@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+    <ProxyGroup name="filters">
+        <SourceProxy name="DilateErode" class="ttkDilateErode" label="TTK DilateErode">
+            <Documentation long_help="TTK dilateErode" short_help="TTK dilateErode">
+                TODO
+            </Documentation>
+
+            <InputProperty name="Input" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkDataSet" />
+                </DataTypeDomain>
+                <InputArrayDomain name="input_array" attribute_type="point"/>
+                <Documentation>TODO.</Documentation>
+            </InputProperty>
+
+            <StringVectorProperty name="InputArray" label="Input Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+                <ArrayListDomain name="array_list" attribute_type="Scalars">
+                    <RequiredProperties>
+                        <Property function="Input" name="Input" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Documentation>TODO.</Documentation>
+            </StringVectorProperty>
+
+            <IntVectorProperty name="Mode" label="Mode" command="SetMode" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Dilate"/>
+                    <Entry value="1" text="Erode"/>
+                </EnumerationDomain>
+                <Documentation>TODO</Documentation>
+            </IntVectorProperty>
+            <DoubleVectorProperty name="Value" command="SetValue" number_of_elements="1" animateable="0" label="Value" default_values="0">
+                <Documentation>TODO.</Documentation>
+            </DoubleVectorProperty>
+
+            <PropertyGroup panel_widget="Line" label="Input Options">
+                <Property name="InputArray" />
+            </PropertyGroup>
+            <PropertyGroup panel_widget="Line" label="Output Options">
+                <Property name="Mode" />
+                <Property name="Value" />
+            </PropertyGroup>
+
+            ${DEBUG_WIDGETS}
+
+            <Hints>
+                <ShowInMenu category="TTK - Scalar Data" />
+            </Hints>
+        </SourceProxy>
+    </ProxyGroup>
+</ServerManagerConfiguration>

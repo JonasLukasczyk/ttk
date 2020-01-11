@@ -1,0 +1,8 @@
+NAME
+  ttkMapArray
+SOURCES
+  ttkMapArray.cpp
+HEADERS
+  ttkMapArray.h
+DEPENDS
+  ttkAlgorithm

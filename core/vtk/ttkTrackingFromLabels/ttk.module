@@ -1,0 +1,9 @@
+NAME
+  ttkTrackingFromLabels
+SOURCES
+  ttkTrackingFromLabels.cpp
+HEADERS
+  ttkTrackingFromLabels.h
+DEPENDS
+  trackingFromLabels
+  ttkAlgorithm

@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+    <ProxyGroup name="filters">
+        <SourceProxy name="MapArray" class="ttkMapArray" label="TTK MapArray">
+            <Documentation long_help="TTK MapArray" short_help="TTK MapArray">
+                TODO
+            </Documentation>
+
+            <InputProperty name="Source" port_index="0" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <InputArrayDomain name="source_arrays" attribute_type="any" number_of_components="1"/>
+                <Documentation>vtkDataSet that is used to build the map.</Documentation>
+            </InputProperty>
+            <InputProperty name="Target" port_index="1" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <InputArrayDomain name="target_arrays" attribute_type="any" number_of_components="1"/>
+                <Documentation>vtkDataSet or vtkMultiBlockDataSet that queries the map.</Documentation>
+            </InputProperty>
+
+            <!-- Map Type -->
+            <IntVectorProperty name="Implementation" label="Implementation" command="SetImplementation" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Map"/>
+                    <Entry value="1" text="Array"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+
+            <!-- Build Map -->
+
+            <IntVectorProperty name="Key0Mode" label="Key0 Mode" command="SetKey0Mode" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Disabled"/>
+                    <Entry value="1" text="Const"/>
+                    <Entry value="2" text="BlockIndex"/>
+                    <Entry value="3" text="Field"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+            <StringVectorProperty command="SetKey0Const" label="Key0" name="Key0Const" number_of_elements="1">
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Key0Mode" value="1" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+            <StringVectorProperty command="SetInputArrayToProcess" element_types="0 0 0 0 2" label="Key0" name="Key0Array" number_of_elements="5" default_values="1 0">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Source" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Key0Mode" value="3" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+    
+            <IntVectorProperty name="Key1Mode" label="Key1 Mode" command="SetKey1Mode" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Disabled"/>
+                    <Entry value="1" text="Const"/>
+                    <Entry value="2" text="BlockIndex"/>
+                    <Entry value="3" text="Field"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+            <StringVectorProperty command="SetKey1Const" label="Key1" name="Key1Const" number_of_elements="1">
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Key1Mode" value="1" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+            <StringVectorProperty command="SetInputArrayToProcess" element_types="0 0 0 0 2" label="Key1" name="Key1Array" number_of_elements="5" default_values="2 0">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Source" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Key1Mode" value="3" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+    
+            <StringVectorProperty command="SetInputArrayToProcess" element_types="0 0 0 0 2" label="Value" name="ValueArray" number_of_elements="5">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Source" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+
+            <!-- Map Lookup -->
+            <IntVectorProperty name="TargetDomain" label="Domain" command="SetTargetDomain" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Point"/>
+                    <Entry value="1" text="Cell"/>
+                    <Entry value="2" text="Field"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+
+            <IntVectorProperty name="Lookup0Mode" label="Lookup0 Mode" command="SetLookup0Mode" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Disabled"/>
+                    <Entry value="1" text="Const"/>
+                    <Entry value="2" text="BlockIndex"/>
+                    <Entry value="3" text="Field"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+            <StringVectorProperty command="SetLookup0Const" label="Lookup0" name="Lookup0Const" number_of_elements="1">
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Lookup0Mode" value="1" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+            <StringVectorProperty command="SetInputArrayToProcess" element_types="0 0 0 0 2" label="Lookup0" name="Lookup0Array" number_of_elements="5" default_values="3 1">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Target" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Lookup0Mode" value="3" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+    
+            <IntVectorProperty name="Lookup1Mode" label="Lookup1 Mode" command="SetLookup1Mode" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Disabled"/>
+                    <Entry value="1" text="Const"/>
+                    <Entry value="2" text="BlockIndex"/>
+                    <Entry value="3" text="Field"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+            <StringVectorProperty command="SetLookup1Const" label="Lookup1" name="Lookup1Const" number_of_elements="1">
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Lookup1Mode" value="1" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+            <StringVectorProperty command="SetInputArrayToProcess" element_types="0 0 0 0 2" label="Lookup1" name="Lookup1Array" number_of_elements="5" default_values="4 1">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Target" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Lookup1Mode" value="3" />
+                </Hints>
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+    
+            <DoubleVectorProperty name="DefaultValue" label="Default Value" command="SetDefaultValue" number_of_elements="1" default_values="0">
+                <Documentation>Fallback value for missing keys.</Documentation>
+            </DoubleVectorProperty>
+
+            <PropertyGroup panel_widget="Line" label="Source">
+                <Property name="Implementation" />
+                <Property name="Key0Mode" /> <Property name="Key0Const" /> <Property name="Key0Array" /><Property name="Key1Mode" /> <Property name="Key1Const" /> <Property name="Key1Array" />
+                <Property name="ValueArray" />
+            </PropertyGroup>
+            <PropertyGroup panel_widget="Line" label="Target">
+                <Property name="TargetDomain" />
+                <Property name="Lookup0Mode" /> <Property name="Lookup0Const" /> <Property name="Lookup0Array" /><Property name="Lookup1Mode" /> <Property name="Lookup1Const" /> <Property name="Lookup1Array" />
+                <Property name="DefaultValue" />
+            </PropertyGroup>
+
+            ${DEBUG_WIDGETS}
+
+            <Hints>
+                <ShowInMenu category="TTK - Pipeline" />
+            </Hints>
+        </SourceProxy>
+    </ProxyGroup>
+</ServerManagerConfiguration>
