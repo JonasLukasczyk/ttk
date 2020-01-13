@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+    <ProxyGroup name="filters">
+        <SourceProxy name="CinemaShading" class="ttkCinemaShading" label="TTK CinemaShading">
+            <Documentation long_help="TTK CinemaShading" short_help="TTK CinemaShading">This filter uses OpenGL shader code to generate rgb images. The inputs of the filter (which must be vtkImageData objects or vtkMultiBlockDataSets holding vtkImageData objects) are fed to the shader as textures. This filter can be used for color mapping, to apply Screen Space Ambient Occlusion, or run custom shader code.</Documentation>
+
+            <InputProperty name="Image0" port_index="0" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkImageData" />
+                    <DataType value="vtkMultiBlockDataSet" />
+                </DataTypeDomain>
+                <InputArrayDomain name="Image0_PointDataArrays" attribute_type="point" />
+                    
+                <Documentation>Auxiliary image that can be used to initialize textures.</Documentation>
+            </InputProperty>
+            <InputProperty name="Image1" port_index="1" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkImageData" />
+                    <DataType value="vtkMultiBlockDataSet" />
+                </DataTypeDomain>
+                <InputArrayDomain name="Image1_PointDataArrays" attribute_type="point" />
+                    <Hints><Optional/></Hints>
+                <Documentation>Auxiliary image that can be used to initialize textures.</Documentation>
+            </InputProperty>
+            <InputProperty name="Image2" port_index="2" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkImageData" />
+                    <DataType value="vtkMultiBlockDataSet" />
+                </DataTypeDomain>
+                <InputArrayDomain name="Image2_PointDataArrays" attribute_type="point" />
+                    <Hints><Optional/></Hints>
+                <Documentation>Auxiliary image that can be used to initialize textures.</Documentation>
+            </InputProperty>
+            <InputProperty name="Image3" port_index="3" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkImageData" />
+                    <DataType value="vtkMultiBlockDataSet" />
+                </DataTypeDomain>
+                <InputArrayDomain name="Image3_PointDataArrays" attribute_type="point" />
+                    <Hints><Optional/></Hints>
+                <Documentation>Auxiliary image that can be used to initialize textures.</Documentation>
+            </InputProperty>
+
+            <IntVectorProperty name="Shader" command="SetShader" number_of_elements="1" animateable="0" label="Shader" default_values="1">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Custom Shader"/>
+                    <Entry value="1" text="Color Mapping"/>
+                    <Entry value="2" text="Resize"/>
+                    <Entry value="3" text="Blur"/>
+                    <Entry value="4" text="SSDD"/>
+                    <Entry value="5" text="Blur + SSDD"/>
+                    <Entry value="6" text="SSAO"/>
+                    <Entry value="7" text="JLUK"/>
+                </EnumerationDomain>
+                <Documentation>
+Different build-in and customizable shaders.
+
+Custom Shader: Write your own vertex and fragment shader code (see the help for example code).
+
+Color Mapping: Apply a color map to a scalar array.
+
+Resize: Resize input images to a new resolution.
+
+Blur: Gaussian blur.
+
+SSDD: Screen Space Depth Darkening [Luft, T., Colditz, C. and Deussen, O., 2006. Image enhancement by unsharp masking the depth buffer (Vol. 25, No. 3, pp. 1206-1213). ACM.]
+
+Blur + SSDD: Combination of Blur and SSDD
+
+SSAO: Screen Space Ambient Occlusion [Ritschel, T., Grosch, T. and Seidel, H.P., 2009, February. Approximating dynamic global illumination in image space. In Proceedings of the 2009 symposium on Interactive 3D graphics and games (pp. 75-82). ACM.]
+
+JLUK: A custom shader by Jonas Lukasczyk for illustrative rendering [Lukasczyk, J., Weber, G., Maciejewski, R., Garth, C. and Leitte, H., 2017, June. Nested tracking graphs. In Computer Graphics Forum (Vol. 36, No. 3, pp. 12-22).]
+                </Documentation>
+            </IntVectorProperty>
+            <StringVectorProperty name="OutputArrayName" command="SetOutputArrayName" number_of_elements="1" animateable="0" label="Array Name" default_values="Shading">
+                <Documentation>Name of the output array.</Documentation>
+            </StringVectorProperty>
+            <IntVectorProperty name="OutputMode" command="SetOutputMode" number_of_elements="1" animateable="0" label="Mode" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Add Array"/>
+                    <Entry value="1" text="New Image"/>
+                </EnumerationDomain>
+                <Documentation>
+AddArray: add the output Array to the images at the first port (input and output images have to have the same resolution)
+
+NewImage: create a new image for each image at the input port.
+                </Documentation>
+            </IntVectorProperty>
+
+            <IntVectorProperty command="SetResolution" default_values="512 512" name="Resolution" label="Resolution" number_of_elements="2">
+                <Documentation>Resolution of the output image.</Documentation>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="OutputMode" value="1" />
+                </Hints>
+            </IntVectorProperty>
+
+            <StringVectorProperty name="CustomVertexShaderCode" command="SetCustomVertexShaderCode" number_of_elements="1" animateable="0" label="Custom Vertex Shader" default_values="//VTK::System::Dec  // always start with this line&#xa;&#xa;attribute vec4 vertexMC;&#xa;varying vec4 vPos;&#xa;&#xa;void main () {&#xa;    vPos = vertexMC/2. + vec4(0.5,0.5,0.5,0);&#xa;    gl_Position = vertexMC;&#xa;}">
+                <Hints>
+                    <Widget type="multi_line" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="0" />
+                </Hints>
+            </StringVectorProperty>
+            <StringVectorProperty name="CustomFragmentShaderCode" command="SetCustomFragmentShaderCode" number_of_elements="1" animateable="0" label="Custom Fragment Shader" default_values="//VTK::System::Dec  // always start with this line&#xa;//VTK::Output::Dec  // always have this line in your FS&#xa;&#xa;uniform sampler2D tex0;&#xa;uniform sampler2D tex1;&#xa;uniform sampler2D tex2;&#xa;uniform sampler2D tex3;&#xa;varying vec4 vPos;&#xa;&#xa;void main(void) {&#xa;    gl_FragData[0] = texture2D( tex0, vPos.xy );&#xa;}">
+                <Hints>
+                    <Widget type="multi_line" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="0" />
+                </Hints>
+            </StringVectorProperty>
+
+                <PropertyGroup panel_widget="Line" label="Shader">
+                    <Property name="Shader" />
+                    <Property name="OutputArrayName" />
+                    <Property name="OutputMode" />
+                    <Property name="Resolution" />
+                    <Property name="CustomVertexShaderCode" />
+                    <Property name="CustomFragmentShaderCode" />
+                </PropertyGroup>
+
+        <StringVectorProperty command="SetColorTransferFunctionString" name="ColorMap" number_of_elements="1" animateable="0" label="Color Map" default_values="">
+            <Documentation>TODO</Documentation>
+            <Hints>
+                <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="1" />
+            </Hints>
+        </StringVectorProperty>
+    
+                <DoubleVectorProperty name="NaNColor" label="NaN Color" number_of_elements="3" default_values="0 0 0" command="SetNaNColor" panel_widget="color_selector">
+                    <DoubleRangeDomain name="range" min="0" max="1" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="1" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <IntVectorProperty name="InterpolateColors" label="Interpolate" number_of_elements="1" default_values="1" command="SetInterpolateColors" >
+                    <BooleanDomain name="bool" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="1" />
+                    </Hints>
+                </IntVectorProperty>
+        
+                <DoubleVectorProperty name="uBlurRadius" label="Radius" number_of_elements="1" default_values="1" command="SetuBlurRadius" >
+                    
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="3" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uSSDDStrength" label="Strength" number_of_elements="1" default_values="1" command="SetuSSDDStrength" >
+                    
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="4" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uSSAORadius" label="Radius" number_of_elements="1" default_values="3" command="SetuSSAORadius" >
+                    <DoubleRangeDomain name="range" min="0" max="40" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="6" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uSSAOScale" label="Scale" number_of_elements="1" default_values="10" command="SetuSSAOScale" >
+                    <DoubleRangeDomain name="range" min="2" max="100" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="6" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uSSAODiffArea" label="DiffArea" number_of_elements="1" default_values="0.3" command="SetuSSAODiffArea" >
+                    <DoubleRangeDomain name="range" min="0" max="1" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="6" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKRadius" label="Radius" number_of_elements="1" default_values="3" command="SetuJLUKRadius" >
+                    <DoubleRangeDomain name="range" min="0" max="40" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKScale" label="Scale" number_of_elements="1" default_values="10" command="SetuJLUKScale" >
+                    <DoubleRangeDomain name="range" min="2" max="1000" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKDiffArea" label="DiffArea" number_of_elements="1" default_values="0.3" command="SetuJLUKDiffArea" >
+                    <DoubleRangeDomain name="range" min="0" max="1" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKNoise" label="Noise" number_of_elements="1" default_values="1" command="SetuJLUKNoise" >
+                    <DoubleRangeDomain name="range" min="0" max="10" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKAOFactor" label="AOFactor" number_of_elements="1" default_values="1" command="SetuJLUKAOFactor" >
+                    <DoubleRangeDomain name="range" min="0" max="2" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKNormalFactor" label="NormalFactor" number_of_elements="1" default_values="1" command="SetuJLUKNormalFactor" >
+                    <DoubleRangeDomain name="range" min="0" max="1000" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <DoubleVectorProperty name="uJLUKLuminanceFactor" label="LuminanceFactor" number_of_elements="1" default_values="0.6" command="SetuJLUKLuminanceFactor" >
+                    <DoubleRangeDomain name="range" min="0" max="2" />
+                    <Documentation>TODO</Documentation>
+                    <Hints>
+                        <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Shader" value="7" />
+                    </Hints>
+                </DoubleVectorProperty>
+        
+                <PropertyGroup panel_widget="Line" label="Uniforms">
+                    <Property name="NaNColor" /><Property name="InterpolateColors" /><Property name="uBlurRadius" /><Property name="uSSDDStrength" /><Property name="uSSAORadius" /><Property name="uSSAOScale" /><Property name="uSSAODiffArea" /><Property name="uJLUKRadius" /><Property name="uJLUKScale" /><Property name="uJLUKDiffArea" /><Property name="uJLUKNoise" /><Property name="uJLUKAOFactor" /><Property name="uJLUKNormalFactor" /><Property name="uJLUKLuminanceFactor" />
+                    <Property name="ColorMap" />
+                </PropertyGroup>
+    
+                <!-- Tex0 -->
+                <StringVectorProperty name="Tex0Array" command="SetTex0Array" number_of_elements="1" animateable="0" label="tex0 Array">
+                    <ArrayListDomain name="array_list" default_values="Depth" input_domain_name="Image0_PointDataArrays">
+                        <RequiredProperties>
+                            <Property name="Image0" function="Input" />
+                        </RequiredProperties>
+                    </ArrayListDomain>
+                    <Documentation>Array of port 0 used for Tex0.</Documentation>
+                </StringVectorProperty>
+                <IntVectorProperty name="Tex0Properties" label="tex0 Flags" command="SetTex0Properties" number_of_elements="3" default_values="1 1 1">
+                    <IntRangeDomain name="range" min="0" max="1" />
+                    <Documentation>FloatingPointTexture, ClampEdge, NoRepeat</Documentation>
+                </IntVectorProperty>
+        
+                <!-- Tex1 -->
+                <StringVectorProperty name="Tex1Array" command="SetTex1Array" number_of_elements="1" animateable="0" label="tex1 Array">
+                    <ArrayListDomain name="array_list" default_values="Depth" input_domain_name="Image1_PointDataArrays">
+                        <RequiredProperties>
+                            <Property name="Image1" function="Input" />
+                        </RequiredProperties>
+                    </ArrayListDomain>
+                    <Documentation>Array of port 1 used for Tex1.</Documentation>
+                </StringVectorProperty>
+                <IntVectorProperty name="Tex1Properties" label="tex1 Flags" command="SetTex1Properties" number_of_elements="3" default_values="1 1 1">
+                    <IntRangeDomain name="range" min="0" max="1" />
+                    <Documentation>FloatingPointTexture, ClampEdge, NoRepeat</Documentation>
+                </IntVectorProperty>
+        
+                <!-- Tex2 -->
+                <StringVectorProperty name="Tex2Array" command="SetTex2Array" number_of_elements="1" animateable="0" label="tex2 Array">
+                    <ArrayListDomain name="array_list" default_values="Depth" input_domain_name="Image2_PointDataArrays">
+                        <RequiredProperties>
+                            <Property name="Image2" function="Input" />
+                        </RequiredProperties>
+                    </ArrayListDomain>
+                    <Documentation>Array of port 2 used for Tex2.</Documentation>
+                </StringVectorProperty>
+                <IntVectorProperty name="Tex2Properties" label="tex2 Flags" command="SetTex2Properties" number_of_elements="3" default_values="1 1 1">
+                    <IntRangeDomain name="range" min="0" max="1" />
+                    <Documentation>FloatingPointTexture, ClampEdge, NoRepeat</Documentation>
+                </IntVectorProperty>
+        
+                <!-- Tex3 -->
+                <StringVectorProperty name="Tex3Array" command="SetTex3Array" number_of_elements="1" animateable="0" label="tex3 Array">
+                    <ArrayListDomain name="array_list" default_values="Depth" input_domain_name="Image3_PointDataArrays">
+                        <RequiredProperties>
+                            <Property name="Image3" function="Input" />
+                        </RequiredProperties>
+                    </ArrayListDomain>
+                    <Documentation>Array of port 3 used for Tex3.</Documentation>
+                </StringVectorProperty>
+                <IntVectorProperty name="Tex3Properties" label="tex3 Flags" command="SetTex3Properties" number_of_elements="3" default_values="1 1 1">
+                    <IntRangeDomain name="range" min="0" max="1" />
+                    <Documentation>FloatingPointTexture, ClampEdge, NoRepeat</Documentation>
+                </IntVectorProperty>
+                    <PropertyGroup panel_widget="Line" label="Textures">
+                        <Property name="Tex0Array" />
+                        <Property name="Tex0Properties" />
+        
+                        <Property name="Tex1Array" />
+                        <Property name="Tex1Properties" />
+        
+                        <Property name="Tex2Array" />
+                        <Property name="Tex2Properties" />
+        
+                        <Property name="Tex3Array" />
+                        <Property name="Tex3Properties" />
+                    </PropertyGroup>
+
+            ${DEBUG_WIDGETS}
+
+            <Hints>
+                <ShowInMenu category="TTK - Cinema" />
+            </Hints>
+        </SourceProxy>
+    </ProxyGroup>
+</ServerManagerConfiguration>

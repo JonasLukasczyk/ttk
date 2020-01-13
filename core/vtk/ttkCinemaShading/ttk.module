@@ -1,0 +1,8 @@
+NAME
+  ttkCinemaShading
+SOURCES
+  ttkCinemaShading.cpp
+HEADERS
+  ttkCinemaShading.h
+DEPENDS
+  ttkAlgorithm

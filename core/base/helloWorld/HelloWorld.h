@@ -45,7 +45,8 @@ namespace ttk {
      *         Note: If the algorithm does not require a triangulation then
      *               this method can be deleted.
      */
-    int preconditionTriangulation(ttk::Triangulation *triangulation) const {
+    int preconditionTriangulation(
+      ttk::AbstractTriangulation *triangulation) const {
       return triangulation->preconditionVertexNeighbors();
     };
 
@@ -56,10 +57,11 @@ namespace ttk {
      *               method must be called after the triangulation has been
      *               preconditioned for the upcoming operations.
      */
-    template <class dataType>
+    template <class dataType,
+              class TriangulationType = ttk::AbstractTriangulation>
     int computeAverages(dataType *outputData,
                         const dataType *inputData,
-                        const ttk::Triangulation *triangulation) const {
+                        const TriangulationType *triangulation) const {
       // start global timer
       ttk::Timer globalTimer;
 
@@ -81,12 +83,9 @@ namespace ttk {
         ttk::Timer localTimer;
 
         // print the progress of the current subprocedure (currently 0%)
-        this->printMsg(
-          "Computing Averages",
-          0, // progress form 0-1
-          this->threadNumber_,
-          ttk::debug::LineMode::REPLACE
-        );
+        this->printMsg("Computing Averages",
+                       0, // progress form 0-1
+                       this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
         // compute the average of each vertex in parallel
         size_t nVertices = triangulation->getNumberOfVertices();
@@ -110,12 +109,9 @@ namespace ttk {
         }
 
         // print the progress of the current subprocedure with elapsed time
-        this->printMsg(
-          "Computing Averages",
-          1, // progress
-          localTimer.getElapsedTime(),
-          this->threadNumber_
-        );
+        this->printMsg("Computing Averages",
+                       1, // progress
+                       localTimer.getElapsedTime(), this->threadNumber_);
       }
 
       // ---------------------------------------------------------------------
