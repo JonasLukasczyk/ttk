@@ -106,9 +106,14 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
   vtkZLibDataCompressor::SafeDownCast(xmlWriter->GetCompressor())
     ->SetCompressionLevel(this->CompressionLevel);
 
-  std::string productExtension = this->Mode == 0
-                                   ? xmlWriter->GetDefaultFileExtension()
-                                   : this->Mode == 1 ? "png" : "ttk";
+  std::string productExtension;
+  switch (this->Mode) {
+    case 0: productExtension=xmlWriter->GetDefaultFileExtension(); break;
+    case 1: productExtension="png"; break;
+    case 2: productExtension="ttk"; break;
+    case 3: productExtension="raw"; break;
+    default: this->printErr("Unsupported Mode");
+  }
 
   // -------------------------------------------------------------------------
   // Prepare Field Data
@@ -434,11 +439,10 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
         (this->DatabasePath + "/" + rDataProductPath).data());
       imageWriter->SetInputData(inputAsID);
       imageWriter->Write();
-    } else {
+    } else if(this->Mode==2) {
       // Topological Compression
       if(!input->IsA("vtkImageData")) {
-        vtkErrorMacro(
-          "Cannot use Topological Compression without a vtkImageData");
+        this->printErr("Cannot use Topological Compression without a vtkImageData");
         return 0;
       }
 
@@ -447,7 +451,7 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
       const auto ScalarFieldName
         = this->topologicalCompressionWriter->GetScalarField();
       if(ScalarFieldName.empty()) {
-        vtkErrorMacro("Need a scalar field for Topological Compression");
+        this->printErr("Need a scalar field for Topological Compression");
         return 0;
       }
       const auto inputData = vtkImageData::SafeDownCast(input);
@@ -456,14 +460,49 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
 
       // Check that input scalar field is indeed scalar
       if(ScalarField->GetNumberOfComponents() != 1) {
-        vtkErrorMacro("Input scalar field should have only 1 component");
+        this->printErr("Input scalar field should have only 1 component");
         return 0;
       }
       this->topologicalCompressionWriter->SetDebugLevel(this->debugLevel_);
       this->topologicalCompressionWriter->SetFileName(
-        (this->DatabasePath + "/" + rDataProductPath).data());
+        (this->DatabasePath + "/" + rDataProductPath).data()
+      );
       this->topologicalCompressionWriter->SetInputData(inputData);
       this->topologicalCompressionWriter->WriteData();
+    } else if(this->Mode==3) {
+
+      // retrieve raw array
+      auto rawArray = this->GetInputArrayToProcess( 3, input );
+      if(!rawArray){
+        this->printErr("Unable to retrieve raw array.");
+        return 0;
+      }
+
+      // opening file
+      std::FILE* file = std::fopen((this->DatabasePath + "/" + rDataProductPath).data(), "wb");
+      if(!file){
+        this->printErr("Unable to open output file.");
+        return 0;
+      }
+
+      // write data
+      switch(rawArray->GetDataType()){
+        vtkTemplateMacro(
+          std::fwrite(
+            rawArray->GetVoidPointer(0),
+            sizeof(VTK_TT),
+            rawArray->GetNumberOfTuples()*rawArray->GetNumberOfComponents(),
+            file
+          )
+        );
+      }
+
+      // close file
+      std::fclose(file);
+
+    } else {
+      this->printErr("Unsupported Mode.");
+      return 0;
     }
 
     this->printMsg("Writing data product to disk", 1, t.getElapsedTime(),
@@ -480,8 +519,15 @@ int ttkCinemaWriter::RequestData(vtkInformation *request,
 
   // Print Status
   {
-    std::string modeS
-      = this->Mode == 0 ? "VTK" : this->Mode == 1 ? "PNG" : "TTK";
+    std::string modeS;
+    switch (this->Mode) {
+        case 0: modeS="VTK"; break;
+        case 1: modeS="PNG"; break;
+        case 2: modeS="TTK"; break;
+        case 3: modeS="RAW"; break;
+        default:
+            this->printErr("Unsupported Mode");
+    }
     this->printMsg({{"Database", this->DatabasePath},
                     {"C. Level", std::to_string(this->CompressionLevel)},
                     {"Format", modeS},

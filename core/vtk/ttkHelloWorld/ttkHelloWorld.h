@@ -30,7 +30,6 @@
 
 // VTK Includes
 #include <ttkAlgorithm.h>
-#include <ttkTriangulation.h>
 
 // TTK Base Includes
 #include <HelloWorld.h>

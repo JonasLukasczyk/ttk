@@ -41,8 +41,9 @@ NOTE:
                     <Entry value="0" text="VTK File"/>
                     <Entry value="1" text="PNG Image"/>
                     <Entry value="2" text="TTK Compression"/>
+                    <Entry value="3" text="RAW Binary Data"/>
                 </EnumerationDomain>
-                <Documentation>Store input as VTK file, a PNG image or a TTK compressed file.</Documentation>
+                <Documentation>Store input as VTK file, a PNG image, a TTK compressed file, or a brick of bytes (one field only).</Documentation>
             </IntVectorProperty>
 
             <IntVectorProperty name="IterateMultiBlock" label="Iterate MultiBlock" command="SetIterateMultiBlock" number_of_elements="1" default_values="0">
@@ -60,13 +61,10 @@ NOTE:
                 <Property name="Mode" />
                 <Property name="IterateMultiBlock" />
             </PropertyGroup>
-            <PropertyGroup panel_widget="Line" label="Commands">
-                <Property name="DeleteDatabase" />
-            </PropertyGroup>
 
             ${TOPOLOGICAL_COMPRESSION_WIDGETS}
 
-            <PropertyGroup panel_widget="Line" label="Topological Compression" >
+            <PropertyGroup panel_widget="Line" label="Topological Compression Options" >
               <Property name="ScalarField" />
               <Property name="CompressionType" />
               <Property name="Tolerance" />
@@ -83,6 +81,30 @@ NOTE:
                     property="Mode"
                     value="2" />
               </Hints>
+            </PropertyGroup>
+
+            <StringVectorProperty name="RawArray" label="Raw Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="3">
+                <ArrayListDomain name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Input" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Documentation>The array that will be stored as a brick of bytes.</Documentation>
+            </StringVectorProperty>
+
+            <PropertyGroup panel_widget="Line" label="Binary Output Options" >
+              <Property name="RawArray" />
+              <Hints>
+                <PropertyWidgetDecorator
+                    type="GenericDecorator"
+                    mode="visibility"
+                    property="Mode"
+                    value="3" />
+              </Hints>
+            </PropertyGroup>
+
+            <PropertyGroup panel_widget="Line" label="Commands">
+                <Property name="DeleteDatabase" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}
