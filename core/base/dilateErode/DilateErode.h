@@ -24,32 +24,33 @@ namespace ttk{
             ~DilateErode(){
             }
 
-            int preconditionTriangulation(ttk::Triangulation *triangulation) const {
+            int preconditionTriangulation(ttk::AbstractTriangulation* triangulation) const {
               return triangulation->preconditionVertexNeighbors();
             };
 
-            template <class dataType> int computeDilateErode(
+            template <class dataType, class TriangulationType = ttk::AbstractTriangulation>
+            int dilateErode(
                 // Output
                 dataType*           newLabels,
 
                 // Input
                 const int           mode,
                 const dataType      value,
-                ttk::Triangulation* triangulation,
+                TriangulationType* triangulation,
                 const dataType*     oldLabels
             ) const;
     };
 }
 
-template <class dataType> int
-ttk::DilateErode::computeDilateErode(
+template <class dataType, class TriangulationType = ttk::AbstractTriangulation>
+int ttk::DilateErode::dilateErode(
     // Output
     dataType*           newLabels,
 
     // Input
     const int           mode,
     const dataType      value,
-    ttk::Triangulation* triangulation,
+    TriangulationType* triangulation,
     const dataType*     oldLabels
 ) const {
 

@@ -6,6 +6,7 @@
                 TODO
             </Documentation>
 
+            <!--Input Ports-->
             <InputProperty name="Input" command="SetInputConnection">
                 <ProxyGroupDomain name="groups">
                     <Group name="sources" />
@@ -14,24 +15,49 @@
                 <DataTypeDomain name="input_type">
                     <DataType value="vtkDataSet" />
                 </DataTypeDomain>
-                <InputArrayDomain name="input_array" attribute_type="point"/>
                 <Documentation>A vtkDataSet.</Documentation>
             </InputProperty>
 
+            <!--Output Ports-->
             <OutputPort index="0" id="port0" name="Segmentation" />
             <OutputPort index="1" id="port1" name="Components" />
 
-            <StringVectorProperty name="LabelArray" label="Input Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+            <!--Input Options-->
+            <IntVectorProperty name="UsePrelabeledBackground" label="Use Prelabeled Background" number_of_elements="1" default_values="0" command="SetUsePrelabeledBackground" >
+                <BooleanDomain name="bool" />
+                <Documentation>This option controls if the algorithm should exclude certain vertices during the computation.</Documentation>
+            </IntVectorProperty>
+            <StringVectorProperty name="BackgroundArray" label="Background Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
                 <ArrayListDomain attribute_type="Scalars" name="array_list">
                     <RequiredProperties>
                         <Property function="Input" name="Input" />
                     </RequiredProperties>
                 </ArrayListDomain>
-                <Documentation>The scalar array that will be used to compute connected components.</Documentation>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="UsePrelabeledBackground" value="1" />
+                </Hints>
+                <Documentation>If the algorithm is executed with the option 'UsePrelabeledBackground', then this array has to contain the background labels, i.e., this array has to define for each vertex if it part of the background or not.</Documentation>
             </StringVectorProperty>
+            <DoubleVectorProperty name="BackgroundLabel" label="Background Label" command="SetBackgroundLabel" number_of_elements="1" default_values="-1">
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="UsePrelabeledBackground" value="1" />
+                </Hints>
+                <Documentation>The value that uniquely identifies the background.</Documentation>
+            </DoubleVectorProperty>
 
             <PropertyGroup panel_widget="Line" label="Input Options">
-                <Property name="LabelArray" />
+                <Property name="UsePrelabeledBackground" />
+                <Property name="BackgroundArray" />
+                <Property name="BackgroundLabel" />
+            </PropertyGroup>
+
+            <!--Output Options-->
+            <StringVectorProperty name="OutputArrayName" label="Output Array Name" command="SetOutputArrayName" number_of_elements="1" default_values="ComponentID">
+                <Documentation>The name of the output scalar array that contains labels.</Documentation>
+            </StringVectorProperty>
+
+            <PropertyGroup panel_widget="Line" label="Output Options">
+                <Property name="OutputArrayName" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}

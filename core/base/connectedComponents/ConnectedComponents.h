@@ -32,30 +32,39 @@ namespace ttk {
             };
 
             template <class idType> int floodFill(
-                idType* newLabels,
-                std::vector<ttk::ConnectedComponents::Component>& components,
-                const Triangulation* triangulation,
-                const intTTK& firstVertexIndex
-            ) const;
-
-            template <class idType> int computeConnectedComponents(
                 // Output
-                idType*            newLabels,
+                idType* labels,
                 std::vector<ttk::ConnectedComponents::Component>& components,
 
                 // Input
-                const Triangulation*     triangulation,
-                const idType*      oldLabels
+                const Triangulation* triangulation,
+                const intTTK& firstVertexIndex,
+                const idType& unlabeledLabel
+            ) const;
+
+            template <class idType, class idType2> int computeConnectedComponents(
+                // Output
+                idType* labels,
+                std::vector<ttk::ConnectedComponents::Component>& components,
+
+                // Input
+                const Triangulation* triangulation,
+                const idType2* backgroundLabels=nullptr,
+                const idType2& backgroundLabel=-1
             ) const;
     };
 }
 
 template <class idType>
 int ttk::ConnectedComponents::floodFill(
-    idType* newLabels,
+    // Output
+    idType* labels,
     std::vector<ttk::ConnectedComponents::Component>& components,
+
+    // Input
     const Triangulation* triangulation,
-    const intTTK& firstVertexIndex
+    const intTTK& firstVertexIndex,
+    const idType& unlabeledLabel
 ) const {
     idType componentId = components.size();
     components.resize( components.size()+1 );
@@ -68,14 +77,12 @@ int ttk::ConnectedComponents::floodFill(
     float x,y,z;
     float center[3] = {0,0,0};
 
-    idType unlabeledLabel  = -2;
-
     while(stack.size()>0){
         cIndex = stack.back();
         stack.pop_back();
 
-        if(newLabels[cIndex]==unlabeledLabel){
-            newLabels[cIndex] = componentId;
+        if(labels[cIndex]==unlabeledLabel){
+            labels[cIndex] = componentId;
             size++;
             triangulation->getVertexPoint( cIndex, x,y,z );
             center[0]+=x; center[1]+=y; center[2]+=z;
@@ -97,15 +104,16 @@ int ttk::ConnectedComponents::floodFill(
     return 1;
 }
 
-template <class idType>
+template <class idType, class idType2>
 int ttk::ConnectedComponents::computeConnectedComponents(
     // Output
-    idType* newLabels,
+    idType* labels,
     std::vector<ttk::ConnectedComponents::Component>& components,
 
     // Input
     const Triangulation* triangulation,
-    const idType* oldLabels
+    const idType2* backgroundLabels,
+    const idType2& backgroundLabel
 ) const {
     Timer t;
 
@@ -113,24 +121,30 @@ int ttk::ConnectedComponents::computeConnectedComponents(
     this->printMsg("Computing Components",0,debug::LineMode::REPLACE);
 
     intTTK nVertices = triangulation->getNumberOfVertices();
-    idType backgroundLabel = -1;
-    idType unlabeledLabel  = -2;
+    idType unlabeledLabel = backgroundLabel-1;
 
-    for(intTTK i=0; i<nVertices; i++)
-        newLabels[i] = oldLabels[i] == backgroundLabel ? backgroundLabel : unlabeledLabel;
+    if(backgroundLabels==nullptr){
+        for(intTTK i=0; i<nVertices; i++)
+            labels[i] = unlabeledLabel;
+    } else {
+        for(intTTK i=0; i<nVertices; i++)
+            labels[i] = backgroundLabels[i] == backgroundLabel ? backgroundLabel : unlabeledLabel;
+    }
 
     for(intTTK i=0; i<nVertices; i++){
-        if(newLabels[i]==unlabeledLabel){
+        if(labels[i]==unlabeledLabel){
             this->floodFill<idType>(
-                newLabels,
+                labels,
                 components,
+
                 triangulation,
-                i
+                i,
+                unlabeledLabel
             );
         }
     }
 
-    this->printMsg("Computing Components",1,t.getElapsedTime());
+    this->printMsg("Computing Components (#"+std::to_string(components.size())+")",1,t.getElapsedTime());
 
     return 1;
 }

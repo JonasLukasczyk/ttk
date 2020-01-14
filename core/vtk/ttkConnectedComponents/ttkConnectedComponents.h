@@ -26,14 +26,29 @@ class TTKCONNECTEDCOMPONENTS_EXPORT ttkConnectedComponents
   : public ttkAlgorithm
   , public ttk::ConnectedComponents
 {
+    private:
+      bool UsePrelabeledBackground{false};
+      double BackgroundLabel{-1};
+      std::string OutputArrayName{"ComponentID"};
+
     public:
-        static ttkConnectedComponents* New();
-        vtkTypeMacro(ttkConnectedComponents, ttkAlgorithm);
+
+      vtkGetMacro(UsePrelabeledBackground, bool);
+      vtkSetMacro(UsePrelabeledBackground, bool);
+
+      vtkGetMacro(BackgroundLabel, double);
+      vtkSetMacro(BackgroundLabel, double);
+
+      vtkGetMacro(OutputArrayName, std::string);
+      vtkSetMacro(OutputArrayName, std::string);
+
+      static ttkConnectedComponents* New();
+      vtkTypeMacro(ttkConnectedComponents, ttkAlgorithm);
 
     protected:
 
-        ttkConnectedComponents();
-        ~ttkConnectedComponents();
+      ttkConnectedComponents();
+      ~ttkConnectedComponents();
 
       int FillInputPortInformation(int port, vtkInformation *info) override;
       int FillOutputPortInformation(int port, vtkInformation *info) override;

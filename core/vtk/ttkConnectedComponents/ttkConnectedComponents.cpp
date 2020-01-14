@@ -2,7 +2,7 @@
 
 #include <vtkObjectFactory.h> // for new macro
 
-#include <vtkImageData.h>
+#include <vtkDataSet.h>
 #include <vtkPolyData.h>
 
 #include <vtkPointData.h>
@@ -26,7 +26,7 @@ ttkConnectedComponents::~ttkConnectedComponents() {
 
 int ttkConnectedComponents::FillInputPortInformation(int port, vtkInformation *info) {
   if(port == 0)
-    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
+    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
   else
     return 0;
 
@@ -52,69 +52,96 @@ int ttkConnectedComponents::RequestData(
     vtkInformationVector** inputVector,
     vtkInformationVector* outputVector
 ){
-    ttk::Timer t;
-
     // Prepare Input and Output
-    auto input = vtkImageData::GetData( inputVector[0] );
-    ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
-    this->preconditionTriangulation(triangulation);
+    auto input = vtkDataSet::GetData( inputVector[0] );
 
     auto outputSegmentation = vtkDataSet::GetData( outputVector, 0 );
     auto outputComponents   = vtkPolyData::GetData( outputVector, 1 );
 
     outputSegmentation->ShallowCopy( input );
 
-    vtkAbstractArray* oldLabels = this->GetInputArrayToProcess(0, inputVector);
-    auto newLabels = vtkSmartPointer<vtkAbstractArray>::Take( oldLabels->NewInstance() );
-    newLabels->DeepCopy( oldLabels );
-    outputSegmentation->GetPointData()->AddArray( newLabels );
+    auto labelArray = vtkSmartPointer<vtkLongArray>::New();
+    labelArray->SetName( this->OutputArrayName.data() );
+    labelArray->SetNumberOfComponents(1);
+    labelArray->SetNumberOfTuples(input->GetNumberOfPoints());
 
     std::vector<ttk::ConnectedComponents::Component> components;
 
-    switch( oldLabels->GetDataType() ){
-        vtkTemplateMacro(
-            this->computeConnectedComponents(
-                (VTK_TT*) newLabels->GetVoidPointer(0),
+    vtkSmartPointer<vtkAbstractArray> backgroundLabelArray = this->UsePrelabeledBackground
+        ? this->GetInputArrayToProcess(0, inputVector)
+        : vtkSmartPointer<vtkLongArray>::New();
+
+    ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(input);
+    this->preconditionTriangulation(triangulation);
+
+    int status = 0;
+
+    switch(
+        vtkTemplate2PackMacro(
+            labelArray->GetDataType(),
+            backgroundLabelArray->GetDataType()
+        )
+    ){
+        vtkTemplate2Macro(
+            status = this->computeConnectedComponents(
+                (VTK_T1*) labelArray->GetVoidPointer(0),
                 components,
 
                 triangulation,
-                (VTK_TT*) oldLabels->GetVoidPointer(0)
+                this->UsePrelabeledBackground
+                    ? (VTK_T2*) backgroundLabelArray->GetVoidPointer(0)
+                    : nullptr,
+                this->UsePrelabeledBackground
+                    ? (VTK_T2) this->BackgroundLabel
+                    : (VTK_T2) -1
             )
         );
     }
 
+    if(!status)
+        return 0;
+
+    // Finalize Output
     {
-        size_t nComponents = components.size();
-
-        auto componentPoints = vtkSmartPointer<vtkPoints>::New();
-        componentPoints->SetNumberOfPoints( nComponents );
-        auto pointCoords = (float*) componentPoints->GetVoidPointer(0);
-
-        auto componentCells = vtkSmartPointer<vtkCellArray>::New();
-        auto connectivityList = componentCells->WritePointer(nComponents, nComponents * 2);
-
-        auto componentSizeArray = vtkSmartPointer<vtkLongArray>::New();
-        componentSizeArray->SetName( "ComponentSize" );
-        componentSizeArray->SetNumberOfComponents(1);
-        componentSizeArray->SetNumberOfTuples( nComponents );
-        auto componentSizeArrayData = (long*) componentSizeArray->GetVoidPointer(0);
-
-        for(size_t i=0,j=0,k=0; i<nComponents; i++){
-            const auto& c = components[i];
-
-            pointCoords[j++] = c.center[0];
-            pointCoords[j++] = c.center[1];
-            pointCoords[j++] = c.center[2];
-
-            connectivityList[k++] = 1;
-            connectivityList[k++] = i;
-
-            componentSizeArrayData[i] = c.size;
+        // Segmentation
+        {
+            outputSegmentation->GetPointData()->AddArray( labelArray );
         }
 
-        outputComponents->SetPoints( componentPoints );
-        outputComponents->SetVerts( componentCells );
-        outputComponents->GetPointData()->AddArray( componentSizeArray );
+        // Components
+        {
+            size_t nComponents = components.size();
+
+            auto componentPoints = vtkSmartPointer<vtkPoints>::New();
+            componentPoints->SetNumberOfPoints( nComponents );
+            auto pointCoords = (float*) componentPoints->GetVoidPointer(0);
+
+            auto componentCells = vtkSmartPointer<vtkCellArray>::New();
+            auto connectivityList = componentCells->WritePointer(nComponents, nComponents * 2);
+
+            auto componentSizeArray = vtkSmartPointer<vtkLongArray>::New();
+            componentSizeArray->SetName( "ComponentSize" );
+            componentSizeArray->SetNumberOfComponents(1);
+            componentSizeArray->SetNumberOfTuples( nComponents );
+            auto componentSizeArrayData = (long*) componentSizeArray->GetVoidPointer(0);
+
+            for(size_t i=0,j=0,k=0; i<nComponents; i++){
+                const auto& c = components[i];
+
+                pointCoords[j++] = c.center[0];
+                pointCoords[j++] = c.center[1];
+                pointCoords[j++] = c.center[2];
+
+                connectivityList[k++] = 1;
+                connectivityList[k++] = i;
+
+                componentSizeArrayData[i] = c.size;
+            }
+
+            outputComponents->SetPoints( componentPoints );
+            outputComponents->SetVerts( componentCells );
+            outputComponents->GetPointData()->AddArray( componentSizeArray );
+        }
     }
 
     return 1;

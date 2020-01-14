@@ -24,7 +24,7 @@
                 <Documentation>Axis which will be used to represent columns.</Documentation>
             </IntVectorProperty>
             <DoubleVectorProperty name="ColGap" label="Column Gap %" command="SetColGap" number_of_elements="1" default_values="0">
-                <DoubleRangeDomain name="range" min="0" max="100" />
+                <!--<DoubleRangeDomain name="range" min="0" max="100" />-->
                 <Documentation>A constant factor that is used to create gaps between columns.</Documentation>
             </DoubleVectorProperty>
 
@@ -37,7 +37,7 @@
                 <Documentation>Axis which will be used to represent rows.</Documentation>
             </IntVectorProperty>
             <DoubleVectorProperty name="RowGap" label="Row Gap %" command="SetRowGap" number_of_elements="1" default_values="0">
-                <DoubleRangeDomain name="range" min="0" max="100" />
+                <!--<DoubleRangeDomain name="range" min="0" max="100" />-->
                 <Documentation>A constant factor that is used to create gaps between rows.</Documentation>
             </DoubleVectorProperty>
 

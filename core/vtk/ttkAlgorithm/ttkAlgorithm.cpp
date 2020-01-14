@@ -58,7 +58,8 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
       }
 
       this->printMsg(
-        "Initializing Explicit Triangulation", 0, ttk::debug::Priority::DETAIL);
+        "Initializing Explicit Triangulation", 0, ttk::debug::LineMode::REPLACE,
+        ttk::debug::Priority::DETAIL);
       auto newTriangulation = new ttk::Triangulation();
       auto cells = dataSetAsUG->GetCells();
 
@@ -88,7 +89,6 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
         {(void *)cells, {newTriangulation, cells->GetMTime()}});
 
       this->printMsg("Initializing Explicit Triangulation", 1,
-                     ttk::debug::LineMode::REPLACE,
                      ttk::debug::Priority::DETAIL);
       return newTriangulation;
     }
@@ -129,7 +129,8 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
       }
 
       this->printMsg(
-        "Initializing Explicit Triangulation", 0, ttk::debug::Priority::DETAIL);
+        "Initializing Explicit Triangulation", 0, ttk::debug::LineMode::REPLACE,
+        ttk::debug::Priority::DETAIL);
       auto newTriangulation = new ttk::Triangulation();
 
       // init points
@@ -171,7 +172,6 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
       }
 
       this->printMsg("Initializing Explicit Triangulation", 1,
-                     ttk::debug::LineMode::REPLACE,
                      ttk::debug::Priority::DETAIL);
       return newTriangulation;
     }
@@ -195,7 +195,8 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
       }
 
       this->printMsg(
-        "Initializing Implicit Triangulation", 0, ttk::debug::Priority::DETAIL);
+        "Initializing Implicit Triangulation", 0, ttk::debug::LineMode::REPLACE,
+        ttk::debug::Priority::DETAIL);
       auto newTriangulation = new ttk::Triangulation();
 
       int extents[6];
@@ -223,7 +224,6 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
         {(void *)dataSetAsID, {newTriangulation, dataSetAsID->GetMTime()}});
 
       this->printMsg("Initializing Implicit Triangulation", 1,
-                     ttk::debug::LineMode::REPLACE,
                      ttk::debug::Priority::DETAIL);
       return newTriangulation;
     }

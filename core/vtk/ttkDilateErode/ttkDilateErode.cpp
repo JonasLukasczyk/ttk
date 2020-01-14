@@ -10,6 +10,8 @@
 #include <vtkDataArray.h>
 #include <vtkSmartPointer.h>
 
+#include <ttkMacros.h>
+
 vtkStandardNewMacro(ttkDilateErode);
 
 ttkDilateErode::ttkDilateErode(){
@@ -62,20 +64,20 @@ int ttkDilateErode::RequestData(
     this->preconditionTriangulation(triangulation);
 
     int status = 0;
-    switch( oldLabels->GetDataType() ){
-        vtkTemplateMacro(
-            status = this->computeDilateErode(
-                // Output
-                (VTK_TT*) newLabels->GetVoidPointer(0),
+    ttkVtkTemplateMacro(
+      triangulation->getType(),
+      oldLabels->GetDataType(),
+      (status = this->dilateErode<VTK_TT, TTK_TT>(
+        // Output
+        (VTK_TT*) newLabels->GetVoidPointer(0),
 
-                // Input
-                this->Mode,
-                (VTK_TT) this->Value,
-                triangulation,
-                (VTK_TT*) oldLabels->GetVoidPointer(0)
-            );
-        );
-    }
+        // Input
+        this->Mode,
+        (VTK_TT) this->Value,
+        (TTK_TT*) triangulation->getData(),
+        (VTK_TT*) oldLabels->GetVoidPointer(0)
+      ))
+    );
 
     if(!status) return 0;
 
