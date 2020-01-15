@@ -17,6 +17,44 @@
 #include <vtkTable.h>
 #include <vtkUnstructuredGrid.h>
 
+#include <vtkCommand.h>
+
+typedef std::unordered_map<void *,std::pair<ttk::Triangulation *, vtkMTimeType>> DataSetToTriangulationMapType;
+
+class ttkOnDeleteCommand : public vtkCommand {
+    DataSetToTriangulationMapType* dataSetToTriangulationMap;
+
+    public:
+        ttkOnDeleteCommand(DataSetToTriangulationMapType* dataSetToTriangulationMap){
+            this->dataSetToTriangulationMap = dataSetToTriangulationMap;
+        }
+        ~ttkOnDeleteCommand(){}
+
+        void Execute(vtkObject* caller, unsigned long eventId, void* callData) {
+            auto it = this->dataSetToTriangulationMap->find( (void*)caller );
+            if(it!=this->dataSetToTriangulationMap->end()){
+                delete it->second.first;
+                this->dataSetToTriangulationMap->erase(it);
+            }
+            caller->RemoveObserver(this);
+            this->Delete();
+        }
+};
+
+void insertIntoDataSetToTriangulationMap(
+    DataSetToTriangulationMapType& dataSetToTriangulationMap,
+    vtkCellArray* cells,
+    ttk::Triangulation* triangulation
+){
+    dataSetToTriangulationMap.insert({
+        (void*) cells,
+        {triangulation, cells->GetMTime()}
+    });
+    auto triangulationObserver = new ttkOnDeleteCommand(&dataSetToTriangulationMap);
+    cells->AddObserver( vtkCommand::DeleteEvent, triangulationObserver, 1 );
+    cells->AddObserver( vtkCommand::ModifiedEvent, triangulationObserver, 1 );
+}
+
 // Pass input type information key
 #include <vtkInformationKey.h>
 vtkInformationKeyMacro(ttkAlgorithm, SAME_DATA_TYPE_AS_INPUT_PORT, Integer);
@@ -29,8 +67,7 @@ ttkAlgorithm::~ttkAlgorithm() {
 }
 
 // init static triangulation registry
-std::unordered_map<void *, std::pair<ttk::Triangulation *, vtkMTimeType>>
-  ttkAlgorithm::DataSetToTriangulationMap;
+DataSetToTriangulationMapType ttkAlgorithm::DataSetToTriangulationMap;
 
 ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
 
@@ -54,6 +91,7 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
         } else {
           this->printMsg("Chached triangulation no longer valid",
                          ttk::debug::Priority::DETAIL);
+          delete it->second.first;
         }
       }
 
@@ -61,6 +99,7 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
         "Initializing Explicit Triangulation", 0, ttk::debug::LineMode::REPLACE,
         ttk::debug::Priority::DETAIL);
       auto newTriangulation = new ttk::Triangulation();
+      newTriangulation->setDebugLevel(5);
       auto cells = dataSetAsUG->GetCells();
 
       // init points
@@ -85,11 +124,15 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
           dataSet->GetNumberOfCells(), cells->GetPointer());
       }
 
-      ttkAlgorithm::DataSetToTriangulationMap.insert(
-        {(void *)cells, {newTriangulation, cells->GetMTime()}});
+      insertIntoDataSetToTriangulationMap(
+        ttkAlgorithm::DataSetToTriangulationMap,
+        cells,
+        newTriangulation
+      );
 
       this->printMsg("Initializing Explicit Triangulation", 1,
                      ttk::debug::Priority::DETAIL);
+
       return newTriangulation;
     }
 
@@ -126,12 +169,14 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
       if(triangulationStatus == 1) {
         this->printMsg("Chached triangulation no longer valid",
                        ttk::debug::Priority::DETAIL);
+        delete it->second.first;
       }
 
       this->printMsg(
         "Initializing Explicit Triangulation", 0, ttk::debug::LineMode::REPLACE,
         ttk::debug::Priority::DETAIL);
       auto newTriangulation = new ttk::Triangulation();
+      newTriangulation->setDebugLevel(5);
 
       // init points
       if(dataSet->GetNumberOfPoints() > 0) {
@@ -159,15 +204,21 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
           newTriangulation->setInputCells(
             polyCells->GetNumberOfCells(), polyCells->GetPointer());
 
-          ttkAlgorithm::DataSetToTriangulationMap.insert(
-            {(void *)polyCells, {newTriangulation, polyCells->GetMTime()}});
+          insertIntoDataSetToTriangulationMap(
+            ttkAlgorithm::DataSetToTriangulationMap,
+            polyCells,
+            newTriangulation
+          );
         } else if(lineCells->GetNumberOfCells() > 0) {
           // 1D
           newTriangulation->setInputCells(
             lineCells->GetNumberOfCells(), lineCells->GetPointer());
 
-          ttkAlgorithm::DataSetToTriangulationMap.insert(
-            {(void *)lineCells, {newTriangulation, lineCells->GetMTime()}});
+          insertIntoDataSetToTriangulationMap(
+            ttkAlgorithm::DataSetToTriangulationMap,
+            lineCells,
+            newTriangulation
+          );
         }
       }
 
@@ -198,6 +249,7 @@ ttk::Triangulation *ttkAlgorithm::GetTriangulation(vtkDataSet *dataSet) {
         "Initializing Implicit Triangulation", 0, ttk::debug::LineMode::REPLACE,
         ttk::debug::Priority::DETAIL);
       auto newTriangulation = new ttk::Triangulation();
+      newTriangulation->setDebugLevel(5);
 
       int extents[6];
       dataSetAsID->GetExtent(extents);
