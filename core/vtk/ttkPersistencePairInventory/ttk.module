@@ -1,0 +1,9 @@
+NAME
+  ttkPersistencePairInventory
+SOURCES
+  ttkPersistencePairInventory.cpp
+HEADERS
+  ttkPersistencePairInventory.h
+DEPENDS
+  persistencePairInventory
+  ttkAlgorithm

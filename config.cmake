@@ -56,13 +56,15 @@ if(TTK_BUILD_DOCUMENTATION)
   endif()
 endif()
 
-find_package(Boost COMPONENTS system)
+find_package(Boost COMPONENTS system asio)
 if(NOT Boost_FOUND)
   find_package(Boost REQUIRED)
   if(Boost_FOUND)
     message(STATUS "BOOST_INCLUDE_DIR: ${Boost_INCLUDE_DIR}")
   endif()
 endif()
+
+find_package(websocketpp)
 
 find_package(ZLIB)
 if(NOT ZLIB_FOUND)
