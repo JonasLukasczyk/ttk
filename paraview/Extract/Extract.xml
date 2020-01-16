@@ -12,18 +12,22 @@ This filter uses a list of values to extract either blocks of a 'vtkMultiBlockDa
                     <Group name="filters" />
                 </ProxyGroupDomain>
                 <DataTypeDomain name="input_type">
-                    <DataType value="vtkObject" />
+                    <DataType value="vtkMultiBlockDataSet" />
+                    <DataType value="vtkDataSet" />
+                    <DataType value="vtkTable" />
                 </DataTypeDomain>
-                <Documentation>'vtkMultiBlockDataSet' or 'vtkUnstructuredGrid'.</Documentation>
+                <Documentation>TODO.</Documentation>
             </InputProperty>
 
             <!-- Global Mode -->
             <IntVectorProperty name="Mode" command="SetMode" number_of_elements="1" default_values="0">
                 <EnumerationDomain name="enum">
-                    <Entry value="0" text="Block"/>
-                    <Entry value="1" text="Geometry"/>
+                    <Entry value="0" text="Blocks"/>
+                    <Entry value="1" text="Rows"/>
+                    <Entry value="2" text="Array Values"/>
+                    <Entry value="3" text="Geometry"/>
                 </EnumerationDomain>
-                <Documentation>Either extract a set of blocks from a 'vtkMultiBlockDataSet', or a geometry subset of a 'vtkDataSet'.</Documentation>
+                <Documentation>TODO.</Documentation>
             </IntVectorProperty>
 
             <StringVectorProperty name="ExpressionString" label="Expression" command="SetExpressionString" number_of_elements="1" default_values="">
@@ -34,9 +38,10 @@ This filter uses a list of values to extract either blocks of a 'vtkMultiBlockDa
             <IntVectorProperty name="OutputType" label="Output Type" command="SetOutputType" number_of_elements="1" default_values="0">
                 <EnumerationDomain name="enum">
                     <Entry value="0" text="Auto"/>
+                    <Entry value="13" text="vtkMultiBlockDataSet"/>
                     <Entry value="6" text="vtkImageData"/>
                     <Entry value="4" text="vtkUnstructuredGrid"/>
-                    <Entry value="13" text="vtkMultiBlockDataSet"/>
+                    <Entry value="19" text="vtkTable"/>
                 </EnumerationDomain>
                 <Documentation>If mode is set to 'Block', then this parameter is used to set the output type of the filter at the 'RequestInformation' pass.
 
@@ -64,7 +69,12 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 </BoundsDomain>
                 <Documentation>The image bounds of the extracted block of type 'vtkImageData'. It is necessary to explicitly specify the bounds as currently the VTK pipeline is unable to automatically derive the image extent and bounds during the 'RequestInformation' pass.</Documentation>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="OutputType" value="6" />
+                    <PropertyWidgetDecorator type="CompositeDecorator">
+                        <Expression type="and">
+                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Mode" value="0"/>
+                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="OutputType" value="6"/>
+                        </Expression>
+                    </PropertyWidgetDecorator>
                 </Hints>
             </DoubleVectorProperty>
 
@@ -76,7 +86,12 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                     </RequiredProperties>
                 </ArrayListDomain>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Mode" value="1" />
+                    <PropertyWidgetDecorator type="CompositeDecorator">
+                        <Expression type="or">
+                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Mode" value="2"/>
+                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Mode" value="3"/>
+                        </Expression>
+                    </PropertyWidgetDecorator>
                 </Hints>
                 <Documentation>The array that will be used to determine which part of the geometry should be extracted.</Documentation>
             </StringVectorProperty>
@@ -88,7 +103,7 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                     <Entry value="2" text="Sub"/>
                 </EnumerationDomain>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Mode" value="1" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="Mode" value="3" />
                 </Hints>
                 <Documentation>Determines if a complete cell is extracted if "All" or "Any" of its vertices fulfill the criterion. If mode is set to "Sub", cells are reduced to the vertices that fulfill the criterion (e.g., to an edge of a triangle/tetrahedron).</Documentation>
             </IntVectorProperty>

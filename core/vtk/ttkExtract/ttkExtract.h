@@ -40,7 +40,31 @@ class TTKEXTRACT_EXPORT ttkExtract : public ttkAlgorithm {
         vtkSetVector6Macro(ImageBounds, double);
         vtkGetVector6Macro(ImageBounds, double);
 
-        int GetVtkDataTypeName( int outputType, std::string& dataTypeName );
+        int GetVtkDataTypeName( std::string& dataTypeName, const int outputType ) const;
+
+        int ExtractBlocks(
+            vtkDataObject* output,
+            vtkDataObject* input,
+            const std::vector<double>& indices
+        ) const;
+
+        int ExtractRows(
+            vtkDataObject* output,
+            vtkDataObject* input,
+            const std::vector<double>& indices
+        ) const;
+
+        int ExtractGeometry(
+            vtkDataObject* output,
+            vtkDataObject* input,
+            const std::vector<double>& labels
+        );
+
+        int ExtractArrayValues(
+            vtkDataObject* output,
+            vtkDataObject* input,
+            const std::vector<double>& indices
+        );
 
         static ttkExtract* New();
         vtkTypeMacro(ttkExtract, ttkAlgorithm)
