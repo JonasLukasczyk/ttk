@@ -36,7 +36,7 @@ void startServer() {
 void startServerX() {
     // get the test data
     auto unImageData = vtkSmartPointer<vtkXMLImageDataReader>::New();
-    unImageData->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/histogram2.vti");
+    unImageData->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/FingersPPI.vti");
 
     // send the two data to e2rr module
     auto webSocket = vtkSmartPointer<ttkWebSocketIO>::New();

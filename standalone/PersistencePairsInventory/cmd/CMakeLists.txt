@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(ttkGenericScriptCmd)
+project(ttkPersistencePairsInventoryCmd)
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(
     ${PROJECT_NAME}
-        PUBLIC
-            ttkProgramBase
+        PRIVATE
             ttkArrayEditor
             ttkWebSocketIO
+            ttkProgramBase
 )
 
 set_target_properties(

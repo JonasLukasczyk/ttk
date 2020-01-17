@@ -10,8 +10,6 @@
 // ttk common includes
 #include <Debug.h>
 #include <set>
-// #include <chrono>
-// #define ASIO_STANDALONE
 
 #include <iostream>
 #include <websocketpp/config/asio_no_tls.hpp>
@@ -88,36 +86,14 @@ public:
 
 namespace ttk {
 
-    struct WebSocketObserver {
-        virtual void update(std::string name, std::string payload)=0;
-    };
-
     class WebSocketIO : virtual public Debug {
-
         public:
-
-            vector<WebSocketObserver*> observers;
-
-            void addObserver(WebSocketObserver* observer){
-                observers.push_back(observer);
-            }
 
             int isListening() {
                 return this->Server.is_listening() ;
             }
 
-            void removeObserver(WebSocketObserver* observer){
-                // find and remove from vector
-                observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end()) ;
-            }
-
-            void notifyObservers(std::string name, std::string payload=""){
-                //for(auto observer: this->observers)
-                //    observer->update(name, payload);
-                this->processClientRequest(name, payload) ;
-            }
-
-            void virtual processClientRequest(std::string name, std::string payload){};
+            void virtual processClientRequest(std::string name, std::string payload = ""){};
 
             WebSocketIO() {
                 this->setDebugMsgPrefix("WebSocketIO"); // inherited from Debug: prefix will be printed at the beginning of every msg
@@ -356,7 +332,7 @@ namespace ttk {
                 this->Server.close(hdl,  websocketpp::close::status::normal, "Terminating connection ...", ec);
             }
 
-            this->notifyObservers("on_open");
+            this->processClientRequest("on_open");
         }
 
         void on_received_object() {
@@ -387,13 +363,13 @@ namespace ttk {
 
                 case 2: // request data from client
                     this->printMsg("receive requestData") ;
-                    this->notifyObservers("on_requestData");
+                    this->processClientRequest("on_requestData");
                     break ;
                 case 3: // update
-                    this->notifyObservers("updateUnstructuredGrid", ServerParser::parse_updateUnstructuredGrid(pay_msg));
+                    this->processClientRequest("updateUnstructuredGrid", ServerParser::parse_updateUnstructuredGrid(pay_msg));
                     break ;
                 case 4:
-                    this->notifyObservers("updateImageData", ServerParser::parse_updateImageData(pay_msg));
+                    this->processClientRequest("updateImageData", ServerParser::parse_updateImageData(pay_msg));
                     break ;
 
                 default:

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ServerManagerConfiguration>
-    <ProxyGroup name="filters">
+    <ProxyGroup name="sources">
         <SourceProxy name="WebSocketIO" class="ttkWebSocketIO" label="TTK WebSocketIO">
            <Documentation long_help="TODO" short_help="TODO">
                TODO
            </Documentation>
 
-           <InputProperty name="Input" command="SetInputConnection">
+            <InputProperty name="Input" command="SetInputConnection" multiple_input="1">
                 <ProxyGroupDomain name="groups">
                     <Group name="sources" />
                     <Group name="filters" />
@@ -15,6 +15,9 @@
                     <DataType value="vtkDataSet" />
                 </DataTypeDomain>
                 <Documentation>TODO.</Documentation>
+                <Hints>
+                    <Optional />
+                </Hints>
             </InputProperty>
 
             <IntVectorProperty name="PortNumber" label="PortNumber" command="SetPortNumber" number_of_elements="1" default_values="9285">

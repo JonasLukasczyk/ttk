@@ -19,16 +19,6 @@ using namespace std;
 
 vtkStandardNewMacro(ttkWebSocketIO);
 
-//struct vtkWebSocketObserver : ttk::WebSocketObserver{
-//    ttkWebSocketIO* parent;
-//
-//    void update(std::string name, std::string payload="") override {
-//        this->parent->processClientRequest(name, payload) ;
-//    }
-//};
-
-// vtkWebSocketObserver globalListener;
-
 ttkWebSocketIO::ttkWebSocketIO() :WebSocketIO() {
     this->lastInput = vtkSmartPointer<vtkUnstructuredGrid>::New();
     this->lastUGfromClient = vtkSmartPointer<vtkUnstructuredGrid>::New();
@@ -36,11 +26,7 @@ ttkWebSocketIO::ttkWebSocketIO() :WebSocketIO() {
     this->lastImageInput = vtkSmartPointer<vtkImageData>::New();
     this->lastImageUGfromClient = vtkSmartPointer<vtkImageData>::New();
 
-    //globalListener.parent = this;
-
     this->SetNeedsUpdate(true);
-
-    //this->addObserver( &globalListener );
 
     this->SetNumberOfInputPorts(1);
     this->SetNumberOfOutputPorts(1);
@@ -55,6 +41,7 @@ int ttkWebSocketIO::FillInputPortInformation(int port, vtkInformation *info) {
     switch (port) {
         case 0:
             info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
+            info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
             break;
         default:
             return 0;
@@ -105,7 +92,7 @@ int ttkWebSocketIO::RequestData(
         if (!this->isListening()){
             this->startServer( this->PortNumber );
         } else {
-            this->notifyObservers("on_update");
+            this->processClientRequest("on_update");
         }
     } catch (const std::exception& e) {
         this->printMsg("start Server error: " + string(e.what())) ;
