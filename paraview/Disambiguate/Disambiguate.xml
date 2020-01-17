@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+    <ProxyGroup name="filters">
+        <SourceProxy name="Disambiguate" class="ttkDisambiguate" label="TTK Disambiguate">
+           <Documentation long_help="TODO" short_help="TODO">
+               TODO
+           </Documentation>
+
+           <InputProperty name="Input" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkDataSet" />
+                </DataTypeDomain>
+                <Documentation>TODO.</Documentation>
+            </InputProperty>
+
+            <StringVectorProperty name="InputArray" label="Input Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Input" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Documentation>The scalar array that will be used to compute averages.</Documentation>
+            </StringVectorProperty>
+
+            <PropertyGroup panel_widget="Line" label="Input Options">
+                <Property name="InputArray" />
+            </PropertyGroup>
+
+            ${DEBUG_WIDGETS}
+
+            <Hints>
+                <ShowInMenu category="TTK - Scalar Data" />
+            </Hints>
+        </SourceProxy>
+    </ProxyGroup>
+</ServerManagerConfiguration>

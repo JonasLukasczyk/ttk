@@ -1,0 +1,9 @@
+NAME
+  ttkDisambiguate
+SOURCES
+  ttkDisambiguate.cpp
+HEADERS
+  ttkDisambiguate.h
+DEPENDS
+  disambiguate
+  ttkAlgorithm
