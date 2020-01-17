@@ -19,6 +19,8 @@
 
 #include <ttkUtils.h>
 
+#include <set>
+
 vtkStandardNewMacro(ttkExtract);
 
 ttkExtract::ttkExtract(){
@@ -31,7 +33,7 @@ ttkExtract::~ttkExtract(){};
 
 int ttkExtract::GetVtkDataTypeName( std::string& dataTypeName, const int outputType ) const {
     switch (outputType) {
-        case 0: // auto
+        case -1: // in case of auto return vtkMultiBlockDataSet
         case VTK_MULTIBLOCK_DATA_SET: {
             dataTypeName = "vtkMultiBlockDataSet";
             break;
@@ -52,30 +54,26 @@ int ttkExtract::GetVtkDataTypeName( std::string& dataTypeName, const int outputT
 }
 
 int ttkExtract::FillInputPortInformation(int port, vtkInformation* info) {
-    if (port==0)
-        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject");
-    else
+    if (port==0){
+        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet", 0);
+        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkTable", 1);
+        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid", 2);
+    } else
         return 0;
     return 1;
 }
 
 int ttkExtract::FillOutputPortInformation(int port, vtkInformation* info) {
     if (port==0){
-        if( this->Mode==0 ){
+        if(this->OutputType!=-1){
             std::string outputDataTypeName="";
             if( !this->GetVtkDataTypeName(outputDataTypeName, this->OutputType) ){
                 this->printErr("Unsupported output type");
                 return 0;
             }
             info->Set(vtkDataObject::DATA_TYPE_NAME(), outputDataTypeName.data());
-        } else if(this->Mode==1)
-            info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkTable");
-        else if(this->Mode==2)
+        } else
             info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
-        else if(this->Mode==3)
-            info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkUnstructuredGrid");
-        else
-            return 0;
     } else
         return 0;
     return 1;
@@ -89,7 +87,7 @@ int ttkExtract::RequestInformation(
     vtkInformationVector**,
     vtkInformationVector* outputVector
 ){
-    if(this->Mode==0 && this->GetOutputType()==VTK_IMAGE_DATA){
+    if(this->ExtractionMode==0 && this->GetOutputType()==VTK_IMAGE_DATA){
         vtkInformation* outInfo = outputVector->GetInformationObject(0);
 
         // Bounds
@@ -150,11 +148,11 @@ int ttkExtract::ExtractBlocks(
     const std::vector<double>& indices
 ) const {
     // print state
+    std::string indicesString = "";
+    doubleVectorToString(indicesString, indices);
     {
         std::string outputDataTypeName = "";
         this->GetVtkDataTypeName( outputDataTypeName, this->OutputType );
-        std::string indicesString = "";
-        doubleVectorToString(indicesString, indices);
 
         this->printMsg( ttk::debug::Separator::L1 );
         this->printMsg({
@@ -165,7 +163,7 @@ int ttkExtract::ExtractBlocks(
         this->printMsg( ttk::debug::Separator::L2 );
     }
 
-    this->printMsg("Extracting blocks", 0, ttk::debug::LineMode::REPLACE);
+    this->printMsg("Extracting blocks ["+indicesString+"]", 0, ttk::debug::LineMode::REPLACE);
 
     auto inputAsMB = vtkMultiBlockDataSet::SafeDownCast(input);
     if(!inputAsMB){
@@ -173,7 +171,7 @@ int ttkExtract::ExtractBlocks(
         return 0;
     }
 
-    if(this->OutputType==0){
+    if(this->OutputType==-1){
         // extract multiple blocks (vtkMultiBlockDataSet input/output only)
         auto outputAsMB = vtkMultiBlockDataSet::SafeDownCast( output );
 
@@ -210,7 +208,7 @@ int ttkExtract::ExtractBlocks(
         }
     }
 
-    this->printMsg("Extracting blocks", 1);
+    this->printMsg("Extracting blocks ["+indicesString+"]", 1);
 
     return 1;
 }
@@ -221,9 +219,9 @@ int ttkExtract::ExtractRows(
     const std::vector<double>& indices
 ) const {
     // print state
+    std::string indicesString = "";
+    doubleVectorToString(indicesString, indices);
     {
-        std::string indicesString = "";
-        doubleVectorToString(indicesString, indices);
         this->printMsg( ttk::debug::Separator::L1 );
         this->printMsg({
             {"Extraction Mode", "Rows"},
@@ -233,7 +231,7 @@ int ttkExtract::ExtractRows(
     }
 
     ttk::Timer t;
-    this->printMsg("Extracting rows", 0, ttk::debug::LineMode::REPLACE);
+    this->printMsg("Extracting rows ["+indicesString+"]", 0, ttk::debug::LineMode::REPLACE);
 
     size_t nValues = indices.size();
     auto inputAsT = vtkTable::SafeDownCast( input );
@@ -268,7 +266,7 @@ int ttkExtract::ExtractRows(
 
     outputAsT->GetFieldData()->ShallowCopy( inputAsT->GetFieldData() );
 
-    this->printMsg("Extracting rows", 1, t.getElapsedTime());
+    this->printMsg("Extracting rows ["+indicesString+"]", 1, t.getElapsedTime());
 
     return 1;
 }
@@ -283,13 +281,17 @@ int ttkExtract::ExtractGeometry(
     size_t nValues = labels.size();
 
     auto inputArray = this->GetInputArrayToProcess(0, input);
+    if(!inputArray){
+        this->printErr("Unable to retrieve input array.");
+        return 0;
+    }
     std::string inputArrayName = inputArray->GetName();
+
+    std::string labelsString = "";
+    doubleVectorToString(labelsString, labels);
 
     // print status
     {
-        std::string labelsString = "";
-        doubleVectorToString(labelsString, labels);
-
         this->printMsg({
             {"Ext. Mode", "Geometry"},
             {"Cell Mode", std::string(this->CellMode==0 ? "All" : this->CellMode==1 ? "Any" : "Sub")},
@@ -342,7 +344,7 @@ int ttkExtract::ExtractGeometry(
     // Marking Vertices
     // ---------------------------------------------------------------------
     {
-        this->printMsg("Marking vertices/cells", 0, ttk::debug::LineMode::REPLACE);
+        this->printMsg("Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+labelsString+"]", 0, ttk::debug::LineMode::REPLACE);
         ttk::Timer t;
 
         // Mark vertices that satisfy condition
@@ -450,7 +452,7 @@ int ttkExtract::ExtractGeometry(
                 oIndex_to_mIndex_map[i] = nMarkedPoints++;
 
         this->printMsg(
-            "Marking vertices/cells",
+            "Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+labelsString+"]",
             1, t.getElapsedTime()
         );
     }
@@ -460,7 +462,7 @@ int ttkExtract::ExtractGeometry(
     // ---------------------------------------------------------------------
     {
         ttk::Timer t;
-        this->printMsg("Extracting vertices", 0, ttk::debug::LineMode::REPLACE);
+        this->printMsg("Extracting marked vertices", 0, ttk::debug::LineMode::REPLACE);
 
         auto inPoints = inputAsUG->GetPoints();
         auto inPointCoords = (float*) inPoints->GetVoidPointer(0);
@@ -512,7 +514,7 @@ int ttkExtract::ExtractGeometry(
         }
 
         this->printMsg(
-            "Extracting vertices (#"+std::to_string(nMarkedPoints)+")",
+            "Extracting marked vertices (#"+std::to_string(nMarkedPoints)+")",
             1, t.getElapsedTime()
         );
     }
@@ -522,7 +524,7 @@ int ttkExtract::ExtractGeometry(
     // -------------------------------------------------------------------------
     {
         ttk::Timer t;
-        this->printMsg( "Extracting cells", 0, ttk::debug::LineMode::REPLACE );
+        this->printMsg( "Extracting marked cells", 0, ttk::debug::LineMode::REPLACE );
 
         const int types[20] = {
             VTK_EMPTY_CELL,
@@ -621,16 +623,45 @@ int ttkExtract::ExtractGeometry(
         }
 
         this->printMsg(
-            "Extracting cells (#"+std::to_string(nOutCells)+")",
+            "Extracting marked cells (#"+std::to_string(nOutCells)+")",
             1, t.getElapsedTime()
         );
     }
 
     this->printMsg( ttk::debug::Separator::L2 );
-    this->printMsg( "Complete", 1, globalTimer.getElapsedTime() );
-    this->printMsg( ttk::debug::Separator::L1 );
+    this->printMsg( "Complete ("+std::to_string(nMarkedPoints)+" vertices, "+std::to_string(nOutCells)+" cells)", 1, globalTimer.getElapsedTime() );
 
     outputAsUG->GetFieldData()->ShallowCopy( inputAsUG->GetFieldData() );
+
+    return 1;
+}
+
+template <class dataType>
+int createUniqueValueArray(
+    vtkDataArray* uniqueValueArray,
+    vtkDataArray* valueArray
+){
+    std::set<dataType> uniqueValues;
+
+    if(uniqueValueArray->GetDataType()!=valueArray->GetDataType())
+        return 0;
+
+    size_t nValues = valueArray->GetNumberOfTuples()*valueArray->GetNumberOfComponents();
+    auto valueArrayData = (dataType*) valueArray->GetVoidPointer(0);
+    for(size_t i=0; i<nValues; i++)
+        uniqueValues.insert( valueArrayData[i] );
+
+    size_t nUniqueValues = uniqueValues.size();
+
+    uniqueValueArray->SetNumberOfComponents( 1 );
+    uniqueValueArray->SetNumberOfTuples( nUniqueValues );
+
+    auto uniqueValueArrayData = (dataType*) uniqueValueArray->GetVoidPointer(0);
+    auto it = uniqueValues.begin();
+    for(size_t i=0; i<nUniqueValues; i++){
+        uniqueValueArrayData[i] = *it;
+        it++;
+    }
 
     return 1;
 }
@@ -643,40 +674,81 @@ int ttkExtract::ExtractArrayValues(
     size_t nValues = indices.size();
 
     auto inputArray = this->GetInputArrayToProcess(0, input);
+    if(!inputArray){
+        this->printErr("Unable to retrieve input array.");
+        return 0;
+    }
     std::string inputArrayName = inputArray->GetName();
 
-    // print status
-    {
+    output->ShallowCopy(input);
+
+    if(this->ExtractUniqueValues){
+        ttk::Timer t;
+        this->printMsg(
+            "Extracting unique values from '"+inputArrayName+"'",
+            0,
+            ttk::debug::LineMode::REPLACE
+        );
+
+        auto uniqueValueArray = vtkSmartPointer<vtkDataArray>::Take( inputArray->NewInstance() );
+        uniqueValueArray->SetName( ("Unique"+std::string(inputArrayName.data())).data() );
+
+        int status=0;
+        switch(inputArray->GetDataType()){
+            vtkTemplateMacro(
+                status = createUniqueValueArray<VTK_TT>(
+                    uniqueValueArray,
+                    inputArray
+                )
+            );
+        }
+        if(!status){
+            this->printErr("Unable to compute unique values.");
+            return 0;
+        }
+
+        output->GetFieldData()->AddArray(uniqueValueArray);
+
+        this->printMsg(
+            "Extracting unique values from '"+inputArrayName+"'",
+            1,
+            t.getElapsedTime()
+        );
+    } else {
+        ttk::Timer t;
         std::string indicesString = "";
         doubleVectorToString(indicesString, indices);
 
-        this->printMsg({
-            {"Ext. Mode", "Array Values"},
-            {"Array", "'"+inputArrayName+"'"},
-            {"Indices", "["+indicesString+"]"}
-        });
-        this->printMsg( ttk::debug::Separator::L1 );
-    }
+        this->printMsg(
+            "Extracting values at ["+indicesString+"] from '"+inputArrayName+"'",
+            0,
+            ttk::debug::LineMode::REPLACE
+        );
 
-    auto outputArray = vtkSmartPointer<vtkDataArray>::Take( inputArray->NewInstance() );
-    outputArray->SetName( ("_ttk_ExtractedArrayValues_"+inputArrayName).data() );
-    outputArray->SetNumberOfComponents( inputArray->GetNumberOfComponents() );
-    outputArray->SetNumberOfTuples( indices.size() );
-    size_t inputArraySize = inputArray->GetNumberOfTuples();
+        auto outputArray = vtkSmartPointer<vtkDataArray>::Take( inputArray->NewInstance() );
+        outputArray->SetName( ("Extracted"+std::string(inputArray->GetName())).data() );
+        outputArray->SetNumberOfComponents( inputArray->GetNumberOfComponents() );
+        outputArray->SetNumberOfTuples( indices.size() );
 
-    size_t q=0;
-    for(size_t i=0; i<nValues; i++){
-        size_t index = (size_t) indices[i];
-        if(0<=index && index<inputArraySize){
-            outputArray->SetTuple(i, index, inputArray);
-        } else {
-            this->printErr("Index out of range ("+std::to_string(i)+"/"+std::to_string(inputArraySize)+").");
-            return 0;
+        for(size_t i=0; i<nValues; i++){
+            size_t index = (size_t) indices[i];
+            size_t inputArraySize = inputArray->GetNumberOfTuples();
+            if(0<=index && index<inputArraySize){
+                outputArray->SetTuple(i, index, inputArray);
+            } else {
+                this->printErr("Index out of range ("+std::to_string(i)+"/"+std::to_string(inputArraySize)+").");
+                return 0;
+            }
         }
-    }
 
-    output->ShallowCopy(input);
-    output->GetFieldData()->AddArray( outputArray );
+        output->GetFieldData()->AddArray( outputArray );
+
+        this->printMsg(
+            "Extracting values at ["+indicesString+"] from '"+inputArrayName+"'",
+            1,
+            t.getElapsedTime()
+        );
+    }
 
     return 1;
 }
@@ -723,19 +795,33 @@ int ttkExtract::RequestData(
         }
     }
 
-    if(this->Mode==0){
+    auto mode = this->ExtractionMode;
+    if(mode<0){
+        if(input->IsA("vtkMultiBlockDataSet"))
+            mode = 0;
+        else if(input->IsA("vtkTable"))
+            mode = 1;
+        else {
+            this->printErr("Unable to automatically determine extraction mode.");
+            return 0;
+        }
+    }
+
+    if(mode==0){
         if(!this->ExtractBlocks( output, input, valuesAsD ))
             return 0;
-    } else if(this->Mode==1){
+    } else if(mode==1){
         if(!this->ExtractRows( output, input, valuesAsD ))
             return 0;
-    } else if(this->Mode==2){
+    } else if(mode==2){
         if(!this->ExtractArrayValues( output, input, valuesAsD ))
             return 0;
-    } else if(this->Mode==3){
+    } else if(mode==3){
         if(!this->ExtractGeometry( output, input, valuesAsD ))
             return 0;
     }
+
+    this->printMsg( ttk::debug::Separator::L1 );
 
     return 1;
 }

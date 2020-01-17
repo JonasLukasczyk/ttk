@@ -16,30 +16,17 @@
 #include <ttkForEachModule.h>
 
 // TTK includes
-#include <ttkAlgorithm.h>
+#include <ttkExtract.h>
 
-class TTKFOREACH_EXPORT ttkForEach : public ttkAlgorithm {
-
-    private:
-        int Mode{0};
-        std::string FieldDataName{""};
+class TTKFOREACH_EXPORT ttkForEach : public ttkExtract {
 
     public:
-        vtkSetMacro(Mode, int);
-        vtkGetMacro(Mode, int);
-
-        vtkSetMacro(FieldDataName, std::string);
-        vtkGetMacro(FieldDataName, std::string);
-
         static ttkForEach* New();
-        vtkTypeMacro(ttkForEach, ttkAlgorithm)
+        vtkTypeMacro(ttkForEach, ttkExtract);
 
     protected:
         ttkForEach();
         ~ttkForEach();
-
-        int FillInputPortInformation(int port, vtkInformation* info) override;
-        int FillOutputPortInformation(int port, vtkInformation* info) override;
 
         int RequestInformation(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
         int RequestData(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;

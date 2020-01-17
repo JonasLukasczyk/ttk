@@ -48,5 +48,5 @@ class TTKBLOCKAGGREGATOR_EXPORT ttkBlockAggregator : public ttkAlgorithm {
             vtkInformationVector** inputVector,
             vtkInformationVector* outputVector
         ) override;
-        int AggregateBlock(vtkDataObject* dataObject, bool useShallowCopy);
+        int AggregateBlock(vtkDataObject* dataObject);
 };

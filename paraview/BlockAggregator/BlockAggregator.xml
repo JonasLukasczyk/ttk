@@ -6,52 +6,12 @@
                TODO
            </Documentation>
 
-           <InputProperty name="Block0" port_index="0" command="SetInputConnection">
+           <InputProperty name="Input" port_index="0" clean_command="RemoveAllInputs" command="AddInputConnection" multiple_input="1">
                 <ProxyGroupDomain name="groups">
                     <Group name="sources" />
                     <Group name="filters" />
                 </ProxyGroupDomain>
-                <Documentation>vtkDataObject that will be added as a block.</Documentation>
-            </InputProperty>
-            <InputProperty name="Block1" port_index="1" command="SetInputConnection">
-                <ProxyGroupDomain name="groups">
-                    <Group name="sources" />
-                    <Group name="filters" />
-                </ProxyGroupDomain>
-                <Documentation>vtkDataObject that will be added as a block.</Documentation>
-                <Hints>
-                    <Optional />
-                </Hints>
-            </InputProperty>
-            <InputProperty name="Block2" port_index="2" command="SetInputConnection">
-                <ProxyGroupDomain name="groups">
-                    <Group name="sources" />
-                    <Group name="filters" />
-                </ProxyGroupDomain>
-                <Documentation>vtkDataObject that will be added as a block.</Documentation>
-                <Hints>
-                    <Optional />
-                </Hints>
-            </InputProperty>
-            <InputProperty name="Block3" port_index="3" command="SetInputConnection">
-                <ProxyGroupDomain name="groups">
-                    <Group name="sources" />
-                    <Group name="filters" />
-                </ProxyGroupDomain>
-                <Documentation>vtkDataObject that will be added as a block.</Documentation>
-                <Hints>
-                    <Optional />
-                </Hints>
-            </InputProperty>
-            <InputProperty name="Block4" port_index="4" command="SetInputConnection">
-                <ProxyGroupDomain name="groups">
-                    <Group name="sources" />
-                    <Group name="filters" />
-                </ProxyGroupDomain>
-                <Documentation>vtkDataObject that will be added as a block.</Documentation>
-                <Hints>
-                    <Optional />
-                </Hints>
+                <Documentation>vtkDataObjects that will be added as blocks.</Documentation>
             </InputProperty>
 
             <IntVectorProperty name="ForceReset" label="Force Reset" command="SetForceReset" number_of_elements="1" default_values="0">
