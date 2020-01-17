@@ -54,7 +54,7 @@ int ttkEndFor::RequestUpdateExtent(
     vtkInformationVector* outputVector
 ){
     // Request next index
-    vtkInformation* inInfo = inputVector[1]->GetInformationObject(0);
+    vtkInformation* inInfo = inputVector[0]->GetInformationObject(0);
     inInfo->Set( vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP(), this->nextIndex);
 
     return 1;

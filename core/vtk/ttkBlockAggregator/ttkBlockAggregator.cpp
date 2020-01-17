@@ -96,12 +96,20 @@ int ttkBlockAggregator::RequestData(
         this->printErr("No input objects.");
         return 0;
     }
+
+    // Get iteration information
     auto firstInput = vtkDataObject::GetData( inputVector[0], 0);
-    size_t iterationIndex = 0;
-    bool useIterations = false;
+    double iterationIndex = 0;
+    auto iterationInformation = vtkDoubleArray::SafeDownCast(
+        firstInput->GetFieldData()->GetAbstractArray("_ttk_IterationInfo")
+    );
+    if(iterationInformation){
+        iterationIndex = iterationInformation->GetValue(0);
+        this->AggregatedMultiBlockDataSet->GetFieldData()->AddArray( iterationInformation );
+    }
 
     // Check if AggregatedMultiBlockDataSet needs to be reset
-    if(!useIterations || this->GetForceReset() || iterationIndex==0)
+    if(!iterationInformation || this->GetForceReset() || iterationIndex==0)
         this->Reset();
 
     for(size_t i=0; i<nInputs; i++){
@@ -115,16 +123,7 @@ int ttkBlockAggregator::RequestData(
         } else
             this->AggregateBlock(input);
     }
-    // // Get iteration information
-    // double iteration = 0;
-    // auto iterationInformation = vtkDoubleArray::SafeDownCast(
-    //     firstInput->GetFieldData()->GetAbstractArray("_ttk_IterationInfo")
-    // );
-    // bool useIterations = iterationInformation!=nullptr;
-    // if(useIterations){
-    //     iteration = iterationInformation->GetValue(0);
-    //     this->AggregatedMultiBlockDataSet->GetFieldData()->AddArray( iterationInformation );
-    // }
+
 
     // Get Output
     auto output = vtkMultiBlockDataSet::GetData(outputVector);
