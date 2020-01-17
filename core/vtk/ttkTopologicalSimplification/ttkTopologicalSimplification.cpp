@@ -1,5 +1,7 @@
 #include <ttkTopologicalSimplification.h>
 
+#include <Disambiguate.h>
+
 using namespace std;
 using namespace ttk;
 
@@ -183,12 +185,24 @@ int ttkTopologicalSimplification::getOffsets(vtkDataSet *input) {
 template <typename VTK_TT>
 int ttkTopologicalSimplification::dispatch() {
   int ret = 0;
-  if(inputOffsets_->GetDataType() == VTK_INT) {
-    ret = topologicalSimplification_.execute<VTK_TT, int>();
+
+  if(!this->UseTPTS){
+      if(inputOffsets_->GetDataType() == VTK_INT) {
+        ret = topologicalSimplification_.execute<VTK_TT, int>();
+      }
+      if(inputOffsets_->GetDataType() == VTK_ID_TYPE) {
+        ret = topologicalSimplification_.execute<VTK_TT, vtkIdType>();
+      }
+  } else {
+      auto tpts = ttk::Disambiguate();
+      tpts.setThreadNumber( this->threadNumber_ );
+      tpts.setDebugLevel( this->debugLevel_ );
+
+      int status = tpts.test();
+      if(!status)
+        return 1;
   }
-  if(inputOffsets_->GetDataType() == VTK_ID_TYPE) {
-    ret = topologicalSimplification_.execute<VTK_TT, vtkIdType>();
-  }
+
   return ret;
 }
 

@@ -122,6 +122,11 @@ public:
   vtkSetMacro(PeriodicBoundaryConditions, int);
   vtkGetMacro(PeriodicBoundaryConditions, int);
 
+
+  vtkSetMacro(UseTPTS, bool);
+  vtkGetMacro(UseTPTS, bool);
+
+
   int getTriangulation(vtkDataSet *input);
   int getScalars(vtkDataSet *input);
   int getIdentifiers(vtkPointSet *input);
@@ -152,6 +157,8 @@ private:
   bool ConsiderIdentifierAsBlackList;
   bool AddPerturbation;
   bool hasUpdatedMesh_;
+
+  bool UseTPTS{false};
 
   ttk::TopologicalSimplification topologicalSimplification_;
   ttk::Triangulation *triangulation_;

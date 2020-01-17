@@ -26,6 +26,10 @@ namespace ttk {
             };
             ~Disambiguate(){};
 
+            int simplify() const {
+
+            };
+
             int PreconditionTriangulation(
                 ttk::Triangulation* triangulation
             ) const;
@@ -99,6 +103,12 @@ namespace ttk {
 
     };
 }
+
+// int ttk::Disambiguate::test(
+// ) const {
+//     this->printMsg("Test",0.5,12,this->threadNumber_);
+//     return 1;
+// }
 
 int ttk::Disambiguate::PreconditionTriangulation(
     ttk::Triangulation* triangulation
@@ -201,16 +211,17 @@ int ttk::Disambiguate::IdentifyPlateaus(
             // are added to the stack
             std::vector<ttk::SimplexId> stack(1,v);
 
-            ttk::SimplexId a,b;
             while(stack.size()){
                 // pop vertex from stack
                 const ttk::SimplexId a = stack.back();
                 stack.pop_back();
 
-                if(boundary.size()<1 && triangulation->isVertexOnBoundary(a))
+                // if(boundary.size()<1 && triangulation->isVertexOnBoundary(a))
+                if(triangulation->isVertexOnBoundary(a))
                     boundary.insert(a);
 
                 // check neighbors for seed candidates
+                ttk::SimplexId b;
                 const size_t nNeighbors = triangulation->getVertexNeighborNumber( a );
                 for(size_t i=0; i<nNeighbors; i++){
                     triangulation->getVertexNeighbor(a,i,b);
@@ -461,25 +472,41 @@ int ttk::Disambiguate::FillPlateau(
         Comparator
     > queue(comparator);
 
-    // add all vertices inside plateau next to seed vertices to queue
+    // add seed candidate vertex with largest distance to queue
     {
-        ttk::SimplexId u;
-        for(const auto& v : seedVertices ){
-            // check neighbors for seed candidates
-            const size_t nNeighbors = triangulation->getVertexNeighborNumber( v );
-            for(size_t i=0; i<nNeighbors; i++){
-                triangulation->getVertexNeighbor(v,i,u);
+        ttk::SimplexId maxCandidate;
+        float maxDistance = -1;
 
-                // if vertex is inside plateau
-                if(offsetScalarField[u]==plateauIdAsStoredInOffsetScalarField){
-                    // add to queue
-                    queue.push( u );
-                    // mark as added
-                    offsetScalarField[u]=0;
-                }
+        for(const auto& v : seedVertices ){
+            if(maxDistance<distanceField[v]){
+                maxDistance = distanceField[v];
+                maxCandidate = v;
             }
         }
+        // add to queue
+        queue.push( maxCandidate );
+        // mark as added
+        offsetScalarField[maxCandidate]=0;
     }
+    // // add all vertices inside plateau next to seed vertices to queue
+    // {
+    //     ttk::SimplexId u;
+    //     for(const auto& v : seedVertices ){
+    //         // check neighbors for seed candidates
+    //         const size_t nNeighbors = triangulation->getVertexNeighborNumber( v );
+    //         for(size_t i=0; i<nNeighbors; i++){
+    //             triangulation->getVertexNeighbor(v,i,u);
+
+    //             // if vertex is inside plateau
+    //             if(offsetScalarField[u]==plateauIdAsStoredInOffsetScalarField){
+    //                 // add to queue
+    //                 queue.push( u );
+    //                 // mark as added
+    //                 offsetScalarField[u]=0;
+    //             }
+    //         }
+    //     }
+    // }
 
     {
         size_t sequenceIndex = plateauStartIndex;
@@ -525,28 +552,42 @@ int ttk::Disambiguate::DisambiguatePlateau(
     ];
     ttk::SimplexId plateauId = -plateauIdAsStoredInOffsetScalarField-1;
 
+    std::unordered_set<ttk::SimplexId> plateauVertices;
+    {
+        for(size_t i=0; i<nVertices; i++){
+            if(offsetScalarField[i]==plateauIdAsStoredInOffsetScalarField){
+                plateauVertices.insert(i);
+                // offsetScalarField[i] = plateauId;
+            }
+        }
+    }
+
     // determine type
-    size_t type = (smallerNeighbors.size()>0 && largerNeighbors.size()>0)
-        ? 0 // regular (possible saddle)
-        : (smallerNeighbors.size()<1 && largerNeighbors.size()<1)
-            ? 3 // plateau is isolated (e.g., entire region)
-            : smallerNeighbors.size()>0
-                ? 1 // maximum region
-                : 2 // minimum region
-    ;
+    // size_t type = (smallerNeighbors.size()>0 && largerNeighbors.size()>0)
+    //     ? 0 // regular (possible saddle)
+    //     : (smallerNeighbors.size()<1 && largerNeighbors.size()<1)
+    //         ? 3 // plateau is isolated (e.g., entire region)
+    //         : smallerNeighbors.size()>0
+    //             ? 1 // maximum region
+    //             : 2 // minimum region
+    // ;
 
     // this->printMsg("Disambiguating region ["+std::to_string(plateauId)+", "+std::to_string(type)+", "+std::to_string(plateauIndex0)+" - "+std::to_string(plateauIndexN)+"]");
 
-    std::unordered_set<ttk::SimplexId> singleSmallerNeighbor;
-    if(smallerNeighbors.size()>0)
-        singleSmallerNeighbor.insert( *smallerNeighbors.begin() );
+    // std::unordered_set<ttk::SimplexId> singleSmallerNeighbor;
+    // if(smallerNeighbors.size()>0)
+    //     singleSmallerNeighbor.insert( *smallerNeighbors.begin() );
 
-    std::unordered_set<ttk::SimplexId> singleLargerNeighbor;
-    if(largerNeighbors.size()>0)
-        singleLargerNeighbor.insert( *largerNeighbors.begin() );
+    // std::unordered_set<ttk::SimplexId> singleLargerNeighbor;
+    // if(largerNeighbors.size()>0)
+    //     singleLargerNeighbor.insert( *largerNeighbors.begin() );
 
-    std::unordered_set<ttk::SimplexId> isolated;
-    isolated.insert( 0 );
+    // std::unordered_set<ttk::SimplexId> isolated;
+    // isolated.insert( 0 );
+    std::unordered_set<ttk::SimplexId> randomVertex;
+    randomVertex.insert( plateauIndex0 );
+
+    this->printMsg("P["+std::to_string(plateauId)+"] "+std::to_string(plateauVertices.size())+" "+std::to_string(smallerNeighbors.size())+" "+std::to_string(largerNeighbors.size())+" "+std::to_string(boundary.size()));
 
     this->ComputePlateauDistanceField(
         distanceField,
@@ -554,13 +595,19 @@ int ttk::Disambiguate::DisambiguatePlateau(
         offsetScalarField,
         plateauId,
         triangulation,
-        type==0
+
+        largerNeighbors.size()>0
             ? largerNeighbors
-            : type==1
-                ? singleSmallerNeighbor
-                : type==2
-                    ? singleLargerNeighbor
-                    : isolated
+            : smallerNeighbors.size()>0
+                ? smallerNeighbors
+                : randomVertex
+        // type==0
+        //     ? largerNeighbors
+        //     : type==1
+        //         ? singleSmallerNeighbor
+        //         : type==2
+        //             ? singleLargerNeighbor
+        //             : isolated
     );
 
     // std::cout<<std::endl;
@@ -589,14 +636,34 @@ int ttk::Disambiguate::DisambiguatePlateau(
         plateauId,
         plateauIndex0,
         triangulation,
-        type==0
-            ? smallerNeighbors
-            : type==1
-                ? (boundary.size() ? boundary : smallerNeighbors)
-                : type==2
-                    ? (boundary.size() ? boundary : largerNeighbors)
-                    : isolated
+        plateauVertices
+        // largerNeighbors.size()<1 // nothing to grow towards
+        //     ? plateauVertices
+        //     : smallerNeighbors.size()>0
+        //         ? plateauVertices
+        //         : boundary
+
+        // type==0
+        //     ? smallerNeighbors
+        //     : type==1
+        //         ? (boundary.size() ? boundary : smallerNeighbors)
+        //         : type==2
+        //             ? (boundary.size() ? boundary : largerNeighbors)
+        //             : isolated
     );
+
+    // if necessary invert order
+    if(largerNeighbors.size()<1){
+        int i = plateauIndex0;
+        int j = plateauIndex0+plateauVertices.size()-1;
+        while(i<j){
+            const auto temp = sortedVertexIds[i];
+            sortedVertexIds[i] = sortedVertexIds[j];
+            sortedVertexIds[j] = temp;
+            i++;
+            j--;
+        }
+    }
 
     // std::cout<<std::endl;
     // for(size_t i=i0; i<iN; i++)
@@ -667,7 +734,6 @@ int ttk::Disambiguate::DisambiguateAllPlateaus(
 
     std::vector<size_t> plateauIntervals(nPlateaus*2);
     {
-        ttk::SimplexId plateauIdAsStoredInOffsetScalarField = 0;
         size_t q=0;
         // check if first vertex is interval boundary
         if(offsetScalarField[sortedVertexIds[0]]<0)
@@ -714,7 +780,7 @@ int ttk::Disambiguate::DisambiguateAllPlateaus(
         );
     }
 
-    // update offsetScalarField
+    // // update offsetScalarField
     for(size_t i=0; i<nVertices; i++)
         offsetScalarField[ sortedVertexIds[i] ] = i;
 
