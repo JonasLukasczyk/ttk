@@ -133,7 +133,12 @@ public:
   int getOffsets(vtkDataSet *input);
 
   template <typename VTK_TT>
-  int dispatch();
+  int dispatch(
+    vtkDataArray* outputScalarArray,
+    vtkDataArray* outputOffsetArray,
+    vtkDataArray* inputScalarArray,
+    vtkDataArray* inputCriticalPointIdArray
+  );
 
 protected:
   ttkTopologicalSimplification();

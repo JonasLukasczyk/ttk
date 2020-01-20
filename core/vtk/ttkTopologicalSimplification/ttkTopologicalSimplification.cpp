@@ -182,23 +182,46 @@ int ttkTopologicalSimplification::getOffsets(vtkDataSet *input) {
   return 0;
 }
 
-template <typename VTK_TT>
-int ttkTopologicalSimplification::dispatch() {
+template <typename dataType>
+int ttkTopologicalSimplification::dispatch(
+    vtkDataArray* outputScalarArray,
+    vtkDataArray* outputOffsetArray,
+    vtkDataArray* inputScalarArray,
+    vtkDataArray* inputCriticalPointIdArray
+) {
   int ret = 0;
 
   if(!this->UseTPTS){
       if(inputOffsets_->GetDataType() == VTK_INT) {
-        ret = topologicalSimplification_.execute<VTK_TT, int>();
+        ret = topologicalSimplification_.execute<dataType, int>();
       }
       if(inputOffsets_->GetDataType() == VTK_ID_TYPE) {
-        ret = topologicalSimplification_.execute<VTK_TT, vtkIdType>();
+        ret = topologicalSimplification_.execute<dataType, vtkIdType>();
       }
   } else {
       auto tpts = ttk::Disambiguate();
       tpts.setThreadNumber( this->threadNumber_ );
       tpts.setDebugLevel( this->debugLevel_ );
 
-      int status = tpts.test();
+      int status = 0;
+      if(outputOffsetArray->GetDataType()!=inputCriticalPointIdArray->GetDataType()){
+          this->printErr("Id type missmatch");
+          return 1;
+      }
+      switch(outputOffsetArray->GetDataType()){
+        vtkTemplateMacro(
+          status = tpts.simplify(
+            (dataType*) outputScalarArray->GetVoidPointer(0),
+            (VTK_TT*) outputOffsetArray->GetVoidPointer(0),
+
+            this->triangulation_,
+            (dataType*) inputScalarArray->GetVoidPointer(0),
+            (VTK_TT*) inputCriticalPointIdArray->GetVoidPointer(0),
+            inputCriticalPointIdArray->GetNumberOfTuples()
+          )
+        );
+      }
+
       if(!status)
         return 1;
   }
@@ -287,60 +310,6 @@ int ttkTopologicalSimplification::doIt(vector<vtkDataSet *> &inputs,
   }
 #endif
 
-  vtkDataArray *outputScalars{};
-  switch(inputScalars_->GetDataType()) {
-    case VTK_DOUBLE:
-      outputScalars = vtkDoubleArray::New();
-      break;
-
-    case VTK_FLOAT:
-      outputScalars = vtkFloatArray::New();
-      break;
-
-    case VTK_INT:
-      outputScalars = vtkIntArray::New();
-      break;
-
-    case VTK_ID_TYPE:
-      outputScalars = vtkIdTypeArray::New();
-      break;
-
-    case VTK_SHORT:
-      outputScalars = vtkShortArray::New();
-      break;
-
-    case VTK_UNSIGNED_SHORT:
-      outputScalars = vtkUnsignedShortArray::New();
-      break;
-
-    case VTK_CHAR:
-      outputScalars = vtkCharArray::New();
-      break;
-
-    case VTK_UNSIGNED_CHAR:
-      outputScalars = vtkUnsignedCharArray::New();
-      break;
-
-#ifndef TTK_ENABLE_KAMIKAZE
-    default:
-      cerr << "[ttkTopologicalSimplification] Error : Unsupported data type."
-           << endl;
-      return -8;
-#endif
-  }
-  if(outputScalars) {
-    outputScalars->SetNumberOfTuples(numberOfVertices);
-    outputScalars->SetName(inputScalars_->GetName());
-  }
-#ifndef TTK_ENABLE_KAMIKAZE
-  else {
-    cerr << "[ttkTopologicalSimplification] Error : vtkDataArray allocation "
-            "problem."
-         << endl;
-    return -9;
-  }
-#endif
-
   const SimplexId numberOfConstraints = constraints->GetNumberOfPoints();
 #ifndef TTK_ENABLE_KAMIKAZE
   if(numberOfConstraints <= 0) {
@@ -349,6 +318,9 @@ int ttkTopologicalSimplification::doIt(vector<vtkDataSet *> &inputs,
     return -10;
   }
 #endif
+
+  auto outputScalars = vtkSmartPointer<vtkDataArray>::Take( inputScalars_->NewInstance() );
+  outputScalars->DeepCopy( inputScalars_ );
 
   topologicalSimplification_.setVertexNumber(numberOfVertices);
   topologicalSimplification_.setConstraintNumber(numberOfConstraints);
@@ -379,7 +351,12 @@ int ttkTopologicalSimplification::doIt(vector<vtkDataSet *> &inputs,
 #endif
 
   switch(inputScalars_->GetDataType()) {
-    vtkTemplateMacro(ret = dispatch<VTK_TT>());
+    vtkTemplateMacro(ret = dispatch<VTK_TT>(
+        outputScalars,
+        outputOffsets,
+        this->inputScalars_,
+        this->identifiers_
+    ));
   }
 #ifndef TTK_ENABLE_KAMIKAZE
   // something wrong in baseCode
@@ -394,7 +371,6 @@ int ttkTopologicalSimplification::doIt(vector<vtkDataSet *> &inputs,
   output->ShallowCopy(domain);
   output->GetPointData()->AddArray(outputOffsets);
   output->GetPointData()->AddArray(outputScalars);
-  outputScalars->Delete();
 
   {
     stringstream msg;
