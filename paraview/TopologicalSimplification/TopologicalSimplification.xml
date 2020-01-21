@@ -299,10 +299,23 @@ offset field for flat plateau disambiguation).
         <Property name="PeriodicBoundaryConditions"/>
       </PropertyGroup>
 
+<Property name='Debug_Execute'
+          label='Execute'
+          command='Modified'
+          panel_widget='command_button'
+          panel_visibility='advanced'>
+  <Documentation>
+    Executes the filter with the last applied parameters, which is
+    handy to re-start pipeline execution from a specific element
+    without changing parameters.
+  </Documentation>
+</Property>
+
       <PropertyGroup panel_widget="Line" label="Output options">
 	<Property name="UseTPTS"/>
 	<Property name="OutputOffsetScalarFieldName"/>
 	<Property name="AddPerturbation"/>
+	<Property name="Debug_Execute"/>
       </PropertyGroup>
 
       <Hints>

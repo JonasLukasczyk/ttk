@@ -18,15 +18,347 @@
 
 typedef ttk::SimplexId ttkInt;
 
+template <typename dataType>
+void printVector(std::string prefix, std::vector<dataType>& v){
+    std::cout<<prefix<<" ("<<v.size()<<"): ";
+    for(size_t i=0, j=v.size(); i<j; i++)
+        std::cout<<v[i]<<" ";
+    std::cout<<std::endl<<std::endl;
+}
+
 namespace ttk {
 
     class Disambiguate : virtual public Debug {
 
         public:
+
+            template<typename idType>
+            struct OffsetComparator {
+                const idType* offsets;
+                OffsetComparator(){};
+                OffsetComparator(const idType* o) : offsets(o){};
+                int operator() (const idType& i, const idType& j){
+                    return this->offsets[i]<this->offsets[j];
+                }
+            };
+
+            template<typename idType>
+            struct CriticalPointInfo{
+                std::priority_queue< idType, std::vector<idType>, OffsetComparator<idType> > queue;
+                std::vector<idType> region;
+                bool isLastThread;
+                bool isActive;
+
+                CriticalPointInfo(idType* offsets){
+                    this->isLastThread = false;
+                    this->queue = std::priority_queue< idType, std::vector<idType>, OffsetComparator<idType>>(offsets);
+                };
+            };
+
             Disambiguate(){
                 this->setDebugMsgPrefix("Disambiguate"); // inherited from Debug: prefix will be printed at the beginning of every msg
             };
             ~Disambiguate(){};
+
+            template<typename idType>
+            int classifyExtrema(
+                std::vector<ttkInt>& preservedMinima,
+                std::vector<ttkInt>& discardedMinima,
+                std::vector<ttkInt>& preservedMaxima,
+                std::vector<ttkInt>& discardedMaxima,
+
+                const ttk::Triangulation* triangulation,
+                const idType* inputOffsets,
+                const idType* preservedCriticalPointIndices,
+                const size_t& nPreservedCriticalPointIndices
+            ) const {
+                ttk::Timer t;
+                this->printMsg("Classifying extrema",0,0,this->threadNumber_,debug::LineMode::REPLACE);
+
+                size_t nVertices = triangulation->getNumberOfVertices();
+
+                // Identify critical points (TODO: Currently not parallel for determinism)
+                #ifdef TTK_ENABLE_OPENMP
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                #endif
+                for(ttkInt v=0; v<nVertices; v++){
+
+                    bool hasSmallerNeighbor = false;
+                    bool hasLargerNeighbor = false;
+                    bool ambiguous = false;
+
+                    const idType& vOffset = inputOffsets[v];
+
+                    ttkInt nNeighbors = triangulation->getVertexNeighborNumber( v );
+                    for(size_t n=0; n<nNeighbors; n++){
+                        ttkInt u;
+                        triangulation->getVertexNeighbor(v,n,u);
+                        const idType& uOffset = inputOffsets[u];
+
+                        if( uOffset<vOffset )
+                            hasSmallerNeighbor = true;
+                        else if( uOffset > vOffset )
+                            hasLargerNeighbor = true;
+                        else
+                            ambiguous = true;
+                    }
+
+                    bool isMaximum = hasSmallerNeighbor && !hasLargerNeighbor;
+                    bool isMinimum = !hasSmallerNeighbor && hasLargerNeighbor;
+                    bool isExtremum = isMaximum || isMinimum;
+
+                    bool hasToBePreserved = false;
+                    if(isExtremum){
+                        for(size_t p=0; p<nPreservedCriticalPointIndices; p++){
+                            if(v==preservedCriticalPointIndices[p]){
+                                hasToBePreserved = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    auto& presrevedExtrema = isMaximum ? preservedMaxima : preservedMinima;
+                    auto& discardedExtrema = isMaximum ? discardedMaxima : discardedMinima;
+
+                    if(isExtremum){
+                        if(hasToBePreserved){
+                            #pragma omp critical
+                            presrevedExtrema.push_back(v);
+                        } else {
+                            #pragma omp critical
+                            discardedExtrema.push_back(v);
+                        }
+                    }
+                }
+
+                this->printMsg("Classifying extrema",1,t.getElapsedTime(),this->threadNumber_);
+
+                return 1;
+            }
+
+            template<typename idType>
+            int growUntilSaddle(
+                idType* outputOffsets,
+                std::unordered_map<idType, CriticalPointInfo<idType>>& criticalPointInfos,
+
+                const ttk::Triangulation* triangulation,
+                const idType* inputOffsets,
+                const idType& seedVertexIndex
+            ) const {
+
+                auto cpiIterator = criticalPointInfos.find(seedVertexIndex);
+
+                if(cpiIterator == criticalPointInfos.end()){
+                    this->printErr("Unable to retrieve critical point information");
+                    return 0;
+                }
+
+                #pragma omp critical
+                cpiIterator->second.isActive = true;
+
+                // get region
+                auto& region = cpiIterator->second.region;
+
+                // add seed to queue
+                auto& queue = cpiIterator->second.queue;
+                queue.push(seedVertexIndex);
+
+                while(!queue.empty()){
+                    const idType v = queue.top();
+                    queue.pop();
+
+                    if(outputOffsets[v]==seedVertexIndex)
+                        continue;
+
+                    // grow region
+                    region.push_back(v);
+
+                    // get scalar value of current vertex
+                    const idType& vOffset = inputOffsets[v];
+
+                    // add neighbors to queue AND check if v is a saddle
+                    bool isSaddle = false;
+                    idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+
+                    idType numberOfLargerNeighbors = 0;
+                    idType numberOfLargerNeighborsThisThreadVisited = 0;
+                    for(idType n=0; n<nNeighbors; n++){
+                        idType u;
+                        triangulation->getVertexNeighbor(v,n,u);
+
+                        const idType& uOffset = inputOffsets[u];
+
+                        // if lower neighbor
+                        if(uOffset<vOffset)
+                            queue.push( u );
+                        else {
+                            numberOfLargerNeighbors++;
+                            if(outputOffsets[u]!=seedVertexIndex)
+                                isSaddle = true;
+                            else
+                                numberOfLargerNeighborsThisThreadVisited++;
+                        }
+                    }
+
+                    if(isSaddle){
+
+                        idType numberOfRegisteredLargerVerticesAsStoredInOffset=0;
+                        #pragma omp atomic update
+                        outputOffsets[v] -= numberOfLargerNeighborsThisThreadVisited;
+
+                        #pragma omp atomic read
+                        numberOfRegisteredLargerVerticesAsStoredInOffset = outputOffsets[v];
+
+                        if(numberOfRegisteredLargerVerticesAsStoredInOffset!=-numberOfLargerNeighbors-1)
+                            break;
+
+                        // merge thread data
+                        {
+                            std::unordered_set<idType> allCriticalPointIndicesThatReachSaddle;
+
+                            for(idType n=0; n<nNeighbors; n++){
+                                idType u;
+                                triangulation->getVertexNeighbor(v,n,u);
+                                const idType& uSeedIndex = outputOffsets[u];
+                                if(uSeedIndex>-1)
+                                    allCriticalPointIndicesThatReachSaddle.insert(uSeedIndex);
+                            }
+
+                            for(const idType& uSeedIndex : allCriticalPointIndicesThatReachSaddle){
+                                if(uSeedIndex==seedVertexIndex)
+                                    continue;
+
+                                // this->printMsg("LastThread:   * "+std::to_string(idx));
+                                auto it = criticalPointInfos.find(uSeedIndex);
+                                if(it==criticalPointInfos.end()){
+                                    this->printErr("Unable to retrieve critical point information");
+                                    return 0;
+                                }
+
+                                it->second.isLastThread = false;
+
+                                // add region to current cp region and override old labels
+                                for(const auto& i: it->second.region){
+                                    outputOffsets[i] = seedVertexIndex;
+                                    region.push_back(i);
+                                }
+
+                                // add other queue elements to current queue
+                                while(!it->second.queue.empty()){
+                                    const idType u = it->second.queue.top();
+                                    it->second.queue.pop();
+
+                                    queue.push(u);
+                                }
+                            }
+                        }
+                    }
+
+                    // mark vertex as visited and continue
+                    outputOffsets[v] = seedVertexIndex;
+                }
+
+                #pragma omp critical
+                cpiIterator->second.isActive = false;
+
+                return 1;
+            }
+
+            template<typename dataType,typename idType>
+            int initializeOffsets(
+                std::vector<idType>& offsets,
+                const dataType* inputScalars
+            ) const {
+                ttk::Timer t;
+                this->printMsg(
+                    "Initializing offset scalar field",
+                    0,
+                    0,
+                    this->threadNumber_,
+                    debug::LineMode::REPLACE
+                );
+
+                const idType& nVertices = offsets.size();
+
+                std::vector<idType> sortedIndices(nVertices);
+                for(idType i=0; i<nVertices; i++)
+                    sortedIndices[i] = i;
+
+                struct Comparator {
+                    const dataType* scalars;
+                    Comparator(const dataType* s) : scalars(s){};
+                    int operator() (const ttkInt& i, const ttkInt& j){
+                        const dataType& iScalar = this->scalars[i];
+                        const dataType& jScalar = this->scalars[j];
+                        return iScalar==jScalar
+                                ? i<j
+                                : iScalar<jScalar;
+                    }
+                };
+
+                Comparator c(inputScalars);
+
+                std::sort(sortedIndices.begin(), sortedIndices.end(), c);
+
+                for(idType i=0; i<nVertices; i++)
+                    offsets[sortedIndices[i]] = i;
+
+                this->printMsg(
+                    "Initializing offset scalar field",
+                    1,
+                    t.getElapsedTime(),
+                    this->threadNumber_
+                );
+
+                return 1;
+            }
+
+            template<typename idType>
+            int processCriticalPoints(
+                idType* outputOffsets,
+                std::unordered_map<idType, CriticalPointInfo<idType>>& criticalPointInfos,
+
+                const ttk::Triangulation* triangulation,
+                const std::vector<idType>& discardedMaxima,
+                const idType* inputOffsets
+            ) const {
+                ttk::Timer t;
+                this->printMsg(
+                    "Processing "+std::to_string(discardedMaxima.size())+" points",
+                    0,
+                    0,
+                    this->threadNumber_,
+                    debug::LineMode::REPLACE
+                );
+
+                #pragma omp parallel num_threads(this->threadNumber_)
+                {
+                    #pragma omp single
+                    {
+                        for(size_t i=0; i<discardedMaxima.size(); i++){
+
+                            #pragma omp task firstprivate(i)
+                            {
+                                this->growUntilSaddle<idType>(
+                                    outputOffsets,
+                                    criticalPointInfos,
+
+                                    triangulation,
+                                    inputOffsets,
+                                    discardedMaxima[i]
+                                );
+                            }
+                        }
+                    }
+                }
+
+                this->printMsg(
+                    "Processing "+std::to_string(discardedMaxima.size())+" points",
+                    1,
+                    t.getElapsedTime(),
+                    this->threadNumber_
+                );
+            }
 
             template<typename dataType,typename idType>
             int simplify(
@@ -40,60 +372,59 @@ namespace ttk {
             ) const {
                 size_t nVertices = triangulation->getNumberOfVertices();
 
-                {
-                    ttk::Timer t;
-                    this->printMsg("Classify points",0,0,this->threadNumber_,debug::LineMode::REPLACE);
+                std::vector<idType> inputOffsets(nVertices);
 
-                    // Identify critical points
-                    #ifdef TTK_ENABLE_OPENMP
-                    #pragma omp parallel for num_threads(this->threadNumber_)
-                    #endif
-                    for(ttkInt v=0; v<nVertices; v++){
+                this->initializeOffsets<dataType,idType>(
+                    inputOffsets,
+                    inputScalars
+                );
 
-                        bool hasSmallerNeighbor = false;
-                        bool hasLargerNeighbor = false;
-                        bool ambiguous = false;
+                std::vector<idType> preservedMinima;
+                std::vector<idType> discardedMinima;
+                std::vector<idType> preservedMaxima;
+                std::vector<idType> discardedMaxima;
 
-                        const dataType& vScalar = inputScalars[v];
-                        outputScalars[v] = vScalar;
+                // Classify Critical Points
+                this->classifyExtrema<idType>(
+                    preservedMinima,
+                    discardedMinima,
+                    preservedMaxima,
+                    discardedMaxima,
 
-                        ttkInt nNeighbors = triangulation->getVertexNeighborNumber( v );
-                        for(size_t n=0; n<nNeighbors; n++){
-                            ttkInt u;
-                            triangulation->getVertexNeighbor(v,n,u);
-                            const dataType& uScalar = inputScalars[u];
+                    triangulation,
+                    inputOffsets.data(),
+                    preservedCriticalPointIndices,
+                    nPreservedCriticalPointIndices
+                );
 
-                            if( uScalar<vScalar )
-                                hasSmallerNeighbor = true;
-                            else if( uScalar > vScalar )
-                                hasLargerNeighbor = true;
-                            else
-                                ambiguous = true;
-                        }
+                // printVector("preservedMinima", preservedMinima);
+                // printVector("preservedMaxima", preservedMaxima);
+                // printVector("discardedMinima", discardedMinima);
+                // printVector("discardedMaxima", discardedMaxima);
 
-                        outputOffsets[v] = ambiguous
-                            ? 4 // plateau vertex
-                            : hasSmallerNeighbor && hasLargerNeighbor
-                                ? 1 // regular
-                                : hasSmallerNeighbor
-                                    ? 2 // max
-                                    : 3 // min
-                        ;
-                    }
+                // init offsets
+                #ifdef TTK_ENABLE_OPENMP
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                #endif
+                for(ttkInt v=0; v<nVertices; v++)
+                    outputOffsets[v] = -1;
 
+                // init infos
+                std::unordered_map<idType, CriticalPointInfo<idType>> criticalPointInfos;
+                for(size_t i=0; i<discardedMaxima.size(); i++)
+                    criticalPointInfos.insert({
+                        discardedMaxima[i],
+                        CriticalPointInfo<idType>(inputOffsets.data())
+                    });
 
-                    // Mark critical points that we want to keep
-                    #ifdef TTK_ENABLE_OPENMP
-                    #pragma omp parallel for num_threads(this->threadNumber_)
-                    #endif
-                    for(ttkInt c=0; c<nPreservedCriticalPointIndices; c++){
-                        ttkInt v = preservedCriticalPointIndices[c];
-                        outputOffsets[v]*=-1;
-                    }
+                this->processCriticalPoints<idType>(
+                    outputOffsets,
+                    criticalPointInfos,
 
-                    this->printMsg("Classify points",1,t.getElapsedTime(),this->threadNumber_);
-                    this->printMsg(std::to_string(nPreservedCriticalPointIndices));
-                }
+                    triangulation,
+                    discardedMaxima,
+                    inputOffsets.data()
+                );
 
                 return 1;
             };

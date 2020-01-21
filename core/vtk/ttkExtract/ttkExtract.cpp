@@ -55,9 +55,7 @@ int ttkExtract::GetVtkDataTypeName( std::string& dataTypeName, const int outputT
 
 int ttkExtract::FillInputPortInformation(int port, vtkInformation* info) {
     if (port==0){
-        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet", 0);
-        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkTable", 1);
-        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid", 2);
+        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject", 0);
     } else
         return 0;
     return 1;

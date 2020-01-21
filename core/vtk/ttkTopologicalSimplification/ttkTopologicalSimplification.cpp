@@ -203,23 +203,37 @@ int ttkTopologicalSimplification::dispatch(
       tpts.setThreadNumber( this->threadNumber_ );
       tpts.setDebugLevel( this->debugLevel_ );
 
-      int status = 0;
       if(outputOffsetArray->GetDataType()!=inputCriticalPointIdArray->GetDataType()){
           this->printErr("Id type missmatch");
           return 1;
       }
-      switch(outputOffsetArray->GetDataType()){
-        vtkTemplateMacro(
-          status = tpts.simplify(
-            (dataType*) outputScalarArray->GetVoidPointer(0),
-            (VTK_TT*) outputOffsetArray->GetVoidPointer(0),
 
-            this->triangulation_,
-            (dataType*) inputScalarArray->GetVoidPointer(0),
-            (VTK_TT*) inputCriticalPointIdArray->GetVoidPointer(0),
-            inputCriticalPointIdArray->GetNumberOfTuples()
-          )
+      int status = 0;
+
+      if(outputOffsetArray->GetDataType() == VTK_INT) {
+        status = tpts.simplify(
+          (dataType*) outputScalarArray->GetVoidPointer(0),
+          (int*) outputOffsetArray->GetVoidPointer(0),
+
+          this->triangulation_,
+          (dataType*) inputScalarArray->GetVoidPointer(0),
+          (int*) inputCriticalPointIdArray->GetVoidPointer(0),
+          inputCriticalPointIdArray->GetNumberOfTuples()
         );
+      // }
+      // else if(inputOffsets_->GetDataType() == VTK_ID_TYPE) {
+      //   status = tpts.simplify(
+      //     (dataType*) outputScalarArray->GetVoidPointer(0),
+      //     (vtkIdType*) outputOffsetArray->GetVoidPointer(0),
+
+      //     this->triangulation_,
+      //     (dataType*) inputScalarArray->GetVoidPointer(0),
+      //     (vtkIdType*) inputCriticalPointIdArray->GetVoidPointer(0),
+      //     inputCriticalPointIdArray->GetNumberOfTuples()
+      //   );
+      } else {
+          this->printErr("Unsupported IdType");
+          return 1;
       }
 
       if(!status)
