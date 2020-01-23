@@ -10,15 +10,12 @@
 // ttk common includes
 #include <Debug.h>
 #include <set>
-// #include <chrono>
-// #define ASIO_STANDALONE
 
 #include <iostream>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 
 #include <functional>
-#include <WebSocketIOUtils.cpp>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 using websocketpp::connection_hdl;
@@ -27,147 +24,119 @@ using websocketpp::lib::thread;
 
 using namespace std ;
 
-class ServerParser {
-public:
-    static int parse_message_type(const string& msg) {
-        if (msg.rfind("code:", 0) == 0) {
-            return 1 ;  // code type
-        }
+// https://vtk.org/doc/nightly/html/vtkType_8h_source.html
+// ============================================= Constants ==========================================================
+const int DUPLICATE = 1 ;
+const int BIG_ENDIANNESS = 2 ;
+const int LITTLE_ENDIANNESS = 3 ;
+const int OBJECT_WILL_SENDING = 5 ;
+const int OBJECT_ACK_OBJECT = 6 ;
+const int OBJECT_WILL_FINISH = 7 ;
+const int OBJECT_ACK_FINISH = 8 ;
 
-        if (msg == "requestData") {
-            return 2 ; // request data from client
-        }
+const int DATA_FLOAT_ARRAY = 10 ;
+const int DATA_LONG_ARRAY = 8 ;
+const int DATA_UNSIGNED_ARRAY = 3 ;
+const int DATA_INT_ARRAY = 6 ;
+const int DATA_DOUBLE_ARRAY = 11 ;
+const int DATA_STRING_ARRAY = 13 ;
 
-        if (msg.rfind("updateUnstructuredGrid:", 0) == 0) {
-            return 3; // update data from client,
-        }
+// ============================================ Utils ==============================================================
 
-        if (msg.rfind("updateImageData:", 0) == 0) {
-            return 4 ; // update data from client
-        }
-
-        return 0 ;  // un-known
-    }
-
-    static string combine_code(int code) {
-        return "code:" + to_string(code) ;
-    }
-
-    static int parse_code(const string& code_str) {
-        if (code_str.rfind("code:", 0) == 0) {
-            return stoi(code_str.substr(5));
-        }
-        return 0 ;
-    }
-
-    static string parse_updateUnstructuredGrid(const string& msg_str) {
-        if (msg_str.rfind("updateUnstructuredGrid:", 0) == 0) {
-            return msg_str.substr(23);
-        }
-        return "" ;
-    }
-
-    static string parse_updateImageData(const string& msg_str) {
-        if (msg_str.rfind("updateImageData:", 0) == 0) {
-            return msg_str.substr(16);
-        }
-        return "" ;
-    }
-
-    // JSON
-    static  string combine_object_header(map<string, string> m) {
-        return "{" \
-                 "\"key\": \"" + m["key"] + "\"" + ", "
-               + "\"nTuples\":" + m["nTuples"] + ", "
-               + "\"nComponents\":" + m["nComponents"] + ", "
-               + "\"dataType\":" + m["dataType"]
-               + "}" ;
-    }
-
-};
+// borrow from https://stackoverflow.com/questions/4239993/determining-endianness-at-compile-time/4240029
+bool isLittleEndian()
+{
+    short int number = 0x1;
+    char *numPtr = (char*)&number;
+    return (numPtr[0] == 1);
+}
 
 namespace ttk {
 
-    struct WebSocketObserver {
-        virtual void update(std::string name, std::string payload)=0;
-    };
-
     class WebSocketIO : virtual public Debug {
+    public:
 
-        public:
+        static string combine_code(int code) {
+            return "code:" + to_string(code) ;
+        }
 
-            vector<WebSocketObserver*> observers;
-
-            void addObserver(WebSocketObserver* observer){
-                observers.push_back(observer);
+        static int parse_code(const string& code_str) {  // the code starting from 1
+            if (code_str.rfind("code:", 0) == 0) {
+                return stoi(code_str.substr(5));
             }
+            return 0 ;
+        }
 
-            int isListening() {
-                return this->Server.is_listening() ;
-            }
+        // JSON
+        static  string combine_object_header_json(map<string, string> m) {
+            return "{" \
+                 "\"key\": \"" + m["key"] + "\"" + ", "
+                   + "\"nTuples\":" + m["nTuples"] + ", "
+                   + "\"nComponents\":" + m["nComponents"] + ", "
+                   + "\"dataType\":" + m["dataType"]
+                   + "}" ;
+        }
 
-            void removeObserver(WebSocketObserver* observer){
-                // find and remove from vector
-                observers.erase(std::remove(observers.begin(), observers.end(), observer), observers.end()) ;
-            }
+        static std::map<string, string> combine_object_header_object(const string &key, int nTuples, int nComponents, int dataType) {
+            map<string, string> ans;
 
-            void notifyObservers(std::string name, std::string payload=""){
-                //for(auto observer: this->observers)
-                //    observer->update(name, payload);
-                this->processClientRequest(name, payload) ;
-            }
+            ans.insert(std::make_pair("key", key));  // "pointCoords" or "FieldData:Result", split by ":"
+            ans.insert(std::make_pair("nTuples", to_string(nTuples)));
+            ans.insert(std::make_pair("nComponents", to_string(nComponents)));
+            ans.insert(std::make_pair("dataType", to_string(dataType)));
 
-            void virtual processClientRequest(std::string name, std::string payload){};
+            return ans;
+        }
 
-            WebSocketIO() {
-                this->setDebugMsgPrefix("WebSocketIO"); // inherited from Debug: prefix will be printed at the beginning of every msg
-                this->printMsg("invoke WebSocketIO") ;
+        int isListening() { return this->Server.is_listening() ; }
 
-                // Set logging settings
-                Server.set_error_channels(websocketpp::log::elevel::fatal);
-                Server.set_access_channels(websocketpp::log::alevel::fail) ;
+        void virtual processClientRequest(std::string name, std::string payload = ""){};
 
-                Server.set_reuse_addr(true) ;
+        WebSocketIO() {
+            this->setDebugMsgPrefix("WebSocketIO"); // inherited from Debug: prefix will be printed at the beginning of every msg
+            // Set logging settings
+            Server.set_error_channels(websocketpp::log::elevel::fatal);
+            Server.set_access_channels(websocketpp::log::alevel::fail) ;
 
-                // Initialize Asio
-                Server.init_asio();
+            Server.set_reuse_addr(true) ;
 
-                // Set the default message handler to the echo handler
-                Server.set_message_handler(bind(&WebSocketIO::on_message, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
-                Server.set_open_handler(bind(&WebSocketIO::on_open, this, websocketpp::lib::placeholders::_1));
-                Server.set_close_handler(bind(&WebSocketIO::on_close, this, websocketpp::lib::placeholders::_1));
-            };
+            // Initialize Asio
+            Server.init_asio();
 
-            void startServer(int PortNumber) {
-                this->portNumber = PortNumber;
+            // Set the default message handler to the echo handler
+            Server.set_message_handler(bind(&WebSocketIO::on_message, this, websocketpp::lib::placeholders::_1, websocketpp::lib::placeholders::_2));
+            Server.set_open_handler(bind(&WebSocketIO::on_open, this, websocketpp::lib::placeholders::_1));
+            Server.set_close_handler(bind(&WebSocketIO::on_close, this, websocketpp::lib::placeholders::_1));
+        };
 
-                this->printMsg("invoke startServer at port: " + to_string(this->portNumber)) ;
-                this->Server.reset();
-                this->Server.listen(this->portNumber);
+        void startServer(int PortNumber) {
+            this->portNumber = PortNumber;
 
-                // Queues a connection accept operation
-                this->Server.start_accept();
+            this->printMsg("###### 6: invoke startServer at port: " + to_string(this->portNumber)) ;
+            this->Server.reset();
+            this->Server.listen(this->portNumber);
 
-                // Start the Asio io_service run loop
-                this->ServerThread = new thread([this]() {
-                    try {
-                        {
-                            lock_guard<mutex> guard(this->m_mutex);
-                            this->ServerThreadRunning = true;
-                        }
-                        Server.run();
+            // Queues a connection accept operation
+            this->Server.start_accept();
+
+            // Start the Asio io_service run loop
+            this->ServerThread = new thread([this]() {
+                try {
+                    {
                         lock_guard<mutex> guard(this->m_mutex);
-                        this->ServerThreadRunning = false;
-                    } catch(websocketpp::exception const &e) {
-                        cout << "#########" << e.what() << endl;
+                        this->ServerThreadRunning = true;
                     }
-                });
-                this->ServerThread->detach();
-            }
+                    Server.run();
+                    lock_guard<mutex> guard(this->m_mutex);
+                    this->ServerThreadRunning = false;
+                } catch(websocketpp::exception const &e) {
+                    cout << "startServer exception: " << e.what() << endl;
+                }
+            });
+            this->ServerThread->detach();
+        }
 
-            int getPortNumber(){
-                return this->portNumber;
-            }
+        int getPortNumber(){ return this->portNumber; }
 
         int stopServer(){
             if(this->Server.is_listening()){
@@ -231,31 +200,20 @@ namespace ttk {
             return 1;
         }
 
-            ~WebSocketIO() {
-                this->stopServer() ;
-            };
+        ~WebSocketIO() {
+            this->stopServer() ;
+        };
 
-            void setHeaders(std::vector<std::map<string, string>> m) {
-                this->headers = m ;
-            }
+        void setHeaders(std::vector<std::map<string, string>> m) {
+            this->headers = m ;
+        }
 
-            void setObjectState(int o) {
-                this->object_state = o ;
-            }
+        void setObjectState(int o) {
+            this->object_state = o ;
+        }
 
-            void setSendingData(std::vector<void *> v) {
-                this->sendingData = v ;
-            }
-
-        int send(const string& message) {
-            if (m_connections.empty()) {
-                return 0 ;
-            }
-            cout << isLittleEndian() ;
-            auto it = this->m_connections.begin();
-
-            this->Server.send(*it, message, websocketpp::frame::opcode::text );
-            return 1 ;
+        void setSendingData(std::vector<void *> v) {
+            this->sendingData = v ;
         }
 
         int sendObject() {
@@ -265,16 +223,16 @@ namespace ttk {
 
             auto it = this->m_connections.begin();
             if (this->object_state == 0) {
-                this->Server.send(*it, ServerParser::combine_code(OBJECT_WILL_SENDING), websocketpp::frame::opcode::text) ;
+                this->Server.send(*it, WebSocketIO::combine_code(OBJECT_WILL_SENDING), websocketpp::frame::opcode::text) ;
                 this->object_state += 1 ;
             } else {
                 // cause object_state is non-negative, so it's safe to cast to unsigned value
                 if ((unsigned )this->object_state > 2 * this->headers.size()) {
-                    this->Server.send(*it, ServerParser::combine_code(OBJECT_WILL_FINISH), websocketpp::frame::opcode::text) ;
+                    this->Server.send(*it, WebSocketIO::combine_code(OBJECT_WILL_FINISH), websocketpp::frame::opcode::text) ;
                     return 2 ; // finish
                 } else {
                     if (this->object_state % 2 == 1) {  // sending header
-                        this->Server.send(*it, ServerParser::combine_object_header(this->headers[(this->object_state - 1) / 2] ), websocketpp::frame::opcode::text) ;
+                        this->Server.send(*it, WebSocketIO::combine_object_header_json(this->headers[(this->object_state - 1) / 2] ), websocketpp::frame::opcode::text) ;
                     } else {  // sending data
                         auto d = this->sendingData[(this->object_state / 2) - 1];
                         map<string, string> m = this->headers[(this->object_state / 2) - 1];
@@ -343,20 +301,21 @@ namespace ttk {
         void on_open(websocketpp::connection_hdl hdl) {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_connections.empty()) {
-                m_connections.insert(hdl);  // 78: 0x7f822402ef00, 77: 0x7f822c02f310
+                m_connections.insert(hdl);
                 if (isLittleEndian()) {
-                    this->Server.send(hdl, ServerParser::combine_code(LITTLE_ENDIANNESS), websocketpp::frame::opcode::text);
+                    this->Server.send(hdl, WebSocketIO::combine_code(LITTLE_ENDIANNESS), websocketpp::frame::opcode::text);
+                    this->Server.send(hdl, WebSocketIO::combine_code(LITTLE_ENDIANNESS), websocketpp::frame::opcode::text);
                 } else {
-                    this->Server.send(hdl, ServerParser::combine_code(BIG_ENDIANNESS), websocketpp::frame::opcode::text);
+                    this->Server.send(hdl, WebSocketIO::combine_code(BIG_ENDIANNESS), websocketpp::frame::opcode::text);
                 }
             } else {
                 // close this connection
                 cout <<"duplicate connection" << endl;
-                this->Server.send(hdl, ServerParser::combine_code(DUPLICATE), websocketpp::frame::opcode::text);
+                this->Server.send(hdl, WebSocketIO::combine_code(DUPLICATE), websocketpp::frame::opcode::text);
                 this->Server.close(hdl,  websocketpp::close::status::normal, "Terminating connection ...", ec);
             }
 
-            this->notifyObservers("on_open");
+            this->processClientRequest("on_open");
         }
 
         void on_received_object() {
@@ -372,34 +331,16 @@ namespace ttk {
         void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
             // write a new message
             string pay_msg = msg->get_payload() ;
-            this->printMsg("receive a message: " + pay_msg) ;
-            switch (ServerParser::parse_message_type(pay_msg)) {
-                case 1: { // code
-                    int code = ServerParser::parse_code(pay_msg);
-                    if (code != 0) {
-                        if (code == OBJECT_ACK_OBJECT) {
-                            sendObject();
-                        } else if (code == OBJECT_ACK_FINISH) {
-                            on_received_object();
-                        }
-                    }}
-                    break ;
-
-                case 2: // request data from client
-                    this->printMsg("receive requestData") ;
-                    this->notifyObservers("on_requestData");
-                    break ;
-                case 3: // update
-                    this->notifyObservers("updateUnstructuredGrid", ServerParser::parse_updateUnstructuredGrid(pay_msg));
-                    break ;
-                case 4:
-                    this->notifyObservers("updateImageData", ServerParser::parse_updateImageData(pay_msg));
-                    break ;
-
-                default:
-                    break ;
+            int code = WebSocketIO::parse_code(pay_msg) ;
+            if ( code == 0 ) {
+                this->processClientRequest("raw", pay_msg) ;
+            } else {  // well defined code
+                if (code == OBJECT_ACK_OBJECT) {
+                    sendObject();
+                } else if (code == OBJECT_ACK_FINISH) {
+                    on_received_object();
+                }
             }
-
         }
     };
 }
