@@ -25,25 +25,19 @@ ttkPersistencePairInventory::~ttkPersistencePairInventory(){}
 
 // see ttkAlgorithm::FillInputPortInformation for details about this method
 int ttkPersistencePairInventory::FillInputPortInformation(int port, vtkInformation* info) {
-    switch (port) {
-        case 0:
-            info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
-            break;
-        default:
-            return 0;
-    }
+    if (port==0)
+        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
+    else
+        return 0;
     return 1;
 }
 
 // see ttkAlgorithm::FillOutputPortInformation for details about this method
 int ttkPersistencePairInventory::FillOutputPortInformation(int port, vtkInformation* info) {
-    switch (port) {
-        case 0:
-            info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkMultiBlockDataSet");
-            break;
-        default:
-            return 0;
-    }
+    if (port==0)
+        info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkMultiBlockDataSet");
+    else
+        return 0;
     return 1;
 }
 
@@ -55,26 +49,48 @@ int ttkPersistencePairInventory::RequestData(
     // Get the input
     auto inputAsMB = vtkMultiBlockDataSet::GetData( inputVector[0] );
 
+    if(!inputAsMB){
+        this->printErr("Input is not a 'vtkMultiBlockDataSet' object.");
+        return 0;
+    }
+
     size_t nRows = this->GetNumberOfScalarBins();
     size_t nCols = inputAsMB->GetNumberOfBlocks();
+    if(nCols<0){
+        this->printErr("Input 'vtkMultiBlockDataSet' object has no blocks.");
+        return 0;
+    }
+
+    // get first scalar field
+    auto scalarArray = this->GetInputArrayToProcess(0,inputAsMB->GetBlock(0));
+
+    if(!scalarArray){
+        this->printErr("Unable to retrieve input array.");
+        return 0;
+    }
 
     // TODO: Add APPIArray
     // TODO: PeristenceCurve based Persistence intervals
     // Prepare output point buffer
     auto ppiArray = vtkSmartPointer<vtkIntArray>::New();
     ppiArray->SetName("PersistencePairInventory");
-    ppiArray->SetNumberOfComponents( this->GetNumberOfPersistenceIntervals() );
+    ppiArray->SetNumberOfComponents( this->NumberOfPersistenceIntervals );
     ppiArray->SetNumberOfTuples( nRows*nCols );
 
     auto pcArray = vtkSmartPointer<vtkIntArray>::New();
     pcArray->SetName("PersistenceCurves");
-    pcArray->SetNumberOfComponents( this->NumberOfPersistenceCurvePoints );
+    pcArray->SetNumberOfComponents( this->NumberOfPersistenceIntervals );
     pcArray->SetNumberOfTuples( nCols );
 
     auto scalarBoundsArray = vtkSmartPointer<vtkDoubleArray>::New();
     scalarBoundsArray->SetName("ScalarBounds");
     scalarBoundsArray->SetNumberOfComponents( 1 );
     scalarBoundsArray->SetNumberOfTuples( 2 );
+
+    auto persistenceThresholdArray = vtkSmartPointer<vtkDataArray>::Take( scalarArray->NewInstance() );
+    persistenceThresholdArray->SetName("PersistenceThresholds");
+    persistenceThresholdArray->SetNumberOfComponents( 1 );
+    persistenceThresholdArray->SetNumberOfTuples( this->NumberOfPersistenceIntervals );
 
     auto imageObject = vtkSmartPointer<vtkImageData>::New();
     imageObject->SetExtent(
@@ -85,15 +101,45 @@ int ttkPersistencePairInventory::RequestData(
     imageObject->SetSpacing(1,1,0);
     imageObject->SetOrigin(0,0,0);
     imageObject->GetPointData()->AddArray( ppiArray );
-    imageObject->GetFieldData()->AddArray( pcArray );
-    imageObject->GetFieldData()->AddArray( scalarBoundsArray );
+    auto imageObject_FieldData = imageObject->GetFieldData();
+    imageObject_FieldData->AddArray( pcArray );
+    imageObject_FieldData->AddArray( scalarBoundsArray );
+    imageObject_FieldData->AddArray( persistenceThresholdArray );
 
-    // get first scalar field
-    auto scalarArray = this->GetInputArrayToProcess(0,inputAsMB->GetBlock(0));
+    // copy field data
+    {
+        auto firstBlockAsUG = vtkUnstructuredGrid::SafeDownCast( inputAsMB->GetBlock(0) );
+        if(!firstBlockAsUG){
+            this->printErr("Input 'vtkMultiBlockDataSet' block not of type 'vtkUnstructuredGrid'.");
+            return 0;
+        }
+        auto firstBlockAsUG_FieldData = firstBlockAsUG->GetFieldData();
+        for(size_t i=0; i<firstBlockAsUG_FieldData->GetNumberOfArrays(); i++){
+            auto arrayTemplate = firstBlockAsUG_FieldData->GetAbstractArray(i);
+            auto arrayCopy = vtkSmartPointer<vtkAbstractArray>::Take(arrayTemplate->NewInstance());
+            arrayCopy->SetName(arrayTemplate->GetName());
+            arrayCopy->SetNumberOfComponents(arrayTemplate->GetNumberOfComponents());
+            arrayCopy->SetNumberOfTuples(nCols);
 
-    if(!scalarArray){
-        this->printErr("Unable to retrieve input array.");
-        return 0;
+            for(size_t b=0; b<nCols; b++){
+                auto blockAsUG = vtkUnstructuredGrid::SafeDownCast( inputAsMB->GetBlock(i) );
+                if(!blockAsUG){
+                    this->printErr("Input 'vtkMultiBlockDataSet' block not of type 'vtkUnstructuredGrid'.");
+                    return 0;
+                }
+                auto array = blockAsUG->GetFieldData()->GetAbstractArray( arrayTemplate->GetName() );
+                if(!array){
+                    this->printWrn("Unalbe to retrieve field data array '"+std::string(arrayTemplate->GetName())+"' from all blocks.");
+                    continue;
+                }
+                if(array->GetNumberOfTuples()>1){
+                    this->printWrn("Field data array '"+std::string(arrayTemplate->GetName())+"' from block "+std::to_string(b)+" has more than one tuple.");
+                    continue;
+                }
+                arrayCopy->SetTuple(b, 0, array);
+            }
+            imageObject_FieldData->AddArray( arrayCopy );
+        }
     }
 
     switch( scalarArray->GetDataType() ){
@@ -124,21 +170,32 @@ int ttkPersistencePairInventory::RequestData(
                 int status = 1;
 
                 VTK_TT scalarBounds[2];
-                status = this->ComputeScalarBounds(
-                    scalarBounds,
+                if(this->UseEntireScalarRange){
+                    status = this->ComputeScalarBounds(
+                        scalarBounds,
 
-                    scalarsPerElement,
-                    nEdgesPerElement
-                );
-                if(!status) return 0;
+                        scalarsPerElement,
+                        nEdgesPerElement
+                    );
+                    if(!status) return 0;
+                } else {
+                    scalarBounds[0] = this->ScalarRange[0];
+                    scalarBounds[1] = this->ScalarRange[1];
+                }
+
                 scalarBoundsArray->SetValue(0, scalarBounds[0]);
                 scalarBoundsArray->SetValue(1, scalarBounds[1]);
+
+                auto persistenceThresholdArrayData = (VTK_TT*) persistenceThresholdArray->GetVoidPointer(0);
+                for(size_t i=0; i<this->NumberOfPersistenceIntervals; i++)
+                    persistenceThresholdArrayData[i] = i*this->PersistenceInterval;
+
 
                 status = this->ComputePersistenceCurves(
                     (int*) pcArray->GetVoidPointer(0),
 
-                    this->NumberOfPersistenceCurvePoints,
-                    scalarBounds,
+                    persistenceThresholdArrayData,
+                    this->NumberOfPersistenceIntervals,
                     scalarsPerElement,
                     connectivityListPerElement,
                     nEdgesPerElement
@@ -151,7 +208,8 @@ int ttkPersistencePairInventory::RequestData(
                     nRows,
                     scalarBounds,
                     scalarsPerElement,
-                    this->GetNumberOfPersistenceIntervals(),
+                    persistenceThresholdArrayData,
+                    this->NumberOfPersistenceIntervals,
                     connectivityListPerElement,
                     nEdgesPerElement
                 );

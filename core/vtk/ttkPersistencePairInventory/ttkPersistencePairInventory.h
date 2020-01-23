@@ -39,7 +39,7 @@ class TTKPERSISTENCEPAIRINVENTORY_EXPORT ttkPersistencePairInventory
         double ScalarRange[2]{0,0};
         int NumberOfScalarBins{1};
         int NumberOfPersistenceIntervals{1};
-        int NumberOfPersistenceCurvePoints{1};
+        int PersistenceInterval{1};
 
     public:
         vtkSetMacro(UseEntireScalarRange, bool);
@@ -50,8 +50,8 @@ class TTKPERSISTENCEPAIRINVENTORY_EXPORT ttkPersistencePairInventory
         vtkGetMacro(NumberOfScalarBins, int);
         vtkSetMacro(NumberOfPersistenceIntervals, int);
         vtkGetMacro(NumberOfPersistenceIntervals, int);
-        vtkSetMacro(NumberOfPersistenceCurvePoints, int);
-        vtkGetMacro(NumberOfPersistenceCurvePoints, int);
+        vtkSetMacro(PersistenceInterval, double);
+        vtkGetMacro(PersistenceInterval, double);
 
         static ttkPersistencePairInventory *New();
         vtkTypeMacro(ttkPersistencePairInventory, ttkAlgorithm);

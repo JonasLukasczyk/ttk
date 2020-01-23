@@ -57,10 +57,9 @@
             <IntVectorProperty name="NumberOfPersistenceIntervals" label="Persistence Intervals" command="SetNumberOfPersistenceIntervals" number_of_elements="1" default_values="1">
                 <Documentation>TODO</Documentation>
             </IntVectorProperty>
-            <IntVectorProperty name="NumberOfPersistenceCurvePoints" label="Persistence Curve Points" command="SetNumberOfPersistenceCurvePoints" number_of_elements="1" default_values="1">
-                <IntRangeDomain name="range" min="1" />
+            <DoubleVectorProperty name="PersistenceInterval" label="Persistence Interval" command="SetPersistenceInterval" number_of_elements="1" default_values="1">
                 <Documentation>TODO</Documentation>
-            </IntVectorProperty>
+            </DoubleVectorProperty>
 
             <PropertyGroup panel_widget="Line" label="Input Options">
                 <Property name="ScalarArray" />
@@ -71,6 +70,7 @@
                 <Property name="ScalarRange" />
                 <Property name="NumberOfScalarBins" />
                 <Property name="NumberOfPersistenceIntervals" />
+                <Property name="PersistenceInterval" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}

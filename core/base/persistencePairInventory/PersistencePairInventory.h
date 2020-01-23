@@ -31,8 +31,8 @@ namespace ttk {
             template <class countType, class dataType, class idType> int ComputePersistenceCurves(
                 countType* persistenceCurve,
 
-                const size_t& nPersistenceCurvePoints,
-                const dataType scalarBounds[2],
+                const dataType* persistenceThresholds,
+                const size_t& nPersistenceThresholds,
                 const std::vector<dataType*>& scalarsPerElement,
                 const std::vector<idType*>& connectivityListPerElement,
                 const std::vector<size_t>& nEdgesPerElement
@@ -44,7 +44,8 @@ namespace ttk {
                 const size_t& nRows,
                 const dataType scalarBounds[2],
                 const std::vector<dataType*>& scalars,
-                const size_t& nPersistenceIntervals,
+                const dataType* persistenceThresholds,
+                const size_t& nPersistenceThresholds,
                 const std::vector<idType*>& connectivityLists,
                 const std::vector<size_t>& nEdges
             ) const;
@@ -57,7 +58,8 @@ namespace ttk {
                 const size_t columnIndex,
                 const dataType scalarBounds[2],
                 const dataType* scalars,
-                const size_t& nPersistenceIntervals,
+                const dataType* persistenceThresholds,
+                const size_t& nPersistenceThresholds,
                 const idType* connectivityList,
                 const size_t& nEdges
             ) const;
@@ -67,7 +69,7 @@ namespace ttk {
 
                 const size_t& nRows,
                 const size_t& nCols,
-                const size_t& nPersistenceIntervals,
+                const size_t& nPersistenceThresholds,
                 const binType* ppi
             ) const;
     };
@@ -113,8 +115,8 @@ template <class countType, class dataType, class idType>
 int ttk::PersistencePairInventory::ComputePersistenceCurves(
     countType* persistenceCurve,
 
-    const size_t& nPersistenceCurvePoints,
-    const dataType scalarBounds[2],
+    const dataType* persistenceThresholds,
+    const size_t& nPersistenceThresholds,
     const std::vector<dataType*>& scalarsPerElement,
     const std::vector<idType*>& connectivityListPerElement,
     const std::vector<size_t>& nEdgesPerElement
@@ -127,7 +129,7 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
         this->printMsg( ttk::debug::Separator::L2 );
         this->printMsg({
             {"#Threads", std::to_string(this->threadNumber_)},
-            {"#Points", std::to_string(nPersistenceCurvePoints)},
+            {"#Points", std::to_string(nPersistenceThresholds)},
         });
         this->printMsg( ttk::debug::Separator::L2 );
     }
@@ -135,8 +137,6 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
     size_t nElements = scalarsPerElement.size();
     this->printMsg("Processing "+std::to_string(nElements)+" Elements",0,
         ttk::debug::LineMode::REPLACE);
-
-    dataType persistenceIntervalDelta = (scalarBounds[1]-scalarBounds[0])/nPersistenceCurvePoints;
 
     #ifdef TTK_ENABLE_OPENMP
     #pragma omp parallel for num_threads(threadNumber_)
@@ -146,10 +146,11 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
         idType* connectivityList = connectivityListPerElement[e];
         size_t nEdges = nEdgesPerElement[e];
 
-        size_t offset = e*nPersistenceCurvePoints;
-        for(size_t p=0; p<nPersistenceCurvePoints; p++){
+        size_t offset = e*nPersistenceThresholds;
+        for(size_t p=0; p<nPersistenceThresholds; p++){
             size_t nPairsAboveThreshold = 0;
-            const dataType persistenceThreshold = p*persistenceIntervalDelta;
+
+            const dataType& persistenceThreshold = persistenceThresholds[p];
 
             for(size_t i=0,j=1; i<nEdges; i++,j+=3){
                 const idType& v0 = connectivityList[j];
@@ -168,8 +169,8 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
     }
 
     this->printMsg(
-        "Processed "+std::to_string(nElements)+" Elements",
-        1, t.getElapsedTime()
+        "Processing "+std::to_string(nElements)+" Elements",
+        1, t.getElapsedTime(), this->threadNumber_
     );
 
     this->printMsg( ttk::debug::Separator::L1 );
@@ -184,7 +185,8 @@ int ttk::PersistencePairInventory::ComputePPI(
     const size_t& nRows,
     const dataType scalarBounds[2],
     const std::vector<dataType*>& scalars,
-    const size_t& nPersistenceIntervals,
+    const dataType* persistenceThresholds,
+    const size_t& nPersistenceThresholds,
     const std::vector<idType*>& connectivityLists,
     const std::vector<size_t>& nEdges
 ) const {
@@ -206,7 +208,7 @@ int ttk::PersistencePairInventory::ComputePPI(
             {"#Threads", std::to_string(this->threadNumber_)},
             {"#Rows", std::to_string(nRows)},
             {"#Cols", std::to_string(nCols)},
-            {"#P.Intervals", std::to_string(nPersistenceIntervals)},
+            {"#P.Intervals", std::to_string(nPersistenceThresholds)},
             {"Range", "["+std::to_string(scalarBounds[0])+", "+std::to_string(scalarBounds[1])+"]"}
         });
         this->printMsg( ttk::debug::Separator::L2 );
@@ -214,7 +216,7 @@ int ttk::PersistencePairInventory::ComputePPI(
 
     {
         ttk::Timer t;
-        this->printMsg("Processing "+std::to_string(nCols)+" Elements",0);
+        this->printMsg("Processing "+std::to_string(nCols)+" Elements",0,debug::LineMode::REPLACE);
 
         bool failed=false;
         #ifdef TTK_ENABLE_OPENMP
@@ -229,7 +231,8 @@ int ttk::PersistencePairInventory::ComputePPI(
                 i,
                 scalarBounds,
                 scalars[i],
-                nPersistenceIntervals,
+                persistenceThresholds,
+                nPersistenceThresholds,
                 connectivityLists[i],
                 nEdges[i]
             );
@@ -242,9 +245,8 @@ int ttk::PersistencePairInventory::ComputePPI(
             return 0;
 
         this->printMsg(
-            "Processed "+std::to_string(nCols)+" Elements",
-            1, t.getElapsedTime(),
-            ttk::debug::LineMode::REPLACE
+            "Processing "+std::to_string(nCols)+" Elements",
+            1, t.getElapsedTime(), this->threadNumber_
         );
 
         this->printMsg( ttk::debug::Separator::L1 ); // horizontal '=' Separator
@@ -262,16 +264,17 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
     const size_t columnIndex,
     const dataType scalarBounds[2],
     const dataType* scalars,
-    const size_t& nPersistenceIntervals,
+    const dataType* persistenceThresholds,
+    const size_t& nPersistenceThresholds,
     const idType* connectivityLists,
     const size_t& nEdges
 ) const {
     // clear ppi column
     {
-        size_t rowOffset = nPersistenceIntervals*(nCols-1); // -1 since offset also increased in for loop by nPersistenceIntervals
-        size_t offset = columnIndex*nPersistenceIntervals;
+        size_t rowOffset = nPersistenceThresholds*(nCols-1); // -1 since offset also increased in for loop by nPersistenceThresholds
+        size_t offset = columnIndex*nPersistenceThresholds;
         for(size_t i=0; i<nRows; i++){
-            for(size_t p=0; p<nPersistenceIntervals; p++)
+            for(size_t p=0; p<nPersistenceThresholds; p++)
                 ppi[offset++] = 0;
             offset+=rowOffset;
         }
@@ -281,28 +284,41 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
     {
         dataType range = scalarBounds[1]-scalarBounds[0];
         dataType nRowsM1 = nRows-1;
-        dataType nPersistenceIntervalsDT = nPersistenceIntervals;
-        dataType persistenceIntervalRange = range/nPersistenceIntervalsDT;
 
-        size_t rowOffset = nPersistenceIntervals*nCols;
+        size_t rowOffset = nPersistenceThresholds*nCols;
         for(size_t i=0,j=1; i<nEdges; i++,j+=3){
             const idType& v0 = connectivityLists[j];
             const idType& v1 = connectivityLists[j+1];
 
-            const dataType& s0 = scalars[v0];
-            const dataType& s1 = scalars[v1];
+            const dataType& s0_ = scalars[v0];
+            const dataType& s1_ = scalars[v1];
 
-            const size_t b0 = (s0-scalarBounds[0])/range*nRowsM1;
-            const size_t b1 = (s1-scalarBounds[0])/range*nRowsM1;
+            // enforce order
+            dataType s0 = s0_<s1_ ? s0_ : s1_;
+            dataType s1 = s0_<s1_ ? s1_ : s0_;
 
-            const dataType persistence = s1>s0 ? s1-s0 : s0-s1;
-            size_t p1 = persistence/persistenceIntervalRange;
-            if(p1>=nPersistenceIntervals)
-                p1=nPersistenceIntervals-1;
+            // skip if edge does not intersect interval
+            if(s1<scalarBounds[0] || s0>scalarBounds[1]) continue;
 
-            size_t offset = columnIndex*nPersistenceIntervals + b0*rowOffset;
-            for(size_t b=b0; b<=b1; b++){
-                for(size_t p=0; p<=p1; p++)
+            dataType persistence = s1-s0;
+
+            // force bounds for bin index computation
+            s0 = s0<scalarBounds[0] ? scalarBounds[0] : s0;
+            s1 = s1>scalarBounds[1] ? scalarBounds[1] : s1;
+
+            // compute bin indices
+            size_t b0 = (s0-scalarBounds[0])/range*nRows;
+            size_t b1 = (s1-scalarBounds[0])/range*nRows;
+            b1 = b1>nRows ? nRows : b1;
+
+            // compute last persistence interval index for which pair still exists
+            size_t p1 = 0;
+            while(p1<nPersistenceThresholds && persistenceThresholds[p1]<=persistence)
+                p1++;
+
+            size_t offset = columnIndex*nPersistenceThresholds + b0*rowOffset;
+            for(size_t b=b0; b<b1; b++){
+                for(size_t p=0; p<p1; p++)
                     ppi[offset+p]++;
                 offset+=rowOffset;
             }
@@ -318,11 +334,11 @@ int ttk::PersistencePairInventory::ComputeAPPI(
 
     const size_t& nRows,
     const size_t& nCols,
-    const size_t& nPersistenceIntervals,
+    const size_t& nPersistenceThresholds,
     const binType* ppi
 ) const {
 
-    size_t rowOffset = nPersistenceIntervals*nCols;
+    size_t rowOffset = nPersistenceThresholds*nCols;
 
     // for(size_t i=0; i<nRows; i++){
     //     size_t ppiOffset = i*rowOffset;

@@ -376,10 +376,30 @@ int ttkPersistenceDiagram::getPersistenceDiagram(
     persistenceScalars->InsertTuple1(diagramSize, 2 * maxPersistenceValue);
   }
 
+//   vertexIdentifierScalars->Print(std::cout);
+//   this->inputScalars_->Print(std::cout);
+
+  vtkSmartPointer<vtkDoubleArray> scalars
+    = vtkSmartPointer<vtkDoubleArray>::New();
+    {
+      scalars->SetNumberOfComponents(1);
+      scalars->SetName("Scalars");
+      scalars->SetNumberOfTuples( diagramSize*2 );
+      auto scalarsData = (double*) scalars->GetVoidPointer(0);
+      auto pointCoords = (float*) points->GetVoidPointer(0);
+      for(size_t i=0; i<diagramSize*2; i++){
+          scalarsData[i] = pointCoords[i*3+1];
+      }
+    }
+//   for(size_t i=0; i<diagramSize*2; i++)
+//     scalars->SetValue(i, this->inputScalars_->GetVariantValue( vertexIdentifierScalars->GetValue(i) ).ToDouble());
+    // scalars->SetValue(i, -1);
+
   persistenceDiagram->SetPoints(points);
   persistenceDiagram->GetPointData()->AddArray(vertexIdentifierScalars);
   persistenceDiagram->GetPointData()->AddArray(nodeTypeScalars);
   persistenceDiagram->GetPointData()->AddArray(coordsScalars);
+  persistenceDiagram->GetPointData()->AddArray(scalars);
   persistenceDiagram->GetCellData()->AddArray(pairIdentifierScalars);
   persistenceDiagram->GetCellData()->AddArray(extremumIndexScalars);
   persistenceDiagram->GetCellData()->AddArray(persistenceScalars);
