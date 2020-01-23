@@ -87,8 +87,10 @@
                <div class="col" style="margin-bottom: 6px;">
                   <div class="text-justify p-2 border bg-light" style="height: 100%;">
                      <h4> Summary</h4>
-                     WebSocket Port:
-                     <input id="msg" type="text" value="8777">
+                     WebSocketIO Host:
+                     <input id="msg-host" type="text" value="10.218.107.40">
+                     Port:
+                     <input id="msg" type="text" value="9285">
                      <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
                      <!-- <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button> -->
                      <!-- <button id="close" onclick="Close();" class="btn btn-primary btn-sm">Close</button> -->
@@ -111,7 +113,7 @@
                   <div class="text-justify p-2 border bg-light" style="height: 100%;">
                      <!-- https://www.flaticon.com/ -->
                      <h4>Boxplot View </h4>
-                     <div>
+                     <div id="bar-boxplot">
                         <input type="checkbox" id="l1">
                         <select id="b1">
                            <option>lines</option>
@@ -287,27 +289,16 @@
             }
              
              let vData = [] ;
-
-             let testData = [] ;
-            
-             // for threshold = iComponents
-             for (var i = 0; i < w; i ++ ) {
-                testData.push( 0 ) ;
-             }
-
              // extract related information
              for (let i = 0; i < h; i ++ ) {
                  for (let j = 0; j < w; j ++ ) {
                      let idx = ( i * w + j ) * nComponents  + iComponent;
                      let dd =  data[ idx ] ;
-                     testData[j] += dd ;
                      let items = data.slice(( i * w + j ) * nComponents, ( i * w + j ) * nComponents + nComponents)
                      // (x-axis, y-axis, current value, tuples values, current_index, reliability)
                      vData.push([j + "", i + "", dd, items, idx, calculateReliability(items, iComponent)]) ;
                  }
              }
-
-             console.log("PPI: " + iComponent + ", sum up columns:" + testData) ;
 
              svg.append("g")
                  .attr("width", width)
@@ -433,13 +424,14 @@
                 $("#hidden-notification_xxyy-zoom").click() ;
             }
          }) ;
-         
+
          function objectCallback(msg) {
+             // reset all the message
+             // FLAG
              if (msg.hasOwnProperty("FieldData") && msg.FieldData.hasOwnProperty("PersistenceCurves")) {
                  $("#box_dataviz").html("") ;
                  $("#box_dataviz_total").html("") ;         
                  drawCurve(msg.FieldData.PersistenceCurves.NumberOfComponents, msg.FieldData.PersistenceCurves.Values) ;
-        
                  Window.persistence_num = msg.FieldData.PersistenceCurves.NumberOfComponents ;
                  $("[name='box_line']").attr("visibility", "hidden"); 
                  $("[name='box_box']").attr("visibility", "hidden"); 
@@ -542,7 +534,7 @@
                      console.log("on_close") ; 
                  },
                  objectCallback,
-                 ip="127.0.0.1") ;
+                 ip=$("#msg-host").val()) ;
          }
          
          function Request() {

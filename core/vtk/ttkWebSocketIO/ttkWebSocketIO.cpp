@@ -177,6 +177,7 @@ int ttkWebSocketIO::RequestData(
  *
  */
 void ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
+    this->printMsg("name in processClientRequest is: " + name) ;
     if ( name == "raw" ) {
         if ( payload.rfind("updateUnstructuredGrid:", 0) == 0 ) {
             this->CreateUnstructuredGrid(  payload.substr(23) ) ;
