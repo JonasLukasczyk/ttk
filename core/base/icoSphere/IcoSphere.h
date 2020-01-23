@@ -366,7 +366,14 @@ int ttk::IcoSphere::computeIcoSpheres(
 
   // Output
   float *vertexCoords,
-  idType *connectivityList) const {
+  idType *connectivityList
+) const {
+
+  if(nSpheres<1){
+    this->printWrn("Number of input points smaller than 1.");
+    return 1;
+  }
+
   // compute number of vertices and triangles for one ico sphere
   size_t nVerticesPerIcoSphere, nTrianglesPerIcoSphere;
   if(!this->computeNumberOfVerticesAndTriangles(
