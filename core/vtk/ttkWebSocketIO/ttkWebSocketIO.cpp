@@ -13,13 +13,63 @@
 #include <vtkPoints.h>
 #include <vtkCellArray.h>
 
-#include <ttkWebSocketIOUtils.cpp>
+#include <boost/optional/optional.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace std;
 
 vtkStandardNewMacro(ttkWebSocketIO);
 
+// ======================================== Constants ==================================================
+const int vtkCellsTypeHash[20] = {
+        VTK_EMPTY_CELL ,
+        VTK_VERTEX,
+        VTK_LINE,
+        VTK_TRIANGLE,
+        VTK_TETRA,
+        VTK_CONVEX_POINT_SET, // 5
+        VTK_CONVEX_POINT_SET, // 6
+        VTK_CONVEX_POINT_SET, // 7
+        VTK_VOXEL,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET,
+        VTK_CONVEX_POINT_SET
+};
+
+// ===============================================  JSON utils =======================================
+template <typename T> void jsonEntryToVector(
+        const boost::property_tree::ptree& pt,
+        const boost::property_tree::ptree::key_type& key,
+        T* result
+) {
+    size_t i=0;
+    for (auto& item : pt.get_child(key))
+        result[i++] = item.second.get_value<T>();
+}
+
+// check if a path exists in property_tree or a key exists in json object
+bool hasChild(const boost::property_tree::ptree& pt,
+              const boost::property_tree::ptree::key_type& key) {
+    boost::property_tree::ptree::const_assoc_iterator it = pt.find(key);
+    if( it == pt.not_found() )
+    {
+        return false ;
+    }
+    return true ;
+}
+
 ttkWebSocketIO::ttkWebSocketIO() :WebSocketIO() {
+    this->printMsg("###### 7: invoke ttkWebSocketIO!") ;
     this->lastInput = vtkSmartPointer<vtkUnstructuredGrid>::New();
     this->lastUGfromClient = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
@@ -76,9 +126,11 @@ int ttkWebSocketIO::RequestData(
     this->SetNeedsUpdate(false);
 
     if (this->structureType == 1) {
-        this->lastInput->ShallowCopy( input );
+        if (input != NULL)
+            this->lastInput->ShallowCopy( input );
     } else if (this->structureType == 2) {
-        this->lastImageInput->ShallowCopy( imageInput ) ;
+        if (imageInput != NULL)
+            this->lastImageInput->ShallowCopy( imageInput ) ;
     } else {
 
     }
@@ -102,16 +154,40 @@ int ttkWebSocketIO::RequestData(
     // Get the output
     if (this->structureType == 1) {
         vtkUnstructuredGrid* output = vtkUnstructuredGrid::GetData(outputVector);
-        output->ShallowCopy( this->lastUGfromClient );
+        if (this->lastUGfromClient != NULL)
+            output->ShallowCopy( this->lastUGfromClient );
     } else if (this->structureType == 2) {
         // structure type of output
+        vtkUnstructuredGrid* output = vtkUnstructuredGrid::GetData(outputVector);
+        if ( this->lastUGfromClient != NULL)
+            output->ShallowCopy( this->lastUGfromClient );
     }
     return 1;
 }
 
+/**
+ * @param name:
+ *       reserved options:
+ *         1. on_open, callback from base library with parameter "on_open"
+ *         2. raw, send back a raw payload from the browser
+ *
+ *       custom options (user-defined):
+ *         ...
+ * @param payload
+ *
+ */
 void ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
-    this->printMsg("processClientRequest' name: " + name) ;
-    if(name.compare("on_open") == 0 || name.compare("on_requestData") == 0 || name.compare("on_update") == 0) {
+    if ( name == "raw" ) {
+        if ( payload.rfind("updateUnstructuredGrid:", 0) == 0 ) {
+            this->CreateUnstructuredGrid(  payload.substr(23) ) ;
+            return ;
+        } else if ( payload.rfind("updateImageData:", 0) == 0 ) {
+            this->printMsg("payload for update ImageData:" + payload.substr(16) ) ;
+            return ;
+        }
+    }
+
+    if(name.compare("on_open") == 0 || (name == "raw" && payload == "requestData") || name.compare("on_update") == 0) {
         std::vector<std::map<string, string>> headers;
         std::vector<void *> sendingData;
         vtkSmartPointer<vtkDataSet> input ;
@@ -120,14 +196,14 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
         signed int *tmp;
         tmp = new int[1];
         tmp[0] = this->structureType ;
-        headers.push_back(combineObjectHeader("structureType", 1, 1, VTK_INT));
+        headers.push_back(ttkWebSocketIO::combine_object_header_object("structureType", 1, 1, VTK_INT));
         sendingData.push_back(tmp);
 
         if (this->structureType == 1) {  // unStructuredGrid
             input = this->lastInput ;
             int nPoints = input->GetNumberOfPoints();
             auto *pointCoords = (float *) this->lastInput->GetPoints()->GetVoidPointer(0);
-            headers.push_back(combineObjectHeader("pointCoords", nPoints, 3, VTK_FLOAT));
+            headers.push_back(ttkWebSocketIO::combine_object_header_object("pointCoords", nPoints, 3, VTK_FLOAT));
             sendingData.push_back(pointCoords);
 
             int nCells = this->lastInput->GetNumberOfCells();
@@ -137,7 +213,7 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
                 size_t nVertices = connectivityList[topoIndex];
                 topoIndex += nVertices + 1;
             }
-            headers.push_back(combineObjectHeader("connectivityList", topoIndex, 1, VTK_LONG));
+            headers.push_back(ttkWebSocketIO::combine_object_header_object("connectivityList", topoIndex, 1, VTK_LONG));
             sendingData.push_back(connectivityList);
         }
 
@@ -146,7 +222,7 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
             signed int *tmp;
             tmp = new int[6];
             this->lastImageInput->GetExtent(tmp);
-            headers.push_back(combineObjectHeader("Extent", 6, 1, VTK_INT));
+            headers.push_back(ttkWebSocketIO::combine_object_header_object("Extent", 6, 1, VTK_INT));
             sendingData.push_back(tmp);
         }
 
@@ -159,14 +235,14 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
                 vtkTemplateMacro({
                         size_t n = array->GetNumberOfValues();
                         auto values = (VTK_TT *) array->GetVoidPointer(0);
-                        headers.push_back(combineObjectHeader("PointData:" + string(array->GetName()),
+                        headers.push_back(ttkWebSocketIO::combine_object_header_object("PointData:" + string(array->GetName()),
                         array->GetNumberOfTuples(), array->GetNumberOfComponents(),
                         array->GetDataType()));
                         sendingData.push_back(values);});
                 case VTK_STRING:
                     auto values = (string *) array->GetVoidPointer(0);
                     headers.push_back(
-                            combineObjectHeader("PointData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
+                            ttkWebSocketIO::combine_object_header_object("PointData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
                     sendingData.push_back(values);
             }
         }
@@ -180,7 +256,7 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
                 vtkTemplateMacro({
                         size_t n = array->GetNumberOfValues();
                         auto values = (VTK_TT *) array->GetVoidPointer(0);
-                        headers.push_back(combineObjectHeader("CellData:" + string(array->GetName()),
+                        headers.push_back(ttkWebSocketIO::combine_object_header_object("CellData:" + string(array->GetName()),
                         array->GetNumberOfTuples(), array->GetNumberOfComponents(),
                         array->GetDataType()));
                         sendingData.push_back(values);
@@ -199,14 +275,14 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
                         size_t n = array->GetNumberOfValues();
                         auto values = (VTK_TT *) array->GetVoidPointer(0);
                         headers.push_back(
-                        combineObjectHeader("FieldData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), array->GetDataType()));
+                        ttkWebSocketIO::combine_object_header_object("FieldData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), array->GetDataType()));
                         sendingData.push_back(values);
                                  });
 
                 case VTK_STRING:
                     auto values = (string *) array->GetVoidPointer(0);
                     headers.push_back(
-                            combineObjectHeader("FieldData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
+                            ttkWebSocketIO::combine_object_header_object("FieldData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
                     sendingData.push_back(values);
             }
         }
@@ -215,13 +291,6 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
         this->setObjectState(0) ;
         this->setSendingData(sendingData) ;
         this->sendObject() ;
-    } else if (name.compare("updateUnstructuredGrid") == 0) {
-        this->printMsg("payload for update structuredGrid:" + payload) ;
-        this->CreateUnstructuredGrid( payload ) ;
-    } else if (name.compare("updateImageData") == 0) {
-        this->printMsg("payload for update ImageData:" + payload) ;
-    } else {
-        // other cases, none for now
     }
 }
 
@@ -342,6 +411,7 @@ int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
             fd->AddArray(array_s) ;
         }
     }
+    this->Modified() ;
     this->SetNeedsUpdate(true);
 
     return 1;

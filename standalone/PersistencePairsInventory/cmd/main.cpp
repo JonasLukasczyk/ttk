@@ -35,14 +35,14 @@ void startServer() {
 
 void startServerX() {
     // get the test data
-    auto unImageData = vtkSmartPointer<vtkXMLImageDataReader>::New();
-    unImageData->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/FingersPPI.vti");
+//    auto unImageData = vtkSmartPointer<vtkXMLImageDataReader>::New();
+//    unImageData->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/FingersPPI.vti");
 
     // send the two data to e2rr module
     auto webSocket = vtkSmartPointer<ttkWebSocketIO>::New();
-    webSocket->SetInputConnection(0, unImageData->GetOutputPort(0));
+//    webSocket->SetInputConnection(0, unImageData->GetOutputPort(0));
 
-    webSocket->SetPortNumber(8778);
+    webSocket->SetPortNumber(8777);
     webSocket->Update();
 
     // in the ParaView, the main thread will always be there
@@ -62,7 +62,7 @@ void startServerImage() {
     auto webSocket = vtkSmartPointer<ttkWebSocketIO>::New();
     webSocket->SetInputConnection(0, unImageData->GetOutputPort(0));
 
-    webSocket->SetPortNumber(8777);
+    webSocket->SetPortNumber(8778);
     webSocket->Update();
 
     // in the ParaView, the main thread will always be there

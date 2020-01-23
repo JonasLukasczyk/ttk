@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ServerManagerConfiguration>
-    <ProxyGroup name="sources">
+    <ProxyGroup name="filters">
         <SourceProxy name="WebSocketIO" class="ttkWebSocketIO" label="TTK WebSocketIO">
            <Documentation long_help="TODO" short_help="TODO">
                TODO
            </Documentation>
 
-            <InputProperty name="Input" command="SetInputConnection" multiple_input="1">
+            <InputProperty name="Input" command="SetInputConnection">
                 <ProxyGroupDomain name="groups">
                     <Group name="sources" />
                     <Group name="filters" />

@@ -142,10 +142,10 @@ class ttkWebSocketIO {
         });
     }
 
-    constructor (port, on_open, on_error, on_message, on_close, objectCallback) {
+    constructor (port, on_open, on_error, on_message, on_close, objectCallback, ip="localhost") {
         let uuid = ttkWebSocketIO.create_UUID();
         this.uuid = uuid ;
-        let socket = new WebSocket('ws://localhost:' + port);
+        let socket = new WebSocket('ws://'+ip+':' + port);
         socket.onopen = function() {  // add the interceptor
             return on_open() ;
         };
