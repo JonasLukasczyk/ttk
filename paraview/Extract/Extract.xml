@@ -88,6 +88,15 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 </Hints>
             </DoubleVectorProperty>
 
+            <!-- Array Mode -->
+            <IntVectorProperty name="ExtractUniqueValues" label="Extract unique values" number_of_elements="1" default_values="1" command="SetExtractUniqueValues" >
+                <BooleanDomain name="bool" />
+                <Documentation>TODO</Documentation>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="2" />
+                </Hints>
+            </IntVectorProperty>
+
             <!-- Geometry Mode -->
             <StringVectorProperty name="InputArray" label="Input Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
                 <ArrayListDomain name="array_list">
@@ -106,12 +115,18 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 <Documentation>The array that will be used to determine which part of the geometry should be extracted.</Documentation>
             </StringVectorProperty>
 
-            <IntVectorProperty name="ExtractUniqueValues" label="Extract unique values" number_of_elements="1" default_values="1" command="SetExtractUniqueValues" >
-                <BooleanDomain name="bool" />
-                <Documentation>TODO</Documentation>
+            <IntVectorProperty name="ValidationMode" command="SetValidationMode" number_of_elements="1" animateable="0" label="Validation Mode" default_values="2">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="&lt;"/>
+                    <Entry value="1" text="&lt;="/>
+                    <Entry value="2" text="=="/>
+                    <Entry value="3" text="&gt;="/>
+                    <Entry value="4" text="&gt; "/>
+                </EnumerationDomain>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="2" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="3" />
                 </Hints>
+                <Documentation>Determines how vertex values are compared agains each value of the expression.</Documentation>
             </IntVectorProperty>
 
             <IntVectorProperty name="CellMode" command="SetCellMode" number_of_elements="1" animateable="0" label="Cell Mode" default_values="0">
@@ -126,6 +141,9 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 <Documentation>Determines if a complete cell is extracted if "All" or "Any" of its vertices fulfill the criterion. If mode is set to "Sub", cells are reduced to the vertices that fulfill the criterion (e.g., to an edge of a triangle/tetrahedron).</Documentation>
             </IntVectorProperty>
 
+
+
+
             <PropertyGroup panel_widget="Line" label="Input Options">
                 <Property name="ExtractionMode" />
                 <Property name="ExpressionString" />
@@ -133,6 +151,7 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 <Property name="ImageBounds" />
                 <Property name="InputArray" />
                 <Property name="ExtractUniqueValues" />
+                <Property name="ValidationMode" />
                 <Property name="CellMode" />
             </PropertyGroup>
 
