@@ -36,6 +36,7 @@ namespace ttkUtils {
 
 #include <limits>
 #include <vtkStringArray.h>
+#include <stdlib.h>
 
 int ttkUtils::replaceVariable(const std::string &iString,
                               vtkFieldData *fieldData,
@@ -157,13 +158,11 @@ int ttkUtils::stringListToDoubleVector(const std::string &iString,
     return 0;
 
   size_t n = stringVector.size();
-  v.resize(n);
-  // try {
+  if(n>0){
+    v.resize(n);
     for(size_t i = 0; i < n; i++)
-        v[i] = stod(stringVector[i]);
-  // } catch(std::invalid_argument &e) {
-  //   return 0;
-  // }
+      v[i] = strtod(stringVector[i].c_str(), NULL);
+  }
 
   return 1;
 }

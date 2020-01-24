@@ -388,15 +388,17 @@ int ttkExtract::ExtractGeometry(
     doubleVectorToString(expressionValuesString, expressionValues);
 
     // print status
+    const std::string CellModeS[3] = {"All", "Any", "Sub"};
+    const std::string CellModeSLC[3] = {"all", "any", "sub"};
+    const std::string ValidationModeS[5] = {"<","<=","==",">=",">"};
     {
-        const std::string CellModeS[3] = {"All", "Any", "Sub"};
-        const std::string ValidationModeS[5] = {"<","<=","==",">=",">"};
+        this->printMsg( ttk::debug::Separator::L1 );
         this->printMsg({
             {"Ext. Mode", "Geometry"},
             {"Cell Mode", CellModeS[this->CellMode]},
             {"Condition", "'"+inputArrayName+"' "+ValidationModeS[this->ValidationMode]+" ["+expressionValuesString+"]"}
         });
-        this->printMsg( ttk::debug::Separator::L1 );
+        this->printMsg( ttk::debug::Separator::L2 );
     }
 
     // check input/output object validity
@@ -438,7 +440,7 @@ int ttkExtract::ExtractGeometry(
     // Marking Vertices
     // ---------------------------------------------------------------------
     {
-        this->printMsg("Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+expressionValuesString+"]", 0, ttk::debug::LineMode::REPLACE);
+        this->printMsg("Marking "+CellModeSLC[this->CellMode]+" cells with '"+inputArrayName+"' "+ValidationModeS[this->ValidationMode]+" ["+expressionValuesString+"]", 0, ttk::debug::LineMode::REPLACE);
         ttk::Timer t;
 
         // Mark vertices that satisfy condition
@@ -470,7 +472,7 @@ int ttkExtract::ExtractGeometry(
                 );
             }
         } else {
-            this->printErr("Extraction is only supported based on point and cell data.");
+            this->printErr("Geomerty extraction is only supported based on point and cell data.");
             return 0;
         }
 
@@ -567,7 +569,7 @@ int ttkExtract::ExtractGeometry(
                 oIndex_to_mIndex_map[i] = nMarkedPoints++;
 
         this->printMsg(
-            "Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+expressionValuesString+"]",
+            "Marking "+CellModeSLC[this->CellMode]+" cells with '"+inputArrayName+"' "+ValidationModeS[this->ValidationMode]+" ["+expressionValuesString+"]",
             1, t.getElapsedTime()
         );
     }
@@ -894,21 +896,8 @@ int ttkExtract::RequestData(
         }
     }
 
-    std::vector<std::string> valuesAsStrings;
-    ttkUtils::stringListToVector( finalExpressionString, valuesAsStrings );
-
-    const size_t nValues = valuesAsStrings.size();
-    std::vector<double> valuesAsD( nValues );
-
-    for(size_t i=0; i<nValues; i++){
-        try {
-            double value = stod( valuesAsStrings[i] );
-            valuesAsD[i] = value;
-        } catch(std::invalid_argument& e){
-            this->printErr("Unable to convert element '"+valuesAsStrings[i]+"' of input std::string '"+finalExpressionString+"' to double.");
-            return 0;
-        }
-    }
+    std::vector<double> values;
+    ttkUtils::stringListToDoubleVector( finalExpressionString, values );
 
     auto mode = this->ExtractionMode;
     if(mode<0){
@@ -922,18 +911,41 @@ int ttkExtract::RequestData(
         }
     }
 
+    // in case of array or geometry extraction iterate over vtkMultiBlockDataSet
+    auto inputAsMB = vtkSmartPointer<vtkMultiBlockDataSet>::New();
+    auto outputAsMB = vtkSmartPointer<vtkMultiBlockDataSet>::New();
+    size_t nBlocks;
+    if((mode==2 || mode==3) && input->IsA("vtkMultiBlockDataSet") ){
+
+        inputAsMB->ShallowCopy(input);
+        nBlocks = inputAsMB->GetNumberOfBlocks();
+
+        for(size_t b=0; b<nBlocks; b++){
+            auto inputBlock = inputAsMB->GetBlock(b);
+            auto outputBlock = vtkSmartPointer<vtkDataObject>::Take( inputBlock->NewInstance() );
+            outputAsMB->SetBlock(b, outputBlock);
+        }
+        output->ShallowCopy(outputAsMB);
+    } else {
+        inputAsMB->SetBlock(0, input);
+        outputAsMB->SetBlock(0, output);
+        nBlocks = 1;
+    }
+
     if(mode==0){
-        if(!this->ExtractBlocks( output, input, valuesAsD ))
+        if(!this->ExtractBlocks( output, input, values ))
             return 0;
     } else if(mode==1){
-        if(!this->ExtractRows( output, input, valuesAsD ))
+        if(!this->ExtractRows( output, input, values ))
             return 0;
     } else if(mode==2){
-        if(!this->ExtractArrayValues( output, input, valuesAsD ))
-            return 0;
+        for(size_t b=0; b<nBlocks; b++)
+            if(!this->ExtractArrayValues( outputAsMB->GetBlock(b), inputAsMB->GetBlock(b), values ))
+                return 0;
     } else if(mode==3){
-        if(!this->ExtractGeometry( output, input, valuesAsD ))
-            return 0;
+        for(size_t b=0; b<nBlocks; b++)
+            if(!this->ExtractGeometry( outputAsMB->GetBlock(b), inputAsMB->GetBlock(b), values ))
+                return 0;
     }
 
     this->printMsg( ttk::debug::Separator::L1 );
