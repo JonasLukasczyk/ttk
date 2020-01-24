@@ -22,6 +22,7 @@ class TTKEXTRACT_EXPORT ttkExtract : public ttkAlgorithm {
         int OutputType{-1};
         bool ExtractUniqueValues{true};
         std::string ExpressionString{""};
+        int ValidationMode{0};
         int CellMode{0};
         double ImageBounds[6]{0,0,0,0,0,0};
 
@@ -37,6 +38,9 @@ class TTKEXTRACT_EXPORT ttkExtract : public ttkAlgorithm {
 
         vtkSetMacro(ExtractUniqueValues, bool);
         vtkGetMacro(ExtractUniqueValues, bool);
+
+        vtkSetMacro(ValidationMode, int);
+        vtkGetMacro(ValidationMode, int);
 
         vtkSetMacro(CellMode, int);
         vtkGetMacro(CellMode, int);

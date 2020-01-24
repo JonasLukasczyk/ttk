@@ -104,33 +104,6 @@ int ttkExtract::RequestInformation(
     return 1;
 }
 
-template <class dataType>
-int markVertices(
-    std::vector<int>& oIndex_to_mIndex_map,
-    vtkAbstractArray* inputArray,
-    const size_t& nValues,
-    const std::vector<double>& labels
-){
-    auto data = (dataType*) inputArray->GetVoidPointer(0);
-
-    std::vector<dataType> labelsT( nValues );
-    for(size_t i=0; i<nValues; i++)
-        labelsT[i] = (dataType) labels[i];
-
-    for(size_t i=0, nPoints=inputArray->GetNumberOfTuples(); i<nPoints; i++){
-        const auto& dataValue = data[i];
-        bool contained = false;
-        for(size_t j=0; j<nValues; j++)
-            if(labelsT[j] == dataValue){
-                contained = true;
-                break;
-            }
-        if(contained)
-            oIndex_to_mIndex_map[i] = -2;
-    }
-    return 1;
-}
-
 int doubleVectorToString(std::string& str, const std::vector<double>& vec){
     std::stringstream ss;
     for(auto& v: vec)
@@ -269,14 +242,140 @@ int ttkExtract::ExtractRows(
     return 1;
 }
 
+template<typename dataType>
+struct ComperatorLessOrEqual {static bool Test(const dataType& d0, const dataType& d1){return d0<=d1;}};
+template<typename dataType>
+struct ComperatorLess {static bool Test(const dataType& d0, const dataType& d1){return d0<d1;}};
+template<typename dataType>
+struct ComperatorGreaterOrEqual {static bool Test(const dataType& d0, const dataType& d1){return d0>=d1;}};
+template<typename dataType>
+struct ComperatorGreater {static bool Test(const dataType& d0, const dataType& d1){return d0>d1;}};
+template<typename dataType>
+struct ComperatorEqual {static bool Test(const dataType& d0, const dataType& d1){return d0==d1;}};
+
+
+template <typename dataType, typename ComperatorType>
+int testPointDataArray(
+    std::vector<int>& oIndex_to_mIndex_map,
+
+    const size_t& nPoints,
+    const dataType* inputPointDataArray,
+    const std::vector<dataType> pivotValues,
+    const size_t& threadNumber
+){
+    const size_t nPivotValues = pivotValues.size();
+    #pragma omp parallel for num_threads(threadNumber)
+    for(size_t i=0; i<nPoints; i++){
+        bool hasToBeMarked = false;
+        const dataType& v = inputPointDataArray[i];
+        for(size_t j=0; j<nPivotValues; j++)
+            if(ComperatorType::Test(v, pivotValues[j]))
+                hasToBeMarked = true;
+        if(hasToBeMarked)
+            oIndex_to_mIndex_map[i] = -2;
+    }
+
+    return 1;
+}
+
+template <typename dataType, typename ComperatorType>
+int testCellDataArray(
+    std::vector<int>& oIndex_to_mIndex_map,
+
+    const size_t& nCells,
+    const vtkIdType* inConnectivityList,
+    const dataType* inputCellDataArray,
+    const std::vector<dataType> pivotValues,
+    const size_t& threadNumber
+){
+    const size_t nPivotValues = pivotValues.size();
+
+    #pragma omp parallel for num_threads(threadNumber)
+    for(size_t i=0; i<nCells; i++){
+        const dataType& v = inputCellDataArray[i];
+
+        bool hasToBeMarked = false;
+        for(size_t j=0; j<nPivotValues; j++)
+            if(ComperatorType::Test(v, pivotValues[j]))
+                hasToBeMarked = true;
+        if(hasToBeMarked){
+            const auto& u = inConnectivityList[i*3+1];
+            const auto& v = inConnectivityList[i*3+2];
+            oIndex_to_mIndex_map[u] = -2;
+            oIndex_to_mIndex_map[v] = -2;
+        }
+    }
+
+    return 1;
+}
+
+template <typename dataType>
+int markVerticesBasedOnPointData(
+    std::vector<int>& oIndex_to_mIndex_map,
+
+    const std::vector<double> pivotValues,
+    const size_t& nPoints,
+    const dataType* inputPointDataArray,
+    const size_t& validationMode,
+    const size_t& threadNumber
+){
+    const size_t nPivotValues = pivotValues.size();
+    std::vector<dataType> pivotValuesDT(nPivotValues);
+    for(size_t i=0; i<nPivotValues; i++)
+        pivotValuesDT[i] = (dataType)pivotValues[i];
+
+    if(validationMode==0)
+        return testPointDataArray<dataType,ComperatorLess<dataType>>( oIndex_to_mIndex_map, nPoints, inputPointDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==1)
+        return testPointDataArray<dataType,ComperatorLessOrEqual<dataType>>( oIndex_to_mIndex_map, nPoints, inputPointDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==2)
+        return testPointDataArray<dataType,ComperatorEqual<dataType>>( oIndex_to_mIndex_map, nPoints, inputPointDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==3)
+        return testPointDataArray<dataType,ComperatorGreaterOrEqual<dataType>>( oIndex_to_mIndex_map, nPoints, inputPointDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==4)
+        return testPointDataArray<dataType,ComperatorGreater<dataType>>( oIndex_to_mIndex_map, nPoints, inputPointDataArray, pivotValuesDT, threadNumber );
+
+    return 0;
+}
+
+template <typename dataType>
+int markVerticesBasedOnCellData(
+    std::vector<int>& oIndex_to_mIndex_map,
+
+    const std::vector<double> pivotValues,
+    const size_t& nCells,
+    const vtkIdType* inConnectivityList,
+    const dataType* inputCellDataArray,
+    const size_t& validationMode,
+    const size_t& threadNumber
+){
+    const size_t nPivotValues = pivotValues.size();
+    std::vector<dataType> pivotValuesDT(nPivotValues);
+    for(size_t i=0; i<nPivotValues; i++)
+        pivotValuesDT[i] = (dataType)pivotValues[i];
+
+    if(validationMode==0)
+        return testCellDataArray<dataType,ComperatorLess<dataType>>( oIndex_to_mIndex_map, nCells, inConnectivityList, inputCellDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==1)
+        return testCellDataArray<dataType,ComperatorLessOrEqual<dataType>>( oIndex_to_mIndex_map, nCells, inConnectivityList, inputCellDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==2)
+        return testCellDataArray<dataType,ComperatorEqual<dataType>>( oIndex_to_mIndex_map, nCells, inConnectivityList, inputCellDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==3)
+        return testCellDataArray<dataType,ComperatorGreaterOrEqual<dataType>>( oIndex_to_mIndex_map, nCells, inConnectivityList, inputCellDataArray, pivotValuesDT, threadNumber );
+    else if(validationMode==4)
+        return testCellDataArray<dataType,ComperatorGreater<dataType>>( oIndex_to_mIndex_map, nCells, inConnectivityList, inputCellDataArray, pivotValuesDT, threadNumber );
+
+    return 0;
+}
+
 int ttkExtract::ExtractGeometry(
     vtkDataObject* output,
     vtkDataObject* input,
-    const std::vector<double>& labels
+    const std::vector<double>& expressionValues
 ) {
     ttk::Timer globalTimer;
 
-    size_t nValues = labels.size();
+    size_t nValues = expressionValues.size();
 
     auto inputArray = this->GetInputArrayToProcess(0, input);
     if(!inputArray){
@@ -285,15 +384,17 @@ int ttkExtract::ExtractGeometry(
     }
     std::string inputArrayName = inputArray->GetName();
 
-    std::string labelsString = "";
-    doubleVectorToString(labelsString, labels);
+    std::string expressionValuesString = "";
+    doubleVectorToString(expressionValuesString, expressionValues);
 
     // print status
     {
+        const std::string CellModeS[3] = {"All", "Any", "Sub"};
+        const std::string ValidationModeS[5] = {"<","<=","==",">=",">"};
         this->printMsg({
             {"Ext. Mode", "Geometry"},
-            {"Cell Mode", std::string(this->CellMode==0 ? "All" : this->CellMode==1 ? "Any" : "Sub")},
-            {"Condition", "'"+inputArrayName+"' in ["+labelsString+"]"}
+            {"Cell Mode", CellModeS[this->CellMode]},
+            {"Condition", "'"+inputArrayName+"' "+ValidationModeS[this->ValidationMode]+" ["+expressionValuesString+"]"}
         });
         this->printMsg( ttk::debug::Separator::L1 );
     }
@@ -306,24 +407,19 @@ int ttkExtract::ExtractGeometry(
         return 0;
     }
 
-    // check input array validity
-    if(this->GetInputArrayAssociation(0,input)!=0){
-        this->printErr("Extraction is currently only supported based on point data.");
-        return 0;
-    }
     if(inputArray->GetNumberOfComponents()!=1){
         this->printErr("Data array '"+inputArrayName+"' must have only one component.");
         return 0;
     }
 
     // get points and cells
-    const size_t nPoints = inputArray->GetNumberOfTuples();
+    const size_t nPoints = inputAsUG->GetNumberOfPoints();
     auto inputPD = inputAsUG->GetPointData();
     auto inputCD = inputAsUG->GetCellData();
 
     // Input Topo
     size_t nInCells = inputAsUG->GetNumberOfCells();
-    auto inTopologyData = inputAsUG->GetCells()->GetPointer();
+    vtkIdType* inConnectivityList = inputAsUG->GetCells()->GetPointer();
 
     // Marked Points:
     //     -1: does not satisfy condition
@@ -342,19 +438,40 @@ int ttkExtract::ExtractGeometry(
     // Marking Vertices
     // ---------------------------------------------------------------------
     {
-        this->printMsg("Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+labelsString+"]", 0, ttk::debug::LineMode::REPLACE);
+        this->printMsg("Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+expressionValuesString+"]", 0, ttk::debug::LineMode::REPLACE);
         ttk::Timer t;
 
         // Mark vertices that satisfy condition
-        switch( inputArray->GetDataType() ){
-            vtkTemplateMacro(
-                markVertices<VTK_TT>(
-                    oIndex_to_mIndex_map,
-                    inputArray,
-                    nValues,
-                    labels
-                )
-            );
+        if(this->GetInputArrayAssociation(0,input)==0){
+            switch( inputArray->GetDataType() ){
+                vtkTemplateMacro(
+                    markVerticesBasedOnPointData<VTK_TT>(
+                        oIndex_to_mIndex_map,
+                        expressionValues,
+                        nPoints,
+                        (VTK_TT*) inputArray->GetVoidPointer(0),
+                        this->ValidationMode,
+                        this->threadNumber_
+                    )
+                );
+            }
+        } else if(this->GetInputArrayAssociation(0,input)==1){
+            switch( inputArray->GetDataType() ){
+                vtkTemplateMacro(
+                    markVerticesBasedOnCellData<VTK_TT>(
+                        oIndex_to_mIndex_map,
+                        expressionValues,
+                        nInCells,
+                        inConnectivityList,
+                        (VTK_TT*) inputArray->GetVoidPointer(0),
+                        this->ValidationMode,
+                        this->threadNumber_
+                    )
+                );
+            }
+        } else {
+            this->printErr("Extraction is only supported based on point and cell data.");
+            return 0;
         }
 
         // Mark vertices based on cell mode and determine outTopo stats
@@ -362,11 +479,11 @@ int ttkExtract::ExtractGeometry(
             if( this->CellMode==0 ){
                 // All
                 for(size_t i=0, inTopoIndex=0; i<nInCells; i++){
-                    size_t nVertices = inTopologyData[ inTopoIndex ];
+                    size_t nVertices = inConnectivityList[ inTopoIndex ];
 
                     bool all = true;
                     for(size_t j=1; j<=nVertices; j++)
-                        if( oIndex_to_mIndex_map[inTopologyData[inTopoIndex+j]]==-1 ){
+                        if( oIndex_to_mIndex_map[inConnectivityList[inTopoIndex+j]]==-1 ){
                             all = false;
                             break;
                         }
@@ -375,7 +492,7 @@ int ttkExtract::ExtractGeometry(
                         nOutCells++;
                         markedCells[i] = true;
                         for(size_t j=1; j<=nVertices; j++)
-                            oIndex_to_mIndex_map[ inTopologyData[inTopoIndex+j] ] = -3;
+                            oIndex_to_mIndex_map[ inConnectivityList[inTopoIndex+j] ] = -3;
                         outTopologyDataSize += 1 + nVertices;
                     }
 
@@ -387,11 +504,11 @@ int ttkExtract::ExtractGeometry(
 
                 // Mark Border Vertices
                 for(size_t i=0, inTopoIndex=0; i<nInCells; i++){
-                    size_t nVertices = inTopologyData[ inTopoIndex ];
+                    size_t nVertices = inConnectivityList[ inTopoIndex ];
                     size_t mVertices = 0;
 
                     for(size_t j=1; j<=nVertices; j++){
-                        auto& mIndex = oIndex_to_mIndex_map[inTopologyData[inTopoIndex+j]];
+                        auto& mIndex = oIndex_to_mIndex_map[inConnectivityList[inTopoIndex+j]];
                         if( mIndex==-2 || mIndex==-3 )
                             mVertices++;
                     }
@@ -401,7 +518,7 @@ int ttkExtract::ExtractGeometry(
                         nOutCells++;
                         markedCells[i] = true;
                         for(size_t j=1; j<=nVertices; j++){
-                            auto& mIndex = oIndex_to_mIndex_map[inTopologyData[inTopoIndex+j]];
+                            auto& mIndex = oIndex_to_mIndex_map[inConnectivityList[inTopoIndex+j]];
                             if(mIndex==-1) mIndex = -4; // Border Vertex
                             else if(mIndex==-2) mIndex = -3; // Inner Vertex
                         }
@@ -420,11 +537,11 @@ int ttkExtract::ExtractGeometry(
             } else if ( this->CellMode==2 ){
                 // Sub
                 for(size_t i=0, inTopoIndex=0; i<nInCells; i++){
-                    size_t nVertices = inTopologyData[ inTopoIndex ];
+                    size_t nVertices = inConnectivityList[ inTopoIndex ];
                     size_t mVertices = 0;
 
                     for(size_t j=1; j<=nVertices; j++){
-                        const auto& mIndex = oIndex_to_mIndex_map[ inTopologyData[inTopoIndex+j] ];
+                        const auto& mIndex = oIndex_to_mIndex_map[ inConnectivityList[inTopoIndex+j] ];
                         if ( mIndex==-2 || mIndex==-3  )
                             mVertices++;
                     }
@@ -433,7 +550,7 @@ int ttkExtract::ExtractGeometry(
                         nOutCells++;
                         markedCells[i] = true;
                         for(size_t j=1; j<=nVertices; j++){
-                            auto& mIndex = oIndex_to_mIndex_map[ inTopologyData[inTopoIndex+j] ];
+                            auto& mIndex = oIndex_to_mIndex_map[ inConnectivityList[inTopoIndex+j] ];
                             if( mIndex==-2 )
                                 mIndex = -3;
                         }
@@ -450,7 +567,7 @@ int ttkExtract::ExtractGeometry(
                 oIndex_to_mIndex_map[i] = nMarkedPoints++;
 
         this->printMsg(
-            "Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+labelsString+"]",
+            "Marking "+std::string(this->CellMode==0 ? "all" : this->CellMode==1 ? "any" : "sub")+" cells with '"+inputArrayName+"' in ["+expressionValuesString+"]",
             1, t.getElapsedTime()
         );
     }
@@ -554,12 +671,12 @@ int ttkExtract::ExtractGeometry(
 
         if(this->CellMode==0 || this->CellMode==1){
             for(size_t i=0, inTopoIndex=0, outTopoIndex=0, outCellIndex=0; i<nInCells; i++){
-                const size_t nVertices = inTopologyData[ inTopoIndex ];
+                const size_t nVertices = inConnectivityList[ inTopoIndex ];
                 if( markedCells[i] ){
                     markedCellTypes[ outCellIndex++ ] = types[nVertices];
                     outTopologyData[ outTopoIndex ] = nVertices;
                     for(size_t j=1; j<=nVertices; j++)
-                        outTopologyData[ outTopoIndex+j ] = oIndex_to_mIndex_map[ inTopologyData[inTopoIndex+j] ];
+                        outTopologyData[ outTopoIndex+j ] = oIndex_to_mIndex_map[ inConnectivityList[inTopoIndex+j] ];
                     outTopoIndex += nVertices+1;
                 }
 
@@ -568,12 +685,12 @@ int ttkExtract::ExtractGeometry(
         } else {
             // Sub
             for(size_t i=0, inTopoIndex=0, outTopoIndex=0, outCellIndex=0; i<nInCells; i++){
-                const size_t nVertices = inTopologyData[ inTopoIndex ];
+                const size_t nVertices = inConnectivityList[ inTopoIndex ];
 
                 if( markedCells[i] ){
                     size_t mVertices = 0;
                     for(size_t j=1; j<=nVertices; j++){
-                        const auto& mIndex = oIndex_to_mIndex_map[ inTopologyData[inTopoIndex+j] ];
+                        const auto& mIndex = oIndex_to_mIndex_map[ inConnectivityList[inTopoIndex+j] ];
                         if(mIndex>-1){
                             outTopologyData[ outTopoIndex + 1 + mVertices ] = mIndex;
                             mVertices++;
