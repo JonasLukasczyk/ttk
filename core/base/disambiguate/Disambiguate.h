@@ -495,7 +495,7 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType& regionID,
                 const std::vector<idType>& region,
-                const std::vector<idType>& negativeBoundaryIndices,
+                const idType& seedIndex,
                 const idType* distanceField
             ) const {
                 // init priority queue
@@ -505,12 +505,7 @@ namespace ttk {
                     std::vector<idType>,
                     LessComparator<idType,idType>
                 > queue(comperator);
-
-                // add vertex from negative boundary with largest distance to queue
-                {
-                    const auto& maxIndex = std::max_element(negativeBoundaryIndices.begin(), negativeBoundaryIndices.end(), LessComparator<idType,idType>(distanceField));
-                    queue.push( *maxIndex );
-                }
+                queue.push( seedIndex );
 
                 idType q=-1;
                 while(!queue.empty()){
@@ -589,6 +584,8 @@ namespace ttk {
                 );
 
                 // grow connected region from most distant vertex while maximizing distance towards saddle
+                const idType& maxBoundaryIndex = *std::max_element(boundaryWithoutLastSaddle.begin(), boundaryWithoutLastSaddle.end(), LessComparator<idType,idType>(localOffsets));
+
                 this->growRegionBasedOnFieldMaximum<idType>(
                     outputOffsets,
                     localOffsets,
@@ -596,7 +593,7 @@ namespace ttk {
                     triangulation,
                     propagationData.extremumIndex,
                     propagationData.region,
-                    boundaryWithoutLastSaddle,
+                    maxBoundaryIndex,
                     localOffsets
                 );
 
@@ -608,15 +605,17 @@ namespace ttk {
                 }
 
                 // check if we created new unwanted maxima
-                std::vector<idType> minima;
-                std::vector<idType> maxima;
+                std::vector<idType> regionMinima;
+                std::vector<idType> regionMaxima;
                 for(idType i=0; i<propagationData.region.size(); i++){
+                    const idType& v = propagationData.region[i];
+
+
+                    const idType& vOffset = localOffsets[v];
+
                     bool hasSmallerNeighbor = false;
                     bool hasLargerNeighbor = false;
                     bool ambiguous = false;
-
-                    const idType& v = propagationData.region[i];
-                    const idType& vOffset = localOffsets[v];
 
                     idType nNeighbors = triangulation->getVertexNeighborNumber( v );
                     for(size_t n=0; n<nNeighbors; n++){
@@ -636,12 +635,26 @@ namespace ttk {
                     }
 
                     if(!hasSmallerNeighbor && hasLargerNeighbor){
-                        minima.push_back(v);
+                        regionMinima.push_back(v);
                     } else if(hasSmallerNeighbor && !hasLargerNeighbor)
-                        maxima.push_back(v);
+                        regionMaxima.push_back(v);
                 }
 
-                if(minima.size()!=1 || maxima.size()!=1)
+                std::vector<idType> regionMinimaArtifacts(regionMinima.size()-1);
+                for(size_t i=0,q=0; i<regionMinima.size(); i++){
+                    const idType& v = regionMinima[i];
+                    if(v!=maxBoundaryIndex && v!=propagationData.lastEncounteredSaddle)
+                        regionMinimaArtifacts[q++] = v;
+                }
+
+                std::vector<idType> regionMaximaArtifacts(regionMaxima.size()-1);
+                for(size_t i=0,q=0; i<regionMaxima.size(); i++){
+                    const idType& v = regionMaxima[i];
+                    if(v!=maxBoundaryIndex && v!=propagationData.lastEncounteredSaddle)
+                        regionMaximaArtifacts[q++] = v;
+                }
+
+                if(regionMinimaArtifacts.size()!=0 || regionMaximaArtifacts.size()!=0)
                     this->printWrn("TODO: Disambiguation introduced new artifacts that have to be removed with an additional iteration.");
 
                 return 1;
@@ -718,11 +731,9 @@ namespace ttk {
                 for(idType i=0, n=triangulation->getNumberOfVertices(); i<n; i++)
                     outputOffsets[i] = -1;
 
-                // init task memory
-                std::vector<idType> localOffsets(triangulation->getNumberOfVertices(),-1);
+                // compute regions
                 std::unordered_map<idType, PropagationData<idType,comparatorType>> extremumIndexToPropagationDataMap;
 
-                // compute regions
                 this->computeRegions<idType,comparatorType>(
                     outputOffsets,
                     extremumIndexToPropagationDataMap,
@@ -733,6 +744,10 @@ namespace ttk {
                 );
 
                 // compute local order of regions
+                std::vector<idType> localOffsets(triangulation->getNumberOfVertices(),-1);
+                for(size_t i=0; i<localOffsets.size(); i++)
+                    localOffsets[i] = inputOffsets[i];
+
                 this->computeLocalOffsetsOfRegions<idType,PropagationData<idType,comparatorType>>(
                     localOffsets.data(),
                     outputOffsets,
@@ -796,15 +811,30 @@ namespace ttk {
                     true
                 );
 
-                // std::vector<dataType> inputScalars2(nVertices);
-                // // init offsets
-                // #ifdef TTK_ENABLE_OPENMP
-                // #pragma omp parallel for num_threads(this->threadNumber_)
-                // #endif
-                // for(idType v=0; v<nVertices; v++){
-                //     inputOffsets[v] = outputOffsets[v];
-                //     inputScalars2[v] = outputScalars[v];
-                // }
+                std::vector<dataType> inputScalars2(nVertices);
+
+                // init offsets
+                #ifdef TTK_ENABLE_OPENMP
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                #endif
+                for(idType v=0; v<nVertices; v++){
+                    inputOffsets[v] = outputOffsets[v];
+                    inputScalars2[v] = outputScalars[v];
+                }
+
+                // Minima
+                this->removeExtrema<dataType, idType, GreaterComparator<idType,idType>>(
+                    outputOffsets,
+                    outputScalars,
+
+                    triangulation,
+                    preservedCriticalPointIndices,
+                    nPreservedCriticalPointIndices,
+                    inputOffsets.data(),
+                    outputScalars,
+                    // inputScalars2.data(),
+                    false
+                );
 
                 // // Minima
                 // this->removeExtrema<dataType, idType, GreaterComparator<idType,idType>>(
@@ -815,33 +845,9 @@ namespace ttk {
                 //     preservedCriticalPointIndices,
                 //     nPreservedCriticalPointIndices,
                 //     inputOffsets.data(),
-                //     inputScalars2.data(),
+                //     inputScalars,
                 //     false
                 // );
-
-                // // Minima
-                // this->removeExtrema<dataType, idType, GreaterComparator<idType,idType>>(
-                //     dataType* outputScalars,
-                //     idType* outputOffsets,
-
-                //     triangulation,
-                //     preservedCriticalPointIndices,
-                //     nPreservedCriticalPointIndices
-                //     inputOffsets,
-                //     inputScalars,
-                //     true
-                // );
-
-                // if(false){
-                //     for(size_t i=0; i<localOffsets.size(); i++){
-                //         outputOffsets[i] = localOffsets[i];
-                //         outputScalars[i] = 0;
-                //     }
-
-                //     for(auto it : extremumIndexToPropagationDataMap)
-                //         outputScalars[it.second.lastEncounteredSaddle]=1;
-
-                // } else {
 
                 return 1;
             };

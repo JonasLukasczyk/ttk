@@ -199,7 +199,7 @@ vtkSmartPointer<vtkAbstractArray> ttkUtils::csvToVtkArray(std::string line) {
     array->SetNumberOfTuples(nValues);
     auto arrayData = (double *)array->GetVoidPointer(0);
       for(size_t i = 0; i < nValues; i++)
-        arrayData[i] = strtod(valuesAsString[i]);
+        arrayData[i] = strtod(valuesAsString[i].c_str(), NULL);
     return array;
   } else {
     auto array = vtkSmartPointer<vtkStringArray>::New();
