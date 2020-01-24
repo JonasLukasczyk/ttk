@@ -1,0 +1,8 @@
+NAME
+  ttkLevelSets
+SOURCES
+  ttkLevelSets.cpp
+HEADERS
+  ttkLevelSets.h
+DEPENDS
+  ttkAlgorithm
