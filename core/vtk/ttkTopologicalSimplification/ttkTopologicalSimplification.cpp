@@ -217,6 +217,7 @@ int ttkTopologicalSimplification::dispatch(
 
           this->triangulation_,
           (dataType*) inputScalarArray->GetVoidPointer(0),
+          (int*) inputOffsets_->GetVoidPointer(0),
           (int*) inputCriticalPointIdArray->GetVoidPointer(0),
           (int) inputCriticalPointIdArray->GetNumberOfTuples()
         );
