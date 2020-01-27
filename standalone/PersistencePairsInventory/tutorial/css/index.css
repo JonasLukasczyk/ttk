@@ -1,0 +1,45 @@
+.line2 {
+    fill: none;
+    stroke: #e00007;
+;
+    stroke-width: 2px;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.y.axis path {
+    display: none;
+}
+.overlay1 {
+    fill: none;
+    stroke: none;
+    pointer-events: all;
+}
+.focusLine {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 0.5px;
+}
+.focusCircle {
+    fill: red;
+}
+.brush {
+    width: 500px;
+}
+div.inline {
+    float: left;
+}
+.clearBoth {
+    clear: both;
+}
+.grid line {
+    stroke: lightgrey;
+    stroke-opacity: 0.5;
+    shape-rendering: crispEdges;
+}
+.grid path {
+    stroke-width: 0;
+}

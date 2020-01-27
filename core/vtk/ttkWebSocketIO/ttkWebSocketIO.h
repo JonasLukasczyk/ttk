@@ -53,7 +53,8 @@ class TTKWEBSOCKETIO_EXPORT ttkWebSocketIO
 
     private:
         int PortNumber;
-        int structureType = 1 ; // 1: vtkUnstructuredGrid, 2: vtkImageData
+        int structureType = 1 ; // 1: vtkUnstructuredGrid, 2: vtkImageData, 3: predefined
+        bool lastReqUpdate =  true ;
         vtkSmartPointer<vtkUnstructuredGrid> lastInput;
         vtkSmartPointer<vtkUnstructuredGrid> lastUGfromClient;
 

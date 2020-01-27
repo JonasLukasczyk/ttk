@@ -13,7 +13,19 @@ function formatInput(numberofcomponents, data) {
     return format_data;
 }
 
-function drawCurve(numberofcomponents, data) {
+d3.select("body")
+    .append("div")
+    .attr("id", "box_plot_tooltip")
+    .style("background", "black")
+    .style("opacity", 0.6)
+    .style("color", "white")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("position", "absolute")
+    .style("z-index", "10")
+    .style("visibility", "hidden");
+
+function drawBoxplotCurve(numberofcomponents, data) {
     Window.box_plot_config = {
         min_max_color: "#abdda4",
         q1_q3_color: "#3288bd",
@@ -94,7 +106,8 @@ function drawCurve(numberofcomponents, data) {
     Window.box_plot_config.y_domain = [1, d3.max(format_data, function (d) {
         return d[1];
     })];
-    var yScale = d3.scaleLinear()
+    var yScale = d3.scaleLog()
+        .clamp(true)
         .domain(Window.box_plot_config.y_domain)
         .range([height, 0]);
 
@@ -111,8 +124,8 @@ function drawCurve(numberofcomponents, data) {
     g.append("g")
         .attr('class', 'axis--x')
         .attr("transform", "translate(0," + height + ")")
-        .call(xAxis) ;
-        
+        .call(xAxis);
+
     g.append("g")
         .attr('class', 'axis--y')
         .call(yAxis);
@@ -174,7 +187,7 @@ function drawCurve(numberofcomponents, data) {
         points['median'].push(ret['median']);
         points['q3'].push(ret['q3']);
         points['min'].push(ret['min']);
-        points['data'].push(ret['data']) ;
+        points['data'].push(ret['data']);
     }
 
     drawPolygon();
@@ -205,8 +218,8 @@ function drawCurve(numberofcomponents, data) {
         }
         zoom();
 
-        $("#hidden-optimal-threshold").click() ;
-        $("#hidden-notification_xxyy").click() ;
+        $("#hidden-optimal-threshold").click();
+        $("#hidden-notification_xxyy").click();
     }
 
     $("#hidden-zoom-back").click(function () {
@@ -214,16 +227,16 @@ function drawCurve(numberofcomponents, data) {
         yScale.domain(Window.box_plot_config.y_domain);
         zoom();
 
-        $("#hidden-optimal-threshold").click() ;
-        $("#hidden-notification_xxyy").click() ;
+        $("#hidden-optimal-threshold").click();
+        $("#hidden-notification_xxyy").click();
     });
 
-    $("#hidden-optimal-threshold").click(function() {
-        d3.select(".optimal-threshold").remove() ;
+    $("#hidden-optimal-threshold").click(function () {
+        d3.select(".optimal-threshold").remove();
         if ($("#threshold").val().replace(" ", "") !== "") {
-            drawOptimalLine(parseFloat($("#threshold").val())) ;
+            drawOptimalLine(parseFloat($("#threshold").val()));
         }
-    } ) ;
+    });
 
     $("#customSwitches--x").click(function () {
         if ($("#customSwitches--x").is(':checked')) {
@@ -263,36 +276,36 @@ function drawCurve(numberofcomponents, data) {
         idleTimeout = null;
     }
 
-    $("#hidden-brush-mode, #notification_mode").click(function() {
-        if ( $(this).attr("mode") == "brush" ) {
-            $(".brush").remove() ;
-            $(this).attr("mode", "view") ;
-            $("#notification_mode").text("view mode") ;
+    $("#hidden-brush-mode, #notification_mode").click(function () {
+        if ($(this).attr("mode") == "brush") {
+            $(".brush").remove();
+            $(this).attr("mode", "view");
+            $("#notification_mode").text("view mode");
         } else {
             svg.append("g")
-            .attr("class", "brush")
-            .call(brush);
-            $(this).attr("mode", "brush") ;
-            $("#notification_mode").text("brush mode") ;
+                .attr("class", "brush")
+                .call(brush);
+            $(this).attr("mode", "brush");
+            $("#notification_mode").text("brush mode");
         }
-    } ) ;
+    });
 
-    $("#hidden-notification_xxyy").click(function() {
-        $("#notification_xxyy").text(yScale.domain()[0].toFixed(1) + "-" + yScale.domain()[1].toFixed(1) + 
-                                        ", " + xScale.domain()[0].toFixed(1) + "-" + xScale.domain()[1].toFixed(1) );
-    }) ;
+    $("#hidden-notification_xxyy").click(function () {
+        $("#notification_xxyy").text(yScale.domain()[0].toFixed(1) + "-" + yScale.domain()[1].toFixed(1) +
+            ", " + xScale.domain()[0].toFixed(1) + "-" + xScale.domain()[1].toFixed(1));
+    });
 
-    $("#hidden-notification_xxyy-zoom").click(function() {
-        var x = $("#x-y-range-change").val().replace(" ", "") ;
-        yScale.domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]) ;
-        xScale.domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]) ;
+    $("#hidden-notification_xxyy-zoom").click(function () {
+        var x = $("#x-y-range-change").val().replace(" ", "");
+        yScale.domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]);
+        xScale.domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]);
 
-        zoom() ;
+        zoom();
 
-        $("#hidden-notification_xxyy").click() ;
-        $("#exampleModalLabel-close").click() ;
-        $("#hidden-optimal-threshold").click() ;
-    } );
+        $("#hidden-notification_xxyy").click();
+        $("#exampleModalLabel-close").click();
+        $("#hidden-optimal-threshold").click();
+    });
 
     function zoom() {
         var t = svg.transition().duration(750);
@@ -443,7 +456,7 @@ function drawCurve(numberofcomponents, data) {
             })
 
         var lineStroke = "2px"
-        
+
         var mouseG = g.append("g")
             .attr("class", "mouse-over-effects");
 
@@ -479,18 +492,18 @@ function drawCurve(numberofcomponents, data) {
             .style("stroke-width", lineStroke)
             .style("opacity", "0");
 
-        mouseG.append('svg:rect') // append a rect to catch mouse movements on canvas            
+        mouseG.append('svg:rect') // append a rect to catch mouse movements on canvas
             .attr('width', width)
             .attr('height', height)
             .attr('fill', 'none')
             .attr('pointer-events', 'all')
             .on('mouseout', function () { // on mouse out hide line, circles and text
                 d3.select(".mouse-line")
-                .style("opacity", "0");
+                    .style("opacity", "0");
                 d3.selectAll(".mouse-per-line circle")
-                .style("opacity", "0");
+                    .style("opacity", "0");
                 d3.selectAll(".mouse-per-line text")
-                .style("opacity", "0");
+                    .style("opacity", "0");
                 return d3.select("#box_plot_tooltip").style("visibility", "hidden");
             })
             .on('mouseover', function () { // on mouse in show line, circles and text
@@ -503,7 +516,9 @@ function drawCurve(numberofcomponents, data) {
             })
             .on('mousemove', function () { // update tooltip content, line, circles and text when mouse moves
                 var mouse = d3.mouse(this)
-                var bisect = d3.bisector(function (d) { return d[0]; }).left
+                var bisect = d3.bisector(function (d) {
+                    return d[0];
+                }).left
 
                 d3.selectAll(".mouse-per-line")
                     .attr("transform", function (d, i) {
@@ -516,25 +531,25 @@ function drawCurve(numberofcomponents, data) {
                                 return data;
                             });
                         return "translate(" + xScale(d.values[idx][0]) + "," + yScale(d.values[idx][1]) + ")";
-                });
+                    });
 
-                $("#box_plot_tooltip").html("") ;
-                var xIdx = xScale.invert(mouse[0]) ;
-                var idx = -1 ;
-                res_nested.forEach(function(d) {
+                $("#box_plot_tooltip").html("");
+                var xIdx = xScale.invert(mouse[0]);
+                var idx = -1;
+                res_nested.forEach(function (d) {
                     if (idx === -1) {
-                        idx = bisect(d.values, xIdx) ;
-                    } 
+                        idx = bisect(d.values, xIdx);
+                    }
                     value = d.key.replace("group_", "") + ": <code>" + d.values[idx][1] + "</code>"
                     if ($("#box_plot_tooltip").html() == "") {
-                       $("#box_plot_tooltip").html("<strong>Threshold: </strong> <code>" + ( idx + 1 ) + "</code><br>- " + value) ;
+                        $("#box_plot_tooltip").html("<strong>Threshold: </strong> <code>" + (idx + 1) + "</code><br>- " + value);
                     } else {
-                        $("#box_plot_tooltip").html($("#box_plot_tooltip").html() + "<br>- " + value) ;
+                        $("#box_plot_tooltip").html($("#box_plot_tooltip").html() + "<br>- " + value);
                     }
                 })
-                
+
                 //console.log("Threshold is: ", idx + 1, points['data'][idx]) ;
-                return d3.select("#box_plot_tooltip").style("top", (event.pageY-10)+"px").style("left",(event.pageX+10)+"px");
+                return d3.select("#box_plot_tooltip").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
             })
     }
 
