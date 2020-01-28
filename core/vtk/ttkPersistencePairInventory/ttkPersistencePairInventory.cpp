@@ -122,7 +122,7 @@ int ttkPersistencePairInventory::RequestData(
             arrayCopy->SetNumberOfTuples(nCols);
 
             for(size_t b=0; b<nCols; b++){
-                auto blockAsUG = vtkUnstructuredGrid::SafeDownCast( inputAsMB->GetBlock(i) );
+                auto blockAsUG = vtkUnstructuredGrid::SafeDownCast( inputAsMB->GetBlock(b) );
                 if(!blockAsUG){
                     this->printErr("Input 'vtkMultiBlockDataSet' block not of type 'vtkUnstructuredGrid'.");
                     return 0;
