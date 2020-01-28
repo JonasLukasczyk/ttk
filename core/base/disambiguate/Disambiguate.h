@@ -501,6 +501,8 @@ namespace ttk {
             ) const {
 
                 // NOTE: this function uses the localOffsets during computation to add every region vertex exectly once
+                for(size_t i=0, j=region.size(); i<j; i++)
+                    localOffsets[region[i]] = regionID;
 
                 // init priority queue
                 const LessComparator<idType,idType> comperator(distanceField);
@@ -512,7 +514,7 @@ namespace ttk {
                 queue.push( seedIndex );
                 localOffsets[seedIndex] = -1;
 
-                std::vector<idType> localVertexSequence(region.size());
+                std::vector<idType> localVertexSequence(region.size()+1);
 
                 idType q=0;
                 while(!queue.empty()){
@@ -536,7 +538,7 @@ namespace ttk {
 
                 // finalize tempOffsets and reset outputOffsets
                 for(size_t i=0, j=region.size(); i<j; i++)
-                    localOffsets[ localVertexSequence[i] ] = i;
+                    localOffsets[ localVertexSequence[i+1] ] = i;
 
                 return 1;
             }
@@ -771,13 +773,25 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* regionMask,
                 const idType* inputOffsets,
-                const PropagationType* propagationData,
-                const bool removeMaxima
+                const PropagationType* propagationData
             ) const {
 
-                std::vector<idType> boundaryWithoutLastSaddle(propagationData->region.size(),-1);
+                std::vector<idType> boundary;
                 {
-                    size_t nBoundaryVertices = 0;
+                    // size_t nBoundaryVertices = 0;
+                    // for (auto it=propagationData->queue.begin(), end=propagationData->queue.end();it!=end; ++it) {
+                    //     const idType v = *it;
+                    //     idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+
+                    //     // // if some neighbor u of v is inside the region add u
+                    //     for(idType n=0; n<nNeighbors; n++){
+                    //         idType u;
+                    //         triangulation->getVertexNeighbor(v,n,u);
+                    //         if(regionMask[u]==propagationData->extremumIndex)
+                    //             boundary.push_back(u);
+                    //     }
+                    // }
+
                     for(size_t i=0, j=propagationData->region.size(); i<j; i++){
                         const idType& v = propagationData->region[i];
 
@@ -786,40 +800,35 @@ namespace ttk {
                         for(idType n=0; n<nNeighbors; n++){
                             idType u;
                             triangulation->getVertexNeighbor(v,n,u);
-                            if(regionMask[u]!=propagationData->extremumIndex && u!=propagationData->lastEncounteredSaddle){
-                                boundaryWithoutLastSaddle[nBoundaryVertices++]=v;
+                            if(regionMask[u]!=propagationData->extremumIndex){
+                                boundary.push_back(v);
+                                // boundary[nBoundaryVertices++]=v;
                                 break;
                             }
                         }
                     }
 
                     // check if there is at least one boundary vertex
-                    if(nBoundaryVertices>0){
-                        boundaryWithoutLastSaddle.resize(nBoundaryVertices);
-                    } else {
+                    if(boundary.size()<1){
                         this->printWrn("Unable to determine complementary saddle boundary.");
                         for(size_t i=0, j=propagationData->region.size(); i<j; i++)
-                            boundaryWithoutLastSaddle[i] = propagationData->region[i];
+                            boundary[i] = propagationData->region[i];
                     }
                 }
 
-                // compute breadth first search distance from last encountered saddle
-                this->computeBreadthFirstSearchField<idType>(
-                    localOffsets,
+                // // compute breadth first search distance from last encountered saddle
+                // this->computeBreadthFirstSearchField<idType>(
+                //     tempOffsets,
 
-                    triangulation,
-                    regionMask,
-                    propagationData->extremumIndex,
-                    propagationData->region,
-                    propagationData->lastEncounteredSaddle
-                );
+                //     triangulation,
+                //     regionMask,
+                //     propagationData->extremumIndex,
+                //     propagationData->region,
+                //     propagationData->lastEncounteredSaddle
+                // );
 
                 // grow connected region from most distant vertex while maximizing distance towards saddle
-                const idType& maxBoundaryIndex = *std::max_element(boundaryWithoutLastSaddle.begin(), boundaryWithoutLastSaddle.end(), LessComparator<idType,idType>(localOffsets));
-
-                for(size_t i=0, j=propagationData->region.size(); i<j; i++)
-                    tempOffsets[propagationData->region[i]] = localOffsets[propagationData->region[i]];
-
+                // const idType& maxBoundaryIndex = *std::max_element(boundary.begin(), boundary.end(), LessComparator<idType,idType>(inputOffsets));
                 this->growRegionBasedOnFieldMaximum<idType>(
                     localOffsets,
 
@@ -827,8 +836,9 @@ namespace ttk {
                     regionMask,
                     propagationData->extremumIndex,
                     propagationData->region,
-                    maxBoundaryIndex,
-                    tempOffsets
+                    // maxBoundaryIndex,
+                    propagationData->lastEncounteredSaddle,
+                    inputOffsets
                 );
 
                 // int it = 0;
@@ -949,8 +959,7 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* regionMask,
                 const idType* inputOffsets,
-                const std::vector<PropagationType*>& propagationList,
-                const bool removeMaxima
+                const std::vector<PropagationType*>& propagationList
             ) const {
                 ttk::Timer t;
                 this->printMsg( "Computing local order of regions", 0, 0, this->threadNumber_, debug::LineMode::REPLACE );
@@ -960,8 +969,9 @@ namespace ttk {
                 const idType nPropagations = propagationList.size();
 
                 #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType i=0; i<nVertices; i++)
-                    localOffsets[i] = -1;
+                for(idType i=0; i<nVertices; i++){
+                    tempOffsets[i] = -1;
+                }
 
                 #pragma omp parallel num_threads(this->threadNumber_)
                 #pragma omp single
@@ -977,8 +987,7 @@ namespace ttk {
                         triangulation,
                         regionMask,
                         inputOffsets,
-                        propagationList[i],
-                        removeMaxima
+                        propagationList[i]
                     );
                 }
 
@@ -1050,13 +1059,11 @@ namespace ttk {
                     triangulation,
                     regionMask,
                     inputOffsets,
-                    propagationList,
-                    removeMaxima
+                    propagationList
                 );
 
-                // for(size_t i=0; i<discardedMaxima.size(); i++)
-                //     outputOffsets[discardedMaxima[i]] = 999999;
-
+                // for(size_t i=0; i<nVertices; i++)
+                //     outputOffsets[i] = localOffsets[i];
 
                 // compute output offsets
                 {
@@ -1075,7 +1082,7 @@ namespace ttk {
                                 regionMask[i] = regionMask[propagation->lastEncounteredSaddle];
 
                             // if(removeMaxima)
-                                localOffsets[propagation->lastEncounteredSaddle]=std::numeric_limits<idType>::max();
+                                localOffsets[propagation->lastEncounteredSaddle]=std::numeric_limits<idType>::min();
                             // else
                             //     localOffsets[propagation->lastEncounteredSaddle]=std::numeric_limits<idType>::min();
                         }
@@ -1090,14 +1097,14 @@ namespace ttk {
                             outputOffsets,
 
                             triangulation->getNumberOfVertices(),
-                            DataMinOffsetComparator<idType,idType>(regionMask, localOffsets.data())
+                            DataMaxOffsetComparator<idType,idType>(regionMask, localOffsets.data())
                         );
                     } else {
                         this->computeGlobalOffsets<idType,idType>(
                             outputOffsets,
 
                             triangulation->getNumberOfVertices(),
-                            DataMaxOffsetComparator<idType,idType>(regionMask, localOffsets.data())
+                            DataMinOffsetComparator<idType,idType>(regionMask, localOffsets.data())
                         );
                     }
                 }
@@ -1126,7 +1133,7 @@ namespace ttk {
 
                 // compute initial offsets if not exisitng (currently this done by default)
                 this->computeGlobalOffsets<dataType,idType>(
-                    inputOffsets.data(),
+                    outputOffsets,
 
                     nVertices,
                     DataMinOffsetComparator<dataType,idType>(inputScalars,inputOffsetsCorrupted)
@@ -1138,6 +1145,11 @@ namespace ttk {
 
                 while(true){
                     this->printWrn("Iteration: "+std::to_string(iteration++));
+
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType v=0; v<nVertices; v++){
+                        inputOffsets[v] = outputOffsets[v];
+                    }
 
                     bool hasExtremaToRemove = false;
 
@@ -1154,14 +1166,11 @@ namespace ttk {
                         true
                     );
 
-                    // init offsets
-                    std::vector<dataType> inputScalars2(nVertices);
-                    #ifdef TTK_ENABLE_OPENMP
+                    // break;
+
                     #pragma omp parallel for num_threads(this->threadNumber_)
-                    #endif
                     for(idType v=0; v<nVertices; v++){
                         inputOffsets[v] = outputOffsets[v];
-                        inputScalars2[v] = outputScalars[v];
                     }
 
                     // Minima
@@ -1176,11 +1185,6 @@ namespace ttk {
                         inputOffsets.data(),
                         false
                     );
-
-                    for(idType v=0; v<nVertices; v++){
-                        inputOffsets[v] = outputOffsets[v];
-                        inputScalars2[v] = outputScalars[v];
-                    }
 
                     if(!hasExtremaToRemove)
                         break;
