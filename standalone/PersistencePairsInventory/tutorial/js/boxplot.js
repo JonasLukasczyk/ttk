@@ -276,17 +276,17 @@ function drawBoxplotCurve(numberofcomponents, data) {
         idleTimeout = null;
     }
 
-    $("#hidden-brush-mode, #notification_mode").click(function () {
-        if ($(this).attr("mode") == "brush") {
+    $("#hidden-brush-mode").click(function () {
+        if ($("#brush_mode").attr("mode") == "brush") {
             $(".brush").remove();
-            $(this).attr("mode", "view");
-            $("#notification_mode").text("view mode");
+            $("#brush_mode").attr("mode", "view");
+            $("#brush_mode").text("view mode");
         } else {
             svg.append("g")
                 .attr("class", "brush")
                 .call(brush);
-            $(this).attr("mode", "brush");
-            $("#notification_mode").text("brush mode");
+            $("#brush_mode").attr("mode", "brush");
+            $("#brush_mode").text("brush mode");
         }
     });
 

@@ -157,13 +157,10 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
                 '"idx_scale": [' + d[1] + '], "actual_scale": [' + ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (h - 1) + fieldData['ScalarBounds'].Values[0]) + '],' +
                 '"PPI": [' + d[2] + '] }}';
             if (!DEV) {
-                // send the empty unStructuredGrid with field data
-                Window.socket = socket;
-                //Window.socket.send('updateUnstructuredGrid:{}');
+                Window.socket = socket ;
                 socket.send(mm) ;
-            } else {
-                console.log(mm) ;
-            }
+            } 
+            console.log(mm) ;
         });
 }
 
@@ -265,6 +262,8 @@ $("#save-xy-axis").click(function () {
 });
 
 function objectCallback(msg) {
+    Window.object = msg;
+
     //reset
     if (msg.hasOwnProperty("FieldData") && msg.FieldData.hasOwnProperty("PersistenceCurves")) {
         $("#box_dataviz").html("");
@@ -275,9 +274,10 @@ function objectCallback(msg) {
         $("#l1").prop("checked", false);
         $("#b1").html("<option>lines</option>");
         $("#l3").prop("checked", true);
+        $("#download_raw_data").attr("href", "") ;
         $("#threshold").val("");
         $("#notification_xxyy").text("0-0, 0-0");
-        $("#notification_mode").text("view mode");
+        $("#brush_mode").text("view mode").attr("mode", "view");
         drawBoxplotCurve(msg.FieldData.PersistenceCurves.NumberOfComponents, msg.FieldData.PersistenceCurves.Values);
         Window.persistence_num = msg.FieldData.PersistenceCurves.NumberOfComponents;
 
@@ -286,7 +286,6 @@ function objectCallback(msg) {
     }
 
     if (msg.hasOwnProperty("structureType")) {
-        Window.msg = msg;
         let name = "";
         if (msg.structureType.Values[0] === 2) {
             console.log("This is a ttkImageData");
@@ -307,7 +306,7 @@ function objectCallback(msg) {
                     }
                 }
             }
-            Window.nameX = name;
+            Window.APPIAttrName = name;
             $("#s1").attr("disabled", "disabled");
             if (DEV) {
                 renderHistogram(msg['Extent'].Values,
@@ -334,17 +333,17 @@ function objectCallback(msg) {
 $("#s2").change(function () {
     $("#s2 option:selected").each(function () {
         if (DEV) {
-            renderHistogram(Window.msg['Extent'].Values,
-                Window.msg['PointData'][Window.nameX].Values,
-                Window.msg['PointData'][Window.nameX].NumberOfComponents,
-                Window.msg['FieldData'],
+            renderHistogram(Window.object['Extent'].Values,
+                Window.object['PointData'][Window.APPIAttrName].Values,
+                Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                Window.object['FieldData'],
                 parseInt($(this).text()),
                 null);
         } else {
-            renderHistogram(Window.msg['Extent'].Values,
-                Window.msg['PointData'][Window.nameX].Values,
-                Window.msg['PointData'][Window.nameX].NumberOfComponents,
-                Window.msg['FieldData'],
+            renderHistogram(Window.object['Extent'].Values,
+                Window.object['PointData'][Window.APPIAttrName].Values,
+                Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                Window.object['FieldData'],
                 parseInt($(this).text()),
                 ttk.getSocketObject());
         }
@@ -352,7 +351,7 @@ $("#s2").change(function () {
     });
 });
 
-let ttk, ttk3;
+let ttk;
 
 function Connect() {
     DEV = false;
@@ -387,16 +386,6 @@ function Request() {
     if (ttk)
         ttk.send("requestData");
 }
-
-// function Close() {
-//     if (ttk)
-//         ttk.close() ;
-// }
-
-// function Send() {
-//     if (ttk)
-//         ttk.send(document.getElementById("txt").value) ;
-// }
 
 function LoadTest() {
     DEV = true;
@@ -456,6 +445,10 @@ d3.select("body").on('keydown', function () {
     }
 });
 
+$("#brush_mode").click(function() {
+    $("#hidden-brush-mode").click(); 
+})
+
 $('#threshold').on('keypress', function (e) {
     if (e.which === 13) {
         if ($(this).val().replace(" ", "") == "") {
@@ -488,17 +481,17 @@ $('#rel-window').on('keypress', function (e) {
             alert("this is not valid number");
         } else {
             if (DEV) {
-                renderHistogram(Window.msg['Extent'].Values,
-                    Window.msg['PointData'][Window.nameX].Values,
-                    Window.msg['PointData'][Window.nameX].NumberOfComponents,
-                    Window.msg['FieldData'],
+                renderHistogram(Window.object['Extent'].Values,
+                    Window.object['PointData'][Window.APPIAttrName].Values,
+                    Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                    Window.object['FieldData'],
                     parseInt($("#s2").val()),
                     null);
             } else {
-                renderHistogram(Window.msg['Extent'].Values,
-                    Window.msg['PointData'][Window.nameX].Values,
-                    Window.msg['PointData'][Window.nameX].NumberOfComponents,
-                    Window.msg['FieldData'],
+                renderHistogram(Window.object['Extent'].Values,
+                    Window.object['PointData'][Window.APPIAttrName].Values,
+                    Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                    Window.object['FieldData'],
                     parseInt($("#s2").val()),
                     ttk.getSocketObject());
             }

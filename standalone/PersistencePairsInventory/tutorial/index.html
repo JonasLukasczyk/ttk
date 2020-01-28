@@ -3,7 +3,7 @@
 <head>
    <meta charset="UTF-8">
    <title>Persistence Pairs - tutorial</title>
-   <script type="text/javascript" src="../../WebSocketIO/js/ttkWebSocket.js"></script>
+   
    <script type="text/javascript" src="./js/jquery.min.js"></script>
    <script type="text/javascript" src="./js/bootstrap.min.js"></script>
    <script type="text/javascript" src="./js/testdataset.js"></script>
@@ -44,15 +44,9 @@
                Port:
                <input id="msg" type="text" value="9285">
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
-               <!-- <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button> -->
-               <!-- <button id="close" onclick="Close();" class="btn btn-primary btn-sm">Close</button> -->
+               <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button>
                &nbsp; &nbsp; -<code> OR </code>- &nbsp; &nbsp;
                <button id="load_test" onclick="LoadTest();" class="btn btn-secondary btn-sm">Load test dataset</button>
-               <!-- <br> Message:
-                  <br>
-                  <textarea id="txt" style="width: 100%;" type="text"></textarea>
-                  <br>
-                  <button id="send" onclick="Send();" class="btn btn-primary btn-sm" style="float:right;">Send</button> -->
                <br>
             </div>
          </div>
@@ -60,7 +54,6 @@
       <div class="row">
          <div class="col" style="padding-right:4px;width:936.5px;">
             <div class="text-justify p-2 border bg-light" style="height: 100%;">
-               <!-- https://www.flaticon.com/ -->
                <h4>Boxplot View </h4>
                <div id="bar-boxplot">
                   <input type="checkbox" id="l1">
@@ -91,7 +84,7 @@
                   </div>
                   <div style="float:right;">
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#exampleModal" >0-0, 0-0</span>
-                     <span id="notification_mode" class="p-1 bg-success text-white rounded" style="font-size:12px;cursor:pointer;">view mode</span>
+                     <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
                      <image id="box_zoom_back" style="width:20px;" src="./images/zoom_back.png"></image>
                   </div>
                   <!-- for purpose -->
@@ -125,6 +118,7 @@
       </div>
    </div>
 </div>
+<script type="text/javascript" src="../../WebSocketIO/js/ttkWebSocket.js"></script>
 <script src="./js/index.js"></script>
 <script type="text/javascript" src="./js/boxplot.js"></script>
 </body>
