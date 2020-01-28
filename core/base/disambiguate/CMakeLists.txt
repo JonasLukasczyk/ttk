@@ -3,6 +3,7 @@ ttk_add_base_library(disambiguate
     Disambiguate.cpp
   HEADERS
     Disambiguate.h
+    PropagationData.h
   LINK
     triangulation
 )
