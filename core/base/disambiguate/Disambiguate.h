@@ -28,9 +28,9 @@ namespace ttk {
             template<typename T1, typename T2>
             struct LessComparator {
                 const T1* data;
-                LessComparator(){};
-                LessComparator(const T1* data):data(data){};
-                int operator() (const T2& i, const T2& j) const {
+                inline LessComparator(){};
+                inline LessComparator(const T1* data):data(data){};
+                inline int operator() (const T2& i, const T2& j) const {
                     const T1& iData = this->data[i];
                     const T1& jData = this->data[j];
                     return iData==jData
@@ -42,9 +42,9 @@ namespace ttk {
             template<typename T1, typename T2>
             struct GreaterComparator {
                 const T1* data;
-                GreaterComparator(){};
-                GreaterComparator(const T1* data):data(data){};
-                int operator() (const T2& i, const T2& j) const {
+                inline GreaterComparator(){};
+                inline GreaterComparator(const T1* data):data(data){};
+                inline int operator() (const T2& i, const T2& j) const {
                     const T1& iData = this->data[i];
                     const T1& jData = this->data[j];
                     return iData==jData
@@ -57,9 +57,9 @@ namespace ttk {
             struct DataMinOffsetComparator {
                 const T1* data;
                 const T2* offsets;
-                DataMinOffsetComparator(){};
-                DataMinOffsetComparator(const T1* data, const T2* offsets):data(data),offsets(offsets){};
-                int operator() (const T2& i, const T2& j) const {
+                inline DataMinOffsetComparator(){};
+                inline DataMinOffsetComparator(const T1* data, const T2* offsets):data(data),offsets(offsets){};
+                inline int operator() (const T2& i, const T2& j) const {
                     const T1& iData = this->data[i];
                     const T1& jData = this->data[j];
                     const T2& iOffset = this->offsets[i];
@@ -74,9 +74,9 @@ namespace ttk {
             struct DataMaxOffsetComparator {
                 const T1* data;
                 const T2* offsets;
-                DataMaxOffsetComparator(){};
-                DataMaxOffsetComparator(const T1* data, const T2* offsets):data(data),offsets(offsets){};
-                int operator() (const T2& i, const T2& j) const {
+                inline DataMaxOffsetComparator(){};
+                inline DataMaxOffsetComparator(const T1* data, const T2* offsets):data(data),offsets(offsets){};
+                inline int operator() (const T2& i, const T2& j) const {
                     const T1& iData = this->data[i];
                     const T1& jData = this->data[j];
                     const T2& iOffset = this->offsets[i];
@@ -1144,7 +1144,10 @@ namespace ttk {
                 std::vector<dataType> inputScalars2(nVertices);
 
                 while(true){
-                    this->printWrn("Iteration: "+std::to_string(iteration++));
+                    this->printMsg(
+                        "Iteration: "+std::to_string(iteration++),
+                        ttk::debug::Separator::L2
+                    );
 
                     #pragma omp parallel for num_threads(this->threadNumber_)
                     for(idType v=0; v<nVertices; v++){
