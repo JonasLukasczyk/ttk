@@ -144,7 +144,9 @@ int ttkWebSocketIO::RequestData(
         if (!this->isListening()){
             this->startServer( this->PortNumber );
         } else {
-            this->processClientRequest("on_update");
+            if ( this->lastReqUpdate ) {
+                this->processClientRequest("on_update");
+            }
         }
     } catch (const std::exception& e) {
         this->printMsg("start Server error: " + string(e.what())) ;
@@ -162,6 +164,7 @@ int ttkWebSocketIO::RequestData(
         if ( this->lastUGfromClient != NULL)
             output->ShallowCopy( this->lastUGfromClient );
     }
+    this->lastReqUpdate = true ;
     return 1;
 }
 
@@ -181,9 +184,14 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
     if ( name == "raw" ) {
         if ( payload.rfind("updateUnstructuredGrid:", 0) == 0 ) {
             this->CreateUnstructuredGrid(  payload.substr(23) ) ;
+            this->lastReqUpdate = true ;
             return ;
         } else if ( payload.rfind("updateImageData:", 0) == 0 ) {
             this->printMsg("payload for update ImageData:" + payload.substr(16) ) ;
+            return ;
+        } else if ( payload.rfind("updateUnstructuredGridWithoutUpdate:", 0) == 0) {
+            this->CreateUnstructuredGrid(  payload.substr(36) ) ;
+            this->lastReqUpdate = false ;
             return ;
         }
     }
