@@ -12,14 +12,13 @@
 
 namespace ttk {
 
-  template<typename idType, typename ComparatorType>
+  template<typename idType>
   struct PropagationData {
-    PropagationData<idType, ComparatorType>* parent;
+    PropagationData<idType>* parent;
 
     const idType extremumIndex;
-    ComparatorType comperator;
 
-    boost::heap::fibonacci_heap<idType, boost::heap::compare<ComparatorType>> queue;
+    boost::heap::fibonacci_heap< std::pair<idType,idType> > queue;
     idType lastEncounteredSaddle{-1};
     bool isTerminated{false};
 
@@ -27,12 +26,9 @@ namespace ttk {
     idType regionWriteIndex;
 
     inline explicit PropagationData(
-        const idType& extremumIndex,
-        const idType* offsets
+        const idType& extremumIndex
     ) : extremumIndex(extremumIndex) {
         this->parent = this;
-        this->comperator.data = offsets;
-        this->queue = boost::heap::fibonacci_heap<idType, boost::heap::compare<ComparatorType>>(this->comperator);
     }
 
     PropagationData() = delete;
@@ -52,9 +48,9 @@ namespace ttk {
         }
     }
 
-    static inline PropagationData<idType, ComparatorType>* unify(
-        PropagationData<idType, ComparatorType>* uf0,
-        PropagationData<idType, ComparatorType>* uf1
+    static inline PropagationData<idType>* unify(
+        PropagationData<idType>* uf0,
+        PropagationData<idType>* uf1
     ){
         uf0 = uf0->find();
         uf1 = uf1->find();
@@ -69,7 +65,7 @@ namespace ttk {
         return uf0;
     }
 
-    inline void setParent(PropagationData<idType, ComparatorType>* parent) {
+    inline void setParent(PropagationData<idType>* parent) {
         #pragma omp atomic write
         this->parent = parent;
     };

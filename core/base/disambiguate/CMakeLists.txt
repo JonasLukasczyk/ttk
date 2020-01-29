@@ -4,6 +4,7 @@ ttk_add_base_library(disambiguate
   HEADERS
     Disambiguate.h
     PropagationData.h
+    ParallelMergeSort.h
   LINK
     triangulation
 )
