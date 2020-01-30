@@ -219,7 +219,8 @@ int ttkTopologicalSimplification::dispatch(
           (dataType*) inputScalarArray->GetVoidPointer(0),
           (int*) inputOffsets_->GetVoidPointer(0),
           (int*) inputCriticalPointIdArray->GetVoidPointer(0),
-          (int) inputCriticalPointIdArray->GetNumberOfTuples()
+          (int) inputCriticalPointIdArray->GetNumberOfTuples(),
+          this->TaskSubdivision
         );
       // }
       // else if(inputOffsets_->GetDataType() == VTK_ID_TYPE) {

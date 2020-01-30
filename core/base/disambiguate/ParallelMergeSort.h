@@ -9,20 +9,12 @@ namespace ttk {
         template<typename IdType, typename Rank1Type, typename Rank2Type>
         int merge(
             IdType* indices,
-            const IdType l,
-            const IdType m,
-            const IdType r,
+            const IdType& l,
+            const IdType& m,
+            const IdType& r,
             const Rank1Type* rank1,
             const Rank2Type* rank2
         ){
-            // std::cout<<"merge "<<l<<" - "<<m<<" - "<<r <<std::endl;
-
-            // for(IdType i=l; i<=r; i++)
-            //     std::cout<<indices[i]<<" ";
-            // std::cout<<"\n";
-
-            // return 1;
-
             IdType n1 = m - l + 1;
             IdType n2 = r - m;
 
@@ -40,10 +32,8 @@ namespace ttk {
             IdType j = 0; // Initial index of second subarray
             IdType k = l; // Initial index of merged subarray
             while(i<n1 && j<n2){
-                // std::cout<<i<<" "<<j<<std::endl;
                 const IdType& v = L[i];
                 const IdType& u = R[j];
-                // std::cout<<"->"<<v<<" "<<u<<std::endl;
                 if(
                     (rank1[v]==rank1[u] ? (rank2[v]<rank2[u]) : (rank1[v]<rank1[u]))
                 ){
@@ -72,25 +62,20 @@ namespace ttk {
                 k++;
             }
 
-            // for(IdType i=l; i<=r; i++)
-            //     std::cout<<indices[i]<<" ";
-            // std::cout<<"\n";
-
             return 1;
         }
 
         template<typename IdType, typename Rank1Type, typename Rank2Type>
         int mergeSort(
             IdType* indices,
-            const IdType l,
-            const IdType r,
+            const IdType& l,
+            const IdType& r,
             const Rank1Type* rank1,
             const Rank2Type* rank2
         ) {
             if(l<r){
                 int m = l+(r-l)/2;
 
-                // std::cout<<"l: " <<l<<" m: " <<m<<" r: " <<r<<std::endl;
                 ttk::ParallelMergeSort::mergeSort<IdType,Rank1Type,Rank2Type>(indices, l, m, rank1, rank2);
 
                 ttk::ParallelMergeSort::mergeSort<IdType,Rank1Type,Rank2Type>(indices, m+1, r, rank1, rank2);
@@ -103,10 +88,14 @@ namespace ttk {
         template<typename IdType, typename Rank1Type, typename Rank2Type>
         int sort(
             IdType* indices,
-            const IdType nIndices,
+            const IdType& nIndices,
             const Rank1Type* rank1,
-            const Rank2Type* rank2
+            const Rank2Type* rank2,
+            const IdType& nThreads
         ){
+            IdType depth = nIndices/nThreads;
+            // ToDo compute optimal depth and use std sort at lowest level
+
             ttk::ParallelMergeSort::mergeSort<IdType,Rank1Type,Rank2Type>(indices,0,nIndices-1,rank1,rank2);
             return 1;
         }

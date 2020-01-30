@@ -85,6 +85,10 @@ public:
 
   vtkSetMacro(debugLevel_, int);
 
+  int TaskSubdivision{1};
+  vtkSetMacro(TaskSubdivision, int);
+  vtkGetMacro(TaskSubdivision, int);
+
   void SetThreadNumber(int threadNumber) {
     ThreadNumber = threadNumber;
     SetThreads();

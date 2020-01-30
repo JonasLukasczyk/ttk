@@ -236,6 +236,16 @@ offset field for flat plateau disambiguation).
           Use task parallel topological simplification.
          </Documentation>
       </IntVectorProperty>
+      <IntVectorProperty
+         name="TaskSubdivision"
+         command="SetTaskSubdivision"
+         label="TaskSubdivision"
+         number_of_elements="1"
+         default_values="1">
+         <IntRangeDomain name="range" min="1" max="100" />
+         <Documentation>
+         </Documentation>
+      </IntVectorProperty>
 
       <IntVectorProperty
          name="UseAllCores"
