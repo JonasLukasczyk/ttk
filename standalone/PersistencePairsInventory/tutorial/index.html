@@ -42,7 +42,7 @@
                WebSocketIO Host:
                <input id="msg-host" type="text" value="10.218.107.40">
                Port:
-               <input id="msg" type="text" value="9285">
+               <input id="msg" type="text" value="9286">
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
                <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button>
                &nbsp; &nbsp; -<code> OR </code>- &nbsp; &nbsp;
@@ -109,9 +109,9 @@
                      <option>Magnitude</option>
                   </select>
                   <code> | </code>
-                  <input type="input" style="width: 132px;" placeholder="reliability window" id="rel-window" value="20"> &nbsp; %
+                  <input type="input" style="width: 64px;" id="rel-window" value="2"> &nbsp;
+                  <span id="rel-window-span" title="reliability window" class="text-success">[2, -]</span>
                </div>
-               <br>
                <div id="my_dataviz" style="width: 100%;padding: 2px;"></div>
             </div>
          </div>

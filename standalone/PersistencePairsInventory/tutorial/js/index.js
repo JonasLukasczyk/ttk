@@ -4,7 +4,7 @@ let DEV = false;
 
 function customColor(reliability, ppi, max_persistence_pairs) {
     // from light to dark
-    let green = ["#edf8e9", "bae4b3", "#74c476", "#31a354", "#006d2c"]; 
+    let green = ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]; 
     let gray = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
     let red = ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"];
     let range_color = green;
@@ -39,14 +39,14 @@ d3.select("#tooltip").append("svg").attr("id", "tooltipSvg").style("height", "16
 
 function calculateReliability(items, iComponent) {
     var sum = 0;
-    var sliceItems = items.slice(iComponent, iComponent + items.length * parseInt($("#rel-window").val()) / 100);
+    var sliceItems = items.slice(iComponent, iComponent + parseInt($("#rel-window").val()));
     for (var i = 0; i < sliceItems.length; i++) {
         sum += sliceItems[i];
     }
     if (Math.max(...sliceItems) == 0) {
         return 1;
     }
-    return sum / (sliceItems.length * Math.max(...sliceItems));
+    return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
 }
 
 function renderHistogram(extent, data, nComponents, fieldData, iComponent, socket) {
@@ -58,26 +58,55 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     }
     let w = extent[1] + 1;
     let h = extent[3] + 1;
+    Window.hist_w = w ;
+    Window.hist_h = h ;
     let myGroups = getArray(w);
     let myVars = getArray(h);
 
-    let width = 901;
-    let height = width * h / w - 64;
-    if (height > 1024) {
-        height = 1024;
-        width = (height + 64) * w / h;
+    let containerWidth = 901;
+    let containerHeight = containerWidth * h / w;
+    if (containerHeight > 1024) {
+        containerHeight = 1024;
+        containerWidth = (containerHeight) * w / h;
     }
-    let svg = d3.select("#my_dataviz")
+    let margin = {
+        top: 10,
+        right: 0,
+        bottom: 40,
+        left: 50
+    } ;
+    var width = containerWidth - margin.left - margin.right,
+        height = containerHeight - margin.top - margin.bottom;
+    let container = d3.select("#my_dataviz")
         .append("svg")
-        .attr("width", width)
-        .attr("height", height)
-        .attr("transform",
-            "translate( 0, 0 )");
+        .attr("width", containerWidth)
+        .attr("height", containerHeight) ;
+    
+    var svg = container
+                .append("g")
+                .attr("transform",
+                    "translate("+margin.left+", "+margin.top+")")
+                .attr('overflow', 'hidden');
     
     let x = d3.scaleBand()
         .range([0, width])
         .domain(myGroups)
         .padding(0.01);
+
+    svg.append("g")
+        .attr('class', 'axis--hist--x')
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x).ticks(2, "s"));
+
+    let y = d3.scaleBand()
+        .range([height, 0])
+        .domain(myVars)
+        .padding(0.01);
+
+    // FLAG, needs to do
+    svg.append("g")
+        .attr('class', 'axis--hist--y')
+        .call(d3.axisLeft(y).ticks(2, "s"));
 
     var txt = $("#threshold").val();
     var max_persistence_pairs = 0;
@@ -106,25 +135,12 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         }
     }
 
-    svg.append("g")
-        .attr("width", width)
-        .call(d3.axisBottom(x));
-
-    let y = d3.scaleBand()
-        .range([height, 0])
-        .domain(myVars)
-        .padding(0.01);
-
-    svg.append("g")
-        .call(d3.axisLeft(y));
-
     svg.selectAll()
-        .data(vData, function (d) {
-            return "";
-        })
+        .data(vData)
         .enter()
         .append("rect")
         .attr("class", "bin")
+        .attr("id", function(d, i) { return "hist-bin-" + i ; })
         .style("stroke-width", 0.2)
         .style("stroke", "black")
         .attr("x", function (d) {
@@ -150,18 +166,64 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("click", function (d, i) {
-            d3.selectAll(".bin").style("stroke", "black").style("stroke-width", 0.2);
-            d3.select(this).style("stroke", "black").style("stroke-width", "2");
+            // SELECT one bin
+            d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
+            d3.select(this).style("stroke-width", "2").attr("bin-selected", "on");
+            var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (h - 1) + fieldData['ScalarBounds'].Values[0]) ;
+            var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
             var mm = 'updateUnstructuredGridWithoutUpdate:{"FieldData": ' +
-                '{"idx_timestamp": [' + d[0] + '], "actual_timestamp": [' + fieldData['Time'].Values[parseInt(d[0])] + '], ' +
-                '"idx_scale": [' + d[1] + '], "actual_scale": [' + ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (h - 1) + fieldData['ScalarBounds'].Values[0]) + '],' +
+                '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
+                '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
+            $(".hist-yaxis-title").text("Scalar - " + actual_scalar.toFixed(2)) ;
+            $(".hist-xaxis-title").text("Time - " + actual_time.toFixed(2)) ;
             if (!DEV) {
                 Window.socket = socket ;
                 socket.send(mm) ;
             } 
             console.log(mm) ;
-        });
+        })
+        
+        svg.call(d3.zoom().on("zoom", function () {
+            svg.attr("transform", d3.event.transform)
+        }))
+    
+    // Add y-axis title
+    svg.append("text")
+        .attr("class", "hist-yaxis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - 42 )
+        .attr("x", 0 - (height / 2))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Scalar") ;
+
+    // // Add x-axis title
+    svg.append("text")
+        .attr("class", "hist-xaxis-title")
+        .attr("y", (height + 24) )
+        .attr("x", (width / 2.5 + 110))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Time");
+
+    // reset x-axis, y-axis, TRICKY
+    removeNiceByKicks(".axis--hist--x g") ;
+    removeNiceByKicks(".axis--hist--y g")
+}
+
+function removeNiceByKicks(id) {
+    var gs = $(id) ;
+    if (gs.length >= 40) {
+        var size = Math.floor(gs.length / 20) ;
+        for (var i = 0; i < gs.length; i ++) {
+            if (i % size != 0) {
+                gs[i].remove() ;
+            }
+        }
+    }
 }
 
 $('#exampleModal').on('show.bs.modal', function (event) {
@@ -198,9 +260,10 @@ function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs
         .attr("transform", "translate(28" + ", 4" + ")");
 
     var idx_first = x(iComponent * Window.persistence_num / Window.magnitude_num);
-    var idx_sec = iComponent * Window.persistence_num / Window.magnitude_num + (x.domain()[1] - x.domain()[0]) * parseFloat($("#rel-window").val()) / 100;
-    if (idx_sec > x.domain()[1]) {
-        idx_sec = x.domain()[1];
+    var idx_sec = iComponent * Window.persistence_num / Window.magnitude_num + (x.domain()[1] - x.domain()[0]) * ( (parseFloat($("#rel-window").val()) - 1) / Window.magnitude_num);
+    
+    if (idx_sec >= x.domain()[1] - (x.domain()[1] - x.domain()[0]) / Window.magnitude_num) {
+        idx_sec = x.domain()[1] - (x.domain()[1] - x.domain()[0]) / Window.magnitude_num ;
     }
     idx_sec = x(idx_sec);
 
@@ -240,7 +303,7 @@ function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs
         // sans-serif font-family, size 16px, bolded, and underlined
         .style("font-size", "12px")
         .style("font-family", "sans-serif")
-        .text("reliability: " + reliability.toFixed(2) + ", max_PP: " + max_persistence_pairs + ", PP: " + pp);
+        .text("reliability: " + reliability.toFixed(2) + ", max_PPI: " + max_persistence_pairs + ", PPI: " + pp);
 
     svg.append("g")
         .attr("transform", "translate(28, 136)")
@@ -252,7 +315,7 @@ function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs
         .call(d3.axisLeft(y));
 }
 
-$("#save-xy-axis").click(function () {
+$("#save-xy-axis").unbind().click(function () {
     var x = $("#x-y-range-change").val().replace(" ", "");
     if (x.split(",").length !== 2 && x.split(",")[0].split("-").length != 2 && x.split(",")[1].split("-").length != 2) {
         alert("Format must be yMin-yMax, xMin-yMax");
@@ -302,6 +365,7 @@ function objectCallback(msg) {
                             for (let vv = 0; vv < msg['PointData'][v].NumberOfComponents; vv++) {
                                 $('#s2').append('<option class="histogram-selector" value=' + vv + '>' + vv + '</option>');
                             }
+                            $("#rel-window-span").text("[2 - " + msg['PointData'][v].NumberOfComponents + "]") ;
                         }
                     }
                 }
@@ -402,7 +466,7 @@ Window.visibility = {
     "box_optimal": false
 }
 
-$("#l1").click(function () {
+$("#l1").unbind().click(function () {
     if (Window.visibility['box_line'] == true) {
         $("[name='box_line']").attr("visibility", "hidden");
         Window.visibility['box_line'] = false;
@@ -412,7 +476,7 @@ $("#l1").click(function () {
     }
 });
 
-$("#l2").click(function () {
+$("#l2").unbind().click(function () {
     if (Window.visibility['box_box'] == true) {
         $("[name='box_box']").attr("visibility", "hidden");
         Window.visibility['box_box'] = false;
@@ -423,7 +487,7 @@ $("#l2").click(function () {
 
 });
 
-$("#l3").click(function () {
+$("#l3").unbind().click(function () {
     if (Window.visibility['box_polygon'] == true) {
         $("[name^='box_polygon']").attr("visibility", "hidden");
         Window.visibility['box_polygon'] = false;
@@ -433,19 +497,69 @@ $("#l3").click(function () {
     }
 });
 
-$("#box_zoom_back").click(function () {
+$("#box_zoom_back").unbind().click(function () {
     $("#hidden-zoom-back").click();
 });
 
-d3.select("body").on('keydown', function () {
-    if (d3.event.ctrlKey) {
-        if (d3.event.key == "b") {
-            $("#hidden-brush-mode").click();
+$(document).keydown(function(e) {
+    if (e.ctrlKey) {
+        if (typeof Window.hist_h != 'undefined' && typeof Window.hist_w != 'undefined') {  // FLAG, using one global variable
+            var selected = false ;
+            var g_idx = 0 ;
+            if ($("[bin-selected=on]").length > 0) {
+                g_idx =  parseInt($("[bin-selected=on]").attr("id").replace("hist-bin-", "")) ;
+                var j = Math.floor(g_idx / Window.hist_w) ; 
+                var i = g_idx % Window.hist_w ;
+                selected = true ;
+                console.log(i, j, e.key) ;
+            }
+
+            switch(e.key) {
+                case "b":
+                    $("#hidden-brush-mode").click();
+                    break ;
+                
+                case "ArrowRight":
+                    if (selected) {
+                        if (i + 1 <= Window.hist_w - 1) {
+                            d3.select("#hist-bin-" + (g_idx + 1)).dispatch("click") ;
+                        }
+                    }
+                    break ;
+                
+                case "ArrowLeft":
+                    if (selected) {
+                        if (i - 1 >= 0) {
+                            d3.select("#hist-bin-" + (g_idx - 1)).dispatch("click") ;
+                        }
+                    }
+                    break ;
+    
+                case "ArrowUp":
+                    if (selected) {
+                        if (j + 1 <= Window.hist_h - 1) {
+                            d3.select("#hist-bin-" + (g_idx + Window.hist_w)).dispatch("click") ;
+                        }
+                    }    
+                    break ;
+                
+                case "ArrowDown":
+                    if (selected) {
+                        if (j - 1 >= 0) {
+                            d3.select("#hist-bin-" + (g_idx - Window.hist_w)).dispatch("click") ;
+                        }
+                    }
+                    break ;
+                
+                default:
+                    console.log("do nothing!") ;
+            }
         }
     }
 });
 
-$("#brush_mode").click(function() {
+$("#brush_mode").unbind().click(function() {
+    console.log("brush mode") ;
     $("#hidden-brush-mode").click(); 
 })
 
@@ -480,20 +594,29 @@ $('#rel-window').on('keypress', function (e) {
         if (isNaN($(this).val())) {
             alert("this is not valid number");
         } else {
-            if (DEV) {
-                renderHistogram(Window.object['Extent'].Values,
-                    Window.object['PointData'][Window.APPIAttrName].Values,
-                    Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
-                    Window.object['FieldData'],
-                    parseInt($("#s2").val()),
-                    null);
-            } else {
-                renderHistogram(Window.object['Extent'].Values,
-                    Window.object['PointData'][Window.APPIAttrName].Values,
-                    Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
-                    Window.object['FieldData'],
-                    parseInt($("#s2").val()),
-                    ttk.getSocketObject());
+            if (typeof Window.magnitude_num != 'undefined') {
+                if (parseInt($(this).val()) > Window.magnitude_num) {
+                    $(this).val(Window.magnitude_num) ; 
+                 }
+
+                 if (parseInt($(this).val()) < 2) {
+                    alert("must be integer and larger than 1") ;
+                    $(this).val("2") ;
+                } else if (DEV) {
+                    renderHistogram(Window.object['Extent'].Values,
+                        Window.object['PointData'][Window.APPIAttrName].Values,
+                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                        Window.object['FieldData'],
+                        parseInt($("#s2").val()),
+                        null);
+                } else {
+                    renderHistogram(Window.object['Extent'].Values,
+                        Window.object['PointData'][Window.APPIAttrName].Values,
+                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                        Window.object['FieldData'],
+                        parseInt($("#s2").val()),
+                        ttk.getSocketObject());
+                }
             }
         }
         $(this).blur();

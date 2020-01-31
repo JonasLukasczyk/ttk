@@ -222,7 +222,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $("#hidden-notification_xxyy").click();
     }
 
-    $("#hidden-zoom-back").click(function () {
+    $("#hidden-zoom-back").unbind().click(function () {
         xScale.domain(Window.box_plot_config.x_domain);
         yScale.domain(Window.box_plot_config.y_domain);
         zoom();
@@ -231,14 +231,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $("#hidden-notification_xxyy").click();
     });
 
-    $("#hidden-optimal-threshold").click(function () {
+    $("#hidden-optimal-threshold").unbind().click(function () {
         d3.select(".optimal-threshold").remove();
         if ($("#threshold").val().replace(" ", "") !== "") {
             drawOptimalLine(parseFloat($("#threshold").val()));
         }
     });
 
-    $("#customSwitches--x").click(function () {
+    $("#customSwitches--x").unbind().click(function () {
         if ($("#customSwitches--x").is(':checked')) {
             xScale = d3.scaleLog()
                 .clamp(true)
@@ -255,7 +255,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         zoom();
     });
 
-    $("#customSwitches--y").click(function () {
+    $("#customSwitches--y").unbind().click(function () {
         if ($("#customSwitches--y").is(':checked')) {
             yScale = d3.scaleLog()
                 .clamp(true)
@@ -276,7 +276,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         idleTimeout = null;
     }
 
-    $("#hidden-brush-mode").click(function () {
+    $("#hidden-brush-mode").unbind().unbind().click(function () {
+        console.log("hidden brush mode") ;
         if ($("#brush_mode").attr("mode") == "brush") {
             $(".brush").remove();
             $("#brush_mode").attr("mode", "view");
@@ -290,12 +291,12 @@ function drawBoxplotCurve(numberofcomponents, data) {
         }
     });
 
-    $("#hidden-notification_xxyy").click(function () {
+    $("#hidden-notification_xxyy").unbind().click(function () {
         $("#notification_xxyy").text(yScale.domain()[0].toFixed(1) + "-" + yScale.domain()[1].toFixed(1) +
             ", " + xScale.domain()[0].toFixed(1) + "-" + xScale.domain()[1].toFixed(1));
     });
 
-    $("#hidden-notification_xxyy-zoom").click(function () {
+    $("#hidden-notification_xxyy-zoom").unbind().click(function () {
         var x = $("#x-y-range-change").val().replace(" ", "");
         yScale.domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]);
         xScale.domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]);
@@ -548,7 +549,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
                     }
                 })
 
-                //console.log("Threshold is: ", idx + 1, points['data'][idx]) ;
                 return d3.select("#box_plot_tooltip").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
             })
     }
