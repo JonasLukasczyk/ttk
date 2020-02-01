@@ -248,19 +248,22 @@ namespace ttk {
             ) const {
 
                 // add extremumIndex to queue
-                propagation.queue.push({offsets[propagation.extremumIndex],propagation.extremumIndex});
+                propagation.queue.emplace(offsets[propagation.extremumIndex],propagation.extremumIndex);
                 queueMask[propagation.extremumIndex] = propagation.extremumIndex;
 
-                auto* propagationRepresentative = &propagation;
+                auto* propagationRep = propagation.find();
+                auto* propagationRepQueue = &propagationRep->queue;
 
                 // grow region until it reaches a saddle and then decide if it should continue
-                while(!propagationRepresentative->queue.empty()){
-                    const idType v = std::get<1>(propagationRepresentative->queue.top());
-                    propagationRepresentative->queue.pop();
+                while(!propagationRepQueue->empty()){
+                    const idType v = std::get<1>(propagationRepQueue->top());
+                    propagationRepQueue->pop();
 
-                    // continue if this has already seen this vertex
-                    if(propagationMask[v]!=nullptr)
+                    // continue if this thread has already seen this vertex
+                    if(propagationMask[v]!=nullptr){
+                        // std::cout<<"x";
                         continue;
+                    }
 
                     // add neighbors to queue AND check if v is a saddle
                     bool isSaddle = false;
@@ -274,14 +277,14 @@ namespace ttk {
 
                         // if lower neighbor
                         if( offsets[u]<offsets[v] ){
-                            // here I really want to use propagation instead of propagationRepresentative to label the queue with a unique value
+                            // here I really want to use propagation instead of propagationRep to label the queue with a unique value
                             if(queueMask[u] != propagation.extremumIndex){
-                                propagationRepresentative->queue.push( {offsets[u],u} );
+                                propagationRepQueue->emplace(offsets[u],u);
                                 queueMask[u] = propagation.extremumIndex;
                             }
                         } else {
                             numberOfLargerNeighbors++;
-                            if(propagationMask[u]==nullptr || propagationRepresentative!=propagationMask[u]->find())
+                            if(propagationMask[u]==nullptr || propagationRep!=propagationMask[u]->find())
                                 isSaddle = true;
                             else
                                 numberOfLargerNeighborsThisThreadVisited++;
@@ -291,7 +294,7 @@ namespace ttk {
                     // if v is a saddle we have to check if the current thread is the last visitor
                     if(isSaddle){
 
-                        propagationRepresentative->lastEncounteredSaddle = v;
+                        propagationRep->lastEncounteredSaddle = v;
 
                         // * this check is performed by synchronously adding the number of larger vertices that the current thread visited to the saddle outputOffset
                         // * if after this synchronous operation the outputOffset at the saddle equals the total number of larger vertices then this must be the last thread that visited the saddle
@@ -305,23 +308,24 @@ namespace ttk {
 
                         // if this thread did not register the last remaining larger vertices then terminate propagation
                         if(numberOfRegisteredLargerVerticesAsStoredInOffset!=-numberOfLargerNeighbors-1)
-                            break;
+                            return 1;
 
                         // Otherwise merge propagation data
                         for(idType n=0; n<nNeighbors; n++){
                             idType u;
                             triangulation->getVertexNeighbor(v,n,u);
-                            if(offsets[v]<offsets[u] && propagationRepresentative!=propagationMask[u]->find()){
-                                propagationRepresentative = PropagationData<idType>::unify(
-                                    propagationRepresentative,
+                            if(offsets[v]<offsets[u] && propagationRep!=propagationMask[u]->find()){
+                                propagationRep = PropagationData<idType>::unify(
+                                    propagationRep,
                                     propagationMask[u]
                                 );
+                                propagationRepQueue = &propagationRep->queue;
                             }
                         }
                     }
 
                     // mark vertex as visited and continue
-                    propagationMask[v] = propagationRepresentative;
+                    propagationMask[v] = propagationRep;
                 }
 
                 return 1;
@@ -365,42 +369,29 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                // compute tasks
-                const idType nTasks = this->threadNumber_*TODO_TASKSUBDIVISION;
-                const idType nTaskRange = std::max(
-                    (idType) ceil((float)nPropagations/(float)nTasks),
-                    1
-                );
-
-                // std::vector<std::pair<double,double>> timings(ceil((float)nPropagations/(float)nTaskRange));
+                // std::vector<std::pair<double,double>> timings(nTasks);
 
                 // compute regions
                 #pragma omp parallel num_threads(this->threadNumber_)
                 #pragma omp single
-                for(idType t=0; t<nTasks; t++){
-                    #pragma omp task firstprivate(t)
+                for(idType p=0; p<nPropagations; p++){
+                    #pragma omp task firstprivate(p)
                     {
                         // struct timeval stamp;
                         // gettimeofday(&stamp, NULL);
-                        // timings[ i/nTaskRange ].first = (stamp.tv_sec * 1000000 + stamp.tv_usec) / 1000000.0;
+                        // timings[ t ].first = (stamp.tv_sec * 1000000 + stamp.tv_usec) / 1000000.0;
+                        this->computeRegion<idType>(
+                            regionMask,
+                            queueMask.data(),
+                            // queueMasks[ omp_get_thread_num() ].data(),
+                            propagationList[p],
+                            propagationMask,
 
-                        idType p0 = t*nTaskRange;
-                        idType pN = std::min(p0+nTaskRange,nPropagations);
-
-                        for(idType p=p0; p<pN; p++){
-                            this->computeRegion<idType>(
-                                regionMask,
-                                queueMask.data(),
-                                propagationList[p],
-                                propagationMask,
-
-                                triangulation,
-                                offsets
-                            );
-                        }
-
+                            triangulation,
+                            offsets
+                        );
                         // gettimeofday(&stamp, NULL);
-                        // timings[ i/nTaskRange ].second = (stamp.tv_sec * 1000000 + stamp.tv_usec) / 1000000.0;
+                        // timings[ t ].second = (stamp.tv_sec * 1000000 + stamp.tv_usec) / 1000000.0;
                     }
                 }
 
@@ -432,8 +423,11 @@ namespace ttk {
                         regionMask[j] = propagation.extremumIndex;
                 }
 
+                std::stringstream volumeFraction;
+                volumeFraction << std::fixed << std::setprecision(2) << ((float)nRegionVertices/(float)nVertices);
+
                 this->printMsg(
-                    "Computing propagations ("+std::to_string(nPropagations)+"|"+std::to_string(nNonTerminatedPropagations)+"|"+std::to_string(nRegionVertices)+")",
+                    "Computing propagations ("+std::to_string(nPropagations)+"|"+std::to_string(nNonTerminatedPropagations)+"|"+volumeFraction.str()+")",
                     1, t.getElapsedTime(), this->threadNumber_
                 );
 
@@ -515,7 +509,6 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                // init local offsets
                 const idType nVertices = triangulation->getNumberOfVertices();
                 const idType nPropagations = propagationList.size();
 
@@ -524,10 +517,13 @@ namespace ttk {
                     tempOffsets[i] = -1;
 
                 idType nNonTerminatedPropagations=0;
+                idType nRegionVertices=0;
                 std::vector<const PropagationData<idType>*> nonTerminatedPropagations(nPropagations);
                 for(idType i=0; i<nPropagations; i++){
-                    if(!propagationList[i].isTerminated)
+                    if(!propagationList[i].isTerminated){
                         nonTerminatedPropagations[nNonTerminatedPropagations++] = &propagationList[i];
+                        nRegionVertices += propagationList[i].region.size();
+                    }
                 }
 
                 this->printMsg( "Computing local order of regions ("+std::to_string(nNonTerminatedPropagations)+")",
@@ -535,30 +531,32 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                // compute tasks bounds
                 const idType nTaskRange = std::max(
-                    (int)ceil((float)nNonTerminatedPropagations/(float)this->threadNumber_) / TODO_TASKSUBDIVISION,
+                    (idType) ceil((float)nNonTerminatedPropagations/(float)this->threadNumber_),
                     1
                 );
 
                 #pragma omp parallel num_threads(this->threadNumber_)
                 #pragma omp single
-                for(idType i=0; i<nNonTerminatedPropagations; i+=nTaskRange){
-                    #pragma omp task firstprivate(i)
+                for(idType t=0; t<this->threadNumber_; t++){
+                    #pragma omp task firstprivate(t)
                     {
-                        idType t0 = i;
-                        idType tN = std::min(t0+nTaskRange,nNonTerminatedPropagations);
+                        idType p0 = t*nTaskRange;
+                        idType pN = std::min(p0+nTaskRange,nNonTerminatedPropagations);
 
-                        for(idType t=t0; t<tN; t++){
-                            const auto& propagation = *nonTerminatedPropagations[t];
+                        for(idType p=p0; p<pN; p++){
+
+                            const auto* propagation = nonTerminatedPropagations[p];
+
+                            #pragma omp task if(propagation->region.size()>TODO_TASKSUBDIVISION) firstprivate(propagation) priority(propagation->region.size())
                             this->computeLocalOffsetsOfRegion<idType>(
                                 localOffsets,
 
                                 triangulation,
                                 regionMask,
-                                propagation.extremumIndex,
-                                propagation.region,
-                                propagation.lastEncounteredSaddle,
+                                propagation->extremumIndex,
+                                propagation->region,
+                                propagation->lastEncounteredSaddle,
                                 inputOffsets
                             );
                         }
@@ -591,8 +589,10 @@ namespace ttk {
 
                 const idType nVertices = triangulation->getNumberOfVertices();
 
+                int status = 0;
+
                 // Classify Critical Points
-                this->detectDiscardedMaxima<idType>(
+                status = this->detectDiscardedMaxima<idType>(
                     discardedMaxima,
                     regionMask,
 
@@ -601,6 +601,8 @@ namespace ttk {
                     preservedCriticalPointIndices,
                     nPreservedCriticalPointIndices
                 );
+                if(!status) return 0;
+
                 nDiscardedMaxima = discardedMaxima.size();
 
                 // if nothign to remove return
@@ -609,7 +611,7 @@ namespace ttk {
 
                 // compute regions
                 std::vector<PropagationData<idType>> propagationList;
-                this->computeRegions<idType>(
+                status = this->computeRegions<idType>(
                     regionMask,
                     propagationList,
 
@@ -617,9 +619,10 @@ namespace ttk {
                     inputOffsets,
                     discardedMaxima
                 );
+                if(!status) return 0;
 
                 // compute local order of regions
-                this->computeLocalOffsetsOfRegions<idType>(
+                status = this->computeLocalOffsetsOfRegions<idType>(
                     localOffsets,
                     outputOffsets,
 
@@ -628,6 +631,7 @@ namespace ttk {
                     inputOffsets,
                     propagationList
                 );
+                if(!status) return 0;
 
                 // compute output offsets
                 {
@@ -649,7 +653,7 @@ namespace ttk {
                         }
                     }
 
-                    this->computeGlobalOffsets<idType,idType>(
+                    status = this->computeGlobalOffsets<idType,idType>(
                         outputOffsets,
                         sortedIndices,
 
@@ -657,6 +661,7 @@ namespace ttk {
                         regionMask,
                         localOffsets
                     );
+                    if(!status) return 0;
 
                     #pragma omp parallel for num_threads(this->threadNumber_)
                     for(idType i=0; i<nVertices; i++)
@@ -728,6 +733,7 @@ namespace ttk {
                 }
 
                 size_t iteration=0;
+                int status = 0;
                 while(true){
                     this->printMsg(
                         "Iteration: "+std::to_string(iteration++),
@@ -743,7 +749,7 @@ namespace ttk {
                     idType nDiscardedMaxima=0;
 
                     // Minima
-                    this->removeMaxima<idType>(
+                    status = this->removeMaxima<idType>(
                         outputOffsets,
                         localOffsets.data(),
                         regionMask.data(),
@@ -755,6 +761,7 @@ namespace ttk {
                         nPreservedCriticalPointIndices,
                         inputOffsets.data()
                     );
+                    if(!status) return 0;
 
                     if(nDiscardedMinima)
                         this->flattenScalars<dataType,idType>(
@@ -769,7 +776,7 @@ namespace ttk {
                     for(idType v=0; v<nVertices; v++)
                         inputOffsets[v] = -outputOffsets[v];
 
-                    this->removeMaxima<idType>(
+                    status = this->removeMaxima<idType>(
                         outputOffsets,
                         localOffsets.data(),
                         regionMask.data(),
@@ -781,6 +788,7 @@ namespace ttk {
                         nPreservedCriticalPointIndices,
                         inputOffsets.data()
                     );
+                    if(!status) return 0;
 
                     if(nDiscardedMaxima)
                         this->flattenScalars<dataType,idType>(

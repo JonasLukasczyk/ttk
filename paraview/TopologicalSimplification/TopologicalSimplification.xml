@@ -242,7 +242,7 @@ offset field for flat plateau disambiguation).
          label="TaskSubdivision"
          number_of_elements="1"
          default_values="1">
-         <IntRangeDomain name="range" min="1" max="100" />
+         <IntRangeDomain name="range" min="0" max="10000" />
          <Documentation>
          </Documentation>
       </IntVectorProperty>
