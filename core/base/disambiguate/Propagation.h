@@ -1,9 +1,9 @@
 /// \ingroup base
-/// \class ttk::PropagationData
-/// \author Julien Tierny <julien.tierny@lip6.fr>
-/// \date July 2011.
+/// \class ttk::Propagation
+/// \author Jonas Lukasczyk <jl@jluk.de>
+/// \date Feb 2020.
 ///
-/// \brief Union Find implementation for connectivity tracking.
+/// \brief TODO
 
 #pragma once
 
@@ -13,29 +13,29 @@
 namespace ttk {
 
   template<typename idType>
-  struct PropagationData {
+  struct Propagation {
 
     // union find members
-    PropagationData<idType>* parent;
-    idType rank;
+    Propagation<idType>* parent{this};
+    int rank{0};
 
     // propagation data
-    idType extremumIndex;
-    boost::heap::fibonacci_heap< std::pair<idType,idType> > queue;
+    idType extremumIndex{-1};
     idType lastEncounteredSaddle{-1};
     bool isTerminated{false};
+    idType regionWriteIndex{0};
+    idType regionSize{0};
     std::vector<idType> region;
-    idType regionWriteIndex;
+    boost::heap::fibonacci_heap< std::pair<idType,idType> > queue;
 
-    inline explicit PropagationData() {
+    inline explicit Propagation() {
         this->parent = this;
-        this->rank = 0;
     }
 
-    // PropagationData(const PropagationData&) = delete;
-    // PropagationData& operator=(const PropagationData&) = delete;
+    // Propagation(const Propagation&) = delete;
+    // Propagation& operator=(const Propagation&) = delete;
 
-    inline PropagationData *find(){
+    inline Propagation *find(){
         if(this->parent == this)
             return this;
         else {
@@ -48,12 +48,13 @@ namespace ttk {
         }
     }
 
-    static inline PropagationData<idType>* unify(
-        PropagationData<idType>* uf0,
-        PropagationData<idType>* uf1
+    static inline Propagation<idType>* unify(
+        Propagation<idType>* uf0,
+        Propagation<idType>* uf1
     ){
         uf0 = uf0->find();
         uf1 = uf1->find();
+
 
         // if(uf0 == uf1) {
         //     return uf0;
@@ -62,6 +63,7 @@ namespace ttk {
 
             uf1->isTerminated = true;
             uf0->queue.merge(uf1->queue);
+            uf0->regionSize += uf1->regionSize;
 
             return uf0;
         // } else if(uf0->rank < uf1->rank) {
@@ -81,10 +83,10 @@ namespace ttk {
         //     return uf0;
         // }
 
-        return uf0;
+        // return uf0;
     }
 
-    inline void setParent(PropagationData<idType>* parent) {
+    inline void setParent(Propagation<idType>* parent) {
         #pragma omp atomic write
         this->parent = parent;
     }
@@ -93,6 +95,5 @@ namespace ttk {
         #pragma omp atomic write
         this->rank = rank;
     }
-
   };
 } // namespace ttk
