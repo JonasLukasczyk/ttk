@@ -59,8 +59,8 @@ int ttkPlanarGraphLayout::RequestData(
   }
 
   auto sizeArray = this->GetInputArrayToProcess(1, inputVector);
-  if(this->GetUseSizes() && !sizeArray) {
-    this->printErr("Unable to retrieve size array.");
+  if(this->GetUseSizes() && (!sizeArray || sizeArray->GetDataType()!=VTK_FLOAT)) {
+    this->printErr("Unable to retrieve size array of type float.");
     return 0;
   }
 
@@ -82,33 +82,25 @@ int ttkPlanarGraphLayout::RequestData(
   outputArray->SetNumberOfComponents(2); // (x,y) position
   outputArray->SetNumberOfValues(nPoints * 2);
 
-  auto dataType
-    = this->GetUseSequences() ? sequenceArray->GetDataType() : VTK_CHAR;
+  auto dataType = this->GetUseSequences() ? sequenceArray->GetDataType() : VTK_INT;
   auto idType = this->GetUseBranches()
                   ? branchArray->GetDataType()
-                  : this->GetUseLevels() ? levelArray->GetDataType() : VTK_CHAR;
-//   auto levelType
-//     = this->GetUseLevels()
-//         ? levels->GetDataType()
-//         : this->GetUseBranches() ? branches->GetDataType() : VTK_CHAR;
-
-//   if(branchType != levelType) {
-//     dMsg(cout,
-//          "[ttkPlanarGraphLayout] ERROR: Branch and Level array must have the "
-//          "same type.\n",
-//          fatalMsg);
-//     return 0;
-//   }
+                  : this->GetUseLevels() ? levelArray->GetDataType() : VTK_INT;
+  if(this->GetUseBranches() && this->GetUseLevels() && branchArray->GetDataType()!=levelArray->GetDataType()){
+    this->printErr("Branch and level arrays have to be of the same data type.");
+    return 0;
+  }
 
   int status = 1;
 
   switch(vtkTemplate2PackMacro(idType,dataType)) {
       ttkTemplate2IdMacro(
-        (status = this->execute<VTK_T1,VTK_T2>(
+        (status = this->computeLayout<VTK_T1,VTK_T2,vtkIdType>(
          // Output
          (float *)outputArray->GetVoidPointer(0),
+
          // Input
-         (VTK_T1 *)output->GetCells()->GetPointer(),
+         (vtkIdType *)output->GetCells()->GetPointer(),
          nPoints,
          nEdges,
          !this->GetUseSequences()
@@ -127,21 +119,6 @@ int ttkPlanarGraphLayout::RequestData(
       );
   }
 
-//   // Compute layout with base code
-//   switch(vtkTemplate2PackMacro(branchType, sequenceType)) {
-//     vtkTemplate2Macro(
-//       (status = planarGraphLayout.execute<vtkIdType, VTK_T1, VTK_T2>(
-//          // Input
-//          !this->GetUseSequences() ? nullptr
-//                                   : (VTK_T2 *)sequences->GetVoidPointer(0),
-//          !this->GetUseSizes() ? nullptr : (float *)sizes->GetVoidPointer(0),
-//          !this->GetUseBranches() ? nullptr
-//                                  : (VTK_T1 *)branches->GetVoidPointer(0),
-//          !this->GetUseLevels() ? nullptr : (VTK_T1 *)levels->GetVoidPointer(0),
-//          output->GetCells()->GetPointer(), nPoints, nEdges,
-//          // Output
-//          (float *)outputField->GetVoidPointer(0))));
-//   }
   if(status != 1)
     return 0;
 
