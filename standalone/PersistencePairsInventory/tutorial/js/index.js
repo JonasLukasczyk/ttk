@@ -2,7 +2,194 @@
 // http://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=9
 let DEV = false;
 
+// https://gist.github.com/mjackson/5311256
+// https://www.w3schools.com/colors/colors_picker.asp
+// https://zhuanlan.zhihu.com/p/76532451
+/**
+ * Converts an RGB color value to HSL. Conversion formula
+ * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+ * Assumes r, g, and b are contained in the set [0, 255] and
+ * returns h, s, and l in the set [0, 1].
+ *
+ * @param   Number  r       The red color value
+ * @param   Number  g       The green color value
+ * @param   Number  b       The blue color value
+ * @return  Array           The HSL representation
+ */
+function rgbToHsl(r, g, b) {
+    r /= 255, g /= 255, b /= 255;
+  
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h, s, l = (max + min) / 2;
+  
+    if (max == min) {
+      h = s = 0; // achromatic
+    } else {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+  
+      h /= 6;
+    }
+  
+    return [ h, s, l ];
+  }
+  
+  /**
+   * Converts an HSL color value to RGB. Conversion formula
+   * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+   * Assumes h, s, and l are contained in the set [0, 1] and
+   * returns r, g, and b in the set [0, 255].
+   *
+   * @param   Number  h       The hue
+   * @param   Number  s       The saturation
+   * @param   Number  l       The lightness
+   * @return  Array           The RGB representation
+   */
+  function hslToRgb(h, s, l) {
+    var r, g, b;
+  
+    if (s == 0) {
+      r = g = b = l; // achromatic
+    } else {
+      function hue2rgb(p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1/6) return p + (q - p) * 6 * t;
+        if (t < 1/2) return q;
+        if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+        return p;
+      }
+  
+      var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      var p = 2 * l - q;
+  
+      r = hue2rgb(p, q, h + 1/3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1/3);
+    }
+  
+    return [ r * 255, g * 255, b * 255 ];
+  }
+
+function customColorV2(reliability, ppi, max_persistence_pairs) {
+    var rgbToHex = function (rgb) { 
+        var hex = Number(rgb).toString(16);
+        if (hex.length < 2) {
+             hex = "0" + hex;
+        }
+        return hex;
+    };
+    var items = rgbToHsl(0, 255, 0) ; // green
+
+    if ( ppi == 0) {
+        return "#ffffff" ;
+    }
+
+    var rgb = hslToRgb(items[0], reliability,  0.9 - ppi / max_persistence_pairs / 2.5 ) ;
+    var color = "#" + rgbToHex(parseInt(rgb[0])) + "" + rgbToHex(parseInt(rgb[1])) + "" + rgbToHex(parseInt(rgb[2])) ;
+    return color ;
+}
+
+
+Window.timeout_idx = 0;
+function timerFunc() {
+    Window.timeout_idx += 1 ;
+    $("#threshold").val(Window.timeout_idx)
+    var e = jQuery.Event("keypress");
+    e.which = 13; //choose the one you want
+    e.keyCode = 13;
+    $("#threshold").trigger(e);
+    if (Window.timeout_idx < Window.persistence_num) {
+        setTimeout(timerFunc, 200) ;
+    }
+}
+
+function simulate() {
+    setTimeout(timerFunc, 200) ;
+}
+
+/**
+ * draw a # of features distribution over reliability
+ */
+function drawDistribution(id, data, title) {
+    d3.select("#" + id + " *").remove() ;
+
+    var portion = 10 ;
+    var reduced_data = [] ;
+    for (var i = 0; i < portion; i ++) {
+        reduced_data.push( 0 ) ;
+    }
+    
+    for (var i = 0; i < data.length; i ++) {
+        if ( data[i][0] == 1) {
+            // reduced_data[portion - 1] += data[i][1] ; 
+        } else {
+            reduced_data[ Math.floor(data[i][0] / ( 1 / portion)) ] += data[i][1] ;     
+        }
+    }
+
+    let containerWidth = 501;
+    let containerHeight = 301;
+    let margin = {
+        top: 10,
+        right: 20,
+        bottom: 40,
+        left: 50
+    } ;
+    var width = containerWidth - margin.left - margin.right,
+        height = containerHeight - margin.top - margin.bottom;
+    let container = d3.select("#" + id)
+        .append("svg")
+        .attr("width", containerWidth)
+        .attr("height", containerHeight) ;
+    
+    var svg = container
+                .append("g")
+                .attr("transform",
+                    "translate("+margin.left+", "+margin.top+")")
+                .attr('overflow', 'hidden');
+    
+    let x = d3.scaleLinear().range([0, width]);
+    let y = d3.scaleLinear().range([height, 0]);
+
+    // Scale the range of the data
+    x.domain([0, portion - 1]);
+    y.domain([0, d3.max(reduced_data, function (d) { return d; })]);
+    let dl = d3.line().x(function (d, i) { 
+        return x(i);
+     }).y(function (d) { return y(d) ; });
+
+    svg.append("path")
+        .attr("class", "line2")
+        .attr("d", dl(reduced_data))
+        .style("stroke-width", 2)
+        .style("stroke", "red")
+    
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x));
+
+    svg.append("g")
+        .call(d3.axisLeft(y));
+
+    svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (Window.box_plot_config.margin.top / 2 - 10))
+        .attr("text-anchor", "middle")  
+        .style("font-family", "sans-serif") 
+        .style("font-weight", "bold")
+        .text( title );
+}
+
 function customColor(reliability, ppi, max_persistence_pairs) {
+    //return customColorV2(reliability, ppi, max_persistence_pairs) ;
+
     // from light to dark
     let green = ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]; 
     let gray = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
@@ -17,7 +204,7 @@ function customColor(reliability, ppi, max_persistence_pairs) {
     }
 
     if (ppi == 0) {
-        return "white";
+        return "#ffffff" ;
     } else {
         return range_color[Math.ceil(ppi / (max_persistence_pairs / 5)) - 1];
     }
@@ -49,15 +236,55 @@ function calculateReliability(items, iComponent) {
     return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
 }
 
-function renderHistogram(extent, data, nComponents, fieldData, iComponent, socket) {
-    $("#my_dataviz").html("");
+function renderHistogram(extent, data, nComponents, fieldData, iComponent, socket, returned=false) {
+    let w = extent[1] + 1;
+    let h = extent[3] + 1;
+    var txt = $("#threshold").val();
+    var max_persistence_pairs = 0;
+    let vvv = 0; 
+    if (txt.replace(" ", "") === "") {
+        vvv = 0;
+    } else {
+        vvv = Math.ceil(parseFloat(txt) / (Window.persistence_num / Window.magnitude_num)); 
+    }
+
+    for (let i = 0; i < data.length; i++) {
+        if (i % nComponents >= vvv) {
+            if (data[i] > max_persistence_pairs) {
+                max_persistence_pairs = data[i]
+            }
+        }
+    }
+
+    let vData = [];
+    let dist_data = [] ;
+    // extract related information
+    for (let i = 0; i < h; i++) {
+        for (let j = 0; j < w; j++) {
+            let idx = (i * w + j) * nComponents + iComponent;
+            let dd = data[idx];
+            let items = data.slice((i * w + j) * nComponents, (i * w + j) * nComponents + nComponents);
+            // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
+            let cal = calculateReliability(items, iComponent) ;
+            vData.push([j + "", i + "", dd, items, idx, cal]);
+            dist_data.push([cal, dd]) ;
+        }
+    }
+
+    if ( returned ) {
+        return dist_data ;
+    }
+
+    drawDistribution("my_dataviz_distribution", dist_data, "Distribution of reliability") ;
+    
+    
+    d3.select("#my_dataviz *").remove() ;
     function getArray(n) {
         let ans = [];
         for (let i = 0; i < n; i++) { ans.push("" + i); }
         return ans;
     }
-    let w = extent[1] + 1;
-    let h = extent[3] + 1;
+    
     Window.hist_w = w ;
     Window.hist_h = h ;
     let myGroups = getArray(w);
@@ -108,33 +335,6 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         .attr('class', 'axis--hist--y')
         .call(d3.axisLeft(y).ticks(2, "s"));
 
-    var txt = $("#threshold").val();
-    var max_persistence_pairs = 0;
-    let vvv = Math.ceil(parseFloat(txt) / (Window.persistence_num / Window.magnitude_num));
-    if (txt.replace(" ", "") === "") {
-        vvv = 0;
-    }
-
-    for (let i = 0; i < data.length; i++) {
-        if (i % nComponents >= vvv) {
-            if (data[i] > max_persistence_pairs) {
-                max_persistence_pairs = data[i]
-            }
-        }
-    }
-
-    let vData = [];
-    // extract related information
-    for (let i = 0; i < h; i++) {
-        for (let j = 0; j < w; j++) {
-            let idx = (i * w + j) * nComponents + iComponent;
-            let dd = data[idx];
-            let items = data.slice((i * w + j) * nComponents, (i * w + j) * nComponents + nComponents);
-            // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
-            vData.push([j + "", i + "", dd, items, idx, calculateReliability(items, iComponent)]);
-        }
-    }
-
     svg.selectAll()
         .data(vData)
         .enter()
@@ -160,15 +360,17 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             return d3.select("#tooltip").style("visibility", "visible");
         })
         .on("mousemove", function () {
-            return d3.select("#tooltip").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+            //$("#debug-info").text(d3.event.pageX + "," + d3.event.pageY) ;
+            return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
         })
         .on("mouseout", function () {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("click", function (d, i) {
             // SELECT one bin
+            // FLAG
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
-            d3.select(this).style("stroke-width", "2").attr("bin-selected", "on");
+            d3.select(this).style("stroke-width", 1).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (h - 1) + fieldData['ScalarBounds'].Values[0]) ;
             var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
             var mm = 'updateUnstructuredGridWithoutUpdate:{"FieldData": ' +
@@ -184,9 +386,9 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             console.log(mm) ;
         })
         
-        svg.call(d3.zoom().on("zoom", function () {
-            svg.attr("transform", d3.event.transform)
-        }))
+        // svg.call(d3.zoom().on("zoom", function () {
+        //     svg.attr("transform", d3.event.transform)
+        // }))
     
     // Add y-axis title
     svg.append("text")
@@ -329,8 +531,10 @@ function objectCallback(msg) {
 
     //reset
     if (msg.hasOwnProperty("FieldData") && msg.FieldData.hasOwnProperty("PersistenceCurves")) {
-        $("#box_dataviz").html("");
-        $("#box_dataviz_total").html("");
+        // $("#box_dataviz").html("");
+        // $("#box_dataviz_total").html("");
+        d3.select("#box_dataviz *").remove() ;
+        d3.select("#box_dataviz_total *").remove() ;
 
         $("#customSwitches--x").prop('checked', false);
         $("#customSwitches--y").prop('checked', true);
@@ -387,6 +591,13 @@ function objectCallback(msg) {
                     0,
                     ttk.getSocketObject());
             }
+            
+            var e = jQuery.Event("keypress");
+            e.which = 13; //choose the one you want
+            e.keyCode = 13;
+            $("#rel-window").trigger(e);
+                    
+
         } else if (msg.structureType.Values[0] === 1) {
             console.log("This is a ttkUnstructuredGrid");
         } else {}
@@ -438,6 +649,7 @@ function Connect() {
             btn.html('Connect');
             $("#load_test").attr("disabled", true);
             // btn.attr("disabled", false) ;
+            
         },
         function () {
             console.log("on_close");
@@ -584,6 +796,22 @@ $('#threshold').on('keypress', function (e) {
                 });
                 $("#s2").val("" + v).change();
                 $("#hidden-optimal-threshold").click();
+
+                // draw a distributed sum up
+                var data = [] ;
+                $("#s2 :enabled").each(function(i, d) {
+                    var tmp = renderHistogram(Window.object['Extent'].Values,
+                        Window.object['PointData'][Window.APPIAttrName].Values,
+                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                        Window.object['FieldData'],
+                        parseInt(d.value),
+                        null,
+                        true);
+                    for (var i = 0; i < tmp.length; i ++) {
+                        data.push(tmp[i]) ;
+                    }
+                });
+                drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
             }
         }
     }
@@ -617,6 +845,23 @@ $('#rel-window').on('keypress', function (e) {
                         parseInt($("#s2").val()),
                         ttk.getSocketObject());
                 }
+
+                // draw a distributed sum up
+                var data = [] ;
+                $("#s2 :enabled").each(function(i, d) {
+                    var tmp = renderHistogram(Window.object['Extent'].Values,
+                        Window.object['PointData'][Window.APPIAttrName].Values,
+                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                        Window.object['FieldData'],
+                        parseInt(d.value),
+                        null,
+                        true);
+                    for (var i = 0; i < tmp.length; i ++) {
+                        data.push(tmp[i]) ;
+                    }
+                });
+
+                drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
             }
         }
         $(this).blur();

@@ -69,7 +69,7 @@ bool hasChild(const boost::property_tree::ptree& pt,
 }
 
 ttkWebSocketIO::ttkWebSocketIO() :WebSocketIO() {
-    this->printMsg("###### 7: invoke ttkWebSocketIO!") ;
+    this->printMsg("invoke ttkWebSocketIO!") ;
     this->lastInput = vtkSmartPointer<vtkUnstructuredGrid>::New();
     this->lastUGfromClient = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
@@ -180,11 +180,12 @@ int ttkWebSocketIO::RequestData(
  *
  */
 void ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
-    this->printMsg("name in processClientRequest is: " + name) ;
+    this->printMsg("The name in processClientRequest is : " + name) ;
     if ( name == "raw" ) {
         if ( payload.rfind("updateUnstructuredGrid:", 0) == 0 ) {
             this->CreateUnstructuredGrid(  payload.substr(23) ) ;
             this->lastReqUpdate = true ;
+            this->printMsg("payload in processClientRequest is: " + payload) ;
             return ;
         } else if ( payload.rfind("updateImageData:", 0) == 0 ) {
             this->printMsg("payload for update ImageData:" + payload.substr(16) ) ;

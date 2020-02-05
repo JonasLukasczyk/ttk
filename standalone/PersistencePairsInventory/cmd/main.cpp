@@ -16,7 +16,7 @@ using namespace ttk;
 void startServer() {
     // get the test data
     auto unStructuredGrid = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    unStructuredGrid->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/road_data.vtu");
+    unStructuredGrid->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/dragon.vtu");
 
     // send the two data to e2rr module
     auto webSocket = vtkSmartPointer<ttkWebSocketIO>::New();
@@ -55,12 +55,12 @@ void startServerX() {
 
 void startServerImage() {
     // get the test data
-    auto unImageData = vtkSmartPointer<vtkXMLImageDataReader>::New();
-    unImageData->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/histogram.vti");
+    auto unStructuredGrid = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
+    unStructuredGrid->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/road_data.vtu");
 
     // send the two data to e2rr module
     auto webSocket = vtkSmartPointer<ttkWebSocketIO>::New();
-    webSocket->SetInputConnection(0, unImageData->GetOutputPort(0));
+    webSocket->SetInputConnection(0, unStructuredGrid->GetOutputPort(0));
 
     webSocket->SetPortNumber(8778);
     webSocket->Update();

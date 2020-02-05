@@ -95,8 +95,8 @@ namespace ttk {
         WebSocketIO() {
             this->setDebugMsgPrefix("WebSocketIO"); // inherited from Debug: prefix will be printed at the beginning of every msg
             // Set logging settings
-            Server.set_error_channels(websocketpp::log::elevel::fatal);
-            Server.set_access_channels(websocketpp::log::alevel::fail) ;
+            Server.set_error_channels(websocketpp::log::elevel::none);
+            Server.set_access_channels(websocketpp::log::alevel::none ) ;
 
             Server.set_reuse_addr(true) ;
 
@@ -112,7 +112,7 @@ namespace ttk {
         void startServer(int PortNumber) {
             this->portNumber = PortNumber;
 
-            this->printMsg("###### 6: invoke startServer at port: " + to_string(this->portNumber)) ;
+            this->printMsg("invoke startServer at port: " + to_string(this->portNumber)) ;
             this->Server.reset();
             this->Server.listen(this->portNumber);
 

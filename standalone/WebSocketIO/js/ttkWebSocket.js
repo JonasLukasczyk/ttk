@@ -24,7 +24,6 @@ Window.ttkWebSocket = {} ;
 function on_message_intercept(uuid, msg) {
     let socket = Window.ttkWebSocket[uuid].socket ;
     let code = ttkWebSocketIO.parse_code(msg.data) ;
-    // console.log("receive: " + msg.data ) ;
     if (code !== 0) {
         if (code === DUPLICATE) {
             alert("the connection is existing, this connection will be closed") ;
@@ -34,7 +33,6 @@ function on_message_intercept(uuid, msg) {
             Window.ttkWebSocket[uuid].isLittleEndianness = false ;
         } else if (code === OBJECT_WILL_SENDING) {  // send object
             Window.ttkWebSocket[uuid].objectData = {} ;
-            // console.log("receive object_will_sending") ;
             socket.send( ttkWebSocketIO.combine_code(OBJECT_ACK_OBJECT) ) ;
         } else if (code === OBJECT_WILL_FINISH) {
             socket.send( ttkWebSocketIO.combine_code(OBJECT_ACK_FINISH) ) ;
@@ -46,6 +44,7 @@ function on_message_intercept(uuid, msg) {
         try {
             let data = JSON.parse(msg.data) ;
             if (data.hasOwnProperty("key")) {  // header
+                console.log(data) ;
                 let keys = data['key'].split(":") ;
                 if (keys.length === 1) {
                     Window.ttkWebSocket[uuid].objectData[keys[0]] = null ;
@@ -190,6 +189,23 @@ class ttkWebSocketIO {
     send(data) {  // send data back to Paraview
         let o = this.getWindowObject() ;
         o.socket.send( data ) ;
+    }
+
+    sendUnstructuredGrid(pointCoords, connectivityList, pointData={}, cellData={}, fieldData={}, update=true) {  // send unstructuredGrid
+        let o = this.getWindowObject() ;
+        let prefix = "updateUnstructuredGridWithoutUpdate:" ;
+        if ( update ) {
+            prefix = "updateUnstructuredGrid:" ;
+        }
+        
+        let items = {
+            "pointCoords": pointCoords,
+            "connectivityList": connectivityList,
+            "CellData": cellData,
+            "FieldData": fieldData,
+            "PointData": pointData,
+        }
+        o.socket.send( prefix + JSON.stringify(items)) ;
     }
 
     getSocketObject() {  // get raw socket connection to do cool things on your own
