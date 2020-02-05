@@ -24,7 +24,6 @@ namespace ttk {
     idType lastEncounteredSaddle{-1};
     bool isTerminated{false};
     idType regionWriteIndex{0};
-    idType regionSize{0};
     std::vector<idType> region;
     boost::heap::fibonacci_heap< std::pair<idType,idType> > queue;
 
@@ -63,7 +62,11 @@ namespace ttk {
 
             uf1->isTerminated = true;
             uf0->queue.merge(uf1->queue);
-            uf0->regionSize += uf1->regionSize;
+            idType oldSize = uf0->region.size();
+            idType newSize = oldSize + uf1->region.size();
+            uf0->region.resize(newSize);
+            for(idType i=oldSize,j=0; i<newSize; i++,j++)
+                uf0->region[i] = uf1->region[j];
 
             return uf0;
         // } else if(uf0->rank < uf1->rank) {

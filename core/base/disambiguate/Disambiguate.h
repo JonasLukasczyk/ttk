@@ -77,7 +77,9 @@ namespace ttk {
                         this->printWrn("Caution, outside GCC, sequential sort");
                         std::sort(sortedIndices.begin(), sortedIndices.end());
                     #else
+                        omp_set_num_threads(this->threadNumber_);
                         __gnu_parallel::sort(sortedIndices.begin(), sortedIndices.end());
+                        omp_set_num_threads(1);
                     #endif
                 #else
                     this->printWrn("Caution, outside GCC, sequential sort");
@@ -111,7 +113,7 @@ namespace ttk {
 
                 const idType* offsets,
                 const std::vector<std::tuple<idType,idType,idType>>& sortedIndices,
-                const bool acendingSweep = true
+                const int sortDirection
             ) const {
                 ttk::Timer t;
                 this->printMsg(
@@ -121,20 +123,21 @@ namespace ttk {
                 );
 
                 const idType nVertices = sortedIndices.size();
-                if(acendingSweep)
+                if(sortDirection>0){
                     for(idType i=1; i<nVertices; i++){
                         const idType& v0 = std::get<2>(sortedIndices[i-1]);
                         const idType& v1 = std::get<2>(sortedIndices[i]);
                         if(outputScalars[v0]>=outputScalars[v1])
-                            outputScalars[v0] = boost::math::float_prior(outputScalars[v1]);
+                            outputScalars[v1] = boost::math::float_next(outputScalars[v0]);
                     }
-                else
+                } else if(sortDirection<0) {
                     for(idType i=nVertices-1; i>1; i--){
-                        const idType& v0 = std::get<2>(sortedIndices[i-1]);
-                        const idType& v1 = std::get<2>(sortedIndices[i]);
+                        const idType& v1 = std::get<2>(sortedIndices[i-1]);
+                        const idType& v0 = std::get<2>(sortedIndices[i]);
                         if(outputScalars[v0]>=outputScalars[v1])
-                            outputScalars[v0] = boost::math::float_prior(outputScalars[v1]);
+                            outputScalars[v1] = boost::math::float_next(outputScalars[v0]);
                     }
+                }
 
                 this->printMsg(
                     "Applying numerical perturbation",
@@ -148,17 +151,20 @@ namespace ttk {
             int flattenScalars(
                 dataType* scalars,
 
-                const idType nVertices,
-                const idType* regionMask
+                const std::vector<Propagation<idType>*>& activePropagations
             ) const {
                 ttk::Timer t;
                 this->printMsg("Flattening scalar field",0,0,this->threadNumber_,debug::LineMode::REPLACE);
 
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++){
-                    const idType& s = regionMask[v];
-                    if(s>=0)
-                        scalars[v] = scalars[s];
+                const idType nActivePropagations = activePropagations.size();
+
+                #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
+                for(idType p=0; p<nActivePropagations; p++){
+                    const auto& propagation = *activePropagations[p];
+                    const idType s = propagation.lastEncounteredSaddle;
+                    const dataType sScalar = scalars[s];
+                    for(auto v : propagation.region)
+                        scalars[v] = sScalar;
                 }
 
                 this->printMsg("Flattening scalar field",1,t.getElapsedTime(),this->threadNumber_);
@@ -259,7 +265,7 @@ namespace ttk {
                 // frequently used propagation members
                 const idType extremumIndex = propagation.extremumIndex;
                 auto& queue = propagation.queue;
-                idType& regionSize = propagation.regionSize;
+                auto& region = propagation.region;
 
                 // pointer used to compare against representative
                 auto* propagationP = &propagation;
@@ -340,7 +346,7 @@ namespace ttk {
 
                     // mark vertex as visited and continue
                     propagationMask[v] = propagationP;
-                    regionSize++;
+                    region.push_back(v);
                 }
 
                 return 1;
@@ -377,6 +383,7 @@ namespace ttk {
                 }
 
                 // init propagation list
+                propagations.clear();
                 propagations.resize(nPropagations);
                 #pragma omp parallel for num_threads(this->threadNumber_)
                 for(idType i=0; i<nPropagations; i++)
@@ -419,33 +426,18 @@ namespace ttk {
 
                 idType nRegionVertices = 0;
                 idType nActivePropagations=0;
+                activePropagations.clear();
                 activePropagations.resize(nPropagations);
                 for(idType p=0; p<nPropagations; p++){
                     auto* propagation = &propagations[p];
                     if(!propagation->isTerminated){
-                        nRegionVertices = nRegionVertices + propagation->regionSize;
-                        propagation->region.resize( propagation->regionSize );
+                        nRegionVertices = nRegionVertices + propagation->region.size();
                         activePropagations[nActivePropagations++] = propagation;
                     }
                 }
                 activePropagations.resize(nActivePropagations);
 
-                // build region lists
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++){
-                    if(propagationMask[v]==nullptr)
-                        continue;
-
-                    auto* propagation = propagationMask[v]->find();
-
-                    idType writeIndex = 0;
-                    #pragma omp atomic capture
-                    writeIndex = propagation->regionWriteIndex++;
-
-                    propagation->region[writeIndex] = v;
-                }
-
-                #pragma omp parallel for num_threads(this->threadNumber_)
+                #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
                 for(idType i=0; i<nActivePropagations; i++){
                     auto& propagation = (*activePropagations[i]);
                     for(const auto& j : propagation.region)
@@ -582,6 +574,8 @@ namespace ttk {
                 idType* regionMask,
                 idType* queueMask,
                 Propagation<idType>** propagationMask,
+                std::vector<Propagation<idType>>& propagations,
+                std::vector<Propagation<idType>*>& activePropagations,
                 idType& nDiscardedMaxima,
                 std::vector<std::tuple<idType,idType,idType>>& sortedIndices,
 
@@ -617,8 +611,6 @@ namespace ttk {
                     return 1;
 
                 // compute regions
-                std::vector<Propagation<idType>> propagations;
-                std::vector<Propagation<idType>*> activePropagations;
                 status = this->computePropagations<idType>(
                     regionMask,
                     queueMask,
@@ -653,7 +645,7 @@ namespace ttk {
 
                 // flatten regions to offset of last encountered saddles
                 // and force that saddles are last in the local offset order
-                #pragma omp parallel for num_threads(this->threadNumber_)
+                #pragma omp parallel for schedule(static,4) num_threads(this->threadNumber_)
                 for(size_t p=0; p<nActivePropagations; p++){
                     const auto* propagation = activePropagations[p];
                     for(const auto& i : propagation->region)
@@ -672,16 +664,16 @@ namespace ttk {
                 );
                 if(!status) return 0;
 
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType i=0; i<nVertices; i++)
-                    regionMask[i] = -1;
+                // #pragma omp parallel for num_threads(this->threadNumber_)
+                // for(idType i=0; i<nVertices; i++)
+                //     regionMask[i] = -1;
 
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(size_t p=0; p<nActivePropagations; p++){
-                    const auto* propagation = activePropagations[p];
-                    for(const auto& i : propagation->region)
-                        regionMask[i] = propagation->lastEncounteredSaddle;
-                }
+                // #pragma omp parallel for num_threads(this->threadNumber_)
+                // for(size_t p=0; p<nActivePropagations; p++){
+                //     const auto* propagation = activePropagations[p];
+                //     for(const auto& i : propagation->region)
+                //         regionMask[i] = propagation->lastEncounteredSaddle;
+                // }
 
                 return 1;
             };
@@ -718,6 +710,8 @@ namespace ttk {
                 std::vector<Propagation<idType>*> propagationMask(nVertices);
                 std::vector<idType> localOffsets(nVertices);
                 std::vector<std::tuple<idType,idType,idType>> sortedIndices(nVertices);
+                std::vector<Propagation<idType>> propagations;
+                std::vector<Propagation<idType>*> activePropagations;
 
                 #pragma omp parallel for num_threads(this->threadNumber_)
                 for(idType i=0; i<nVertices; i++)
@@ -743,7 +737,7 @@ namespace ttk {
 
                 size_t iteration=0;
                 int status = 0;
-                int nSorts = 0;
+                int sortDirection = -1;
                 while(true){
                     this->printMsg(
                         "Iteration: "+std::to_string(iteration++),
@@ -766,6 +760,8 @@ namespace ttk {
                         regionMask.data(),
                         queueMask.data(),
                         propagationMask.data(),
+                        propagations,
+                        activePropagations,
                         nDiscardedMinima,
                         sortedIndices,
 
@@ -777,12 +773,11 @@ namespace ttk {
                     if(!status) return 0;
 
                     if(nDiscardedMinima){
-                        nSorts++;
+                        sortDirection=-1;
                         this->flattenScalars<dataType,idType>(
                             outputScalars,
 
-                            nVertices,
-                            regionMask.data()
+                            activePropagations
                         );
                     }
 
@@ -797,6 +792,8 @@ namespace ttk {
                         regionMask.data(),
                         queueMask.data(),
                         propagationMask.data(),
+                        propagations,
+                        activePropagations,
                         nDiscardedMaxima,
                         sortedIndices,
 
@@ -808,12 +805,11 @@ namespace ttk {
                     if(!status) return 0;
 
                     if(nDiscardedMaxima){
-                        nSorts++;
+                        sortDirection=+1;
                         this->flattenScalars<dataType,idType>(
                             outputScalars,
 
-                            nVertices,
-                            regionMask.data()
+                            activePropagations
                         );
                     }
 
@@ -821,14 +817,16 @@ namespace ttk {
                         break;
                 }
 
-                this->printMsg(debug::Separator::L2);
-                this->applyNumericalPerturbation<dataType,idType>(
-                    outputScalars,
+                if(sortDirection!=0){
+                    this->printMsg(debug::Separator::L2);
+                    this->applyNumericalPerturbation<dataType,idType>(
+                        outputScalars,
 
-                    outputOffsets,
-                    sortedIndices,
-                    nSorts%2==1
-                );
+                        outputOffsets,
+                        sortedIndices,
+                        sortDirection
+                    );
+                }
 
                 this->printMsg(debug::Separator::L2);
                 this->printMsg("Complete", 1, globalTimer.getElapsedTime(), this->threadNumber_);
@@ -838,9 +836,12 @@ namespace ttk {
             };
 
 
-
-
-
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
