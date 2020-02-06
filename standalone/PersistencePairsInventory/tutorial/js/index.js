@@ -96,24 +96,6 @@ function customColorV2(reliability, ppi, max_persistence_pairs) {
     return color ;
 }
 
-
-Window.timeout_idx = 0;
-function timerFunc() {
-    Window.timeout_idx += 1 ;
-    $("#threshold").val(Window.timeout_idx)
-    var e = jQuery.Event("keypress");
-    e.which = 13; //choose the one you want
-    e.keyCode = 13;
-    $("#threshold").trigger(e);
-    if (Window.timeout_idx < Window.persistence_num) {
-        setTimeout(timerFunc, 200) ;
-    }
-}
-
-function simulate() {
-    setTimeout(timerFunc, 200) ;
-}
-
 /**
  * draw a # of features distribution over reliability
  */
@@ -165,7 +147,7 @@ function drawDistribution(id, data, title) {
         return x(i);
      }).y(function (d) { return y(d) ; });
 
-    svg.append("path")
+    svg.append("path");
         .attr("class", "line2")
         .attr("d", dl(reduced_data))
         .style("stroke-width", 2)
@@ -180,14 +162,22 @@ function drawDistribution(id, data, title) {
 
     svg.append("text")
         .attr("x", (width / 2))             
-        .attr("y", 0 - (Window.box_plot_config.margin.top / 2 - 10))
+        .attr("y", 0 - (margin.top / 2 - 10))
         .attr("text-anchor", "middle")  
         .style("font-family", "sans-serif") 
         .style("font-weight", "bold")
         .text( title );
 }
 
-function customColor(reliability, ppi, max_persistence_pairs) {
+/**
+ * return the color 
+ * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1] 
+ * @param {*} ppi: # of features
+ * @param {*} max_persistence_pairs 
+ * @param {*} lower 
+ * @param {*} upper 
+ */
+function customColor(reliability, ppi, max_persistence_pairs, lower=0.3, upper=0.6) {
     //return customColorV2(reliability, ppi, max_persistence_pairs) ;
 
     // from light to dark
@@ -195,9 +185,9 @@ function customColor(reliability, ppi, max_persistence_pairs) {
     let gray = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
     let red = ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"];
     let range_color = green;
-    if (reliability >= 0 && reliability < 0.3) {
+    if (reliability >= 0 && reliability < lower) {
         range_color = red;
-    } else if (reliability >= 0.3 && reliability < 0.6) {
+    } else if (reliability >= lower && reliability < upper) {
         range_color = gray;
     } else {
         range_color = green;
@@ -258,6 +248,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
 
     let vData = [];
     let dist_data = [] ;
+    let bins_data = [] ;
     // extract related information
     for (let i = 0; i < h; i++) {
         for (let j = 0; j < w; j++) {
@@ -267,7 +258,8 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
             let cal = calculateReliability(items, iComponent) ;
             vData.push([j + "", i + "", dd, items, idx, cal]);
-            dist_data.push([cal, dd]) ;
+            // dist_data.push([cal, dd]) ;
+            bins_data.push([cal, 1]) ;
         }
     }
 
@@ -275,8 +267,8 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         return dist_data ;
     }
 
-    drawDistribution("my_dataviz_distribution", dist_data, "Distribution of reliability") ;
-    
+    // drawDistribution("my_dataviz_distribution", dist_data, "Distribution of reliability") ;
+    drawDistribution("my_dataviz_distribution_bins", bins_data, "Bins distribution of reliability") ;
     
     d3.select("#my_dataviz *").remove() ;
     function getArray(n) {
@@ -649,7 +641,6 @@ function Connect() {
             btn.html('Connect');
             $("#load_test").attr("disabled", true);
             // btn.attr("disabled", false) ;
-            
         },
         function () {
             console.log("on_close");
@@ -798,20 +789,20 @@ $('#threshold').on('keypress', function (e) {
                 $("#hidden-optimal-threshold").click();
 
                 // draw a distributed sum up
-                var data = [] ;
-                $("#s2 :enabled").each(function(i, d) {
-                    var tmp = renderHistogram(Window.object['Extent'].Values,
-                        Window.object['PointData'][Window.APPIAttrName].Values,
-                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
-                        Window.object['FieldData'],
-                        parseInt(d.value),
-                        null,
-                        true);
-                    for (var i = 0; i < tmp.length; i ++) {
-                        data.push(tmp[i]) ;
-                    }
-                });
-                drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
+                // var data = [] ;
+                // $("#s2 :enabled").each(function(i, d) {
+                //     var tmp = renderHistogram(Window.object['Extent'].Values,
+                //         Window.object['PointData'][Window.APPIAttrName].Values,
+                //         Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                //         Window.object['FieldData'],
+                //         parseInt(d.value),
+                //         null,
+                //         true);
+                //     for (var i = 0; i < tmp.length; i ++) {
+                //         data.push(tmp[i]) ;
+                //     }
+                // });
+                // drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
             }
         }
     }
@@ -847,21 +838,21 @@ $('#rel-window').on('keypress', function (e) {
                 }
 
                 // draw a distributed sum up
-                var data = [] ;
-                $("#s2 :enabled").each(function(i, d) {
-                    var tmp = renderHistogram(Window.object['Extent'].Values,
-                        Window.object['PointData'][Window.APPIAttrName].Values,
-                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
-                        Window.object['FieldData'],
-                        parseInt(d.value),
-                        null,
-                        true);
-                    for (var i = 0; i < tmp.length; i ++) {
-                        data.push(tmp[i]) ;
-                    }
-                });
+                // var data = [] ;
+                // $("#s2 :enabled").each(function(i, d) {
+                //     var tmp = renderHistogram(Window.object['Extent'].Values,
+                //         Window.object['PointData'][Window.APPIAttrName].Values,
+                //         Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                //         Window.object['FieldData'],
+                //         parseInt(d.value),
+                //         null,
+                //         true);
+                //     for (var i = 0; i < tmp.length; i ++) {
+                //         data.push(tmp[i]) ;
+                //     }
+                // });
 
-                drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
+                // drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
             }
         }
         $(this).blur();
