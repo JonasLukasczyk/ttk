@@ -16,6 +16,7 @@
 #include <limits>
 #include <queue>
 #include <unordered_set>
+#include <set>
 #include <unordered_map>
 
 #include <sys/time.h>
@@ -244,13 +245,6 @@ namespace ttk {
                 return 1;
             }
 
-            /**
-             * Current Limitation: monkey saddle handing (especially during disambiguation)
-             *
-             * Possible improvements:
-             *      + add vertices only once to queue
-             *      + each thread has its own temporary data
-             */
             template<typename idType>
             int computePropagation(
                 idType* regionMask, // used here to store registered larger vertices
@@ -281,10 +275,8 @@ namespace ttk {
                     queue.pop();
 
                     // continue if this thread has already seen this vertex
-                    if(propagationMask[v]!=nullptr){
-                        // std::cout<<"x";
+                    if(propagationMask[v]!=nullptr)
                         continue;
-                    }
 
                     // add neighbors to queue AND check if v is a saddle
                     bool isSaddle = false;
@@ -395,27 +387,18 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                // std::vector<std::pair<double,double>> timings(nTasks);
-
                 // compute regions
                 #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
                 for(idType p=0; p<nPropagations; p++){
-                    {
-                        // struct timeval stamp;
-                        // gettimeofday(&stamp, NULL);
-                        // timings[ t ].first = (stamp.tv_sec * 1000000 + stamp.tv_usec) / 1000000.0;
-                        this->computePropagation<idType>(
-                            regionMask,
-                            queueMask,
-                            propagationMask,
-                            propagations[p],
+                    this->computePropagation<idType>(
+                        regionMask,
+                        queueMask,
+                        propagationMask,
+                        propagations[p],
 
-                            triangulation,
-                            offsets
-                        );
-                        // gettimeofday(&stamp, NULL);
-                        // timings[ t ].second = (stamp.tv_sec * 1000000 + stamp.tv_usec) / 1000000.0;
-                    }
+                        triangulation,
+                        offsets
+                    );
                 }
 
                 this->printMsg(
@@ -453,10 +436,6 @@ namespace ttk {
                     1, t.getElapsedTime(), this->threadNumber_
                 );
 
-                // for(idType i=0; i<timings.size(); i++){
-                //     this->printMsg("Task "+std::to_string(i)+": "+std::to_string(timings[i].first)+" - "+std::to_string(timings[i].second) + " -> " +std::to_string(timings[i].second-timings[i].first));
-                // }
-
                 return 1;
             }
 
@@ -481,10 +460,10 @@ namespace ttk {
                     std::pair<idType,idType>,
                     std::vector<std::pair<idType,idType>>
                 > queue;
-                queue.push( {distanceField[seedIndex],seedIndex} );
+                queue.emplace( distanceField[seedIndex], seedIndex );
                 localOffsets[seedIndex] = -1;
 
-                std::vector<idType> localVertexSequence(region.size()+1);
+                std::vector<idType> localVertexSequence(region.size());
 
                 idType q=0;
                 while(!queue.empty()){
@@ -501,22 +480,238 @@ namespace ttk {
                         // if u has not been popped from the queue add to queue
                         if(regionMask[u]==regionID && localOffsets[u]!=-1){
                             localOffsets[u] = -1;
-                            queue.push( {distanceField[u],u} );
+                            queue.emplace( distanceField[u], u );
                         }
                     }
                 }
 
-                // finalize tempOffsets and reset outputOffsets
-                for(size_t i=0, j=region.size(); i<j; i++)
-                    localOffsets[ localVertexSequence[i+1] ] = -i-1;
+                idType localOffset = -1;
+                for(idType i=0, j=region.size(); i<j; i++)
+                    localOffsets[ localVertexSequence[i] ] = localOffset--;
 
                 return 1;
             }
 
+            // template<typename idType>
+            // int computeSeparatrix(
+            //     std::vector<idType>& separatrix,
+
+            //     const ttk::Triangulation* triangulation,
+            //     const idType* offsets,
+            //     const idType* regionMask,
+            //     const idType& regionID,
+            //     const idType& seedIndex,
+            //     const idType& threshold
+            // ) const {
+
+            //     separatrix.resize(1, seedIndex);
+
+            //     // find always smallest neighbor until threshold is reached
+            //     idType v = seedIndex;
+            //     while(offsets[v]>threshold){
+
+            //         idType smallestNeighbor = -1;
+            //         idType smallestNeighborOffset = 1;
+
+            //         idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+            //         for(idType n=0; n<nNeighbors; n++){
+            //             idType u;
+            //             triangulation->getVertexNeighbor(v,n,u);
+
+            //             if(regionMask[u]!=regionID)
+            //                 continue;
+
+            //             if(offsets[u]<offsets[v] && smallestNeighborOffset>offsets[u]){
+            //                 smallestNeighbor = u;
+            //                 smallestNeighborOffset = offsets[u];
+            //             }
+            //         }
+
+            //         if(smallestNeighbor<0)
+            //             return 1;
+
+            //         v = smallestNeighbor;
+            //         separatrix.push_back(v);
+            //     }
+
+            //     return 1;
+            // }
+
+            // template<typename idType>
+            // int removeInternalMinimaFromRegion(
+            //     idType* localOffsets,
+            //     idType* tempOffsets,
+
+            //     const ttk::Triangulation* triangulation,
+            //     const idType* regionMask,
+            //     const idType& regionID,
+            //     const std::vector<idType>& region
+            // ) const {
+            //     idType span = region.size()+1;
+
+            //     // find internal minima
+            //     std::vector<idType> internalMinima;
+            //     {
+            //         for(const auto& v : region){
+
+            //             // init temp offsets with -1 for later
+            //             tempOffsets[v] = -1;
+
+            //             // check if v is a minima
+            //             bool hasSmallerNeighbor = false;
+            //             bool isInternal = true;
+
+            //             idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+            //             for(idType n=0; n<nNeighbors; n++){
+            //                 idType u;
+            //                 triangulation->getVertexNeighbor(v,n,u);
+
+            //                 // if u is inside region
+            //                 if(regionMask[u]!=regionID){
+            //                     isInternal = false;
+            //                 }
+
+            //                 if(localOffsets[u]<localOffsets[v]){
+            //                     hasSmallerNeighbor = true;
+            //                 }
+            //             }
+
+            //             if(isInternal && !hasSmallerNeighbor)
+            //                 internalMinima.push_back(v);
+            //         }
+
+            //     }
+
+            //     if(internalMinima.size()>0){
+            //         // #pragma omp critical
+            //         // this->printWrn(std::to_string(regionID)+": "+std::to_string(internalMinima.size()));
+            //     } else {
+            //         return 1;
+            //     }
+
+            //     // force persistence order of internalMinima
+
+            //     idType q = -1;
+            //     for(const auto& m: internalMinima){
+            //         localOffsets[m] = q*span;
+            //         q--;
+            //     }
+
+            //     // find saddle
+            //     for(const auto& m: internalMinima){
+
+            //         std::priority_queue<
+            //             std::pair<idType,idType>,
+            //             std::vector<std::pair<idType,idType>>
+            //         > queue;
+            //         queue.emplace( -localOffsets[m], m );
+            //         tempOffsets[m]=m;
+
+            //         // grow region until first saddle
+            //         idType saddleIndex = -1;
+            //         idType lowerLinkComponent0 = -1;
+            //         idType lowerLinkComponent1 = -1;
+            //         while(!queue.empty()){
+            //             const idType v = std::get<1>(queue.top());
+            //             queue.pop();
+
+            //             idType numberOfSmallerNeighbors = 0;
+            //             idType numberOfSmallerNeighborsThisThreadVisited = 0;
+
+            //             idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+            //             for(idType n=0; n<nNeighbors; n++){
+            //                 idType u;
+            //                 triangulation->getVertexNeighbor(v,n,u);
+
+            //                 if(regionMask[u]!=regionID)
+            //                     continue;
+
+            //                 // if u is larger neighbor ...
+            //                 if(localOffsets[u] > localOffsets[v]){
+            //                     // and has not been already added to the queue
+            //                     if(tempOffsets[u]!=m){
+            //                         // add to queue and mark as visited
+            //                         queue.emplace( -localOffsets[u], u );
+            //                         tempOffsets[u]=m;
+            //                     }
+            //                 } else {
+            //                     // otherwise check if this thread visited the samler neighbor
+            //                     numberOfSmallerNeighbors++;
+            //                     if(tempOffsets[u]==m){
+            //                         numberOfSmallerNeighborsThisThreadVisited++;
+            //                         lowerLinkComponent0 = u;
+            //                     } else {
+            //                         lowerLinkComponent1 = u;
+            //                     }
+            //                 }
+            //             }
+
+            //             if(numberOfSmallerNeighborsThisThreadVisited!=numberOfSmallerNeighbors){
+            //                 saddleIndex = v;
+            //                 break;
+            //             }
+            //         }
+
+            //         // #pragma omp critical
+            //         if(lowerLinkComponent0<0 || lowerLinkComponent1<0){
+            //             this->printErr(std::to_string(regionID)+" "+std::to_string(m)+": si "+std::to_string(saddleIndex));
+            //             this->printErr("WHAT");
+            //             return 1;
+            //         }
+
+            //         int status = 0;
+
+            //         // compute separatrix
+            //         std::vector<idType> separatrix0;
+            //         status = this->computeSeparatrix<idType>(
+            //             separatrix0,
+
+            //             triangulation,
+            //             localOffsets,
+            //             regionMask,
+            //             regionID,
+            //             lowerLinkComponent0,
+            //             localOffsets[m]
+            //         );
+
+            //         // #pragma omp critical
+            //         // this->printErr(std::to_string(regionID)+" "+std::to_string(m)+": "+std::to_string(separatrix0.size()));
+
+            //         for(auto v: separatrix0)
+            //             tempOffsets[v] = 9999999;
+
+            //         std::vector<idType> separatrix1;
+            //         status = this->computeSeparatrix<idType>(
+            //             separatrix1,
+
+            //             triangulation,
+            //             localOffsets,
+            //             regionMask,
+            //             regionID,
+            //             lowerLinkComponent1,
+            //             localOffsets[m]
+            //         );
+
+            //         if(!status)
+            //             return 0;
+
+            //         // enforcing new order
+            //         idType offset = localOffsets[ separatrix1.back() ];
+            //         for(idType i=separatrix1.size()-2; i>=0; i--)
+            //             localOffsets[ separatrix1[i] ] = ++offset;
+            //         localOffsets[ saddleIndex ] = ++offset;
+            //         for(idType i=0; i<separatrix0.size(); i++)
+            //             localOffsets[ separatrix0[i] ] = ++offset;
+
+            //         return 1;
+            //     }
+
+            //     return 1;
+            // }
+
             template<typename idType>
             int computeLocalOffsetsOfRegions(
                 idType* localOffsets,
-                idType* tempOffsets,
 
                 const ttk::Triangulation* triangulation,
                 const idType* regionMask,
@@ -536,7 +731,6 @@ namespace ttk {
 
                 #pragma omp parallel for num_threads(this->threadNumber_)
                 for(idType i=0; i<nVertices; i++){
-                    tempOffsets[i] = -1;
                     localOffsets[i] = 1;
                 }
 
@@ -545,20 +739,55 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
+                int status = 1;
                 #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
                 for(idType p=0; p<nActivePropagations; p++){
                     const auto* propagation = activePropagations[p];
-                    this->computeLocalOffsetsOfRegion<idType>(
+
+                    idType seedVertex = -1;
+                    // get saddle neighbor inside region with largest offset
+                    {
+                        idType maxOffset = std::numeric_limits<idType>::min();
+                        idType nNeighbors = triangulation->getVertexNeighborNumber( propagation->lastEncounteredSaddle );
+                        for(idType n=0; n<nNeighbors; n++){
+                            idType u;
+                            triangulation->getVertexNeighbor(propagation->lastEncounteredSaddle,n,u);
+                            if(regionMask[u]==propagation->extremumIndex && maxOffset<inputOffsets[u]){
+                                seedVertex = u;
+                                maxOffset=inputOffsets[u];
+                            }
+                        }
+                    }
+
+                    int localStatus = 0;
+                    localStatus = this->computeLocalOffsetsOfRegion<idType>(
                         localOffsets,
 
                         triangulation,
                         regionMask,
                         propagation->extremumIndex,
                         propagation->region,
-                        propagation->lastEncounteredSaddle,
+                        seedVertex,
                         inputOffsets
                     );
+                    if(!localStatus)
+                        status = 0;
+
+                    // status = this->removeInternalMinimaFromRegion<idType>(
+                    //     localOffsets,
+                    //     tempOffsets,
+
+                    //     triangulation,
+                    //     regionMask,
+                    //     propagation->extremumIndex,
+                    //     propagation->region
+                    // );
+                    // if(!status)
+                    //     return 0;
                 }
+
+                if(!status)
+                    return 0;
 
                 this->printMsg( "Computing local order of regions ("+std::to_string(nActivePropagations)+")",
                     1, t.getElapsedTime(), this->threadNumber_
@@ -629,7 +858,6 @@ namespace ttk {
                 // compute local order of regions
                 status = this->computeLocalOffsetsOfRegions<idType>(
                     localOffsets,
-                    outputOffsets,
 
                     triangulation,
                     regionMask,
@@ -811,6 +1039,13 @@ namespace ttk {
 
                             activePropagations
                         );
+                    }
+
+                    if(nDiscardedMinima>0 && nDiscardedMaxima<1){
+                        const idType maxOffset = nVertices-1;
+                        #pragma omp parallel for num_threads(this->threadNumber_)
+                        for(idType v=0; v<nVertices; v++)
+                            outputOffsets[v] = maxOffset-outputOffsets[v];
                     }
 
                     if((nDiscardedMaxima+nDiscardedMinima)==0)
