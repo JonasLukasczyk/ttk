@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <title>ttkWebSocket library examples</title>
+      <script type="text/javascript" src="./ttkWebSocket.js"></script>
+      <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+      <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+   </head>
+   <body>
+      <div >
+         <div class="container">
+
+            <h2 style="padding-top: 20px;" class="pb-3">ttkWebSocket library examples  </h2>
+            <h4>more information would be found at <code>console.log</code></h4>
+            <hr>
+            <div class="row">
+               <div class="col">
+                  <h4> To receive <code>UnStructuredGrid/ImageData</code></h4>
+                  <div class="text-justify p-2 border bg-light">
+                     WebSocket Host:
+                     <input id="msg-h" type="text" value="127.0.0.1">
+                     Port:
+                     <input id="msg-u" type="text" value="9286">
+                     <button id="connect-u" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
+                     <button id="request-u" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button>
+                     <button id="sendobj-u" onclick="SendObj();" class="btn btn-primary btn-sm">Send Object</button>
+                     <button id="sendobj-u" onclick="SendObjWithoutUpdate();" class="btn btn-primary btn-sm">Send Object Without Update</button>
+                     <button id="close-u" onclick="Close();" class="btn btn-primary btn-sm">Close</button>
+                     <!--<br> Message:
+                     <br>
+                     <textarea id="txt-u" style="width: 100%;" type="text"></textarea>
+                     <br>
+                     <button id="send-u" onclick="Send();" class="btn btn-primary btn-sm" style="float:right;">Send Text</button> -->
+                     <br>
+                     <br>
+                     <div id="log" style="max-height: 200px;overflow: scroll;" class="text-justify p-2 border bg-light"></div>
+                  </div>
+               </div>
+               <br>
+
+            </div>
+         </div> <!-- container -->
+      </div>
+
+      <script>
+         let ttk;
+
+         (function () {
+            var ele = document.getElementById('log');
+            logger = function (message) {
+               if (typeof message == 'object') {
+                     ele.innerHTML += (JSON && JSON.stringify ? JSON.stringify(message) : message) + '<br />';
+               } else {
+                     ele.innerHTML += message + '<br />';
+               }
+            }
+         })();
+
+         function Connect() {
+            let PORT = parseInt(document.getElementById("msg-u").value) ;
+            let onOpen = function() { logger("open a connection") ; } ;
+            let onMessage = function(msg) { console.log(msg) ; } ;
+            let onErr = function() { alert("check if listening port is available") ; } ;
+            let onClose = function() {} ;
+            let objectCallback = function(obj) {
+               console.log(obj) ;
+               if ( obj.structureType.Values[0] == 2 ) {  // 2 => ImageData, 1 => UnStructuredGrid
+                  logger("[callback information] browser receives an imagedata object") ;
+               } else if ( obj.structureType.Values[0] == 1 ) {
+                  logger("[callback information] browser receives an UnStructuredGrid object") ;
+               } else {
+                  alert("NOT Support!") ;
+               }
+            }
+
+            ttk = new ttkWebSocketIO(PORT, onOpen, onErr, onMessage, onClose, objectCallback, ip=document.getElementById("msg-h").value) ;
+         }
+
+         function Request() {
+            if (ttk)
+               ttk.send("requestData") ;
+         }
+
+         function Close() {
+            if (ttk)
+               ttk.close() ;
+         }
+
+         // function Send() {
+         //    if (ttk) {
+         //       logger("send back a text message to paraview") ;
+         //       ttk.send(document.getElementById("txt-u").value) ;
+         //    }
+
+         // }
+
+         function SendObj() {
+            if (ttk) {
+               logger("send an unstructedgrid object to paraview with paraview updating") ;
+               let pointCoords = [-10.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0.8506507873535156, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957] ;
+               let connectivityList = [3, 0, 11, 5, 3, 0, 5, 1, 3, 0, 1, 7, 3, 0, 7, 10, 3, 0, 10, 11, 3, 1, 5, 9, 3, 5, 11, 4, 3, 11, 10, 2, 3, 10, 7, 6, 3, 7, 1, 8, 3, 3, 9, 4, 3, 3, 4, 2, 3, 3, 2, 6, 3, 3, 6, 8, 3, 3, 8, 9, 3, 4, 9, 5, 3, 2, 4, 11, 3, 6, 2, 10, 3, 8, 6, 7, 3, 9, 8, 1] ;
+               let fieldData =  {"n": [1, 2, 32], "m": [2, 3, 45]} ;
+               ttk.sendUnstructuredGrid(pointCoords, connectivityList, undefined, undefined, fieldData, update=true) ;
+            }
+         }
+
+         function SendObjWithoutUpdate() {
+            if (ttk) {
+               logger("send an unstructedgrid object to paraview");
+               let pointCoords = [-10.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0.8506507873535156, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957] ;
+               let connectivityList = [3, 0, 11, 5, 3, 0, 5, 1, 3, 0, 1, 7, 3, 0, 7, 10, 3, 0, 10, 11, 3, 1, 5, 9, 3, 5, 11, 4, 3, 11, 10, 2, 3, 10, 7, 6, 3, 7, 1, 8, 3, 3, 9, 4, 3, 3, 4, 2, 3, 3, 2, 6, 3, 3, 6, 8, 3, 3, 8, 9, 3, 4, 9, 5, 3, 2, 4, 11, 3, 6, 2, 10, 3, 8, 6, 7, 3, 9, 8, 1] ;
+               let fieldData =  {"n": [1, 2, 32], "m": [2, 3, 45]} ;
+               ttk.sendUnstructuredGrid(pointCoords, connectivityList, undefined, undefined, fieldData, update=false) ;
+            }
+         }
+      </script>
+   </body>
+</html>

@@ -25,6 +25,9 @@ if (@TTK_ENABLE_ZLIB@)
   find_dependency(ZLIB REQUIRED)
 endif()
 
+if (@TTK_ENABLE_WEBSOCKETIO@)
+  find_dependency(websocketpp REQUIRED)
+endif()
 
 
 # Include the actual targets for TTK Base
