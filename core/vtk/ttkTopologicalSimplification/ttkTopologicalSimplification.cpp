@@ -210,6 +210,8 @@ int ttkTopologicalSimplification::dispatch(
 
       int status = 0;
 
+      this->triangulation_->preconditionBoundaryVertices();
+
       if(outputOffsetArray->GetDataType() == VTK_INT) {
         status = tpts.simplify(
           (dataType*) outputScalarArray->GetVoidPointer(0),

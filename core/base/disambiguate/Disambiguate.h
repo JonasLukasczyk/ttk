@@ -447,21 +447,25 @@ namespace ttk {
                 const idType* regionMask,
                 const idType& regionID,
                 const std::vector<idType>& region,
-                const idType& seedIndex,
-                const idType* distanceField
+                const std::vector<idType>& seedVertices,
+                const idType* distanceField,
+                const idType localOffsetSortingDirection // controls if the first visited vertex is the last or first element of the local offsets
             ) const {
 
                 // NOTE: this function uses the localOffsets during computation to add every region vertex exectly once
-                for(size_t i=0, j=region.size(); i<j; i++)
-                    localOffsets[region[i]] = regionID;
+                for(const auto& v: region)
+                    localOffsets[v] = regionID;
 
                 // init priority queue
                 std::priority_queue<
                     std::pair<idType,idType>,
                     std::vector<std::pair<idType,idType>>
                 > queue;
-                queue.emplace( distanceField[seedIndex], seedIndex );
-                localOffsets[seedIndex] = -1;
+
+                for(const auto& v: seedVertices){
+                    queue.emplace( distanceField[v], v );
+                    localOffsets[v] = -1;
+                }
 
                 std::vector<idType> localVertexSequence(region.size());
 
@@ -479,239 +483,28 @@ namespace ttk {
 
                         // if u has not been popped from the queue add to queue
                         if(regionMask[u]==regionID && localOffsets[u]!=-1){
-                            localOffsets[u] = -1;
                             queue.emplace( distanceField[u], u );
+                            localOffsets[u] = -1;
                         }
                     }
                 }
 
                 idType localOffset = -1;
-                for(idType i=0, j=region.size(); i<j; i++)
-                    localOffsets[ localVertexSequence[i] ] = localOffset--;
+                if(localOffsetSortingDirection<0){
+                    for(idType i=0, j=region.size(); i<j; i++)
+                        localOffsets[ localVertexSequence[i] ] = localOffset--;
+                } else {
+                    for(idType i=region.size()-1; i>=0; i--)
+                        localOffsets[ localVertexSequence[i] ] = localOffset--;
+                }
 
                 return 1;
             }
 
-            // template<typename idType>
-            // int computeSeparatrix(
-            //     std::vector<idType>& separatrix,
-
-            //     const ttk::Triangulation* triangulation,
-            //     const idType* offsets,
-            //     const idType* regionMask,
-            //     const idType& regionID,
-            //     const idType& seedIndex,
-            //     const idType& threshold
-            // ) const {
-
-            //     separatrix.resize(1, seedIndex);
-
-            //     // find always smallest neighbor until threshold is reached
-            //     idType v = seedIndex;
-            //     while(offsets[v]>threshold){
-
-            //         idType smallestNeighbor = -1;
-            //         idType smallestNeighborOffset = 1;
-
-            //         idType nNeighbors = triangulation->getVertexNeighborNumber( v );
-            //         for(idType n=0; n<nNeighbors; n++){
-            //             idType u;
-            //             triangulation->getVertexNeighbor(v,n,u);
-
-            //             if(regionMask[u]!=regionID)
-            //                 continue;
-
-            //             if(offsets[u]<offsets[v] && smallestNeighborOffset>offsets[u]){
-            //                 smallestNeighbor = u;
-            //                 smallestNeighborOffset = offsets[u];
-            //             }
-            //         }
-
-            //         if(smallestNeighbor<0)
-            //             return 1;
-
-            //         v = smallestNeighbor;
-            //         separatrix.push_back(v);
-            //     }
-
-            //     return 1;
-            // }
-
-            // template<typename idType>
-            // int removeInternalMinimaFromRegion(
-            //     idType* localOffsets,
-            //     idType* tempOffsets,
-
-            //     const ttk::Triangulation* triangulation,
-            //     const idType* regionMask,
-            //     const idType& regionID,
-            //     const std::vector<idType>& region
-            // ) const {
-            //     idType span = region.size()+1;
-
-            //     // find internal minima
-            //     std::vector<idType> internalMinima;
-            //     {
-            //         for(const auto& v : region){
-
-            //             // init temp offsets with -1 for later
-            //             tempOffsets[v] = -1;
-
-            //             // check if v is a minima
-            //             bool hasSmallerNeighbor = false;
-            //             bool isInternal = true;
-
-            //             idType nNeighbors = triangulation->getVertexNeighborNumber( v );
-            //             for(idType n=0; n<nNeighbors; n++){
-            //                 idType u;
-            //                 triangulation->getVertexNeighbor(v,n,u);
-
-            //                 // if u is inside region
-            //                 if(regionMask[u]!=regionID){
-            //                     isInternal = false;
-            //                 }
-
-            //                 if(localOffsets[u]<localOffsets[v]){
-            //                     hasSmallerNeighbor = true;
-            //                 }
-            //             }
-
-            //             if(isInternal && !hasSmallerNeighbor)
-            //                 internalMinima.push_back(v);
-            //         }
-
-            //     }
-
-            //     if(internalMinima.size()>0){
-            //         // #pragma omp critical
-            //         // this->printWrn(std::to_string(regionID)+": "+std::to_string(internalMinima.size()));
-            //     } else {
-            //         return 1;
-            //     }
-
-            //     // force persistence order of internalMinima
-
-            //     idType q = -1;
-            //     for(const auto& m: internalMinima){
-            //         localOffsets[m] = q*span;
-            //         q--;
-            //     }
-
-            //     // find saddle
-            //     for(const auto& m: internalMinima){
-
-            //         std::priority_queue<
-            //             std::pair<idType,idType>,
-            //             std::vector<std::pair<idType,idType>>
-            //         > queue;
-            //         queue.emplace( -localOffsets[m], m );
-            //         tempOffsets[m]=m;
-
-            //         // grow region until first saddle
-            //         idType saddleIndex = -1;
-            //         idType lowerLinkComponent0 = -1;
-            //         idType lowerLinkComponent1 = -1;
-            //         while(!queue.empty()){
-            //             const idType v = std::get<1>(queue.top());
-            //             queue.pop();
-
-            //             idType numberOfSmallerNeighbors = 0;
-            //             idType numberOfSmallerNeighborsThisThreadVisited = 0;
-
-            //             idType nNeighbors = triangulation->getVertexNeighborNumber( v );
-            //             for(idType n=0; n<nNeighbors; n++){
-            //                 idType u;
-            //                 triangulation->getVertexNeighbor(v,n,u);
-
-            //                 if(regionMask[u]!=regionID)
-            //                     continue;
-
-            //                 // if u is larger neighbor ...
-            //                 if(localOffsets[u] > localOffsets[v]){
-            //                     // and has not been already added to the queue
-            //                     if(tempOffsets[u]!=m){
-            //                         // add to queue and mark as visited
-            //                         queue.emplace( -localOffsets[u], u );
-            //                         tempOffsets[u]=m;
-            //                     }
-            //                 } else {
-            //                     // otherwise check if this thread visited the samler neighbor
-            //                     numberOfSmallerNeighbors++;
-            //                     if(tempOffsets[u]==m){
-            //                         numberOfSmallerNeighborsThisThreadVisited++;
-            //                         lowerLinkComponent0 = u;
-            //                     } else {
-            //                         lowerLinkComponent1 = u;
-            //                     }
-            //                 }
-            //             }
-
-            //             if(numberOfSmallerNeighborsThisThreadVisited!=numberOfSmallerNeighbors){
-            //                 saddleIndex = v;
-            //                 break;
-            //             }
-            //         }
-
-            //         // #pragma omp critical
-            //         if(lowerLinkComponent0<0 || lowerLinkComponent1<0){
-            //             this->printErr(std::to_string(regionID)+" "+std::to_string(m)+": si "+std::to_string(saddleIndex));
-            //             this->printErr("WHAT");
-            //             return 1;
-            //         }
-
-            //         int status = 0;
-
-            //         // compute separatrix
-            //         std::vector<idType> separatrix0;
-            //         status = this->computeSeparatrix<idType>(
-            //             separatrix0,
-
-            //             triangulation,
-            //             localOffsets,
-            //             regionMask,
-            //             regionID,
-            //             lowerLinkComponent0,
-            //             localOffsets[m]
-            //         );
-
-            //         // #pragma omp critical
-            //         // this->printErr(std::to_string(regionID)+" "+std::to_string(m)+": "+std::to_string(separatrix0.size()));
-
-            //         for(auto v: separatrix0)
-            //             tempOffsets[v] = 9999999;
-
-            //         std::vector<idType> separatrix1;
-            //         status = this->computeSeparatrix<idType>(
-            //             separatrix1,
-
-            //             triangulation,
-            //             localOffsets,
-            //             regionMask,
-            //             regionID,
-            //             lowerLinkComponent1,
-            //             localOffsets[m]
-            //         );
-
-            //         if(!status)
-            //             return 0;
-
-            //         // enforcing new order
-            //         idType offset = localOffsets[ separatrix1.back() ];
-            //         for(idType i=separatrix1.size()-2; i>=0; i--)
-            //             localOffsets[ separatrix1[i] ] = ++offset;
-            //         localOffsets[ saddleIndex ] = ++offset;
-            //         for(idType i=0; i<separatrix0.size(); i++)
-            //             localOffsets[ separatrix0[i] ] = ++offset;
-
-            //         return 1;
-            //     }
-
-            //     return 1;
-            // }
-
             template<typename idType>
             int computeLocalOffsetsOfRegions(
                 idType* localOffsets,
+                idType* distanceField,
 
                 const ttk::Triangulation* triangulation,
                 const idType* regionMask,
@@ -744,21 +537,27 @@ namespace ttk {
                 for(idType p=0; p<nActivePropagations; p++){
                     const auto* propagation = activePropagations[p];
 
-                    idType seedVertex = -1;
-                    // get saddle neighbor inside region with largest offset
+                    // init distance field
+                    for(const auto& v: propagation->region)
+                        distanceField[v] = inputOffsets[v];
+
+                    // there is always only one authorized maximum, which is next to the saddle
+                    std::vector<idType> authorizedMaximum(1,-1);
                     {
+                        // get saddle neighbor inside region with largest offset
                         idType maxOffset = std::numeric_limits<idType>::min();
                         idType nNeighbors = triangulation->getVertexNeighborNumber( propagation->lastEncounteredSaddle );
                         for(idType n=0; n<nNeighbors; n++){
                             idType u;
                             triangulation->getVertexNeighbor(propagation->lastEncounteredSaddle,n,u);
                             if(regionMask[u]==propagation->extremumIndex && maxOffset<inputOffsets[u]){
-                                seedVertex = u;
+                                authorizedMaximum[0] = u;
                                 maxOffset=inputOffsets[u];
                             }
                         }
                     }
 
+                    // start first grow from saddle
                     int localStatus = 0;
                     localStatus = this->computeLocalOffsetsOfRegion<idType>(
                         localOffsets,
@@ -767,27 +566,187 @@ namespace ttk {
                         regionMask,
                         propagation->extremumIndex,
                         propagation->region,
-                        seedVertex,
-                        inputOffsets
+                        authorizedMaximum,
+                        distanceField,
+                        -1
                     );
                     if(!localStatus)
                         status = 0;
 
-                    // status = this->removeInternalMinimaFromRegion<idType>(
-                    //     localOffsets,
-                    //     tempOffsets,
+                    // TODO REPLACE WITH OPTION
+                    if(true){
 
-                    //     triangulation,
-                    //     regionMask,
-                    //     propagation->extremumIndex,
-                    //     propagation->region
-                    // );
-                    // if(!status)
-                    //     return 0;
+                        bool containsResidualExtrema = false;
+                        // collect all vertices on the boundary that are not the authorized maximum
+                        std::vector<idType> authorizedMinima;
+                        {
+                            idType smallestVertexOnBoundary = -1;
+
+                            for(const auto& v: propagation->region){
+
+                                // check if v is on the boundary and if it has no smaller neighbors inside region
+                                bool isOnRegionBoundary = false;
+                                bool hasSmallerNeighbor = false;
+
+                                idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+                                for(idType n=0; n<nNeighbors; n++){
+                                    idType u;
+                                    triangulation->getVertexNeighbor(v,n,u);
+
+                                    // if u is not inside region -> v is on region boundary
+                                    if(regionMask[u]!=propagation->extremumIndex){
+                                        isOnRegionBoundary = true;
+                                    } else if(localOffsets[u]<localOffsets[v]) {
+                                        hasSmallerNeighbor = true;
+                                    }
+                                }
+
+                                if(isOnRegionBoundary){
+                                    if(!hasSmallerNeighbor && !triangulation->isVertexOnBoundary(v) && authorizedMinima.size()<1 )
+                                        authorizedMinima.push_back(v);
+
+                                    if(localOffsets[smallestVertexOnBoundary]>localOffsets[v])
+                                        smallestVertexOnBoundary = v;
+                                } else if(!hasSmallerNeighbor) {
+                                    containsResidualExtrema = true;
+                                }
+                            }
+
+                            // if there was no minimum on the boundary force one
+                            if(authorizedMinima.size()<1){
+                                // this->printErr(std::to_string(propagation->extremumIndex)+" "+std::to_string(propagation->lastEncounteredSaddle)+": pushing extra");
+                                containsResidualExtrema = true;
+                                authorizedMinima.push_back(smallestVertexOnBoundary);
+                            }
+                        }
+
+                        // if this region does not contain residual extrema then continue
+                        if(!containsResidualExtrema)
+                            continue;
+
+                        // otherwise loop until all residual extrema are removed
+                        idType localOffsetSortingDirection = 1;
+                        int it = 0;
+
+
+                        // for(const auto& v: propagation->region)
+                        //     if(v==1366016){
+                        //         this->printWrn(std::to_string(propagation->lastEncounteredSaddle));
+                        //         this->printWrn(std::to_string(propagation->lastEncounteredSaddle));
+                        //     }
+                        // bool debugMode = propagation->lastEncounteredSaddle==1490944 && TODO_TASKSUBDIVISION>1;
+                        // bool debugMode = false;
+
+                        // if(debugMode){
+                        //     for(const auto& v: propagation->region)
+                        //         distanceField[v] = 999999999;
+
+                        //     return 0;
+                        // }
+
+                        while(true){
+
+                            std::vector<idType>* seedVertices;
+                            if(localOffsetSortingDirection>0){
+
+                                seedVertices = &authorizedMinima;
+                                for(const auto& v: propagation->region)
+                                    distanceField[v] = -localOffsets[v];
+
+                            } else {
+
+                                seedVertices = &authorizedMaximum;
+                                for(const auto& v: propagation->region)
+                                    distanceField[v] = localOffsets[v];
+
+                            }
+
+                            // if(debugMode)
+                            //     for(const auto& v: authorizedMinima)
+                            //         distanceField[v]=-999999999;
+
+
+                            // if(debugMode)
+                            //     return 0;
+
+                            localStatus = this->computeLocalOffsetsOfRegion<idType>(
+                                localOffsets,
+
+                                triangulation,
+                                regionMask,
+                                propagation->extremumIndex,
+                                propagation->region,
+                                *seedVertices,
+                                distanceField,
+                                localOffsetSortingDirection
+                            );
+                            if(!localStatus)
+                                status = 0;
+
+                            // check if number of extrema correpsonds to number of authorized extrema
+                            size_t nUnAuthorizedMinima = 0;
+                            size_t nMaxima = 0;
+
+                            for(const auto& v: propagation->region){
+
+                                // check if v is on the boundary and if it has no smaller neighbors inside region
+                                bool hasSmallerNeighbor = false;
+                                bool hasLargerNeighbor = false;
+                                bool isOnRegionBoundary = false;
+
+                                idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+                                for(idType n=0; n<nNeighbors; n++){
+                                    idType u;
+                                    triangulation->getVertexNeighbor(v,n,u);
+
+                                    if(regionMask[u]!=propagation->extremumIndex){
+                                        isOnRegionBoundary = true;
+                                        continue;
+                                    }
+
+                                    if(localOffsets[u]<localOffsets[v]) {
+                                        hasSmallerNeighbor = true;
+                                    } else {
+                                        hasLargerNeighbor = true;
+                                    }
+                                }
+
+                                if(!isOnRegionBoundary && !hasSmallerNeighbor)
+                                    nUnAuthorizedMinima++;
+
+                                if(!hasLargerNeighbor)
+                                    nMaxima++;
+                            }
+
+                            if(nMaxima!=1 || nUnAuthorizedMinima>0){
+                                // if(debugMode)
+                                    // this->printWrn(std::to_string(propagation->extremumIndex)+" "+std::to_string(propagation->lastEncounteredSaddle)+": "+std::to_string(nUnAuthorizedMinima)+"("+std::to_string(authorizedMinima.size())+") "+std::to_string(nMaxima));
+
+                                localOffsetSortingDirection*=-1;
+
+                            } else {
+                                // this->printWrn(std::to_string(propagation->extremumIndex)+" "+std::to_string(propagation->lastEncounteredSaddle)+": DONE");
+                                break;
+                            }
+
+                            it++;
+
+                            // if(it>2)
+                            //     break;
+                        }
+                    }
                 }
 
                 if(!status)
                     return 0;
+
+                // TODO_TASKSUBDIVISION++;
+
+                // if(TODO_TASKSUBDIVISION>2)
+                //     return 0;
+
+                // if(TODO_TASKSUBDIVISION>2)
+                //     return 0;
 
                 this->printMsg( "Computing local order of regions ("+std::to_string(nActivePropagations)+")",
                     1, t.getElapsedTime(), this->threadNumber_
@@ -858,6 +817,7 @@ namespace ttk {
                 // compute local order of regions
                 status = this->computeLocalOffsetsOfRegions<idType>(
                     localOffsets,
+                    outputOffsets, // used here to temporarily store distance field
 
                     triangulation,
                     regionMask,
@@ -892,17 +852,6 @@ namespace ttk {
                 );
                 if(!status) return 0;
 
-                // #pragma omp parallel for num_threads(this->threadNumber_)
-                // for(idType i=0; i<nVertices; i++)
-                //     regionMask[i] = -1;
-
-                // #pragma omp parallel for num_threads(this->threadNumber_)
-                // for(size_t p=0; p<nActivePropagations; p++){
-                //     const auto* propagation = activePropagations[p];
-                //     for(const auto& i : propagation->region)
-                //         regionMask[i] = propagation->lastEncounteredSaddle;
-                // }
-
                 return 1;
             };
 
@@ -919,7 +868,7 @@ namespace ttk {
                 const idType& nTaskSubdivions
             ) const {
 
-                TODO_TASKSUBDIVISION = nTaskSubdivions;
+                TODO_TASKSUBDIVISION = 1;
 
                 this->printMsg(debug::Separator::L1);
 
@@ -1050,6 +999,8 @@ namespace ttk {
 
                     if((nDiscardedMaxima+nDiscardedMinima)==0)
                         break;
+
+                    break;
                 }
 
                 if(sortDirection!=0){
