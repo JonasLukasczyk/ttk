@@ -509,7 +509,8 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* regionMask,
                 const idType* inputOffsets,
-                const std::vector<Propagation<idType>*>& activePropagations
+                const std::vector<Propagation<idType>*>& activePropagations,
+                const bool& useRegionBasedIterations
             ) const {
 
                 ttk::Timer t;
@@ -573,8 +574,7 @@ namespace ttk {
                     if(!localStatus)
                         status = 0;
 
-                    // TODO REPLACE WITH OPTION
-                    if(true){
+                    if(useRegionBasedIterations){
 
                         bool containsResidualExtrema = false;
                         // collect all vertices on the boundary that are not the authorized maximum
@@ -770,7 +770,8 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* preservedCriticalPointIndices,
                 const size_t& nPreservedCriticalPointIndices,
-                const idType* inputOffsets
+                const idType* inputOffsets,
+                const bool&   useRegionBasedIterations
             ) const {
 
                 std::vector<idType> discardedMinima;
@@ -822,7 +823,8 @@ namespace ttk {
                     triangulation,
                     regionMask,
                     inputOffsets,
-                    activePropagations
+                    activePropagations,
+                    useRegionBasedIterations
                 );
                 if(!status) return 0;
 
@@ -865,14 +867,15 @@ namespace ttk {
                 const idType* inputOffsetsCorrupted,
                 const idType* preservedCriticalPointIndices,
                 const idType& nPreservedCriticalPointIndices,
-                const idType& nTaskSubdivions
+                const bool&   useRegionBasedIterations,
+                const bool&   addPerturbation
             ) const {
 
                 TODO_TASKSUBDIVISION = 1;
 
                 this->printMsg(debug::Separator::L1);
 
-                ttk::Timer globalTimer;
+                ttk::Timer allocationTimer;
 
                 // allocate global memory
                 this->printMsg(
@@ -896,8 +899,11 @@ namespace ttk {
 
                 this->printMsg(
                     "Allocating memory",
-                    1,globalTimer.getElapsedTime(),this->threadNumber_
+                    1,allocationTimer.getElapsedTime(),this->threadNumber_
                 );
+                this->printMsg(debug::Separator::L2);
+
+                ttk::Timer globalTimer;
 
                 // compute initial offsets if not exisitng (currently this done by default)
                 {
@@ -914,22 +920,23 @@ namespace ttk {
 
                 size_t iteration=0;
                 int status = 0;
-                int sortDirection = -1;
+                int sortDirection = 0;
                 while(true){
                     this->printMsg(
                         "Iteration: "+std::to_string(iteration++),
                         ttk::debug::Separator::L2
                     );
 
-                    // Minima
-
-                    // invert offsets to first remove minima (now maxima)
-                    #pragma omp parallel for num_threads(this->threadNumber_)
-                    for(idType v=0; v<nVertices; v++)
-                        inputOffsets[v] = -outputOffsets[v];
-
                     idType nDiscardedMinima=0;
                     idType nDiscardedMaxima=0;
+
+                    // Minima
+                    {
+                        // invert offsets to first remove minima (now maxima)
+                        #pragma omp parallel for num_threads(this->threadNumber_)
+                        for(idType v=0; v<nVertices; v++)
+                            inputOffsets[v] = -outputOffsets[v];
+                    }
 
                     status = this->removeMaxima<idType>(
                         outputOffsets,
@@ -945,23 +952,28 @@ namespace ttk {
                         triangulation,
                         preservedCriticalPointIndices,
                         nPreservedCriticalPointIndices,
-                        inputOffsets.data()
+                        inputOffsets.data(),
+                        useRegionBasedIterations
                     );
                     if(!status) return 0;
 
                     if(nDiscardedMinima){
                         sortDirection=-1;
-                        this->flattenScalars<dataType,idType>(
+                        status = this->flattenScalars<dataType,idType>(
                             outputScalars,
 
                             activePropagations
                         );
+                        if(!status) return 0;
                     }
 
                     // Maxima
-                    #pragma omp parallel for num_threads(this->threadNumber_)
-                    for(idType v=0; v<nVertices; v++)
-                        inputOffsets[v] = -outputOffsets[v];
+                    {
+                        // invert offsets again to now remove maxima
+                        #pragma omp parallel for num_threads(this->threadNumber_)
+                        for(idType v=0; v<nVertices; v++)
+                            inputOffsets[v] = -outputOffsets[v];
+                    }
 
                     status = this->removeMaxima<idType>(
                         outputOffsets,
@@ -977,17 +989,19 @@ namespace ttk {
                         triangulation,
                         preservedCriticalPointIndices,
                         nPreservedCriticalPointIndices,
-                        inputOffsets.data()
+                        inputOffsets.data(),
+                        useRegionBasedIterations
                     );
                     if(!status) return 0;
 
                     if(nDiscardedMaxima){
                         sortDirection=+1;
-                        this->flattenScalars<dataType,idType>(
+                        status = this->flattenScalars<dataType,idType>(
                             outputScalars,
 
                             activePropagations
                         );
+                        if(!status) return 0;
                     }
 
                     if(nDiscardedMinima>0 && nDiscardedMaxima<1){
@@ -997,13 +1011,11 @@ namespace ttk {
                             outputOffsets[v] = maxOffset-outputOffsets[v];
                     }
 
-                    if((nDiscardedMaxima+nDiscardedMinima)==0)
+                    if(useRegionBasedIterations || (nDiscardedMaxima+nDiscardedMinima)==0)
                         break;
-
-                    break;
                 }
 
-                if(sortDirection!=0){
+                if(sortDirection!=0 && addPerturbation){
                     this->printMsg(debug::Separator::L2);
                     this->applyNumericalPerturbation<dataType,idType>(
                         outputScalars,

@@ -222,19 +222,9 @@ int ttkTopologicalSimplification::dispatch(
           (int*) inputOffsets_->GetVoidPointer(0),
           (int*) inputCriticalPointIdArray->GetVoidPointer(0),
           (int) inputCriticalPointIdArray->GetNumberOfTuples(),
-          this->TaskSubdivision
+          this->UseRegionBasedIterations,
+          this->AddPerturbation
         );
-      // }
-      // else if(inputOffsets_->GetDataType() == VTK_ID_TYPE) {
-      //   status = tpts.simplify(
-      //     (dataType*) outputScalarArray->GetVoidPointer(0),
-      //     (vtkIdType*) outputOffsetArray->GetVoidPointer(0),
-
-      //     this->triangulation_,
-      //     (dataType*) inputScalarArray->GetVoidPointer(0),
-      //     (vtkIdType*) inputCriticalPointIdArray->GetVoidPointer(0),
-      //     inputCriticalPointIdArray->GetNumberOfTuples()
-      //   );
       } else {
           this->printErr("Unsupported IdType");
           return 1;

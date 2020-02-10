@@ -237,12 +237,18 @@ offset field for flat plateau disambiguation).
          </Documentation>
       </IntVectorProperty>
       <IntVectorProperty
-         name="TaskSubdivision"
-         command="SetTaskSubdivision"
-         label="TaskSubdivision"
+         name="UseRegionBasedIterations"
+         command="SetUseRegionBasedIterations"
+         label="UseRegionBasedIterations"
          number_of_elements="1"
-         default_values="1">
-         <IntRangeDomain name="range" min="0" max="10000" />
+         default_values="0">
+         <BooleanDomain name="bool"/>
+         <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+            mode="visibility"
+            property="UseTPTS"
+            value="1" />
+         </Hints>
          <Documentation>
          </Documentation>
       </IntVectorProperty>
@@ -322,9 +328,10 @@ offset field for flat plateau disambiguation).
 </Property>
 
       <PropertyGroup panel_widget="Line" label="Output options">
-	<Property name="UseTPTS"/>
 	<Property name="OutputOffsetScalarFieldName"/>
 	<Property name="AddPerturbation"/>
+	<Property name="UseTPTS"/>
+	<Property name="UseRegionBasedIterations"/>
 	<Property name="Debug_Execute"/>
       </PropertyGroup>
 
