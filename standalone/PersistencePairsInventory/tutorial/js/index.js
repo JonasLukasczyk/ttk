@@ -147,7 +147,7 @@ function drawDistribution(id, data, title) {
         return x(i);
      }).y(function (d) { return y(d) ; });
 
-    svg.append("path");
+    svg.append("path")
         .attr("class", "line2")
         .attr("d", dl(reduced_data))
         .style("stroke-width", 2)
