@@ -2,6 +2,10 @@
 // http://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=9
 let DEV = false;
 
+let COLOR_GREEN = ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]; 
+let COLOR_GREY = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
+let COLOR_RED = ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"];
+
 // https://gist.github.com/mjackson/5311256
 // https://www.w3schools.com/colors/colors_picker.asp
 // https://zhuanlan.zhihu.com/p/76532451
@@ -75,7 +79,7 @@ function rgbToHsl(r, g, b) {
     }
   
     return [ r * 255, g * 255, b * 255 ];
-  }
+ }
 
 function customColorV2(reliability, ppi, max_persistence_pairs) {
     var rgbToHex = function (rgb) { 
@@ -169,37 +173,6 @@ function drawDistribution(id, data, title) {
         .text( title );
 }
 
-/**
- * return the color 
- * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1] 
- * @param {*} ppi: # of features
- * @param {*} max_persistence_pairs 
- * @param {*} lower 
- * @param {*} upper 
- */
-function customColor(reliability, ppi, max_persistence_pairs, lower=0.3, upper=0.6) {
-    //return customColorV2(reliability, ppi, max_persistence_pairs) ;
-
-    // from light to dark
-    let green = ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]; 
-    let gray = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
-    let red = ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"];
-    let range_color = green;
-    if (reliability >= 0 && reliability < lower) {
-        range_color = red;
-    } else if (reliability >= lower && reliability < upper) {
-        range_color = gray;
-    } else {
-        range_color = green;
-    }
-
-    if (ppi == 0) {
-        return "#ffffff" ;
-    } else {
-        return range_color[Math.ceil(ppi / (max_persistence_pairs / 5)) - 1];
-    }
-}
-
 // Add tooltips
 d3.select("body")
     .append("div")
@@ -258,7 +231,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
             let cal = calculateReliability(items, iComponent) ;
             vData.push([j + "", i + "", dd, items, idx, cal]);
-            // dist_data.push([cal, dd]) ;
+            dist_data.push([cal, dd]) ;
             bins_data.push([cal, 1]) ;
         }
     }
@@ -268,15 +241,10 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     }
 
     // drawDistribution("my_dataviz_distribution", dist_data, "Distribution of reliability") ;
-    drawDistribution("my_dataviz_distribution_bins", bins_data, "Bins distribution of reliability") ;
-    
+    // drawDistribution("my_dataviz_distribution_bins", bins_data, "Bins distribution of reliability") ;
+    drawLegend(dist_data, max_persistence_pairs) ;
+
     d3.select("#my_dataviz *").remove() ;
-    function getArray(n) {
-        let ans = [];
-        for (let i = 0; i < n; i++) { ans.push("" + i); }
-        return ans;
-    }
-    
     Window.hist_w = w ;
     Window.hist_h = h ;
     let myGroups = getArray(w);
@@ -309,8 +277,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     
     let x = d3.scaleBand()
         .range([0, width])
-        .domain(myGroups)
-        .padding(0.01);
+        .domain(myGroups) ;
 
     svg.append("g")
         .attr('class', 'axis--hist--x')
@@ -319,8 +286,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
 
     let y = d3.scaleBand()
         .range([height, 0])
-        .domain(myVars)
-        .padding(0.01);
+        .domain(myVars) ;
 
     // FLAG, needs to do
     svg.append("g")
@@ -406,18 +372,6 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     // reset x-axis, y-axis, TRICKY
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g")
-}
-
-function removeNiceByKicks(id) {
-    var gs = $(id) ;
-    if (gs.length >= 40) {
-        var size = Math.floor(gs.length / 20) ;
-        for (var i = 0; i < gs.length; i ++) {
-            if (i % size != 0) {
-                gs[i].remove() ;
-            }
-        }
-    }
 }
 
 $('#exampleModal').on('show.bs.modal', function (event) {
