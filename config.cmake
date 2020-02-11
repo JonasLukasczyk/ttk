@@ -64,8 +64,6 @@ if(NOT Boost_FOUND)
   endif()
 endif()
 
-find_package(websocketpp)
-
 find_package(ZLIB)
 if(NOT ZLIB_FOUND)
   option(TTK_ENABLE_ZLIB "Enable Zlib support" OFF)
@@ -165,6 +163,14 @@ if(SQLITE3_FOUND)
 else()
   option(TTK_ENABLE_SQLITE3 "Enable SQLITE3 support" OFF)
   message(STATUS "SQLITE3 not found, disabling SQLITE3 support in TTK.")
+endif()
+
+find_package(websocketpp)
+if(NOT WEBSOCKETPP_INCLUDE_DIR)
+  option(TTK_ENABLE_WEBSOCKETIO "Enable WEBSOCKETIO support" OFF)
+  message(STATUS "WEBSOCKETPP header only library not found, disabling WEBSOCKETIO support in TTK.")
+else()
+  option(TTK_ENABLE_WEBSOCKETIO "Enable WEBSOCKETIO support" ON)
 endif()
 
 find_package(ZFP QUIET)

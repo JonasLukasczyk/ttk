@@ -113,7 +113,7 @@ int ttkForEach::RequestData(
         ttk::debug::Separator::SLASH
     );
 
-    this->SetExpressionString( std::to_string(iterationIndex) );
+    this->SetExpressionString( std::to_string((int)iterationIndex) );
     this->SetExtractUniqueValues( false );
 
     if(!ttkExtract::RequestData(request, inputVector, outputVector))

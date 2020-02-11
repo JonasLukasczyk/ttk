@@ -30,6 +30,7 @@
             <Hints>
                 <ShowInMenu category="TTK" />
                 <LiveSource interval="100" />
+                <Visibility replace_input="0" />
             </Hints>
         </SourceProxy>
     </ProxyGroup>

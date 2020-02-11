@@ -9,6 +9,7 @@
 #include <vtkDoubleArray.h>
 
 #include <vtkPointData.h>
+#include <vtkCellData.h>
 
 #include <vtkPoints.h>
 #include <vtkCellArray.h>
@@ -18,6 +19,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+// TODO
 using namespace std;
 
 vtkStandardNewMacro(ttkWebSocketIO);
@@ -68,13 +70,10 @@ bool hasChild(const boost::property_tree::ptree& pt,
     return true ;
 }
 
-ttkWebSocketIO::ttkWebSocketIO() :WebSocketIO() {
+ttkWebSocketIO::ttkWebSocketIO() {
     this->printMsg("invoke ttkWebSocketIO!") ;
-    this->lastInput = vtkSmartPointer<vtkUnstructuredGrid>::New();
-    this->lastUGfromClient = vtkSmartPointer<vtkUnstructuredGrid>::New();
-
-    this->lastImageInput = vtkSmartPointer<vtkImageData>::New();
-    this->lastImageUGfromClient = vtkSmartPointer<vtkImageData>::New();
+    // this->lastInput;
+    this->lastOutput = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
     this->SetNeedsUpdate(true);
 
@@ -116,24 +115,12 @@ int ttkWebSocketIO::RequestData(
         vtkInformationVector **inputVector,
         vtkInformationVector *outputVector
 ) {
-    auto imageInput = vtkImageData::GetData( inputVector[0] );
-    auto input = vtkUnstructuredGrid::GetData( inputVector[0] );
-    if(imageInput){
-        this->structureType = 2 ;
-    }
+    auto input = vtkDataSet::GetData( inputVector[0] );
+    this->lastInput = vtkSmartPointer<vtkDataSet>::Take( input->NewInstance() );
+    this->lastInput->ShallowCopy( input );
 
     this->printMsg("invoke RequestData! & Port: " + to_string(this->GetPortNumber()));
     this->SetNeedsUpdate(false);
-
-    if (this->structureType == 1) {
-        if (input != NULL)
-            this->lastInput->ShallowCopy( input );
-    } else if (this->structureType == 2) {
-        if (imageInput != NULL)
-            this->lastImageInput->ShallowCopy( imageInput ) ;
-    } else {
-
-    }
 
     if (this->isListening() && this->getPortNumber() != this->PortNumber) {
         this->stopServer() ;
@@ -145,7 +132,7 @@ int ttkWebSocketIO::RequestData(
             this->startServer( this->PortNumber );
         } else {
             if ( this->lastReqUpdate ) {
-                this->processClientRequest("on_update");
+                this->processClientRequest("raw","requestData");
             }
         }
     } catch (const std::exception& e) {
@@ -154,18 +141,36 @@ int ttkWebSocketIO::RequestData(
     }
 
     // Get the output
-    if (this->structureType == 1) {
-        vtkUnstructuredGrid* output = vtkUnstructuredGrid::GetData(outputVector);
-        if (this->lastUGfromClient != NULL)
-            output->ShallowCopy( this->lastUGfromClient );
-    } else if (this->structureType == 2) {
-        // structure type of output
-        vtkUnstructuredGrid* output = vtkUnstructuredGrid::GetData(outputVector);
-        if ( this->lastUGfromClient != NULL)
-            output->ShallowCopy( this->lastUGfromClient );
-    }
+    auto output = vtkDataSet::GetData( outputVector );
+    output->ShallowCopy( this->lastOutput );
+
     this->lastReqUpdate = true ;
     return 1;
+}
+
+int addFieldDataArraysToHeader(vtkFieldData* fd, std::string typeName, std::vector<std::map<string, string>>& headers, std::vector<void *>& sendingData){
+    int nFieldDataArrays = fd->GetNumberOfArrays();
+
+    for (int i = 0; i < nFieldDataArrays; i++) {
+        vtkAbstractArray *array = fd->GetAbstractArray(i);
+        std::string string1 = string(array->GetName());
+        string1.erase(std::remove(string1.begin(), string1.end(), ':'), string1.end());
+        switch (array->GetDataType()) {
+            vtkTemplateMacro({
+                    size_t n = array->GetNumberOfValues();
+                    auto values = (VTK_TT *) array->GetVoidPointer(0);
+                    headers.push_back(
+                    ttkWebSocketIO::combine_object_header_object(typeName + ":" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), array->GetDataType()));
+                    sendingData.push_back(values);
+                             });
+
+            case VTK_STRING:
+                auto values = (string *) array->GetVoidPointer(0);
+                headers.push_back(
+                        ttkWebSocketIO::combine_object_header_object(typeName + ":" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
+                sendingData.push_back(values);
+        }
+    }
 }
 
 /**
@@ -179,45 +184,51 @@ int ttkWebSocketIO::RequestData(
  * @param payload
  *
  */
-void ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
+int ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
     this->printMsg("The name in processClientRequest is : " + name) ;
     if ( name == "raw" ) {
         if ( payload.rfind("updateUnstructuredGrid:", 0) == 0 ) {
             this->CreateUnstructuredGrid(  payload.substr(23) ) ;
             this->lastReqUpdate = true ;
             this->printMsg("payload in processClientRequest is: " + payload) ;
-            return ;
+            return 1;
         } else if ( payload.rfind("updateImageData:", 0) == 0 ) {
             this->printMsg("payload for update ImageData:" + payload.substr(16) ) ;
-            return ;
+            return 1;
         } else if ( payload.rfind("updateUnstructuredGridWithoutUpdate:", 0) == 0) {
             this->CreateUnstructuredGrid(  payload.substr(36) ) ;
             this->lastReqUpdate = false ;
-            return ;
+            return 1;
         }
     }
 
-    if(name.compare("on_open") == 0 || (name == "raw" && payload == "requestData") || name.compare("on_update") == 0) {
+    int structureType = this->lastInput->IsA("vtkImageData") ? 2 : this->lastInput->IsA("vtkUnstructuredGrid") ? 1 : 0;
+    if(structureType<1){
+        this->printErr("Unsupported Data Object Type.");
+        return 0;
+    }
+
+    if(name.compare("on_open") == 0 || (name == "raw" && payload == "requestData")) {
         std::vector<std::map<string, string>> headers;
         std::vector<void *> sendingData;
-        vtkSmartPointer<vtkDataSet> input ;
 
         // send structureType back to the Client
         signed int *tmp;
         tmp = new int[1];
-        tmp[0] = this->structureType ;
-        headers.push_back(ttkWebSocketIO::combine_object_header_object("structureType", 1, 1, VTK_INT));
+        tmp[0] = structureType;
+        headers.push_back(ttkWebSocketIO::combine_object_header_object("vtkDataObjectType", 1, 1, VTK_INT));
         sendingData.push_back(tmp);
 
-        if (this->structureType == 1) {  // unStructuredGrid
-            input = this->lastInput ;
-            int nPoints = input->GetNumberOfPoints();
-            auto *pointCoords = (float *) this->lastInput->GetPoints()->GetVoidPointer(0);
+        if (structureType == 1) {  // unStructuredGrid
+            auto* lastInputAsUG = vtkUnstructuredGrid::SafeDownCast( this->lastInput );
+
+            int nPoints = lastInputAsUG->GetNumberOfPoints();
+            auto *pointCoords = (float *) lastInputAsUG->GetPoints()->GetVoidPointer(0);
             headers.push_back(ttkWebSocketIO::combine_object_header_object("pointCoords", nPoints, 3, VTK_FLOAT));
             sendingData.push_back(pointCoords);
 
-            int nCells = this->lastInput->GetNumberOfCells();
-            auto *connectivityList = (long long *) this->lastInput->GetCells()->GetPointer();
+            int nCells = lastInputAsUG->GetNumberOfCells();
+            auto *connectivityList = (long long *) lastInputAsUG->GetCells()->GetPointer();
             size_t j = 0, topoIndex = 0;
             for (j = 0, topoIndex = 0; j < nCells; j++) {
                 size_t nVertices = connectivityList[topoIndex];
@@ -227,92 +238,37 @@ void ttkWebSocketIO::processClientRequest(std::string name, std::string payload)
             sendingData.push_back(connectivityList);
         }
 
-        if (this->structureType == 2) { // imageData
-            input = this->lastImageInput ;
+        if (structureType == 2) { // imageData
             signed int *tmp;
             tmp = new int[6];
-            this->lastImageInput->GetExtent(tmp);
+            auto* lastInputAsID = vtkImageData::SafeDownCast( this->lastInput );
+            lastInputAsID->GetExtent(tmp);
             headers.push_back(ttkWebSocketIO::combine_object_header_object("Extent", 6, 1, VTK_INT));
             sendingData.push_back(tmp);
         }
 
-        vtkPointData *inputPD = input->GetPointData();
-        int nPointDataArrays = inputPD->GetNumberOfArrays();
-        for (int i = 0; i < nPointDataArrays; i++) {
-            vtkAbstractArray *array = inputPD->GetAbstractArray(i);
-            string string1 = string(array->GetName());
-            switch (array->GetDataType()) {
-                vtkTemplateMacro({
-                        size_t n = array->GetNumberOfValues();
-                        auto values = (VTK_TT *) array->GetVoidPointer(0);
-                        headers.push_back(ttkWebSocketIO::combine_object_header_object("PointData:" + string(array->GetName()),
-                        array->GetNumberOfTuples(), array->GetNumberOfComponents(),
-                        array->GetDataType()));
-                        sendingData.push_back(values);});
-                case VTK_STRING:
-                    auto values = (string *) array->GetVoidPointer(0);
-                    headers.push_back(
-                            ttkWebSocketIO::combine_object_header_object("PointData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
-                    sendingData.push_back(values);
-            }
-        }
+        addFieldDataArraysToHeader( this->lastInput->GetPointData(), "PointData", headers, sendingData );
+        addFieldDataArraysToHeader( this->lastInput->GetCellData(), "CellData", headers, sendingData );
+        addFieldDataArraysToHeader( this->lastInput->GetFieldData(), "FieldData", headers, sendingData );
 
-        auto inputCD = (vtkFieldData *) input->GetCellData();
-        int nCellDataArrays = inputCD->GetNumberOfArrays();
-        for (int i = 0; i < nCellDataArrays; i++) {
-            vtkAbstractArray *array = inputCD->GetAbstractArray(i);
-            size_t t = array->GetDataType();
-            switch (t) {
-                vtkTemplateMacro({
-                        size_t n = array->GetNumberOfValues();
-                        auto values = (VTK_TT *) array->GetVoidPointer(0);
-                        headers.push_back(ttkWebSocketIO::combine_object_header_object("CellData:" + string(array->GetName()),
-                        array->GetNumberOfTuples(), array->GetNumberOfComponents(),
-                        array->GetDataType()));
-                        sendingData.push_back(values);
-                                 });
-            }
-        }
-
-        vtkFieldData *inputFD = input->GetFieldData();  // FLAG, can not load FieldData from ParaView
-        int nFieldDataArrays = inputFD->GetNumberOfArrays();
-        for (int i = 0; i < nFieldDataArrays; i++) {
-            vtkAbstractArray *array = inputFD->GetAbstractArray(i);
-            string string1 = string(array->GetName());
-            string1.erase(std::remove(string1.begin(), string1.end(), ':'), string1.end());
-            switch (array->GetDataType()) {
-                vtkTemplateMacro({
-                        size_t n = array->GetNumberOfValues();
-                        auto values = (VTK_TT *) array->GetVoidPointer(0);
-                        headers.push_back(
-                        ttkWebSocketIO::combine_object_header_object("FieldData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), array->GetDataType()));
-                        sendingData.push_back(values);
-                                 });
-
-                case VTK_STRING:
-                    auto values = (string *) array->GetVoidPointer(0);
-                    headers.push_back(
-                            ttkWebSocketIO::combine_object_header_object("FieldData:" + string1, array->GetNumberOfTuples(), array->GetNumberOfComponents(), VTK_STRING));
-                    sendingData.push_back(values);
-            }
-        }
-
-        this->setHeaders(headers) ;
-        this->setObjectState(0) ;
-        this->setSendingData(sendingData) ;
-        this->sendObject() ;
+        this->setHeaders(headers);
+        this->setObjectState(0);
+        this->setSendingData(sendingData);
+        this->sendObject();
     }
+
+    return 1;
 }
 
 int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
-    this->printMsg("invoke CreateUnstructuredGrid, receive JSON: " + json) ;
+    this->printMsg("invoke CreateUnstructuredGrid, receive JSON: " + json, ttk::debug::Priority::VERBOSE);
 
     if ( json.empty() ) {
         this->printMsg("lastClientInput is empty") ;
         return 1 ;
     }
 
-    vtkUnstructuredGrid* ug = this->lastUGfromClient;
+    this->lastOutput = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
     // parse lastClientInput into json
     std::stringstream ss ;
@@ -338,12 +294,12 @@ int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
             for (std::vector<double>::size_type i = 0; i != pointSize * 3; i++) {
                 pointCoordinates[i] = jsArray[i];
             }
-            ug->SetPoints(points);
+            this->lastOutput->SetPoints(points);
         }
 
         // if json has point data -> then add each array as doubleArray
         if ( hasChild(pt, "PointData") ) {
-            auto pd = ug->GetPointData();
+            auto pd = this->lastOutput->GetPointData();
             for (auto& item : pt.get_child("PointData")) {
                 vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
                 vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();
@@ -383,11 +339,11 @@ int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
             cellTypes[i] = vtkCellsTypeHash[jsArray[topoIndex]];
             topoIndex += jsArray[topoIndex] + 1;
         }
-        ug->SetCells(cellTypes, cells);
+        this->lastOutput->SetCells(cellTypes, cells);
 
         // if json has cell data -> then add each array as doubleArray
         if ( hasChild(pt, "CellData") ) {
-            auto cd = (vtkFieldData*) ug->GetCellData();
+            auto cd = this->lastOutput->GetCellData();
             for (auto& item : pt.get_child("CellData")) {
                 vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
                 vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();
@@ -406,7 +362,7 @@ int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
 
     // if json has field data -> then add each array as doubleArray
     if ( hasChild(pt, "FieldData") ) {
-        auto fd = ug->GetFieldData();
+        auto fd = this->lastOutput->GetFieldData();
         for (auto& item : pt.get_child("FieldData")) {
             vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
             vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();

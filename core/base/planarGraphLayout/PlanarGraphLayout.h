@@ -28,7 +28,7 @@
 #include <map>
 
 // base code includes
-#include <Wrapper.h>
+#include <Debug.h>
 
 namespace ttk {
 
@@ -38,13 +38,13 @@ namespace ttk {
     PlanarGraphLayout();
     ~PlanarGraphLayout();
 
-    template <class idType, class dataType>
-    int execute(
+    template <class idType, class dataType, class topoType>
+    int computeLayout(
       // Output
       float *layout,
 
       // Input
-      const idType *connectivityList,
+      const topoType *connectivityList,
       const size_t &nPoints,
       const size_t &nEdges,
       const dataType *pointSequences,
@@ -53,27 +53,27 @@ namespace ttk {
       const idType *levels
     ) const;
 
-    template <class idType>
+    template <class idType, class topoType>
     int extractLevel(
       // Output
       std::vector<size_t> &nodeIndicies,
       std::vector<size_t> &edgeIndicies,
 
       // Input
-      const idType *connectivityList,
+      const topoType *connectivityList,
       const size_t &nPoints,
       const size_t &nEdges,
       const idType &level,
       const idType *levels
     ) const;
 
-    template <class idType, class dataType>
+    template <class idType, class dataType, class topoType>
     int computeDotString(
       // Output
       std::string &dotString,
 
       // Input
-      const idType *connectivityList,
+      const topoType *connectivityList,
       const dataType *pointSequences,
       const float *sizes,
       const idType *branches,
@@ -82,13 +82,13 @@ namespace ttk {
       const std::map<dataType, size_t> &sequenceValueToIndexMap
     ) const;
 
-    template <class idType>
+    template <class idType, class topoType>
     int computeSlots(
       // Output
       float *layout,
 
       // Input
-      const idType *connectivityList,
+      const topoType *connectivityList,
       const size_t &nPoints,
       const size_t &nEdges,
       const float *sizes,
@@ -111,14 +111,14 @@ namespace ttk {
 // =============================================================================
 // Extract Level
 // =============================================================================
-template <class idType>
+template <class idType, class topoType>
 int ttk::PlanarGraphLayout::extractLevel(
   // Output
   std::vector<size_t> &nodeIndicies,
   std::vector<size_t> &edgeIndicies,
 
   // Input
-  const idType *connectivityList,
+  const topoType *connectivityList,
   const size_t &nPoints,
   const size_t &nEdges,
   const idType &level,
@@ -158,13 +158,13 @@ int ttk::PlanarGraphLayout::extractLevel(
 // =============================================================================
 // Compute Dot String
 // =============================================================================
-template <class idType, class dataType>
+template <class idType, class dataType, class topoType>
 int ttk::PlanarGraphLayout::computeDotString(
   // Output
   std::string &dotString,
 
   // Input
-  const idType *connectivityList,
+  const topoType *connectivityList,
   const dataType *pointSequences,
   const float *sizes,
   const idType *branches,
@@ -240,6 +240,7 @@ int ttk::PlanarGraphLayout::computeDotString(
   // Edges
   // ---------------------------------------------------------------------------
   {
+    std::vector<unsigned char> firstEdgeMask( nodeIndicies.size(),0 );
     for(auto &edgeIndex : edgeIndicies) {
       size_t temp = edgeIndex * 3;
       auto &i0 = connectivityList[temp + 1];
@@ -250,6 +251,13 @@ int ttk::PlanarGraphLayout::computeDotString(
         auto b0 = branches[i0];
         auto b1 = branches[i1];
         edgeString += b0 == b1 ? "[weight=1]" : "[weight=0]";
+      } else {
+        if(firstEdgeMask[i0]!=0)
+            edgeString += "[weight=0]";
+        else {
+            firstEdgeMask[i0]=1;
+            edgeString += "[weight=1]";
+        }
       }
 
       edgeString += ";";
@@ -273,13 +281,13 @@ int ttk::PlanarGraphLayout::computeDotString(
 // =============================================================================
 // Compute Slots
 // =============================================================================
-template <class idType>
+template <class idType, class topoType>
 int ttk::PlanarGraphLayout::computeSlots(
   // Output
   float *layout,
 
   // Input
-  const idType *connectivityList,
+  const topoType *connectivityList,
   const size_t &nPoints,
   const size_t &nEdges,
   const float *sizes,
@@ -376,15 +384,15 @@ int ttk::PlanarGraphLayout::computeSlots(
 }
 
 // =============================================================================
-// Execute
+// Compute Layout
 // =============================================================================
-template <class idType, class dataType>
-int ttk::PlanarGraphLayout::execute(
+template <class idType, class dataType, class topoType>
+int ttk::PlanarGraphLayout::computeLayout(
   // Output
   float *layout,
 
   // Input
-  const idType *connectivityList,
+  const topoType *connectivityList,
   const size_t &nPoints,
   const size_t &nEdges,
   const dataType *pointSequences,

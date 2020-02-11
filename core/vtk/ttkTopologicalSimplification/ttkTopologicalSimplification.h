@@ -85,6 +85,10 @@ public:
 
   vtkSetMacro(debugLevel_, int);
 
+  bool UseRegionBasedIterations{false};
+  vtkSetMacro(UseRegionBasedIterations, bool);
+  vtkGetMacro(UseRegionBasedIterations, bool);
+
   void SetThreadNumber(int threadNumber) {
     ThreadNumber = threadNumber;
     SetThreads();

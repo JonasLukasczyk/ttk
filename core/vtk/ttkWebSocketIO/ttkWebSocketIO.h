@@ -10,8 +10,8 @@
 // VTK Module
 #include <ttkWebSocketIOModule.h>
 #include <vtkSmartPointer.h>
+#include <vtkDataSet.h>
 #include <vtkUnstructuredGrid.h>
-#include <vtkImageData.h>
 
 // VTK Includes
 #include <vtkInformation.h>
@@ -34,7 +34,7 @@ class TTKWEBSOCKETIO_EXPORT ttkWebSocketIO
         vtkSetMacro(NeedsUpdate, bool);
         vtkGetMacro(NeedsUpdate, bool);
 
-        void processClientRequest(std::string, std::string payload="") override;
+        int processClientRequest(std::string, std::string payload="") override;
 
     protected:
         ttkWebSocketIO();
@@ -53,13 +53,10 @@ class TTKWEBSOCKETIO_EXPORT ttkWebSocketIO
 
     private:
         int PortNumber;
-        int structureType = 1 ; // 1: vtkUnstructuredGrid, 2: vtkImageData, 3: predefined
-        bool lastReqUpdate =  true ;
-        vtkSmartPointer<vtkUnstructuredGrid> lastInput;
-        vtkSmartPointer<vtkUnstructuredGrid> lastUGfromClient;
+        bool lastReqUpdate = true;
 
-        vtkSmartPointer<vtkImageData> lastImageInput;
-        vtkSmartPointer<vtkImageData> lastImageUGfromClient;
+        vtkSmartPointer<vtkDataSet> lastInput;
+        vtkSmartPointer<vtkUnstructuredGrid> lastOutput;
 
         bool NeedsUpdate;
 
