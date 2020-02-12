@@ -498,9 +498,9 @@ function objectCallback(msg) {
         $("[name='box_box']").attr("visibility", "hidden");
     }
 
-    if (msg.hasOwnProperty("structureType")) {
+    if (msg.hasOwnProperty("VtkDataObjectType")) {
         let name = "";
-        if (msg.structureType.Values[0] === 2) {
+        if (msg.VtkDataObjectType.Values[0] === 2) {
             console.log("This is a ttkImageData");
             $("#s1").html("");
             $("#s2").html("");
@@ -544,7 +544,7 @@ function objectCallback(msg) {
             $("#rel-window").trigger(e);
                     
 
-        } else if (msg.structureType.Values[0] === 1) {
+        } else if (msg.VtkDataObjectType.Values[0] === 1) {
             console.log("This is a ttkUnstructuredGrid");
         } else {}
         console.log(msg);
