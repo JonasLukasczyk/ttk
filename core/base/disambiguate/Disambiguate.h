@@ -256,23 +256,22 @@ namespace ttk {
                 const idType* offsets
             ) const {
 
-                // frequently used propagation members
-                const idType extremumIndex = propagation.extremumIndex;
-                auto& queue = propagation.queue;
-                auto& region = propagation.region;
-
                 // pointer used to compare against representative
                 auto* propagationP = &propagation;
 
+                // frequently used propagation members
+                idType extremumIndex = propagationP->extremumIndex;
+                auto* queue = &propagationP->queue;
+                auto* region = &propagationP->region;
+
                 // add extremumIndex to queue
-                queue.emplace(offsets[extremumIndex],extremumIndex);
+                queue->emplace(offsets[extremumIndex],extremumIndex);
                 queueMask[extremumIndex] = extremumIndex;
 
-
                 // grow region until it reaches a saddle and then decide if it should continue
-                while(!queue.empty()){
-                    const idType v = std::get<1>(queue.top());
-                    queue.pop();
+                while(!queue->empty()){
+                    const idType v = std::get<1>(queue->top());
+                    queue->pop();
 
                     // continue if this thread has already seen this vertex
                     if(propagationMask[v]!=nullptr)
@@ -292,7 +291,7 @@ namespace ttk {
                         if( offsets[u]<offsets[v] ){
                             // here I really want to use propagation instead of propagationP to label the queue with a unique value
                             if(queueMask[u] != extremumIndex){
-                                queue.emplace(offsets[u],u);
+                                queue->emplace(offsets[u],u);
                                 queueMask[u] = extremumIndex;
                             }
                         } else {
@@ -307,7 +306,7 @@ namespace ttk {
                     // if v is a saddle we have to check if the current thread is the last visitor
                     if(isSaddle){
 
-                        propagation.lastEncounteredSaddle = v;
+                        propagationP->lastEncounteredSaddle = v;
 
                         // * this check is performed by synchronously adding the number of larger vertices that the current thread visited to the saddle outputOffset
                         // * if after this synchronous operation the outputOffset at the saddle equals the total number of larger vertices then this must be the last thread that visited the saddle
@@ -328,17 +327,20 @@ namespace ttk {
                             idType u;
                             triangulation->getVertexNeighbor(v,n,u);
                             if(offsets[v]<offsets[u] && propagationP!=propagationMask[u]->find()){
-                                Propagation<idType>::unify(
+                                propagationP = Propagation<idType>::unify(
                                     propagationP,
                                     propagationMask[u]
                                 );
+                                extremumIndex = propagationP->extremumIndex;
+                                queue = &propagationP->queue;
+                                region = &propagationP->region;
                             }
                         }
                     }
 
                     // mark vertex as visited and continue
                     propagationMask[v] = propagationP;
-                    region.push_back(v);
+                    region->push_back(v);
                 }
 
                 return 1;
