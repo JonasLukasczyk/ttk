@@ -189,14 +189,11 @@ int ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
     if ( name == "raw" ) {
         if ( payload.rfind("updateUnstructuredGrid:", 0) == 0 ) {
             this->CreateUnstructuredGrid(  payload.substr(23) ) ;
-            this->lastReqUpdate = true ;
+            this->lastReqUpdate = false ;
             this->printMsg("payload in processClientRequest is: " + payload) ;
             return 1;
         } else if ( payload.rfind("updateImageData:", 0) == 0 ) {
             this->printMsg("payload for update ImageData:" + payload.substr(16) ) ;
-            return 1;
-        } else if ( payload.rfind("updateUnstructuredGridWithoutUpdate:", 0) == 0) {
-            this->CreateUnstructuredGrid(  payload.substr(36) ) ;
             this->lastReqUpdate = false ;
             return 1;
         }
@@ -216,7 +213,7 @@ int ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
         signed int *tmp;
         tmp = new int[1];
         tmp[0] = structureType;
-        headers.push_back(ttkWebSocketIO::combine_object_header_object("vtkDataObjectType", 1, 1, VTK_INT));
+        headers.push_back(ttkWebSocketIO::combine_object_header_object("VtkDataObjectType", 1, 1, VTK_INT));
         sendingData.push_back(tmp);
 
         if (structureType == 1) {  // unStructuredGrid
@@ -224,7 +221,7 @@ int ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
 
             int nPoints = lastInputAsUG->GetNumberOfPoints();
             auto *pointCoords = (float *) lastInputAsUG->GetPoints()->GetVoidPointer(0);
-            headers.push_back(ttkWebSocketIO::combine_object_header_object("pointCoords", nPoints, 3, VTK_FLOAT));
+            headers.push_back(ttkWebSocketIO::combine_object_header_object("PointCoords", nPoints, 3, VTK_FLOAT));
             sendingData.push_back(pointCoords);
 
             int nCells = lastInputAsUG->GetNumberOfCells();
@@ -234,7 +231,7 @@ int ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
                 size_t nVertices = connectivityList[topoIndex];
                 topoIndex += nVertices + 1;
             }
-            headers.push_back(ttkWebSocketIO::combine_object_header_object("connectivityList", topoIndex, 1, VTK_LONG));
+            headers.push_back(ttkWebSocketIO::combine_object_header_object("ConnectivityList", topoIndex, 1, VTK_LONG));
             sendingData.push_back(connectivityList);
         }
 
@@ -282,48 +279,30 @@ int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
     }
 
     // if json has pointCoords -> update point coords
-    if (hasChild(pt, "pointCoords")) {
-        size_t pointSize = pt.get_child("pointCoords").size() / 3;
+    if (hasChild(pt, "PointCoords")) {
+        size_t pointSize = pt.get_child("PointCoords").size() / 3;
         if (pointSize > 0) {
             vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
             points->SetNumberOfPoints(pointSize);
             auto *pointCoordinates = (float *) points->GetVoidPointer(0);
             vector<double> jsArray(pointSize * 3);
-            jsonEntryToVector<double>(pt, "pointCoords", jsArray.data());
+            jsonEntryToVector<double>(pt, "PointCoords", jsArray.data());
 
             for (std::vector<double>::size_type i = 0; i != pointSize * 3; i++) {
                 pointCoordinates[i] = jsArray[i];
             }
             this->lastOutput->SetPoints(points);
         }
-
-        // if json has point data -> then add each array as doubleArray
-        if ( hasChild(pt, "PointData") ) {
-            auto pd = this->lastOutput->GetPointData();
-            for (auto& item : pt.get_child("PointData")) {
-                vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
-                vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();
-                array_s->SetName(item.first.c_str()) ;
-
-                vector<double> jsArray(pt.get_child("PointData." + item.first ).size());
-                jsonEntryToVector<double>(pt, "PointData." + item.first, jsArray.data());
-
-                for (std::vector<double>::size_type i = 0; i != jsArray.size(); i++) {
-                    array_s->InsertValue(i, jsArray[i]);
-                }
-                pd->AddArray(array_s) ;
-            }
-        }
     }
 
     // if json has connectivityList -> update connectivityList; if not create vertex cell for each point
-    if (hasChild(pt, "connectivityList")) {
+    if (hasChild(pt, "ConnectivityList")) {
         vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
 
-        size_t cellSize = pt.get_child("connectivityList").size();
+        size_t cellSize = pt.get_child("ConnectivityList").size();
         int nCells = 0 ;
         vector<long> jsArray(cellSize);
-        jsonEntryToVector<long>(pt, "connectivityList", jsArray.data());
+        jsonEntryToVector<long>(pt, "ConnectivityList", jsArray.data());
 
         for (std::vector<long>::size_type i = 0; i != jsArray.size(); ) {
             nCells += 1 ;
@@ -340,23 +319,41 @@ int ttkWebSocketIO::CreateUnstructuredGrid( std::string json ) {
             topoIndex += jsArray[topoIndex] + 1;
         }
         this->lastOutput->SetCells(cellTypes, cells);
+    }
 
-        // if json has cell data -> then add each array as doubleArray
-        if ( hasChild(pt, "CellData") ) {
-            auto cd = this->lastOutput->GetCellData();
-            for (auto& item : pt.get_child("CellData")) {
-                vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
-                vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();
-                array_s->SetName(item.first.c_str()) ;
+    // if json has point data -> then add each array as doubleArray
+    if ( hasChild(pt, "PointData") ) {
+        auto pd = this->lastOutput->GetPointData();
+        for (auto& item : pt.get_child("PointData")) {
+            vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
+            vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();
+            array_s->SetName(item.first.c_str()) ;
 
-                vector<double> jsArray(pt.get_child("CellData." + item.first ).size());
-                jsonEntryToVector<double>(pt, "CellData." + item.first, jsArray.data());
+            vector<double> jsArray(pt.get_child("PointData." + item.first ).size());
+            jsonEntryToVector<double>(pt, "PointData." + item.first, jsArray.data());
 
-                for (std::vector<double>::size_type i = 0; i != jsArray.size(); i++) {
-                    array_s->InsertValue(i, jsArray[i]);
-                }
-                cd->AddArray(array_s) ;
+            for (std::vector<double>::size_type i = 0; i != jsArray.size(); i++) {
+                array_s->InsertValue(i, jsArray[i]);
             }
+            pd->AddArray(array_s) ;
+        }
+    }
+
+    // if json has cell data -> then add each array as doubleArray
+    if ( hasChild(pt, "CellData") ) {
+        auto cd = this->lastOutput->GetCellData();
+        for (auto& item : pt.get_child("CellData")) {
+            vtkSmartPointer<vtkDoubleArray> array_s = vtkSmartPointer<vtkDoubleArray>::New();
+            vtkSmartPointer<vtkDataObject> data = vtkSmartPointer<vtkDataObject>::New();
+            array_s->SetName(item.first.c_str()) ;
+
+            vector<double> jsArray(pt.get_child("CellData." + item.first ).size());
+            jsonEntryToVector<double>(pt, "CellData." + item.first, jsArray.data());
+
+            for (std::vector<double>::size_type i = 0; i != jsArray.size(); i++) {
+                array_s->InsertValue(i, jsArray[i]);
+            }
+            cd->AddArray(array_s) ;
         }
     }
 

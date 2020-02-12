@@ -196,21 +196,30 @@ class ttkWebSocketIO {
         o.socket.send( data ) ;
     }
 
-    sendUnstructuredGrid(pointCoords, connectivityList, pointData={}, cellData={}, fieldData={}, update=true) {  // send unstructuredGrid
+    sendUnstructuredGrid(pointCoords, connectivityList, pointData={}, cellData={}, fieldData={}) {  // send unstructuredGrid
         let o = this.getWindowObject() ;
-        let prefix = "updateUnstructuredGridWithoutUpdate:" ;
-        if ( update ) {
-            prefix = "updateUnstructuredGrid:" ;
-        }
+        let prefix = "updateUnstructuredGrid:" ;
 
         let items = {
-            "pointCoords": pointCoords,
-            "connectivityList": connectivityList,
+            "PointCoords": pointCoords,
+            "ConnectivityList": connectivityList,
             "CellData": cellData,
             "FieldData": fieldData,
             "PointData": pointData,
-        }
+        } ;
         o.socket.send( prefix + JSON.stringify(items)) ;
+    }
+
+    sendUnstructuredGridJSON(json_text) {  // send unstructuredGrid by json
+        let o = this.getWindowObject() ;
+        let prefix = "updateUnstructuredGrid:" ;
+
+        try {
+            JSON.parse(json_text) ;
+            o.socket.send( prefix + json_text) ;
+        } catch ( e ) {
+            alert ("make sure the input is the json format") ;
+        }
     }
 
     getSocketObject() {  // get raw socket connection to do cool things on your own

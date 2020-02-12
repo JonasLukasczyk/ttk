@@ -35,16 +35,14 @@
             <h3>Example</h3>
             <ul>
                 <li>This simple example just receives a serialized vtkDataObject from ParaView, and sends a custom vtkDataObject to ParaView.</li>
-                <li>Connect: TODO</li>
-                <li>Close: TODO</li>
+                <li>Connect: Requests to build a connection</li>
+                <li>Close: Closes current connection</li>
                 <li>Request Data: Requests the latest input from the connected ParaView WebSocketIO filter</li>
                 <li>Send Data: Sends data from the browser to the connected ParaView WebSocketIO filter</li>
             </ul>
             <hr>
 
             TODO: Text input for JSON object<br>
-
-            BUG: After clicking connect twice it is no longer possible to send data
             <div class="row">
                <div class="col">
                   <div class="text-justify p-2 border bg-light">
@@ -52,13 +50,13 @@
                      <input id="msg-h" type="text" value="127.0.0.1">
                      Port:
                      <input id="msg-u" type="text" value="9285">
-                     <button id="connect-u" onclick="Connect();" title='TODO' class="btn btn-primary btn-sm">Connect</button>
-                     <button id="close-u" onclick="Close();" title='TODO' class="btn btn-primary btn-sm">Close</button>
+                     <button id="connect-u" onclick="Connect();" title='Requests to build a connection' class="btn btn-primary btn-sm">Connect</button>
+                     <button id="close-u" onclick="Close();" title='Closes current connection' class="btn btn-primary btn-sm">Close</button>
                      <button id="request-u" onclick="Request();" title='Requests the latest input from the connected ParaView WebSocketIO filter.' class="btn btn-primary btn-sm">Request Data</button>
-                     <button id="sendobj-u" onclick="SendObj();" title='TODO' class="btn btn-primary btn-sm">Send Data</button>
-                     <br> Message:
+                     <hr>UnstructuredGrid JSON Format:
                      <br>
-                     <textarea id="txt-u" style="width: 100%;" type="text"></textarea>
+                     <textarea id="txt-u" style="width: 100%;" type="text">{"PointCoords":[],"ConnectivityList":[],"CellData":{},"FieldData":{"n":[21,2,32],"m":[2,3,45]},"PointData":{}}</textarea>
+                      <button id="sendobj-u" onclick="SendObj();" title='TODO' class="btn btn-primary btn-sm">Send Data</button>
                      <br>
                      <br>
                      <div id="log" style="max-height: 200px;overflow: scroll;" class="text-justify p-2 border bg-light"></div>
@@ -85,6 +83,11 @@
          })();
 
          function Connect() {
+            if ( ttk && ttk.getSocketObject().readyState != 3) {
+                alert("please try it again after closing current connection") ;
+                return ;
+            }
+
             const IP = document.getElementById("msg-h").value ;
             const PORT = parseInt(document.getElementById("msg-u").value) ;
 
@@ -95,7 +98,7 @@
             const onMessage = function(msg) {};
 
             // TODO
-            const onErr = function() { alert("check if listening port is available") ; } ;
+            const onErr = function(msg) { logger("get an error: " + msg) ; } ;
 
             // TODO
             const onClose = function() {} ;
@@ -103,14 +106,14 @@
             // TODO
             const objectCallback = function(obj) {
                console.log(obj) ;
-               if ( obj.vtkDataObjectType.Values[0] == 2 ) {  // 2 => ImageData, 1 => UnStructuredGrid
+               if ( obj.VtkDataObjectType.Values[0] == 2 ) {  // 2 => ImageData, 1 => UnStructuredGrid
                   logger("[callback information] browser receives an imagedata object -> check console") ;
-               } else if ( obj.vtkDataObjectType.Values[0] == 1 ) {
+               } else if ( obj.VtkDataObjectType.Values[0] == 1 ) {
                   logger("[callback information] browser receives an UnStructuredGrid object -> check console") ;
                } else {
                   alert("NOT Supported!") ;
                }
-            }
+            } ;
 
             ttk = new ttkWebSocketIO(PORT, onOpen, onErr, onMessage, onClose, objectCallback, IP) ;
          }
@@ -125,33 +128,10 @@
                ttk.close() ;
          }
 
-          function Send() {
-             if (ttk) {
-                logger("send back a text message to paraview") ;
-                ttk.send(document.getElementById("txt-u").value) ;
-             }
-
-          }
-
          function SendObj() {
             if (ttk) {
-               logger("send an unstructedgrid object to paraview with paraview updating") ;
-               let pointCoords = [-10.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0.8506507873535156, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957] ;
-               let connectivityList = [3, 0, 11, 5, 3, 0, 5, 1, 3, 0, 1, 7, 3, 0, 7, 10, 3, 0, 10, 11, 3, 1, 5, 9, 3, 5, 11, 4, 3, 11, 10, 2, 3, 10, 7, 6, 3, 7, 1, 8, 3, 3, 9, 4, 3, 3, 4, 2, 3, 3, 2, 6, 3, 3, 6, 8, 3, 3, 8, 9, 3, 4, 9, 5, 3, 2, 4, 11, 3, 6, 2, 10, 3, 8, 6, 7, 3, 9, 8, 1] ;
-               let fieldData =  {"n": [1, 2, 32], "m": [2, 3, 45]} ;
-               ttk.sendUnstructuredGrid(pointCoords, connectivityList, undefined, undefined, fieldData, update=true) ;
-               // TODO
-            //   ttk.sendUnstructuredGrid(json, update=true) ;
-            }
-         }
-
-         function SendObjWithoutUpdate() {
-            if (ttk) {
-               logger("send an unstructedgrid object to paraview");
-               let pointCoords = [-10.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, 0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0.8506507873535156, 0, -0.525731086730957, 0.8506507873535156, 0, 0.525731086730957, -0.8506507873535156, 0, -0.525731086730957, -0.8506507873535156, 0, 0.525731086730957] ;
-               let connectivityList = [3, 0, 11, 5, 3, 0, 5, 1, 3, 0, 1, 7, 3, 0, 7, 10, 3, 0, 10, 11, 3, 1, 5, 9, 3, 5, 11, 4, 3, 11, 10, 2, 3, 10, 7, 6, 3, 7, 1, 8, 3, 3, 9, 4, 3, 3, 4, 2, 3, 3, 2, 6, 3, 3, 6, 8, 3, 3, 8, 9, 3, 4, 9, 5, 3, 2, 4, 11, 3, 6, 2, 10, 3, 8, 6, 7, 3, 9, 8, 1] ;
-               let fieldData =  {"n": [1, 2, 32], "m": [2, 3, 45]} ;
-               ttk.sendUnstructuredGrid(pointCoords, connectivityList, undefined, undefined, fieldData, update=false) ;
+                logger("send unStructuredGrid object to ParaView with JSON") ;
+                ttk.sendUnstructuredGridJSON($("#txt-u").val()) ;
             }
          }
       </script>
