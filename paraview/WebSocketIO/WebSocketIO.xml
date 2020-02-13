@@ -15,9 +15,6 @@
                     <DataType value="vtkDataSet" />
                 </DataTypeDomain>
                 <Documentation>TODO.</Documentation>
-                <Hints>
-                    <Optional />
-                </Hints>
             </InputProperty>
 
             <IntVectorProperty name="PortNumber" label="PortNumber" command="SetPortNumber" number_of_elements="1" default_values="9285">
