@@ -42,16 +42,19 @@ function removeNiceByKicks(id, keep=-1, ratio=0) {
 }
 
 /**
- * return the color 
- * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1] 
+ * return the color
+ * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1]
  * @param {*} ppi: # of features
- * @param {*} max_persistence_pairs 
- * @param {*} lower 
- * @param {*} upper 
+ * @param {*} max_persistence_pairs
+ * @param {*} lower
+ * @param {*} upper
+ * @param default_color
  */
-function customColor(reliability, ppi, max_persistence_pairs, lower=0.3, upper=0.6, default_color="#ffffff") {
+function customColor(reliability, ppi, max_persistence_pairs, default_color="#ffffff") {
     //return customColorV2(reliability, ppi, max_persistence_pairs) ;
     // from light to dark
+    let lower = getFloatValue("#my_dataviz_legend", "data-x_0"),
+        upper = getFloatValue("#my_dataviz_legend", "data-x_1") ;
     let range_color = COLOR_GREEN;
     if (reliability >= 0 && reliability < lower) {
         range_color = COLOR_RED;
@@ -61,9 +64,13 @@ function customColor(reliability, ppi, max_persistence_pairs, lower=0.3, upper=0
         range_color = COLOR_GREEN;
     }
 
-    if (ppi == 0) {
+    if (ppi === 0) {
         return default_color ;
     } else {
         return range_color[Math.ceil(ppi / (max_persistence_pairs / 5)) - 1];
     }
+}
+
+function getFloatValue(id, attr) {
+    return parseFloat($(id).attr(attr)) ;
 }

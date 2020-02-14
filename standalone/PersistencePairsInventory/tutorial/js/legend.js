@@ -16,8 +16,8 @@ function drawLegend(data, max_persistence_pairs) {
     // more complicated
     // data processing
     // reduced_data: [(reliability, # of bins), ...]
-    let x_0 = 0.3,
-        x_1 = 0.6,
+    let x_0 = getFloatValue("#my_dataviz_legend", "data-x_0"),
+        x_1 = getFloatValue("#my_dataviz_legend", "data-x_1"),
         width_partition = 50,
         height_partition = 30;
     
@@ -170,11 +170,11 @@ function drawLegend(data, max_persistence_pairs) {
         .attr("height", y.bandwidth())
         .style("fill", function(d, i) {
             if ( i % 3 === 0) {
-                return customColor(x_0 / 2, Math.floor(i / 3) + 0.01, 5, x_0, x_1);
+                return customColor(x_0 / 2, Math.floor(i / 3) + 0.01, 5);
             } else if ( i % 3 === 1) {
-                return customColor(x_0 + (x_1 - x_0) / 2, Math.floor(i / 3) + 0.01, 5, x_0, x_1);
+                return customColor(x_0 + (x_1 - x_0) / 2, Math.floor(i / 3) + 0.01, 5);
             } else {
-                return customColor(x_1 + (1 - x_1) / 2, Math.floor(i / 3) + 0.01, 5, x_0, x_1);
+                return customColor(x_1 + (1 - x_1) / 2, Math.floor(i / 3) + 0.01, 5);
             }
         });
     removeNiceByKicks(".axis--legend--y", 0);
@@ -199,4 +199,21 @@ function drawLegend(data, max_persistence_pairs) {
         .style("text-anchor", "middle")
         .style("font-size", "small")
         .text("Reliability");
+
+    // Add two vertical line for reliability
+    lines = [
+        {"x1": xLine(x_0), "x2": xLine(x_0)} ,
+        {"x1": xLine(x_1), "x2": xLine(x_1)} ,
+    ] ;
+
+    svg.selectAll('line')
+        .data(lines)
+        .enter()
+        .append('line')
+        .attr("x1", function(d) {return d.x1;})
+        .attr("y1", 0)
+        .attr("x2", function(d) {return d.x2;})
+        .attr("y2", height)
+        .style("stroke", "#01665e")
+        .style("stroke-width", 2) ;
 }

@@ -288,7 +288,6 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         .range([height, 0])
         .domain(myVars) ;
 
-    // FLAG, needs to do
     svg.append("g")
         .attr('class', 'axis--hist--y')
         .call(d3.axisLeft(y).ticks(2, "s"));
