@@ -83,7 +83,7 @@
          })();
 
          function Connect() {
-            if ( ttk && ttk.getSocketObject().readyState != 3) {
+            if ( ttk && ttk.getSocketObject().readyState !== 3) {
                 alert("please try it again after closing current connection") ;
                 return ;
             }
@@ -106,16 +106,16 @@
             // TODO
             const objectCallback = function(obj) {
                console.log(obj) ;
-               if ( obj.VtkDataObjectType.Values[0] == 2 ) {  // 2 => ImageData, 1 => UnStructuredGrid
+               if ( obj.VtkDataObjectType.Values[0] === 2 ) {  // 2 => ImageData, 1 => UnStructuredGrid
                   logger("[callback information] browser receives an imagedata object -> check console") ;
-               } else if ( obj.VtkDataObjectType.Values[0] == 1 ) {
+               } else if ( obj.VtkDataObjectType.Values[0] === 1 ) {
                   logger("[callback information] browser receives an UnStructuredGrid object -> check console") ;
                } else {
                   alert("NOT Supported!") ;
                }
             } ;
 
-            ttk = new ttkWebSocketIO(PORT, onOpen, onErr, onMessage, onClose, objectCallback, IP) ;
+            ttk = new ttkWebSocketIO(PORT, onOpen, onErr, onMessage, onClose, objectCallback, IP, true) ;
          }
 
          function Request() {

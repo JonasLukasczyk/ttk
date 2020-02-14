@@ -207,13 +207,13 @@ int ttk::WebSocketIO::sendObject() {
                     case DATA_UNSIGNED_ARRAY:
                         this->Server.send(*it, d, stoi(m["nTuples"]) * stoi(m["nComponents"]) * sizeof(unsigned char), websocketpp::frame::opcode::binary);
                         break;
-                    case DATA_INT_ARRAY: {
+                    case DATA_INT_ARRAY:
                         this->Server.send(*it, d, stoi(m["nTuples"]) * stoi(m["nComponents"]) * sizeof(signed int), websocketpp::frame::opcode::binary);
-                        break; }
+                        break;
                     case DATA_DOUBLE_ARRAY:
                         this->Server.send(*it, d, stoi(m["nTuples"]) * stoi(m["nComponents"]) * sizeof(double), websocketpp::frame::opcode::binary);
                         break;
-                    case DATA_STRING_ARRAY:
+                    case DATA_STRING_ARRAY: {
                         size_t n = stoi(m["nTuples"]) * stoi(m["nComponents"]);
                         string json = "" ;
                         string * values = (string *) d ;
@@ -231,6 +231,13 @@ int ttk::WebSocketIO::sendObject() {
                         }
                         json += "]" ;
                         this->Server.send(*it, json, websocketpp::frame::opcode::text);
+                        break;
+                    }
+
+                    default:
+                        // for unknown dataType, we do not care about the data sent to the browser, just let the browser knows that the ParaView has received the data from the client
+                        this->Server.send(*it, d, 1, websocketpp::frame::opcode::binary);
+                        this->printErr("unknown dataType: " + m["dataType"] + ", key: " + m["key"] + ". dataType definition: https://vtk.org/doc/nightly/html/vtkType_8h_source.html") ;
                         break;
                 }
             }
