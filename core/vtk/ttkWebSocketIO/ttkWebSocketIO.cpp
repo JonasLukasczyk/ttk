@@ -71,8 +71,6 @@ bool hasChild(const boost::property_tree::ptree& pt,
 }
 
 ttkWebSocketIO::ttkWebSocketIO() {
-    this->printMsg("invoke ttkWebSocketIO!") ;
-    // this->lastInput;
     this->lastOutput = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
     this->SetNeedsUpdate(true);
@@ -85,12 +83,10 @@ ttkWebSocketIO::~ttkWebSocketIO() {
     this->printMsg("invoke ~ttkWebSocketIO!") ;
 }
 
-// see ttkAlgorithm::FillInputPortInformation for details about this method
 int ttkWebSocketIO::FillInputPortInformation(int port, vtkInformation *info) {
     switch (port) {
         case 0:
             info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
-            info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1);
             break;
         default:
             return 0;
@@ -98,7 +94,6 @@ int ttkWebSocketIO::FillInputPortInformation(int port, vtkInformation *info) {
     return 1;
 }
 
-// see ttkAlgorithm::FillOutputPortInformation for details about this method
 int ttkWebSocketIO::FillOutputPortInformation(int port, vtkInformation *info) {
     switch (port) {
         case 0:
@@ -115,12 +110,12 @@ int ttkWebSocketIO::RequestData(
         vtkInformationVector **inputVector,
         vtkInformationVector *outputVector
 ) {
+    this->printMsg("invoke RequestData! & Port: " + to_string(this->GetPortNumber()));
+    this->SetNeedsUpdate(false);
+
     auto input = vtkDataSet::GetData( inputVector[0] );
     this->lastInput = vtkSmartPointer<vtkDataSet>::Take( input->NewInstance() );
     this->lastInput->ShallowCopy( input );
-
-    this->printMsg("invoke RequestData! & Port: " + to_string(this->GetPortNumber()));
-    this->SetNeedsUpdate(false);
 
     if (this->isListening() && this->getPortNumber() != this->PortNumber) {
         this->stopServer() ;
@@ -141,10 +136,10 @@ int ttkWebSocketIO::RequestData(
     }
 
     // Get the output
-    auto output = vtkDataSet::GetData( outputVector );
+    auto output = vtkUnstructuredGrid::GetData( outputVector );
     output->ShallowCopy( this->lastOutput );
-
     this->lastReqUpdate = true ;
+
     return 1;
 }
 
@@ -171,6 +166,8 @@ int addFieldDataArraysToHeader(vtkFieldData* fd, std::string typeName, std::vect
                 sendingData.push_back(values);
         }
     }
+
+    return 1;
 }
 
 /**

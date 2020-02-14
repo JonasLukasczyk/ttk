@@ -9,13 +9,12 @@
 
 // VTK Module
 #include <ttkWebSocketIOModule.h>
+
+// VTK Includes
+#include <ttkAlgorithm.h>
 #include <vtkSmartPointer.h>
 #include <vtkDataSet.h>
 #include <vtkUnstructuredGrid.h>
-
-// VTK Includes
-#include <vtkInformation.h>
-#include <ttkAlgorithm.h>
 
 // TTK Base Includes
 #include <WebSocketIO.h>

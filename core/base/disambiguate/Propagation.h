@@ -22,13 +22,12 @@ namespace ttk {
     // propagation data
     idType extremumIndex{-1};
     idType lastEncounteredSaddle{-1};
-    bool isTerminated{false};
     idType regionWriteIndex{0};
+    idType regionSize{0};
     std::vector<idType> region;
     boost::heap::fibonacci_heap< std::pair<idType,idType> > queue;
 
     inline explicit Propagation() {
-        this->parent = this;
     }
 
     // Propagation(const Propagation&) = delete;
@@ -54,39 +53,54 @@ namespace ttk {
         uf0 = uf0->find();
         uf1 = uf1->find();
 
-
-        // if(uf0 == uf1) {
-        //     return uf0;
-        // } else if(uf0->rank > uf1->rank) {
-            uf1->setParent(uf0);
-
-            uf1->isTerminated = true;
-            uf0->queue.merge(uf1->queue);
-            idType oldSize = uf0->region.size();
-            idType newSize = oldSize + uf1->region.size();
-            uf0->region.resize(newSize);
-            for(idType i=oldSize,j=0; i<newSize; i++,j++)
-                uf0->region[i] = uf1->region[j];
-
+        if(uf0 == uf1){
+            std::cout<<"xxxxxxxxxxxx"<<std::endl;
             return uf0;
-        // } else if(uf0->rank < uf1->rank) {
-        //     uf0->setParent(uf1);
+        }
 
-        //     uf0->isTerminated = true;
-        //     uf1->queue.merge(uf0->queue);
+        Propagation<idType>* master = nullptr;
+        Propagation<idType>* slave  = nullptr;
 
-        //     return uf1;
+        // determine master and slave based on rank
+        if(uf0 == uf1) {
+            return uf0;
+        } else if(uf0->rank > uf1->rank) {
+            master = uf0;
+            slave = uf1;
+        } else if(uf0->rank < uf1->rank) {
+            master = uf1;
+            slave = uf0;
+        } else {
+            master = uf0;
+            slave = uf1;
+            master->setRank(master->rank + 1);
+        }
+
+        // determine master and slave based on region size
+        // if(uf0->region.size() > uf1->region.size()) {
+        //     master = uf0;
+        //     slave = uf1;
         // } else {
-        //     uf1->setParent(uf0);
-        //     uf0->setRank(uf0->rank + 1);
-
-        //     uf1->isTerminated = true;
-        //     uf0->queue.merge(uf1->queue);
-
-        //     return uf0;
+        //     master = uf1;
+        //     slave = uf0;
         // }
 
-        // return uf0;
+        // update union find tree
+        slave->setParent(master);
+
+        // merge f. heaps
+        master->queue.merge(slave->queue);
+
+        // merge regions
+        master->regionSize += slave->regionSize;
+
+        // idType oldSize = master->region.size();
+        // idType newSize = oldSize + slave->region.size();
+        // master->region.resize(newSize);
+        // for(idType i=oldSize,j=0; i<newSize; i++,j++)
+        //     master->region[i] = slave->region[j];
+
+        return master;
     }
 
     inline void setParent(Propagation<idType>* parent) {
