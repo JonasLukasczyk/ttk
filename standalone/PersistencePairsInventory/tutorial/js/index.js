@@ -113,7 +113,7 @@ function drawDistribution(id, data, title) {
     }
     
     for (var i = 0; i < data.length; i ++) {
-        if ( data[i][0] == 1) {
+        if ( data[i][0] === 1) {
             // reduced_data[portion - 1] += data[i][1] ; 
         } else {
             reduced_data[ Math.floor(data[i][0] / ( 1 / portion)) ] += data[i][1] ;     
@@ -257,7 +257,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         containerWidth = (containerHeight) * w / h;
     }
     let margin = {
-        top: 10,
+        top: 90,
         right: 0,
         bottom: 40,
         left: 50
@@ -575,6 +575,10 @@ $("#s2").change(function () {
 let ttk;
 
 function Connect() {
+    if ( ttk && ttk.getSocketObject().readyState !== 3) {
+        alert("please try it again after closing current connection") ;
+        return ;
+    }
     DEV = false;
     var btn = $("#connect");
     btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...')

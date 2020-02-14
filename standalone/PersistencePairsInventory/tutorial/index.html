@@ -33,12 +33,14 @@
 </div>
 
 <div >
-   <div class="container-fluid">
-      <h2 style="padding-top: 20px;" class="pb-3">Persistence Pairs Exploration</h2>
+   <div class="container-fluid" style="margin-top:10px;">
       <span id="debug-info"></span>
       <div class="row">
-         <div class="col" style="margin-bottom: 6px;">
-            <div class="text-justify p-2 border bg-light" style="height: 100%;">
+         <div class="col-sm-3">
+            <h2 style="padding-top: 20px;" class="pb-3">Persistence Pairs Exploration</h2>
+         </div>
+         <div class="col-sm-9">
+            <div class="text-justify p-2 border" style="height: 100%;">
                <h4> Summary</h4>
                WebSocketIO Host:
                <input id="msg-host" type="text" value="10.218.107.40">
@@ -51,7 +53,8 @@
                <br>
             </div>
          </div>
-      </div>
+      </div> </div> <hr>
+   <div class="container-fluid">
       <div class="row">
          <div class="col" style="padding-right:4px;width:936.5px;">
             <div class="text-justify p-2 border bg-light" style="height: 100%;">
@@ -118,14 +121,14 @@
                <div id="my_dataviz_distribution"></div>
                <div id="my_dataviz_distribution_bins"></div>
                <div id="my_dataviz_distribution_sum"></div>
-               <div id="my_dataviz_legend"></div>
+               <div id="my_dataviz_legend" style="    position: absolute; top: -36px;right: 12px;"></div>
             </div>
          </div>
       </div>
    </div>
 </div>
 <script type="text/javascript" src="./js/utils.js"></script>
-<script type="text/javascript" src="../../WebSocketIO/ttkWebSocket.js"></script>
+<script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
 <script type="text/javascript" src="./js/legend.js"></script>
 <script src="./js/index.js"></script>
 <script type="text/javascript" src="./js/boxplot.js"></script>

@@ -1,40 +1,40 @@
 function drawLegend(data, max_persistence_pairs) {
+    function removeLastEqual(bins) {
+        if ( bins.length > 0 ) {
+            let lastEle = bins.slice(-1)[0] ;
+            let lastSecondEle = bins.slice(-2, -1)[0] ;
+            if ( lastEle.x0 === lastEle.x1 ) {
+                for (let i = 0; i < lastEle.length ; i ++) {
+                    lastSecondEle.push(lastEle[i]) ;
+                }
+            }
+            bins = bins.slice(0, -1) ;
+        }
+        return bins ;
+    }
+
     // more complicated
     // data processing
     // reduced_data: [(reliability, # of bins), ...]
-    var x_0 = 0.3,
-        x_1 = 0.6;
-        width_view = 10;
-        width_partition = 100;
-        height_view = 5;
+    let x_0 = 0.3,
+        x_1 = 0.6,
+        width_partition = 50,
         height_partition = 30;
     
-    var reduced_data = [];
-    for (var i = 0; i < width_view; i++) {
-        reduced_data.push(0);
-    }
-
-    for (var i = 0; i < data.length; i++) {
-        if (data[i][0] == 1) {
-            reduced_data[width_view - 1] += 1;
-        } else {
-            reduced_data[Math.floor(data[i][0] / (1 / width_view))] += 1;
-        }
-    }
-
     // define the container and svg
     d3.select("#my_dataviz_legend *").remove();
     
-    let containerWidth = 501;
-    let containerHeight = 401;
+    let containerWidth = 301;
+    let containerHeight = 201;
     let margin = {
-        top: 150,
-        right: 150,
+        top: 60,
+        right: 60,
         bottom: 20,
         left: 20
     };
 
-    var width = containerWidth - margin.left - margin.right,
+    // http://bl.ocks.org/nnattawat/8916402
+    let width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
 
     let container = d3.select("#my_dataviz_legend")
@@ -43,64 +43,84 @@ function drawLegend(data, max_persistence_pairs) {
                     .attr("height", containerHeight);
 
     // draw the top line SVG
-    var lineSvg = container
+    let lineSvg = container
                 .append("g")
                 .attr("transform",
                     "translate(" + margin.left + ", 5)")
                 .attr('overflow', 'hidden');
 
-    let xLine = d3.scaleLinear().range([0, width]);
+    let xLine = d3.scaleLinear().range([0, width]).domain([0, 1]);
+
+    let histogram = d3.histogram()
+        .value(function(d) { return d[0]; })   // I need to give the vector of value
+        .domain(xLine.domain())  // then the domain of the graphic
+        .thresholds(xLine.ticks(width_partition)); // then the numbers of bins
+    let bins = histogram(data);
+    bins = removeLastEqual(bins) ;
+
     let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
+    yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
 
-    let dl = d3.line().x(function(d, i) { return xLine(i); })
-                      .y(function(d) { return yLine(d); });
-
-    xLine.domain([0, width_view - 1]).nice();
-    yLine.domain([0, d3.max(reduced_data, function(d) { return d; })]);
-
-    reduced_data[0] = 80;
-    lineSvg.append("path")
-        .attr("class", "line2")
-        .attr("d", dl(reduced_data))
-        .style("stroke-width", 2)
-        .style("stroke", "red");
+    lineSvg.selectAll("rect")
+        .data(bins)
+        .enter()
+        .append("rect")
+        .attr("transform", function(d) { return "translate(" + xLine(d.x0) + "," + yLine(d.length) + ")"; })
+        .attr("width", function(d) {
+            if ( d.x0 === d.x1 ) {
+                return xLine(0.01) - xLine(0);
+            }
+            return xLine(d.x1) - xLine(d.x0);
+        })
+        .attr("height", function(d) { return margin.top - 5 - yLine(d.length); })
+        .style("fill", "#69b3a2") ;
 
     // draw the right SVG
-    var lineSvgRight = container
+    let lineSvgRight = container
         .append("g")
         .attr("transform",
             "translate(" + (margin.left + width + margin.right - 5) + ", "+ margin.top+") rotate(90)")
         .attr('overflow', 'hidden');
 
-    let xLineRight = d3.scaleLinear().range([0, height]);
+    let xLineRight = d3.scaleLinear().range([0, height]).domain([0, max_persistence_pairs]);
+
+    let histogramRight = d3.histogram()
+        .value(function(d) { return d[1]; })   // I need to give the vector of value
+        .domain(xLineRight.domain())  // then the domain of the graphic
+        .thresholds(xLineRight.ticks(height_partition)); // then the numbers of bins
+
+    let binsRight = histogramRight(data);
+    binsRight = removeLastEqual(binsRight) ;
     let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
+    yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
 
-    let dlRight = d3.line().x(function(d, i) { return xLineRight(i); })
-                      .y(function(d) { return yLineRight(d); });
+    lineSvgRight.selectAll("rect")
+        .data(binsRight)
+        .enter()
+        .append("rect")
+        .attr("transform", function(d) { return "translate(" + xLineRight(d.x0) + "," + yLineRight(d.length) + ")"; })
+        .attr("width", function(d) {
+            if ( d.x0 === d.x1 ) {
+                return xLineRight(max_persistence_pairs * 0.01) - xLineRight(0) ;
+            }
+            return xLineRight(d.x1) - xLineRight(d.x0);
+        })
+        .attr("height", function(d) { return margin.right - 5 - yLineRight(d.length); })
+        .style("fill", "#4575b4") ;
 
-    xLineRight.domain([0, width_view - 1]).nice();
-    yLineRight.domain([0, d3.max(reduced_data, function(d) { return d; })]);
-
-    reduced_data[0] = 80;
-    lineSvgRight.append("path")
-        .attr("class", "line2")
-        .attr("d", dlRight(reduced_data))
-        .style("stroke-width", 2)
-        .style("stroke", "red");
-    
+    // GET errors
     // draw the main body SVG
-    let widthGroups = getArray(width_partition);
-    let heightGroups = getArray(height_partition);
-    let vData = getArray(width_partition * height_partition);
+    let widthGroups = getArray(3);
+    let heightGroups = getArray(5);
+    let vData = getArray(15);
 
-    var svg = container
+    let svg = container
         .append("g")
         .attr("transform",
             "translate(" + margin.left + ", " + margin.top + ")")
         .attr('overflow', 'hidden');
 
     // share the same x axis
-
     let x = d3.scaleBand()
         .range([0, width])
         .domain(widthGroups);
@@ -122,17 +142,61 @@ function drawLegend(data, max_persistence_pairs) {
         .data(vData)
         .enter()
         .append("rect")
+        .style("stroke-width", 0.1)
+        .style("stroke", "black")
         .attr("x", function(d, i) {
-            return x(i % width_partition);
+            let total_width = x.bandwidth() * 3;
+            if ( i % 3 === 0 ) {
+                return  0;
+            } else if ( i % 3 === 1 ) {
+                return total_width * x_0  ;
+            } else {
+                return total_width * x_1  ;
+            }
         })
         .attr("y", function(d, i) {
-            return y(Math.ceil(i / width_partition));
+            return y.bandwidth() * ( 4 - Math.floor(i / 3) ) ;
         })
-        .attr("width", x.bandwidth())
+        .attr("width", function (d, i) {
+            let total_width = x.bandwidth() * 3;
+            if ( i % 3 === 0 ) {
+                return total_width * x_0 ;
+            } else if ( i % 3 === 1 ) {
+                return total_width * ( x_1 - x_0 )  ;
+            } else {
+                return total_width * ( 1- x_1 ) ;
+            }
+        })
         .attr("height", y.bandwidth())
         .style("fill", function(d, i) {
-            return customColor((i % width_partition) / width_partition, Math.max(1, Math.ceil(i / width_partition)), height_partition, x_0, x_1);
-        })
+            if ( i % 3 === 0) {
+                return customColor(x_0 / 2, Math.floor(i / 3) + 0.01, 5, x_0, x_1);
+            } else if ( i % 3 === 1) {
+                return customColor(x_0 + (x_1 - x_0) / 2, Math.floor(i / 3) + 0.01, 5, x_0, x_1);
+            } else {
+                return customColor(x_1 + (1 - x_1) / 2, Math.floor(i / 3) + 0.01, 5, x_0, x_1);
+            }
+        });
     removeNiceByKicks(".axis--legend--y", 0);
-    removeNiceByKicks(".axis--legend--x g", 10);
+    removeNiceByKicks(".axis--legend--x", 0);
+
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", -20)
+        .attr("x", 0 - (height / 2))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "small")
+        .text("Color Scalar") ;
+
+    // Add x-axis title
+    svg.append("text")
+        .attr("y", (height ) )
+        .attr("x", (width / 2))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "small")
+        .text("Reliability");
 }
