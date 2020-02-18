@@ -44,8 +44,9 @@ function on_message_intercept(uuid, msg) {
         try {
             let data = JSON.parse(msg.data) ;
             if (data.hasOwnProperty("key")) {  // header
-                // TODO debugMode
-                // console.log(data) ;
+                if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                    console.log("[DEBUG] received header: ", data) ;
+                }
                 let keys = data['key'].split(":") ;
                 if (keys.length === 1) {
                     Window.ttkWebSocket[uuid].objectData[keys[0]] = null ;
@@ -109,6 +110,11 @@ function on_message_intercept(uuid, msg) {
                     case DATA_DOUBLE_ARRAY:
                         v =  new Float64Array(dt, 0, msg.data.size/8);
                         break ;
+                    default:
+                        if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                            console.log("[DEBUG] received unknown dataType data: " + keys.join(" -> ")) ;
+                        }
+                        break ;
                 }
                 if (keys.length === 1) {
                     vv["Name"] = keys[0] ;
@@ -142,7 +148,7 @@ class ttkWebSocketIO {
         });
     }
 
-    constructor (port, on_open, on_error, on_message, on_close, objectCallback, ip="localhost") {
+    constructor (port, on_open, on_error, on_message, on_close, objectCallback, ip="localhost", debugMode=false) {
         let uuid = ttkWebSocketIO.create_UUID();
         this.uuid = uuid ;
         let socket = new WebSocket('ws://'+ip+':' + port);
@@ -161,9 +167,9 @@ class ttkWebSocketIO {
             return on_message(msg) ;
         };
 
-        // TODO
-        this.debugMode = false;
-
+        if ( debugMode === true ) {
+            Window.ttkWebSocket["debugMode"] = true ;
+        }
         Window.ttkWebSocket[uuid] = {};
         Window.ttkWebSocket[uuid].socket = socket ;
         Window.ttkWebSocket[uuid].uuid = uuid ;
