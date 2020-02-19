@@ -18,6 +18,7 @@ namespace ttk {
     // union find members
     Propagation<idType>* parent{this};
     int rank{0};
+    int status{0};
 
     // propagation data
     idType extremumIndex{-1};

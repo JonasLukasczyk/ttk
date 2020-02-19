@@ -223,6 +223,7 @@ int ttkTopologicalSimplification::dispatch(
           (int*) inputCriticalPointIdArray->GetVoidPointer(0),
           (int) inputCriticalPointIdArray->GetNumberOfTuples(),
           this->UseRegionBasedIterations,
+          this->UseInterleaving,
           this->AddPerturbation
         );
       } else {

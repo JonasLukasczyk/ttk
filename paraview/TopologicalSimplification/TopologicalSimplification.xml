@@ -252,6 +252,22 @@ offset field for flat plateau disambiguation).
          <Documentation>
          </Documentation>
       </IntVectorProperty>
+      <IntVectorProperty
+         name="UseInterleaving"
+         command="SetUseInterleaving"
+         label="UseInterleaving"
+         number_of_elements="1"
+         default_values="0">
+         <BooleanDomain name="bool"/>
+         <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+            mode="visibility"
+            property="UseTPTS"
+            value="1" />
+         </Hints>
+         <Documentation>
+         </Documentation>
+      </IntVectorProperty>
 
       <IntVectorProperty
          name="UseAllCores"
@@ -296,11 +312,23 @@ offset field for flat plateau disambiguation).
          </Documentation>
        </IntVectorProperty>
 
+<Property name='Debug_Execute'
+          label='Execute'
+          command='Modified'
+          panel_widget='command_button'
+          panel_visibility='advanced'>
+  <Documentation>
+    Executes the filter with the last applied parameters, which is
+    handy to re-start pipeline execution from a specific element
+    without changing parameters.
+  </Documentation>
+</Property>
 
       <PropertyGroup panel_widget="Line" label="Testing">
         <Property name="UseAllCores" />
         <Property name="ThreadNumber" />
         <Property name="DebugLevel" />
+        <Property name="Debug_Execute"/>
       </PropertyGroup>
 
       <PropertyGroup panel_widget="Line" label="Input options">
@@ -315,24 +343,12 @@ offset field for flat plateau disambiguation).
         <Property name="PeriodicBoundaryConditions"/>
       </PropertyGroup>
 
-<Property name='Debug_Execute'
-          label='Execute'
-          command='Modified'
-          panel_widget='command_button'
-          panel_visibility='advanced'>
-  <Documentation>
-    Executes the filter with the last applied parameters, which is
-    handy to re-start pipeline execution from a specific element
-    without changing parameters.
-  </Documentation>
-</Property>
-
       <PropertyGroup panel_widget="Line" label="Output options">
 	<Property name="OutputOffsetScalarFieldName"/>
 	<Property name="AddPerturbation"/>
 	<Property name="UseTPTS"/>
 	<Property name="UseRegionBasedIterations"/>
-	<Property name="Debug_Execute"/>
+	<Property name="UseInterleaving"/>
       </PropertyGroup>
 
       <Hints>

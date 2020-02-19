@@ -88,6 +88,9 @@ public:
   bool UseRegionBasedIterations{false};
   vtkSetMacro(UseRegionBasedIterations, bool);
   vtkGetMacro(UseRegionBasedIterations, bool);
+  bool UseInterleaving{false};
+  vtkSetMacro(UseInterleaving, bool);
+  vtkGetMacro(UseInterleaving, bool);
 
   void SetThreadNumber(int threadNumber) {
     ThreadNumber = threadNumber;
