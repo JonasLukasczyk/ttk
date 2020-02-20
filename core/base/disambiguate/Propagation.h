@@ -18,7 +18,7 @@ namespace ttk {
     // union find members
     Propagation<idType>* parent{this};
     int rank{0};
-    int status{0};
+    int status{0}; // 0 default, 1 reached saddle and terminated
 
     // propagation data
     idType extremumIndex{-1};

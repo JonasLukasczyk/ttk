@@ -419,8 +419,10 @@ namespace ttk {
                         }
 
                         // if this thread did not register the last remaining larger vertices then terminate propagation
-                        if(numberOfRegisteredLargerVertices != numberOfLargerNeighbors)
+                        if(numberOfRegisteredLargerVertices != numberOfLargerNeighbors){
+                            propagationP->status = 1;
                             return 1;
+                        }
 
                         // Otherwise merge propagation data
                         for(idType n=0; n<nNeighbors; n++){
@@ -440,6 +442,11 @@ namespace ttk {
                     propagationMask[v] = propagationP;
                     propagationP->regionSize++;
                 }
+
+                // if queue should be empty
+                this->printMsg("ENDDDDD");
+                this->printMsg("ENDDDDD");
+                propagationP->status = 1;
 
                 return 1;
             }
@@ -529,14 +536,14 @@ namespace ttk {
                 );
 
                 idType nActivePropagations = nPropagations;
+                idType nCompletedPropagations = 0;
 
-                std::unordered_set<idType> test;
-
-                // #pragma omp taskloop default(none)
                 #pragma omp parallel num_threads(this->threadNumber_)
                 #pragma omp single
                 for(idType p=0; p<nPropagations; p++){
-                    #pragma omp task firstprivate(p) priority(2)
+                    // idType pS = std::get<1>(sortedUnauthorizedMaxima[p]);
+
+                    #pragma omp task priority(2)
                     {
                         idType nActivePropagations_ = 0;
                         #pragma omp atomic capture
@@ -557,31 +564,43 @@ namespace ttk {
                             inputOffsets
                         );
 
+                        idType nCompletedPropagations_ = 0;
+                        #pragma omp atomic capture
+                        {
+                            nCompletedPropagations++;
+                            nCompletedPropagations_ = nCompletedPropagations;
+                        }
+
                         progress[ omp_get_thread_num() ] = inputOffsets[propagation.lastEncounteredSaddle];
 
-                        // std::cout<<omp_get_thread_num()<< ": " << inputOffsets[propagation.extremumIndex]<<"\n";
-
                         // as soon as one thread becomes available dispatch interleaved jobs
-                        #pragma omp critical
-                        if(nActivePropagations_<this->threadNumber_){
+                        if(nPropagations-nCompletedPropagations_<this->threadNumber_){
+
+                            std::vector<idType> progress_(this->threadNumber_);
+                            for(size_t i=0; i<this->threadNumber_; i++){
+                                #pragma omp atomic read
+                                progress_[i]=progress[i];
+                            }
+
                             size_t counter = 0;
+                            size_t regionSize = 0;
                             for(idType p2=0; p2<nPropagations; p2++){
                                 auto& propagation2 = propagations[p2];
 
-                                if(&propagation2 != propagation2.parent)
+                                if(&propagation2 != propagation2.find() || propagation2.status!=1)
                                     continue;
 
                                 const idType& pivot = inputOffsets[propagation2.lastEncounteredSaddle];
 
                                 bool canBeProcessed = true;
                                 for(size_t i=0; i<this->threadNumber_; i++){
-                                    if(progress[i]>pivot){
+                                    if(progress_[i]>pivot){
                                         canBeProcessed = false;
                                         break;
                                     }
                                 }
 
-                                if(!canBeProcessed)
+                                if(!canBeProcessed && nCompletedPropagations_<nPropagations)
                                     continue;
 
                                 int propagationStatus = -1;
@@ -591,13 +610,13 @@ namespace ttk {
                                     propagationStatus = propagation2.status;
                                 }
 
-                                if(propagationStatus!=1)
+                                if(propagationStatus!=2)
                                     continue;
 
                                 counter++;
+                                regionSize += propagation2.regionSize;
 
-                                // #pragma omp task firstprivate(p2) priority(1)
-
+                                #pragma omp task firstprivate(p2) priority(1) if(propagation2.regionSize>2)
                                 {
                                     const auto propagation3 = &propagations[p2];
 
@@ -621,45 +640,12 @@ namespace ttk {
                                     );
                                 }
                             }
-
-                            std::cout<<"\n"<<counter<<"\n";
+                            std::cout<<("\n"+std::to_string(counter)+" ("+std::to_string(regionSize)+")\n");
                         }
                     }
                 }
                 if(!status)
                     return 0;
-
-                // get left over propagations
-                #pragma omp parallel num_threads(this->threadNumber_)
-                #pragma omp single
-                for(idType p=0; p<nPropagations; p++){
-                    if(&propagations[p]==propagations[p].find() && propagations[p].status==0){
-                        #pragma omp task firstprivate(p) priority(3)
-                        {
-                            const auto propagation = &propagations[p];
-
-                            this->computeRegion<idType>(
-                                regionMask,
-                                propagationMask,
-                                propagation,
-
-                                triangulation
-                            );
-
-                            this->computeLocalOffsetsOfRegion<idType>(
-                                localOffsets,
-                                distanceField,
-
-                                propagation,
-                                triangulation,
-                                regionMask,
-                                inputOffsets,
-                                useRegionBasedIterations
-                            );
-                        }
-                    }
-                }
-
 
                 nActivePropagations=0;
                 activePropagations.clear();
@@ -849,6 +835,11 @@ namespace ttk {
                 const idType* inputOffsets,
                 const bool& useRegionBasedIterations
             ) const {
+
+                if(propagation->regionSize==1){
+                    localOffsets[ propagation->region[0] ] = -1;
+                    return 1;
+                }
 
                 const idType& extremumIndex = propagation->extremumIndex;
                 const idType& saddleIndex = propagation->lastEncounteredSaddle;
