@@ -16,9 +16,13 @@ namespace ttk {
   struct Propagation {
 
     // union find members
-    Propagation<idType>* parent{this};
+    Propagation<idType>* parent{nullptr};
     int rank{0};
-    int status{0}; // 0 default, 1 reached saddle and terminated
+    signed char terminated{0};
+    signed char temp{0};
+    idType rep{0};
+
+    std::vector<idType> saddles;
 
     // propagation data
     idType extremumIndex{-1};
@@ -31,14 +35,19 @@ namespace ttk {
     inline explicit Propagation() {
     }
 
-    // Propagation(const Propagation&) = delete;
-    // Propagation& operator=(const Propagation&) = delete;
+    Propagation(const Propagation& that){
+        this->extremumIndex = that.extremumIndex;
+    };
+
+    Propagation& operator=(const Propagation& that){
+        this->extremumIndex = that.extremumIndex;
+    };
 
     inline Propagation *find(){
-        if(this->parent == this)
+        if(this->parent == nullptr)
             return this;
         else {
-            decltype(this->parent) tmp = this->parent->find();
+            auto tmp = this->parent->find();
 
             #pragma omp atomic write
             this->parent = tmp;
@@ -54,37 +63,16 @@ namespace ttk {
         uf0 = uf0->find();
         uf1 = uf1->find();
 
-        if(uf0 == uf1){
-            std::cout<<"xxxxxxxxxxxx"<<std::endl;
-            return uf0;
-        }
-
-        Propagation<idType>* master = nullptr;
-        Propagation<idType>* slave  = nullptr;
+        Propagation<idType>* master = uf0;
+        Propagation<idType>* slave  = uf1;
 
         // determine master and slave based on rank
-        if(uf0 == uf1) {
-            return uf0;
-        } else if(uf0->rank > uf1->rank) {
-            master = uf0;
-            slave = uf1;
+        if(uf0->rank == uf1->rank) {
+            master->setRank(master->rank + 1);
         } else if(uf0->rank < uf1->rank) {
             master = uf1;
             slave = uf0;
-        } else {
-            master = uf0;
-            slave = uf1;
-            master->setRank(master->rank + 1);
         }
-
-        // determine master and slave based on region size
-        // if(uf0->region.size() > uf1->region.size()) {
-        //     master = uf0;
-        //     slave = uf1;
-        // } else {
-        //     master = uf1;
-        //     slave = uf0;
-        // }
 
         // update union find tree
         slave->setParent(master);
@@ -95,11 +83,8 @@ namespace ttk {
         // merge regions
         master->regionSize += slave->regionSize;
 
-        // idType oldSize = master->region.size();
-        // idType newSize = oldSize + slave->region.size();
-        // master->region.resize(newSize);
-        // for(idType i=oldSize,j=0; i<newSize; i++,j++)
-        //     master->region[i] = slave->region[j];
+        slave->terminated = 0;
+        master->terminated = 0;
 
         return master;
     }
