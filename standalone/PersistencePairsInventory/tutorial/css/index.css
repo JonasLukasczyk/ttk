@@ -43,3 +43,14 @@ div.inline {
 .grid path {
     stroke-width: 0;
 }
+
+.active-d3-item-line {
+    cursor: pointer;
+    stroke: magenta;
+    stroke-width: 4;
+}
+
+.inactive-d3-item-line {
+    stroke: #0b2e13;
+    stroke-width: 3;
+}

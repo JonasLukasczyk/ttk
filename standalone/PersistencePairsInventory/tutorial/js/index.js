@@ -26,7 +26,7 @@ function rgbToHsl(r, g, b) {
     var max = Math.max(r, g, b), min = Math.min(r, g, b);
     var h, s, l = (max + min) / 2;
   
-    if (max == min) {
+    if (max === min) {
       h = s = 0; // achromatic
     } else {
       var d = max - min;
@@ -193,7 +193,7 @@ function calculateReliability(items, iComponent) {
     for (var i = 0; i < sliceItems.length; i++) {
         sum += sliceItems[i];
     }
-    if (Math.max(...sliceItems) == 0) {
+    if (Math.max(...sliceItems) === 0) {
         return 1;
     }
     return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
@@ -204,11 +204,11 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     let h = extent[3] + 1;
     var txt = $("#threshold").val();
     var max_persistence_pairs = 0;
-    let vvv = 0; 
+    let vvv = 0;
     if (txt.replace(" ", "") === "") {
         vvv = 0;
     } else {
-        vvv = Math.ceil(parseFloat(txt) / (Window.persistence_num / Window.magnitude_num)); 
+        vvv = Math.ceil(parseFloat(txt) / (Window.persistence_num / Window.magnitude_num));
     }
 
     for (let i = 0; i < data.length; i++) {
@@ -250,14 +250,14 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     let myGroups = getArray(w);
     let myVars = getArray(h);
 
-    let containerWidth = 901;
+    let containerWidth = 981;
     let containerHeight = containerWidth * h / w;
     if (containerHeight > 1024) {
         containerHeight = 1024;
         containerWidth = (containerHeight) * w / h;
     }
     let margin = {
-        top: 90,
+        top: 2,
         right: 0,
         bottom: 40,
         left: 50
@@ -268,13 +268,13 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         .append("svg")
         .attr("width", containerWidth)
         .attr("height", containerHeight) ;
-    
+
     var svg = container
                 .append("g")
                 .attr("transform",
                     "translate("+margin.left+", "+margin.top+")")
                 .attr('overflow', 'hidden');
-    
+
     let x = d3.scaleBand()
         .range([0, width])
         .domain(myGroups) ;
@@ -325,28 +325,28 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         })
         .on("click", function (d, i) {
             // SELECT one bin
-            // FLAG
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
-            d3.select(this).style("stroke-width", 1).attr("bin-selected", "on");
+            d3.select(this).style("stroke-width", 8).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (h - 1) + fieldData['ScalarBounds'].Values[0]) ;
             var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
-            var mm = 'updateUnstructuredGridWithoutUpdate:{"FieldData": ' +
+            var mm = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
-            $(".hist-yaxis-title").text("Scalar - " + actual_scalar.toFixed(2)) ;
-            $(".hist-xaxis-title").text("Time - " + actual_time.toFixed(2)) ;
+
+            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
+
             if (!DEV) {
                 Window.socket = socket ;
                 socket.send(mm) ;
-            } 
+            }
             console.log(mm) ;
-        })
-        
+        }) ;
+
         // svg.call(d3.zoom().on("zoom", function () {
         //     svg.attr("transform", d3.event.transform)
         // }))
-    
+
     // Add y-axis title
     svg.append("text")
         .attr("class", "hist-yaxis-title")
@@ -370,7 +370,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
 
     // reset x-axis, y-axis, TRICKY
     removeNiceByKicks(".axis--hist--x g") ;
-    removeNiceByKicks(".axis--hist--y g")
+    removeNiceByKicks(".axis--hist--y g") ;
 }
 
 $('#exampleModal').on('show.bs.modal', function (event) {
@@ -473,7 +473,6 @@ $("#save-xy-axis").unbind().click(function () {
 
 function objectCallback(msg) {
     Window.object = msg;
-
     //reset
     if (msg.hasOwnProperty("FieldData") && msg.FieldData.hasOwnProperty("PersistenceCurves")) {
         // $("#box_dataviz").html("");
@@ -537,20 +536,18 @@ function objectCallback(msg) {
                     ttk.getSocketObject());
             }
             
-            var e = jQuery.Event("keypress");
-            e.which = 13; //choose the one you want
-            e.keyCode = 13;
-            $("#rel-window").trigger(e);
-                    
+            triggerEnterInput("#rel-window") ;
 
         } else if (msg.VtkDataObjectType.Values[0] === 1) {
             console.log("This is a ttkUnstructuredGrid");
         } else {}
         console.log(msg);
     }
+    $('body').plainOverlay('hide');
 }
 
 $("#s2").change(function () {
+    $('#histogram-view-container').plainOverlay("show");  // FLAG
     $("#s2 option:selected").each(function () {
         if (DEV) {
             renderHistogram(Window.object['Extent'].Values,
@@ -567,20 +564,21 @@ $("#s2").change(function () {
                 parseInt($(this).text()),
                 ttk.getSocketObject());
         }
-
     });
+    $('#histogram-view-container').plainOverlay('hidden');
 });
 
 let ttk;
 
 function Connect() {
+    $('body').plainOverlay("show");
     if ( ttk && ttk.getSocketObject().readyState !== 3) {
         alert("please try it again after closing current connection") ;
         return ;
     }
     DEV = false;
     var btn = $("#connect");
-    btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...')
+    btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...') ;
     btn.attr("disabled", true);
     let PORT = parseInt(document.getElementById("msg").value);
     ttk = new ttkWebSocketIO(PORT,
@@ -604,6 +602,7 @@ function Connect() {
         },
         objectCallback,
         ip = $("#msg-host").val());
+
 }
 
 function Request() {
@@ -663,7 +662,7 @@ $("#box_zoom_back").unbind().click(function () {
 
 $(document).keydown(function(e) {
     if (e.ctrlKey) {
-        if (typeof Window.hist_h != 'undefined' && typeof Window.hist_w != 'undefined') {  // FLAG, using one global variable
+        if (typeof Window.hist_h != 'undefined' && typeof Window.hist_w != 'undefined') {
             var selected = false ;
             var g_idx = 0 ;
             if ($("[bin-selected=on]").length > 0) {
@@ -764,6 +763,19 @@ $('#threshold').on('keypress', function (e) {
         }
     }
 });
+
+function rel_window_keydown(event) {
+    let ele = $("#rel-window") ;
+    if (event.key === "ArrowUp") {
+        ele.val(parseInt(ele.val()) + 1) ;
+    } else if ( event.key === "ArrowDown") {
+        ele.val(parseInt(ele.val()) - 1)
+    }
+
+    triggerEnterInput("#rel-window") ;
+
+    ele.focus() ;
+}
 
 $('#rel-window').on('keypress', function (e) {
     if (e.which === 13) {

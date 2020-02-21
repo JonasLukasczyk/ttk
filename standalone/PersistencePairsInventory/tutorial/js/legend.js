@@ -18,8 +18,11 @@ function drawLegend(data, max_persistence_pairs) {
     // reduced_data: [(reliability, # of bins), ...]
     let x_0 = getFloatValue("#my_dataviz_legend", "data-x_0"),
         x_1 = getFloatValue("#my_dataviz_legend", "data-x_1"),
-        width_partition = 50,
-        height_partition = 30;
+        width_partition = 20,
+        height_partition = 10;
+
+    // updated notification
+    $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
     
     // define the container and svg
     d3.select("#my_dataviz_legend *").remove();
@@ -55,7 +58,15 @@ function drawLegend(data, max_persistence_pairs) {
         .value(function(d) { return d[0]; })   // I need to give the vector of value
         .domain(xLine.domain())  // then the domain of the graphic
         .thresholds(xLine.ticks(width_partition)); // then the numbers of bins
+    let cc = [] ;
+    for (var i = 0; i < data.length ; i++) {
+        if (data[i][1] !== 0) {
+            cc.push(data[i]) ;
+        }
+    }
+    data = cc ;
     let bins = histogram(data);
+
     bins = removeLastEqual(bins) ;
 
     let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
@@ -73,7 +84,7 @@ function drawLegend(data, max_persistence_pairs) {
             return xLine(d.x1) - xLine(d.x0);
         })
         .attr("height", function(d) { return margin.top - 5 - yLine(d.length); })
-        .style("fill", "#69b3a2") ;
+        .style("fill", "black") ;
 
     // draw the right SVG
     let lineSvgRight = container
@@ -106,7 +117,7 @@ function drawLegend(data, max_persistence_pairs) {
             return xLineRight(d.x1) - xLineRight(d.x0);
         })
         .attr("height", function(d) { return margin.right - 5 - yLineRight(d.length); })
-        .style("fill", "#4575b4") ;
+        .style("fill", "black") ;
 
     // GET errors
     // draw the main body SVG
@@ -206,6 +217,11 @@ function drawLegend(data, max_persistence_pairs) {
         {"x1": xLine(x_1), "x2": xLine(x_1)} ,
     ] ;
 
+    let drag = d3.drag()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended);
+
     svg.selectAll('line')
         .data(lines)
         .enter()
@@ -214,6 +230,37 @@ function drawLegend(data, max_persistence_pairs) {
         .attr("y1", 0)
         .attr("x2", function(d) {return d.x2;})
         .attr("y2", height)
-        .style("stroke", "#01665e")
-        .style("stroke-width", 2) ;
+        .attr("class", "inactive-d3-item-line")
+        .style("cursor", "pointer")
+        .attr("data-id", "legend-lines")
+        .attr("data-value", function(d, i) { if ( i === 0) { return x_0; } else { return x_1 ; } } )
+        .call(drag) ;
+
+    function dragstarted() {
+        d3.select(this).attr('class', 'active-d3-item-line');
+
+    }
+
+    function dragged(d) {
+        d = xLine.invert(d3.event.x);
+        d3.select(this)
+            .attr('x1', xLine(d))
+            .attr('x2', xLine(d))
+            .attr('data-value', d) ;
+    }
+
+    function dragended() {
+        d3.select(this).attr('class', 'inactive-d3-item-line');
+        let values = [] ;
+        $("[data-id=legend-lines]").each(function() {
+            values.push(parseFloat($(this).attr("data-value"))) ;
+        } ) ;
+
+        if (values[0] > values[1]) {
+            [values[0], values[1]] = [values[1], values[0]] ;
+        }
+
+        $("#my_dataviz_legend").attr("data-x_0", values[0]).attr("data-x_1", values[1]) ;
+        $("#s2").change() ;
+    }
 }

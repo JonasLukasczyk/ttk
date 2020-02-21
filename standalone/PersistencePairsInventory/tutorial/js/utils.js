@@ -41,6 +41,13 @@ function removeNiceByKicks(id, keep=-1, ratio=0) {
     }
 }
 
+function triggerEnterInput(selector) {
+    var e = jQuery.Event("keypress");
+    e.which = 13; //choose the one you want
+    e.keyCode = 13;
+    $(selector).trigger(e);
+}
+
 /**
  * return the color
  * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1]
