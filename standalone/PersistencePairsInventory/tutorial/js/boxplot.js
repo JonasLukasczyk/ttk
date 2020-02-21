@@ -209,7 +209,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
     function brushended() {
         var s = d3.event.selection;
         if (!s) {
-            //console.log("reset");
         } else {
             xScale.domain([s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale));
             yScale.domain([s[1][1], s[0][1] * ratio].map(yScale.invert, yScale));
@@ -558,7 +557,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         // color palette
         var res = sumstat.map(function (d) {
             return d.key
-        }) // list of group names
+        }) ; // list of group names
 
         $("#b1").html("<option value='all'>all</option>");
         for (var i = 0; i < res.length; i++) {

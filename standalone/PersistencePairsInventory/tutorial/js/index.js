@@ -415,6 +415,7 @@ function objectCallback(msg) {
         $("#notification_xxyy").text("0-0, 0-0");
         $("#brush_mode").text("view mode").attr("mode", "view");
         drawBoxplotCurve(msg.FieldData.PersistenceCurves.NumberOfComponents, msg.FieldData.PersistenceCurves.Values);
+        $("#hidden-notification_xxyy").click();
         Window.persistence_num = msg.FieldData.PersistenceCurves.NumberOfComponents;
 
         $("[name='box_line']").attr("visibility", "hidden");
@@ -426,7 +427,6 @@ function objectCallback(msg) {
         if (msg.VtkDataObjectType.Values[0] === 2) {
             console.log("This is a ttkImageData");
             $("#s2").attr("title", "");
-            $("#s2").html("");
             if (msg.hasOwnProperty("PointData")) {
                 for (let v in msg.PointData) {
                     name = v;

@@ -44,9 +44,9 @@
                WebSocketIO Host:
                <input id="msg-host" type="text" value="10.218.107.40">
                Port:
-               <input id="msg" type="text" value="9286">
+               <input id="msg" type="text" value="9286" style="width: 64px;">
                Port for render:
-               <input id="msg-render" type="text" value="9285">
+               <input id="msg-render" type="text" value="9285" style="width: 64px;">
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
                <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button>
                &nbsp; &nbsp; -<code> OR </code>- &nbsp; &nbsp;
@@ -60,43 +60,44 @@
          <div class="col-4" style="padding-right:0px;">
             <div class="text-justify p-2 border bg-light" style="height: 100%;">
                <h4>Boxplot View </h4>
-               <div id="bar-boxplot" style="height: 72px;">
-                  <input type="checkbox" id="l1">
-                  <select id="b1">
-                     <option>lines</option>
-                  </select>
-                  <label>
-                     line layer
-                  </label> <code>|</code>
-                  <input type="checkbox" checked="checked" id="l3">
-                  <label>
-                     polygon layer
-                  </label> <code>|</code>
-                  <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
-                  <code> | </code>
-                  <input type="input" style="width: 72px;height: 24px;" placeholder="threshold" id="threshold" value="">
-                  <div class="custom-control custom-switch inline">
-                     <input type="checkbox" class="custom-control-input" id="customSwitches--x">
-                     <label class="custom-control-label" title="logarithmic or not" for="customSwitches--x">x-axis</label> <code> | </code>
-                  </div>
-                  <div class="custom-control custom-switch inline">
-                     <input type="checkbox" class="custom-control-input" id="customSwitches--y">
-                     <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y">y-axis</label> <code> | </code>
-                  </div> <br>
-                  <div style="float:left;">
+               
+               <ul>
+                  <li>
+                     <div class="custom-switch inline">
+                        <input type="checkbox" class="custom-control-input" id="customSwitches--x">
+                        <label class="custom-control-label" title="logarithmic or not" for="customSwitches--x">x-axis</label> <code> | </code>
+                     </div>
+                     <div class="custom-switch inline">
+                        <input type="checkbox" class="custom-control-input" id="customSwitches--y">
+                        <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y">y-axis</label>
+                     </div>
+                  </li>
+                  <li style="padding-top: 10px;">
+                     <input type="checkbox" id="l1">
+                     <select id="b1">
+                        <option>lines</option>
+                     </select>
+                     <label>
+                        line layer
+                     </label> <code>|</code>
+                     <input type="checkbox" checked="checked" id="l3">
+                     <label>
+                        polygon layer
+                     </label> <code>|</code>
+                     <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
+                     <code> | </code>
+                     <input type="input" style="width: 72px;height: 24px;" placeholder="threshold" id="threshold" value="">
+                  </li>
+
+                  <li>
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#exampleModal" >0-0, 0-0</span>
                      <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
                      <image id="box_zoom_back" style="width:20px;" src="./images/zoom_back.png"></image>
-                  </div> <br>
-                  <!-- for purpose -->
-                  <image id="hidden-zoom-back" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-brush-mode" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-optimal-threshold" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-notification_xxyy" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-notification_xxyy-zoom" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-               </div>
+                  </li>
+                  
+               </ul>
+
                <div id="box_dataviz" style="width: 100%;border: thin dotted gray;padding-top: 20px;padding-bottom: 5px;"></div>
-               
                <hr>
                <div id='RendererContainer' style="border: thin dotted gray;padding-top: 20px;"></div>
 
@@ -122,7 +123,7 @@
                <div id="my_dataviz_distribution"></div>
                <div id="my_dataviz_distribution_bins"></div>
                <div id="my_dataviz_distribution_sum"></div>
-               <div id="my_dataviz_legend" style="position: absolute; top: -56px;right: 12px;" data-x_0="0.1" data-x_1="0.9"></div>
+               <div id="my_dataviz_legend" style="position: absolute; top: -68px;right: 12px;" data-x_0="0.1" data-x_1="0.9"></div>
             </div>
          </div>
       </div>
@@ -138,5 +139,11 @@
 <script type="text/javascript" src="./vtkRenderer.js"></script>
 <script src="./js/index.js"></script>
 
+<!-- for purpose -->
+<image id="hidden-zoom-back" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+<image id="hidden-brush-mode" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+<image id="hidden-optimal-threshold" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+<image id="hidden-notification_xxyy" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+<image id="hidden-notification_xxyy-zoom" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
 </body>
 </html>
