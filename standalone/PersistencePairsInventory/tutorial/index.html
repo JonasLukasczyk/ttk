@@ -7,7 +7,6 @@
    <script type="text/javascript" src="./js/jquery.min.js"></script>
    <script type="text/javascript" src="./js/bootstrap.min.js"></script>
    <script type="text/javascript" src="./js/testdataset.js"></script>
-   <script src="https://unpkg.com/ionicons@5.0.0/dist/ionicons.js"></script>
    <script src="./js/d3.v4.js"></script>
    <link rel="stylesheet" href="./css/bootstrap.min.css">
    <link rel="stylesheet" href="./css/index.css">
@@ -35,18 +34,19 @@
 
 <div >
    <div class="container-fluid" style="margin-top:10px;">
-      <span id="debug-info"></span>
       <div class="row">
-         <div class="col-sm-3">
+         <div class="col-4">
             <h2 style="padding-top: 20px;" class="pb-3">Persistence Pairs Exploration</h2>
          </div>
-         <div class="col-sm-9">
+         <div class="col-8">
             <div class="text-justify p-2 border" style="height: 100%;">
                <h4> Summary</h4>
                WebSocketIO Host:
                <input id="msg-host" type="text" value="10.218.107.40">
                Port:
-               <input id="msg" type="text" value="9285">
+               <input id="msg" type="text" value="9286">
+               Port for render:
+               <input id="msg-render" type="text" value="9285">
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
                <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button>
                &nbsp; &nbsp; -<code> OR </code>- &nbsp; &nbsp;
@@ -57,10 +57,10 @@
       </div> </div> <hr>
    <div class="container-fluid">
       <div class="row">
-         <div class="col" style="padding-right:4px;width:936.5px;">
+         <div class="col-4" style="padding-right:0px;">
             <div class="text-justify p-2 border bg-light" style="height: 100%;">
                <h4>Boxplot View </h4>
-               <div id="bar-boxplot">
+               <div id="bar-boxplot" style="height: 72px;">
                   <input type="checkbox" id="l1">
                   <select id="b1">
                      <option>lines</option>
@@ -68,17 +68,13 @@
                   <label>
                      line layer
                   </label> <code>|</code>
-                  <!-- <input type="checkbox" class="form-check-input" id="l2">
-                     <label class="form-check-label" for="dropdownCheck">
-                       box-plot layer
-                     </label> &nbsp; &nbsp;  -->
                   <input type="checkbox" checked="checked" id="l3">
                   <label>
                      polygon layer
                   </label> <code>|</code>
-                  <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw_data.csv</a>
+                  <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
                   <code> | </code>
-                  <input type="input" style="width: 72px;" placeholder="threshold" id="threshold" value="">
+                  <input type="input" style="width: 72px;height: 24px;" placeholder="threshold" id="threshold" value="">
                   <div class="custom-control custom-switch inline">
                      <input type="checkbox" class="custom-control-input" id="customSwitches--x">
                      <label class="custom-control-label" title="logarithmic or not" for="customSwitches--x">x-axis</label> <code> | </code>
@@ -86,52 +82,47 @@
                   <div class="custom-control custom-switch inline">
                      <input type="checkbox" class="custom-control-input" id="customSwitches--y">
                      <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y">y-axis</label> <code> | </code>
-                  </div>
-                  <div style="float:right;">
+                  </div> <br>
+                  <div style="float:left;">
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#exampleModal" >0-0, 0-0</span>
                      <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
                      <image id="box_zoom_back" style="width:20px;" src="./images/zoom_back.png"></image>
-                  </div>
+                  </div> <br>
                   <!-- for purpose -->
-                  <image id="hidden-zoom-back" style="width:0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-brush-mode" style="width:0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-optimal-threshold" style="width:0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-notification_xxyy" style="width:0px;" src="./images/zoom_back.png"></image>
-                  <image id="hidden-notification_xxyy-zoom" style="width:0px;" src="./images/zoom_back.png"></image>
+                  <image id="hidden-zoom-back" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+                  <image id="hidden-brush-mode" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+                  <image id="hidden-optimal-threshold" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+                  <image id="hidden-notification_xxyy" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+                  <image id="hidden-notification_xxyy-zoom" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
                </div>
-               <div id="box_dataviz" style="width: 100%;"></div>
+               <div id="box_dataviz" style="width: 100%;border: thin dotted gray;padding-top: 20px;padding-bottom: 5px;"></div>
+               
+               <hr>
+               <div id='RendererContainer' style="border: thin dotted gray;padding-top: 20px;"></div>
+
             </div>
          </div>
-         <div class="col" style="padding-left:4px;width:936.5px;">
+         <div class="col-8">
             <div class="text-justify p-2 border bg-light" style="height: 100%;" id="histogram-view-container">
                <h4>Histogram View</h4>
-               <div class="form-check form-check-inline">
-                  Attribute: &nbsp;
-                  <select id="s1">
-                     <option>Attribute</option>
-                  </select>
-                  &nbsp;Threshold:&nbsp;
-                  <select id="s2">
-                     <option>Magnitude</option>
-                  </select>
-                  </div> <br>
-               <div class="form-check form-check-inline" style="margin-top: 10px;">
-                  Reliability Window: &nbsp;
-                  <input type="input" style="width: 64px;" id="rel-window" value="2" onkeydown="rel_window_keydown(event)"> &nbsp;
-                  <span id="rel-window-span" title="reliability window" class="text-success">[2, -]</span>
-               </div> <br>
-               <div class="form-check form-check-inline" id="histogram-notification" style="margin-top: 10px;"
-                    data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
-                    data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
-                  <!-- https://ionicons.com/ -->
-                  <ion-icon name="notifications-outline"></ion-icon> &nbsp; <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
-               </div> <hr>
-               <div id="my_dataviz" style="width: 100%;padding: 2px;"></div>
+               <ul>
+                  <li>Threshold:&nbsp;<select id="s2" title="*">
+                     <option> - </option>
+                  </select></li>
+                  <li>Reliability Window: &nbsp;
+                     <input type="input" style="width: 64px;height: 24px;" id="rel-window" value="5" onkeydown="rel_window_keydown(event)"> &nbsp;
+                  <li><div id="histogram-notification"
+                     data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
+                     data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
+                <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span></li>
+               </ul>
+
+               <div id="my_dataviz" style="width: 100%;border: thin dotted gray;padding-top: 20px;padding-bottom: 5px;"></div>
                <!-- <img style="float:right;" src="./images/colorV2.png"> -->
                <div id="my_dataviz_distribution"></div>
                <div id="my_dataviz_distribution_bins"></div>
                <div id="my_dataviz_distribution_sum"></div>
-               <div id="my_dataviz_legend" style="position: absolute; top: -48px;right: 12px;" data-x_0="0.1" data-x_1="0.9"></div>
+               <div id="my_dataviz_legend" style="position: absolute; top: -56px;right: 12px;" data-x_0="0.1" data-x_1="0.9"></div>
             </div>
          </div>
       </div>
@@ -141,7 +132,11 @@
 <script type="text/javascript" src="./js/utils.js"></script>
 <script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
 <script type="text/javascript" src="./js/legend.js"></script>
-<script src="./js/index.js"></script>
 <script type="text/javascript" src="./js/boxplot.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+<script type="text/javascript" src="./OrbitControls.js"></script>
+<script type="text/javascript" src="./vtkRenderer.js"></script>
+<script src="./js/index.js"></script>
+
 </body>
 </html>

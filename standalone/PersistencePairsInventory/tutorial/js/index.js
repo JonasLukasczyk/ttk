@@ -100,79 +100,6 @@ function customColorV2(reliability, ppi, max_persistence_pairs) {
     return color ;
 }
 
-/**
- * draw a # of features distribution over reliability
- */
-function drawDistribution(id, data, title) {
-    d3.select("#" + id + " *").remove() ;
-
-    var portion = 10 ;
-    var reduced_data = [] ;
-    for (var i = 0; i < portion; i ++) {
-        reduced_data.push( 0 ) ;
-    }
-    
-    for (var i = 0; i < data.length; i ++) {
-        if ( data[i][0] === 1) {
-            // reduced_data[portion - 1] += data[i][1] ; 
-        } else {
-            reduced_data[ Math.floor(data[i][0] / ( 1 / portion)) ] += data[i][1] ;     
-        }
-    }
-
-    let containerWidth = 501;
-    let containerHeight = 301;
-    let margin = {
-        top: 10,
-        right: 20,
-        bottom: 40,
-        left: 50
-    } ;
-    var width = containerWidth - margin.left - margin.right,
-        height = containerHeight - margin.top - margin.bottom;
-    let container = d3.select("#" + id)
-        .append("svg")
-        .attr("width", containerWidth)
-        .attr("height", containerHeight) ;
-    
-    var svg = container
-                .append("g")
-                .attr("transform",
-                    "translate("+margin.left+", "+margin.top+")")
-                .attr('overflow', 'hidden');
-    
-    let x = d3.scaleLinear().range([0, width]);
-    let y = d3.scaleLinear().range([height, 0]);
-
-    // Scale the range of the data
-    x.domain([0, portion - 1]);
-    y.domain([0, d3.max(reduced_data, function (d) { return d; })]);
-    let dl = d3.line().x(function (d, i) { 
-        return x(i);
-     }).y(function (d) { return y(d) ; });
-
-    svg.append("path")
-        .attr("class", "line2")
-        .attr("d", dl(reduced_data))
-        .style("stroke-width", 2)
-        .style("stroke", "red")
-    
-    svg.append("g")
-        .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x));
-
-    svg.append("g")
-        .call(d3.axisLeft(y));
-
-    svg.append("text")
-        .attr("x", (width / 2))             
-        .attr("y", 0 - (margin.top / 2 - 10))
-        .attr("text-anchor", "middle")  
-        .style("font-family", "sans-serif") 
-        .style("font-weight", "bold")
-        .text( title );
-}
-
 // Add tooltips
 d3.select("body")
     .append("div")
@@ -240,8 +167,6 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         return dist_data ;
     }
 
-    // drawDistribution("my_dataviz_distribution", dist_data, "Distribution of reliability") ;
-    // drawDistribution("my_dataviz_distribution_bins", bins_data, "Bins distribution of reliability") ;
     drawLegend(dist_data, max_persistence_pairs) ;
 
     d3.select("#my_dataviz *").remove() ;
@@ -250,11 +175,11 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     let myGroups = getArray(w);
     let myVars = getArray(h);
 
-    let containerWidth = 981;
+    let containerWidth = 1331;
     let containerHeight = containerWidth * h / w;
-    if (containerHeight > 1024) {
-        containerHeight = 1024;
-        containerWidth = (containerHeight) * w / h;
+    if (containerHeight > 824) {
+        containerHeight = 824;
+        //containerWidth = (containerHeight) * w / h;
     }
     let margin = {
         top: 2,
@@ -317,7 +242,6 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             return d3.select("#tooltip").style("visibility", "visible");
         })
         .on("mousemove", function () {
-            //$("#debug-info").text(d3.event.pageX + "," + d3.event.pageY) ;
             return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
         })
         .on("mouseout", function () {
@@ -326,7 +250,8 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         .on("click", function (d, i) {
             // SELECT one bin
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
-            d3.select(this).style("stroke-width", 8).attr("bin-selected", "on");
+            $(this).parent()[0].append($(this)[0]) ;
+            d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (h - 1) + fieldData['ScalarBounds'].Values[0]) ;
             var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
             var mm = 'updateUnstructuredGrid:{"FieldData": ' +
@@ -500,12 +425,12 @@ function objectCallback(msg) {
         let name = "";
         if (msg.VtkDataObjectType.Values[0] === 2) {
             console.log("This is a ttkImageData");
-            $("#s1").html("");
+            $("#s2").attr("title", "");
             $("#s2").html("");
             if (msg.hasOwnProperty("PointData")) {
                 for (let v in msg.PointData) {
                     name = v;
-                    $('#s1').html('<option value=' + v + '>' + v + '</option>');
+                    $('#s2').attr("title", 'for ' + v);
                     if (msg['PointData'][v].hasOwnProperty("NumberOfComponents")) {
                         if (msg['PointData'][v].NumberOfComponents > 1) {
                             Window.magnitude_num = msg['PointData'][v].NumberOfComponents;
@@ -513,13 +438,12 @@ function objectCallback(msg) {
                             for (let vv = 0; vv < msg['PointData'][v].NumberOfComponents; vv++) {
                                 $('#s2').append('<option class="histogram-selector" value=' + vv + '>' + vv + '</option>');
                             }
-                            $("#rel-window-span").text("[2 - " + msg['PointData'][v].NumberOfComponents + "]") ;
+                            $("#rel-window").attr("title", "range: [2 - " + msg['PointData'][v].NumberOfComponents + "]") ;
                         }
                     }
                 }
             }
             Window.APPIAttrName = name;
-            $("#s1").attr("disabled", "disabled");
             if (DEV) {
                 renderHistogram(msg['Extent'].Values,
                     msg['PointData'][name].Values,
@@ -568,7 +492,9 @@ $("#s2").change(function () {
     $('#histogram-view-container').plainOverlay('hidden');
 });
 
-let ttk;
+let ttk, ttk_render;
+
+RENDERER = new vtkRenderer('RendererContainer',661, 312);
 
 function Connect() {
     $('body').plainOverlay("show");
@@ -581,6 +507,7 @@ function Connect() {
     btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Loading...') ;
     btn.attr("disabled", true);
     let PORT = parseInt(document.getElementById("msg").value);
+    let PORT_RENDER = parseInt(document.getElementById("msg-render").value);
     ttk = new ttkWebSocketIO(PORT,
         function () {
             console.log("on_open");
@@ -595,7 +522,6 @@ function Connect() {
             console.log("browser receives a msg:", msg);
             btn.html('Connect');
             $("#load_test").attr("disabled", true);
-            // btn.attr("disabled", false) ;
         },
         function () {
             console.log("on_close");
@@ -603,6 +529,7 @@ function Connect() {
         objectCallback,
         ip = $("#msg-host").val());
 
+    ttk_render = new ttkWebSocketIO(PORT_RENDER, function(){console.log("on_open for render") ;}, ()=>{}, ()=>{}, ()=>{}, obj=>RENDERER.setScene(obj), $("#msg-host").val(), true) ;
 }
 
 function Request() {
@@ -633,17 +560,6 @@ $("#l1").unbind().click(function () {
         $("[name='box_line']").attr("visibility", "show");
         Window.visibility['box_line'] = true;
     }
-});
-
-$("#l2").unbind().click(function () {
-    if (Window.visibility['box_box'] == true) {
-        $("[name='box_box']").attr("visibility", "hidden");
-        Window.visibility['box_box'] = false;
-    } else {
-        $("[name='box_box']").attr("visibility", "show");
-        Window.visibility['box_box'] = true;
-    }
-
 });
 
 $("#l3").unbind().click(function () {
@@ -743,22 +659,6 @@ $('#threshold').on('keypress', function (e) {
                 });
                 $("#s2").val("" + v).change();
                 $("#hidden-optimal-threshold").click();
-
-                // draw a distributed sum up
-                // var data = [] ;
-                // $("#s2 :enabled").each(function(i, d) {
-                //     var tmp = renderHistogram(Window.object['Extent'].Values,
-                //         Window.object['PointData'][Window.APPIAttrName].Values,
-                //         Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
-                //         Window.object['FieldData'],
-                //         parseInt(d.value),
-                //         null,
-                //         true);
-                //     for (var i = 0; i < tmp.length; i ++) {
-                //         data.push(tmp[i]) ;
-                //     }
-                // });
-                // drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
             }
         }
     }
@@ -805,23 +705,6 @@ $('#rel-window').on('keypress', function (e) {
                         parseInt($("#s2").val()),
                         ttk.getSocketObject());
                 }
-
-                // draw a distributed sum up
-                // var data = [] ;
-                // $("#s2 :enabled").each(function(i, d) {
-                //     var tmp = renderHistogram(Window.object['Extent'].Values,
-                //         Window.object['PointData'][Window.APPIAttrName].Values,
-                //         Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
-                //         Window.object['FieldData'],
-                //         parseInt(d.value),
-                //         null,
-                //         true);
-                //     for (var i = 0; i < tmp.length; i ++) {
-                //         data.push(tmp[i]) ;
-                //     }
-                // });
-
-                // drawDistribution("my_dataviz_distribution_sum", data, "Summation distribution of reliability") ;
             }
         }
         $(this).blur();

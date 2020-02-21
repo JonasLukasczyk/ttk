@@ -30,7 +30,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         min_max_color: "#abdda4",
         q1_q3_color: "#3288bd",
         background_color: "#f8f9fa",
-        containerWidth: 901,
+        containerWidth: 661,
         containerHeight: 534,
         margin: {
             top: 10,
@@ -143,7 +143,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     g.append("text")
         .attr("class", "axisLabel--x")
         .attr("transform",
-            "translate(" + (width / 2.5 + 110) + " ," + (height + 40) + ")")
+            "translate(" + (width / 2.5 + 10) + " ," + (height + 40) + ")")
         .style("text-anchor", "middle")
         .text("Threshold");
 
