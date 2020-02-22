@@ -46,7 +46,7 @@ class vtkRenderer{
         this.container.append(this.renderer.domElement);
 
         // Cameras
-        this.cameraFP = new THREE.PerspectiveCamera(90, 1, 0.01, 1000);
+        this.cameraFP = new THREE.PerspectiveCamera(90, this.width/this.height, 0.01, 1000);
         this.cameraFP.position.set(0,0,1);
         this.cameraPP = new THREE.OrthographicCamera( -1, 1, 1, -1, 1, 1000 );
         this.cameraPP.position.set(0,0,1);
@@ -115,9 +115,7 @@ class vtkRenderer{
                 uResolution: { type:'2f', value: [this.width,this.height]},
                 uCamNearFar: { type:'2f', value: [this.cameraFP.near,this.cameraFP.far]},
 
-                uJLUKRadius: { type:'f', value: 2},
-                uJLUKScale: { type:'f', value: 1},
-                uJLUKDiffArea: { type:'f', value: 0.4},
+                uJLUKRadius: { type:'f', value: 0.4},
                 uJLUKNoise: { type:'f', value: 2},
                 uJLUKAOFactor: { type:'f', value: 1},
                 uJLUKNormalFactor: { type:'f', value: 1},

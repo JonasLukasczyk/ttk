@@ -175,11 +175,10 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
     let myGroups = getArray(w);
     let myVars = getArray(h);
 
-    let containerWidth = 1331;
+    let containerWidth = 1201;
     let containerHeight = containerWidth * h / w;
-    if (containerHeight > 824) {
-        containerHeight = 824;
-        //containerWidth = (containerHeight) * w / h;
+    if (containerHeight > 724) {
+        containerHeight = 724;
     }
     let margin = {
         top: 2,
@@ -494,7 +493,7 @@ $("#s2").change(function () {
 
 let ttk, ttk_render;
 
-RENDERER = new vtkRenderer('RendererContainer',661, 312);
+RENDERER = new vtkRenderer('RendererContainer', 581, 321);
 
 function Connect() {
     $('body').plainOverlay("show");

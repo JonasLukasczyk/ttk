@@ -30,8 +30,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         min_max_color: "#abdda4",
         q1_q3_color: "#3288bd",
         background_color: "#f8f9fa",
-        containerWidth: 661,
-        containerHeight: 534,
+        containerWidth: 561,
+        containerHeight: 334,
         margin: {
             top: 10,
             right: 10,
