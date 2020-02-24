@@ -270,6 +270,23 @@ offset field for flat plateau disambiguation).
       </IntVectorProperty>
 
       <IntVectorProperty
+        name="UseDeallocation"
+        command="SetUseDeallocation"
+        label="Use explicit memory de-allocation"
+        number_of_elements="1"
+        default_values="0">
+        <BooleanDomain name="bool"/>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                   mode="visibility"
+                                   property="UseTPTS"
+                                   value="1" />
+          </Hints>
+          <Documentation>
+          </Documentation>
+        </IntVectorProperty>
+      
+      <IntVectorProperty
          name="UseAllCores"
          command="SetUseAllCores"
          label="Use All Cores"
@@ -349,6 +366,7 @@ offset field for flat plateau disambiguation).
 	<Property name="UseTPTS"/>
 	<Property name="UseRegionBasedIterations"/>
 	<Property name="UseInterleaving"/>
+  <Property name="UseDeallocation"/>
       </PropertyGroup>
 
       <Hints>

@@ -132,6 +132,9 @@ public:
 
   vtkSetMacro(UseTPTS, bool);
   vtkGetMacro(UseTPTS, bool);
+  
+  vtkSetMacro(UseDeallocation, bool);
+  vtkGetMacro(UseDeallocation, bool);
 
 
   int getTriangulation(vtkDataSet *input);
@@ -171,6 +174,7 @@ private:
   bool hasUpdatedMesh_;
 
   bool UseTPTS{false};
+  bool UseDeallocation{false};
 
   ttk::TopologicalSimplification topologicalSimplification_;
   ttk::Triangulation *triangulation_;

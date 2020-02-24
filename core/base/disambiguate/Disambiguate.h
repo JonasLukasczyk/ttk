@@ -1384,7 +1384,8 @@ namespace ttk {
                 const idType& nPreservedCriticalPointIndices,
                 const bool&   useRegionBasedIterations,
                 const bool&   useInterleaving,
-                const bool&   addPerturbation
+                const bool&   addPerturbation,
+                const bool&   useDeallocation
             ) const {
 
                 ttk::Timer timer;
@@ -1580,21 +1581,23 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                inputOffsets.clear();
-                unauthorizedExtrema.clear();
-                regionMask.clear();
-                propagationMask.clear();
-                localOffsets.clear();
-                sortedIndices.clear();
-                propagationsMax.clear();
-                masterPropagationsMax.clear();
-                propagationsMin.clear();
-                masterPropagationsMin.clear();
+                if(useDeallocation){
+                  inputOffsets.clear();
+                  unauthorizedExtrema.clear();
+                  regionMask.clear();
+                  propagationMask.clear();
+                  localOffsets.clear();
+                  sortedIndices.clear();
+                  propagationsMax.clear();
+                  masterPropagationsMax.clear();
+                  propagationsMin.clear();
+                  masterPropagationsMin.clear();
 
-                this->printMsg(
-                    "Deallocating memory",
-                    1,timer.getElapsedTime(),this->threadNumber_
-                );
+                  this->printMsg(
+                      "Deallocating memory",
+                      1,timer.getElapsedTime(),this->threadNumber_
+                  );
+                }
 
                 // Print final separator
                 this->printMsg(debug::Separator::L1);
