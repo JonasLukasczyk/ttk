@@ -26,6 +26,7 @@ class TTKARRAYEDITOR_EXPORT ttkArrayEditor : public ttkAlgorithm {
         std::pair<int,std::string> TargetArray;
         int TargetArrayType;
         int TargetArrayIndexation[2];
+        bool ReplaceExistingArrays{true};
 
         std::vector<std::pair<int, std::string>> SourceArraySelection;
 
@@ -39,6 +40,8 @@ class TTKARRAYEDITOR_EXPORT ttkArrayEditor : public ttkAlgorithm {
         vtkGetMacro(TargetAttributeType, int);
         vtkSetMacro(DataString, std::string);
         vtkGetMacro(DataString, std::string);
+        vtkSetMacro(ReplaceExistingArrays, bool);
+        vtkGetMacro(ReplaceExistingArrays, bool);
 
         int SetTargetArray(int idx, int port, int connection, int arrayAssociation, const char* name){
             this->TargetArray = {arrayAssociation, name};

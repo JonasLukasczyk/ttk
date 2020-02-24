@@ -30,12 +30,10 @@ int ttkForEach::RequestInformation(
     vtkInformationVector** inputVector,
     vtkInformationVector* outputVector
 ){
-    vtkInformation* outInfo = outputVector->GetInformationObject(0);
-
     // These values need to exists to automatically enable temporal streaming
     double dummy[2] = {-99999, -99998};
-    outInfo->Set( vtkStreamingDemandDrivenPipeline::TIME_STEPS(), dummy, 2);
-    outInfo->Set( vtkStreamingDemandDrivenPipeline::TIME_RANGE(), dummy, 2);
+    outputVector->GetInformationObject(0)->Set( vtkStreamingDemandDrivenPipeline::TIME_STEPS(), dummy, 2);
+    outputVector->GetInformationObject(0)->Set( vtkStreamingDemandDrivenPipeline::TIME_RANGE(), dummy, 2);
 
     return 1;
 }
@@ -56,7 +54,7 @@ int ttkForEach::RequestData(
     vtkInformationVector* outputVector
 ){
     // retrieve iterationIndex from pipeline
-    auto iterationIndex = inputVector[0]->GetInformationObject(0)->Get(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP());
+    auto iterationIndex = outputVector->GetInformationObject(0)->Get(vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP());
 
     // Get Input and Output
     auto input = vtkDataObject::GetData( inputVector[0] );

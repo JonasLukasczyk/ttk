@@ -216,7 +216,7 @@ int ttkExtract::ExtractRows(
     size_t nCols = inputAsT->GetNumberOfColumns();
 
     for(size_t j=0; j<nValues; j++)
-        if( ((size_t)indices[j])>=nRows ){
+        if( ((size_t)indices[j])>=nRows || indices[j]<0 ){
             this->printErr("Index out of range ("+std::to_string((size_t)indices[j])+"/"+std::to_string(nRows)+").");
             return 0;
         }

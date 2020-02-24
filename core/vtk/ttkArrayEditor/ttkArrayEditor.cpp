@@ -210,7 +210,9 @@ int ttkArrayEditor::RequestData(
                     vtkSmartPointer<vtkAbstractArray> array = ttkUtils::csvToVtkArray(line);
                     if(!array || !checkData(outputArraysByAttributeType, "Target", targetAttributeType, outputAsDS, array, this) )
                         return 0;
-                    outputArraysByAttributeType[ targetAttributeType ]->AddArray( array );
+
+                    if(this->ReplaceExistingArrays || !outputArraysByAttributeType[ targetAttributeType ]->HasArray(array->GetName()))
+                        outputArraysByAttributeType[ targetAttributeType ]->AddArray( array );
                 }
             }
 

@@ -33,10 +33,9 @@ class TTKENDFOR_EXPORT ttkEndFor : public ttkAlgorithm {
         int FillInputPortInformation(int port, vtkInformation* info) override;
         int FillOutputPortInformation(int port, vtkInformation* info) override;
 
-        int RequestInformation(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
         int RequestUpdateExtent(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
         int RequestData(vtkInformation* request, vtkInformationVector** inputVector, vtkInformationVector* outputVector) override;
 
     private:
-        int nextIndex{0};
+        int Iteration{0};
 };

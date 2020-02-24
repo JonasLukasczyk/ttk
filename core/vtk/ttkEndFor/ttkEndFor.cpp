@@ -37,25 +37,16 @@ int ttkEndFor::FillOutputPortInformation(int port, vtkInformation* info) {
     return 1;
 }
 
-
-int ttkEndFor::RequestInformation(
-    vtkInformation* request,
-    vtkInformationVector** inputVector,
-    vtkInformationVector* outputVector
-){
-    // Reset index
-    this->nextIndex = 0;
-    return 1;
-}
-
 int ttkEndFor::RequestUpdateExtent(
     vtkInformation* request,
     vtkInformationVector** inputVector,
     vtkInformationVector* outputVector
 ){
-    // Request next index
-    vtkInformation* inInfo = inputVector[0]->GetInformationObject(0);
-    inInfo->Set( vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP(), this->nextIndex);
+    // Request next index for data input
+    inputVector[0]->GetInformationObject(0)->Set(
+        vtkStreamingDemandDrivenPipeline::UPDATE_TIME_STEP(),
+        this->Iteration
+    );
 
     return 1;
 }
@@ -79,22 +70,22 @@ int ttkEndFor::RequestData(
         this->printErr("Unable to retrieve iteration information from ForEach head");
         return 0;
     }
-    this->nextIndex = iterationInformation->GetValue(0) + 1;
-    int lastIndex = iterationInformation->GetValue(1);
+    this->Iteration = iterationInformation->GetValue(0) + 1;
+    int nIterations = iterationInformation->GetValue(1);
 
     // Print status
     this->printMsg(
-        "Iteration ( " + std::to_string(this->nextIndex-1) + " / " + std::to_string(lastIndex) + " ) complete ",
+        "Iteration ( " + std::to_string(this->Iteration-1) + " / " + std::to_string(nIterations) + " ) complete ",
         ttk::debug::Separator::BACKSLASH
     );
 
-    if(this->nextIndex<=lastIndex){
+    if(this->Iteration<=nIterations){
         // Request Next Element
         request->Set( vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING(), 1 );
     } else {
         // Stop iterations
         request->Remove( vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING() );
-        this->nextIndex = 0;
+        this->Iteration = 0;
 
         // Copy Input to Output
         vtkInformation* outInfo = outputVector->GetInformationObject(0);
