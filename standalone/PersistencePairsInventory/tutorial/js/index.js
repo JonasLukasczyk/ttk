@@ -1,6 +1,9 @@
 // https://htmlcolorcodes.com/
 // http://colorbrewer2.org/#type=diverging&scheme=RdYlBu&n=9
 let DEV = false;
+Window.PPI = {  // global variable
+    "selected-bin-id": "",
+}
 
 let COLOR_GREEN = ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]; 
 let COLOR_GREY = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
@@ -248,6 +251,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         })
         .on("click", function (d, i) {
             // SELECT one bin
+            Window.PPI['selected-bin-id'] = $(this).attr("id")
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
@@ -489,6 +493,9 @@ $("#s2").change(function () {
         }
     });
     $('#histogram-view-container').plainOverlay('hidden');
+    if (Window.PPI['selected-bin-id']) {
+        d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+    }
 });
 
 let ttk, ttk_render;
@@ -528,7 +535,9 @@ function Connect() {
         objectCallback,
         ip = $("#msg-host").val());
 
-    ttk_render = new ttkWebSocketIO(PORT_RENDER, function(){console.log("on_open for render") ;}, ()=>{}, ()=>{}, ()=>{}, obj=>RENDERER.setScene(obj), $("#msg-host").val(), true) ;
+    ttk_render = new ttkWebSocketIO(PORT_RENDER, function(){
+        console.log("on_open for render") ;
+     }, ()=>{}, ()=>{}, ()=>{}, obj=>RENDERER.setScene(obj), $("#msg-host").val(), true) ;
 }
 
 function Request() {

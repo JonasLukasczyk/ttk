@@ -8,6 +8,7 @@
 #include <ttkArrayEditor.h>
 #include <ttkWebSocketIO.h>
 #include <vtkXMLUnstructuredGridReader.h>
+#include <vtkXMLPUnstructuredGridReader.h>
 #include <vtkXMLImageDataReader.h>
 
 using namespace std;
@@ -55,8 +56,8 @@ void startServerX() {
 
 void startServerImage() {
     // get the test data
-    auto unStructuredGrid = vtkSmartPointer<vtkXMLUnstructuredGridReader>::New();
-    unStructuredGrid->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/road_data.vtu");
+    auto unStructuredGrid = vtkSmartPointer<vtkXMLPUnstructuredGridReader>::New();
+    unStructuredGrid->SetFileName("/home/local/ASUAD/wshen24/Documents/ttk-data-wk/empty.pvtu");
 
     // send the two data to e2rr module
     auto webSocket = vtkSmartPointer<ttkWebSocketIO>::New();

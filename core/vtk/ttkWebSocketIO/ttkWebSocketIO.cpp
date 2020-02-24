@@ -144,6 +144,9 @@ int ttkWebSocketIO::RequestData(
 }
 
 int addFieldDataArraysToHeader(vtkFieldData* fd, std::string typeName, std::vector<std::map<string, string>>& headers, std::vector<void *>& sendingData){
+    if (fd == nullptr) {
+        return 1 ;
+    }
     int nFieldDataArrays = fd->GetNumberOfArrays();
 
     for (int i = 0; i < nFieldDataArrays; i++) {
@@ -217,19 +220,24 @@ int ttkWebSocketIO::processClientRequest(std::string name, std::string payload){
             auto* lastInputAsUG = vtkUnstructuredGrid::SafeDownCast( this->lastInput );
 
             int nPoints = lastInputAsUG->GetNumberOfPoints();
-            auto *pointCoords = (float *) lastInputAsUG->GetPoints()->GetVoidPointer(0);
-            headers.push_back(ttkWebSocketIO::combine_object_header_object("PointCoords", nPoints, 3, VTK_FLOAT));
-            sendingData.push_back(pointCoords);
+            if (lastInputAsUG->GetPoints() != nullptr) {
+                auto *pointCoords = (float *) lastInputAsUG->GetPoints()->GetVoidPointer(0);
+                headers.push_back(ttkWebSocketIO::combine_object_header_object("PointCoords", nPoints, 3, VTK_FLOAT));
+                sendingData.push_back(pointCoords);
+            }
 
             int nCells = lastInputAsUG->GetNumberOfCells();
-            auto *connectivityList = (long long *) lastInputAsUG->GetCells()->GetPointer();
-            size_t j = 0, topoIndex = 0;
-            for (j = 0, topoIndex = 0; j < nCells; j++) {
-                size_t nVertices = connectivityList[topoIndex];
-                topoIndex += nVertices + 1;
+            if (lastInputAsUG->GetCells() != nullptr) {
+                auto *connectivityList = (long long *) lastInputAsUG->GetCells()->GetPointer();
+                size_t j = 0, topoIndex = 0;
+                for (j = 0, topoIndex = 0; j < nCells; j++) {
+                    size_t nVertices = connectivityList[topoIndex];
+                    topoIndex += nVertices + 1;
+                }
+                headers.push_back(
+                        ttkWebSocketIO::combine_object_header_object("ConnectivityList", topoIndex, 1, VTK_LONG));
+                sendingData.push_back(connectivityList);
             }
-            headers.push_back(ttkWebSocketIO::combine_object_header_object("ConnectivityList", topoIndex, 1, VTK_LONG));
-            sendingData.push_back(connectivityList);
         }
 
         if (structureType == 2) { // imageData

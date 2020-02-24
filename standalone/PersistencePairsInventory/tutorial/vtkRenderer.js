@@ -155,33 +155,40 @@ class vtkRenderer{
     }
 
     setScene(vtkJson){
-        console.log(vtkJson);
+        console.log("vtkRender:", vtkJson);
 
-        // setTimeout(()=>{
-            for(let i=this.sceneFP.children.length-1; i>=0; i--)
-                this.sceneFP.remove(this.sceneFP.children[i]);
+        for(let i=this.sceneFP.children.length-1; i>=0; i--)
+            this.sceneFP.remove(this.sceneFP.children[i]);
 
-            var geometry = new THREE.BufferGeometry();
-            geometry.setAttribute( 'position', new THREE.BufferAttribute( vtkJson.PointCoords.Values, 3 ) );
-
-            const connectivityList = vtkJson.ConnectivityList.Values;
-
-            const indices = new Uint32Array(connectivityList.length/4*3);
-            for(let i=0,q=0; i<connectivityList.length; i+=4){
-                indices[q++] = parseInt(connectivityList[i+1]);
-                indices[q++] = parseInt(connectivityList[i+2]);
-                indices[q++] = parseInt(connectivityList[i+3]);
+        if (! vtkJson.hasOwnProperty("PointCoords")) {
+            const empty = new Int32Array(0);
+            vtkJson["PointCoords"] = {
+                "Values": empty,
+            },
+            vtkJson['ConnectivityList'] = {
+                "Values": empty,
             }
-            geometry.setIndex( new THREE.BufferAttribute(indices,1) );
+        }
 
-            {
-                const mesh = new THREE.Mesh( geometry, this.objectMaterial );
-                this.sceneFP.add(mesh);
-            }
+        var geometry = new THREE.BufferGeometry();
+        geometry.setAttribute( 'position', new THREE.BufferAttribute( vtkJson.PointCoords.Values, 3 ) );
 
-            this.resetCamera();
+        const connectivityList = vtkJson.ConnectivityList.Values;
 
-        // }, 200);
+        const indices = new Uint32Array(connectivityList.length/4*3);
+        for(let i=0,q=0; i<connectivityList.length; i+=4){
+            indices[q++] = parseInt(connectivityList[i+1]);
+            indices[q++] = parseInt(connectivityList[i+2]);
+            indices[q++] = parseInt(connectivityList[i+3]);
+        }
+        geometry.setIndex( new THREE.BufferAttribute(indices,1) );
+        {
+            const mesh = new THREE.Mesh( geometry, this.objectMaterial );
+            this.sceneFP.add(mesh);
+        }
+
+        this.resetCamera();
+
     }
 
     resetCamera(){

@@ -60,6 +60,9 @@ function on_message_intercept(uuid, msg) {
                 socket.send( ttkWebSocketIO.combine_code(OBJECT_ACK_OBJECT)) ;
             } else {
                 if (typeof Window.ttkWebSocket[uuid].header === "object" && Window.ttkWebSocket[uuid].header) {
+                    if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                        console.log("[DEBUG] received data") ;
+                    }
                     let tt = parseInt(Window.ttkWebSocket[uuid].header['dataType']);
                     let keys = Window.ttkWebSocket[uuid].header['key'].split(":") ;
                     if (tt === DATA_STRING_ARRAY) {
@@ -116,6 +119,9 @@ function on_message_intercept(uuid, msg) {
                         }
                         break ;
                 }
+                if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                    console.log("[DEBUG] received data: ", v) ;
+                }
                 if (keys.length === 1) {
                     vv["Name"] = keys[0] ;
                     vv["Values"] = v ;
@@ -125,10 +131,10 @@ function on_message_intercept(uuid, msg) {
                     vv["Values"] = v ;
                     Window.ttkWebSocket[uuid].objectData[keys[0]][keys[1]] = vv;
                 }
-            } ) ;
 
-            socket.send( ttkWebSocketIO.combine_code(OBJECT_ACK_OBJECT) ) ;
-            Window.ttkWebSocket[uuid].header = null ;
+                socket.send( ttkWebSocketIO.combine_code(OBJECT_ACK_OBJECT) ) ;
+                Window.ttkWebSocket[uuid].header = null ;
+            } ) ;
         }
 
         if (typeof Window.ttkWebSocket[uuid].isLittleEndianness === "undefined") {
