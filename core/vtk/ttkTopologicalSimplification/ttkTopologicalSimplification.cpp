@@ -200,6 +200,7 @@ int ttkTopologicalSimplification::dispatch(
       }
   } else {
       auto tpts = ttk::Disambiguate();
+      tpts.setDebugMsgPrefix( "TPTS" );
       tpts.setThreadNumber( this->threadNumber_ );
       tpts.setDebugLevel( this->debugLevel_ );
 

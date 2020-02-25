@@ -21,6 +21,7 @@ namespace ttk {
     signed char terminated{0};
     signed char temp{0};
     idType rep{0};
+    mutable idType nIterations{0};
 
     std::vector<idType> saddles;
 
@@ -32,16 +33,16 @@ namespace ttk {
     std::vector<idType> region;
     boost::heap::fibonacci_heap< std::pair<idType,idType> > queue;
 
-    inline explicit Propagation() {
-    }
+    // inline explicit Propagation() {
+    // }
 
-    Propagation(const Propagation& that){
-        this->extremumIndex = that.extremumIndex;
-    };
+    // Propagation(const Propagation& that){
+    //     this->extremumIndex = that.extremumIndex;
+    // };
 
-    Propagation& operator=(const Propagation& that){
-        this->extremumIndex = that.extremumIndex;
-    };
+    // Propagation& operator=(const Propagation& that){
+    //     this->extremumIndex = that.extremumIndex;
+    // };
 
     inline Propagation *find(){
         if(this->parent == nullptr)

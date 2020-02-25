@@ -53,36 +53,29 @@ int ttkDisambiguate::RequestData(
     this->PreconditionTriangulation( triangulation );
 
     auto inputPD = input->GetPointData();
-    auto scalars = this->GetInputArrayToProcess(0, inputVector);
+    auto inputScalars = this->GetInputArrayToProcess(0, inputVector);
 
-    auto offsetScalarField = vtkSmartPointer<vtkIntArray>::New();
-    offsetScalarField->SetName( "Offsets" );
-    offsetScalarField->SetNumberOfComponents(1);
-    offsetScalarField->SetNumberOfTuples( nVertices );
+    auto outputScalars = vtkSmartPointer<vtkDataArray>::Take( inputScalars->NewInstance() );
+    outputScalars->SetName( inputScalars->GetName() );
+    outputScalars->SetNumberOfComponents(1);
+    outputScalars->SetNumberOfTuples( nVertices );
 
-    auto temp2 = vtkSmartPointer<vtkIntArray>::New();
-    temp2->SetName( "Iteration" );
-    temp2->SetNumberOfComponents(1);
-    temp2->SetNumberOfTuples( nVertices );
-
-    auto temp = vtkSmartPointer<vtkFloatArray>::New();
-    temp->SetName( "ShortestPaths" );
-    temp->SetNumberOfComponents(1);
-    temp->SetNumberOfTuples( nVertices );
+    auto outputOffsets = vtkSmartPointer<vtkIntArray>::New();
+    outputOffsets->SetName( "ttkOffsetScalarField" );
+    outputOffsets->SetNumberOfComponents(1);
+    outputOffsets->SetNumberOfTuples( nVertices );
 
     // Compute Segmentation Mask
     {
         int status = -1;
-        switch (scalars->GetDataType()) {
+        switch (inputScalars->GetDataType()) {
             vtkTemplateMacro(
-                status = this->DisambiguateAllPlateaus(
-                    (int*) offsetScalarField->GetVoidPointer(0),
-                    (float*) temp->GetVoidPointer(0),
-                    (int*) temp2->GetVoidPointer(0),
+                status = this->removeZeroPersistencePairs(
+                    (VTK_TT*) outputScalars->GetVoidPointer(0),
+                    (int*) outputOffsets->GetVoidPointer(0),
 
-                    nVertices,
                     triangulation,
-                    (VTK_TT*) scalars->GetVoidPointer(0)
+                    (VTK_TT*) inputScalars->GetVoidPointer(0)
                 )
             );
         }
@@ -95,9 +88,8 @@ int ttkDisambiguate::RequestData(
     output->ShallowCopy( input );
 
     auto outputPD = output->GetPointData();
-    outputPD->AddArray( offsetScalarField );
-    outputPD->AddArray( temp );
-    outputPD->AddArray( temp2 );
+    outputPD->AddArray( outputOffsets );
+    outputPD->AddArray( outputScalars );
 
     return 1;
 }
