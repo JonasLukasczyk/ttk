@@ -25,6 +25,7 @@ vtkStandardNewMacro(ttkTopologicalSimplification)
   PeriodicBoundaryConditions = false;
 
   UseAllCores = true;
+  this->setDebugMsgPrefix("TopologicalSimplification");
 }
 
 ttkTopologicalSimplification::~ttkTopologicalSimplification() {
@@ -214,6 +215,7 @@ int ttkTopologicalSimplification::dispatch(
       this->triangulation_->preconditionBoundaryVertices();
 
       if(outputOffsetArray->GetDataType() == VTK_INT) {
+        Timer t;
         status = tpts.simplify(
           (dataType*) outputScalarArray->GetVoidPointer(0),
           (int*) outputOffsetArray->GetVoidPointer(0),
@@ -225,8 +227,11 @@ int ttkTopologicalSimplification::dispatch(
           (int) inputCriticalPointIdArray->GetNumberOfTuples(),
           this->UseRegionBasedIterations,
           this->UseInterleaving,
-          this->AddPerturbation
+          this->AddPerturbation,
+          this->UseDeallocation
         );
+        printMsg("Global completion", 1, t.getElapsedTime(),
+                 this->threadNumber_);
       } else {
           this->printErr("Unsupported IdType");
           return 1;

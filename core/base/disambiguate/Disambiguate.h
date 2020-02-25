@@ -1401,7 +1401,8 @@ namespace ttk {
                 const idType& nPreservedCriticalPointIndices,
                 const bool&   useRegionBasedIterations,
                 const bool&   useInterleaving,
-                const bool&   addPerturbation
+                const bool&   addPerturbation,
+                const bool&   useDeallocation
             ) const {
 
                 ttk::Timer timer;
@@ -1590,48 +1591,57 @@ namespace ttk {
 
                 this->printMsg(debug::Separator::L2);
                 this->printMsg("Complete", 1, timer.getElapsedTime(), this->threadNumber_);
-                this->printMsg(debug::Separator::L2);
 
-                // Deallocating memory
-                timer.reStart();
-                this->printMsg(
-                    "Deallocating memory",
-                    0,0,this->threadNumber_,
-                    debug::LineMode::REPLACE
-                );
+                if(useDeallocation){
+                    // Deallocating memory
+                    timer.reStart();
+                    this->printMsg(debug::Separator::L2);
+                    this->printMsg(
+                        "Deallocating memory",
+                        0,0,this->threadNumber_,
+                        debug::LineMode::REPLACE
+                    );
 
-                #pragma omp parallel num_threads(this->threadNumber_)
-                #pragma omp single
-                {
-                    #pragma omp task
-                    propagationsMin.clear();
-                    #pragma omp task
-                    propagationsMax.clear();
+                    // min propagations
+                    {
+                        idType nPropagations = propagationsMin.size();
+                        #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
+                        for(idType p=0; p<nPropagations; p++){
+                            propagationsMin[p].region = std::vector<idType>();
+                            propagationsMin[p].queue = boost::heap::fibonacci_heap< std::pair<idType,idType> >();
+                        }
+                        propagationsMin.clear();
+                    }
 
-                    #pragma omp task
-                    inputOffsets.clear();
-                    #pragma omp task
-                    unauthorizedExtrema.clear();
-                    #pragma omp task
-                    regionMask.clear();
-                    #pragma omp task
-                    propagationMask.clear();
-                    #pragma omp task
-                    localOffsets.clear();
-                    #pragma omp task
-                    sortedIndices.clear();
-                    #pragma omp task
-                    masterPropagationsMax.clear();
-                    #pragma omp task
-                    masterPropagationsMin.clear();
+                    // max propagations
+                    {
+                        idType nPropagations = propagationsMax.size();
+                        #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
+                        for(idType p=0; p<nPropagations; p++){
+                            propagationsMax[p].region = std::vector<idType>();
+                            propagationsMax[p].queue = boost::heap::fibonacci_heap< std::pair<idType,idType> >();
+                        }
+                        propagationsMax.clear();
+                    }
+
+                    // vectors
+                    {
+                        inputOffsets.clear();
+                        unauthorizedExtrema.clear();
+                        regionMask.clear();
+                        propagationMask.clear();
+                        localOffsets.clear();
+                        sortedIndices.clear();
+                        masterPropagationsMax.clear();
+                        masterPropagationsMin.clear();
+                    }
+
+                    this->printMsg(
+                        "Deallocating memory",
+                        1,timer.getElapsedTime(),this->threadNumber_
+                    );
                 }
 
-                this->printMsg(
-                    "Deallocating memory",
-                    1,timer.getElapsedTime(),this->threadNumber_
-                );
-
-                // Print final separator
                 this->printMsg(debug::Separator::L1);
 
                 return 1;
