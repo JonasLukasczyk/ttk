@@ -70,12 +70,17 @@ int ttkDisambiguate::RequestData(
         int status = -1;
         switch (inputScalars->GetDataType()) {
             vtkTemplateMacro(
-                status = this->removeZeroPersistencePairs(
+                // status = this->removeZeroPersistencePairs(
+                status = this->removeExtremaByPersistence(
                     (VTK_TT*) outputScalars->GetVoidPointer(0),
                     (int*) outputOffsets->GetVoidPointer(0),
 
                     triangulation,
-                    (VTK_TT*) inputScalars->GetVoidPointer(0)
+                    (VTK_TT*) inputScalars->GetVoidPointer(0),
+                    (VTK_TT)  this->PersistenceThreshold,
+                    true,
+                    false,
+                    true
                 )
             );
         }

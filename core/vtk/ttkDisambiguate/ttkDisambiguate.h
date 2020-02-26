@@ -34,7 +34,13 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
     : public ttkAlgorithm    // we inherit from the generic ttkAlgorithm class
     , public ttk::Disambiguate // and we inherit from the base class
 {
+    private:
+        double PersistenceThreshold;
+
     public:
+        vtkGetMacro(PersistenceThreshold,double);
+        vtkSetMacro(PersistenceThreshold,double);
+
         static ttkDisambiguate *New();
         vtkTypeMacro(ttkDisambiguate, ttkAlgorithm);
 

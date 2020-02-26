@@ -26,8 +26,15 @@
                 <Documentation>The scalar array that will be used to compute averages.</Documentation>
             </StringVectorProperty>
 
+            <DoubleVectorProperty name="PersistenceThreshold" label="Persistence Threshold" command="SetPersistenceThreshold" number_of_elements="1" default_values="1">
+                <Documentation>TODO.</Documentation>
+            </DoubleVectorProperty>
+
             <PropertyGroup panel_widget="Line" label="Input Options">
                 <Property name="InputArray" />
+            </PropertyGroup>
+            <PropertyGroup panel_widget="Line" label="Output Options">
+                <Property name="PersistenceThreshold" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}

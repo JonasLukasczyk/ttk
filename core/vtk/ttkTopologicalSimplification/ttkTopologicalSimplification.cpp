@@ -216,13 +216,13 @@ int ttkTopologicalSimplification::dispatch(
 
       if(outputOffsetArray->GetDataType() == VTK_INT) {
         Timer t;
-        status = tpts.simplify(
+        status = tpts.removeUnauthorizedExtrema(
           (dataType*) outputScalarArray->GetVoidPointer(0),
           (int*) outputOffsetArray->GetVoidPointer(0),
 
           this->triangulation_,
           (dataType*) inputScalarArray->GetVoidPointer(0),
-          (int*) inputOffsets_->GetVoidPointer(0),
+        //   (int*) inputOffsets_->GetVoidPointer(0),
           (int*) inputCriticalPointIdArray->GetVoidPointer(0),
           (int) inputCriticalPointIdArray->GetNumberOfTuples(),
           this->UseRegionBasedIterations,

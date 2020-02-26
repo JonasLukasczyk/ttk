@@ -32,17 +32,15 @@ Debug::~Debug() {
 
 int Debug::dMsg(ostream &stream, string msg, const int &debugLevel) const {
 
-  welcomeMsg(stream);
-
   if((debugLevel_ >= debugLevel) || (globalDebugLevel_ >= debugLevel))
     stream << msg.data() << flush;
 
   return 0;
 }
 
-int Debug::welcomeMsg(ostream &stream) const {
+int Debug::welcomeMsg(ostream &stream) {
 
-  int priorityAsInt = static_cast<int>(debug::Priority::PERFORMANCE);
+  int priorityAsInt = (int)debug::Priority::PERFORMANCE;
 
   if((ttk::welcomeMsg_) && (debugLevel_ > priorityAsInt)) {
     ttk::welcomeMsg_ = false;
@@ -101,6 +99,9 @@ int Debug::msg(const char *msg, const int &debugLevel) const {
 
 int Debug::setDebugLevel(const int &debugLevel) {
   debugLevel_ = debugLevel;
+
+  welcomeMsg(cout);
+
   return 0;
 }
 

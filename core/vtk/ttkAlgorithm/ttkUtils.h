@@ -10,33 +10,44 @@
 #include <vtkAbstractArray.h>
 #include <vtkDoubleArray.h>
 #include <vtkFieldData.h>
+#include <vtkPoints.h>
 #include <vtkSmartPointer.h>
 
 namespace ttkUtils {
   int replaceVariable(const std::string &iString,
-                             vtkFieldData *fieldData,
-                             std::string &oString,
-                             std::string &errorMsg);
+                      vtkFieldData *fieldData,
+                      std::string &oString,
+                      std::string &errorMsg);
 
   int replaceVariables(const std::string &iString,
-                              vtkFieldData *fieldData,
-                              std::string &oString,
-                              std::string &errorMsg);
+                       vtkFieldData *fieldData,
+                       std::string &oString,
+                       std::string &errorMsg);
 
   int stringListToVector(const std::string &iString,
-                                std::vector<std::string> &v);
+                         std::vector<std::string> &v);
 
   int stringListToDoubleVector(const std::string &iString,
-                                      std::vector<double> &v);
+                               std::vector<double> &v);
 
   vtkSmartPointer<vtkAbstractArray> csvToVtkArray(std::string line);
 
   vtkSmartPointer<vtkDoubleArray> csvToDoubleArray(std::string line);
-};
+
+  // Emultate old VTK functions
+
+  void *GetVoidPointer(vtkDataArray *array, vtkIdType start = 0);
+  void *GetVoidPointer(vtkPoints *points, vtkIdType start = 0);
+
+  void *
+    WriteVoidPointer(vtkDataArray *array, vtkIdType start, vtkIdType numValues);
+  void *WritePointer(vtkDataArray *array, vtkIdType start, vtkIdType numValues);
+
+  void SetVoidArray(vtkDataArray *array, void *data, vtkIdType size, int save);
+}; // namespace ttkUtils
 
 #include <limits>
 #include <vtkStringArray.h>
-#include <stdlib.h>
 
 int ttkUtils::replaceVariable(const std::string &iString,
                               vtkFieldData *fieldData,
@@ -49,7 +60,8 @@ int ttkUtils::replaceVariable(const std::string &iString,
   // Check if varIndex is specified
   size_t indexDelimiter0 = iString.find("[");
   size_t indexDelimiter1 = iString.find("]");
-  if(indexDelimiter0 != std::string::npos && indexDelimiter1 != std::string::npos) {
+  if(indexDelimiter0 != std::string::npos
+     && indexDelimiter1 != std::string::npos) {
     if(indexDelimiter0 > indexDelimiter1
        || iString.find("[", indexDelimiter0 + 1) != std::string::npos
        || iString.find("}", indexDelimiter1 + 1) != std::string::npos) {
@@ -125,7 +137,8 @@ int ttkUtils::replaceVariables(const std::string &iString,
               + oString.substr(c + 1, oString.length() - c - 1);
   }
 
-  if(oString.find("{") != std::string::npos || oString.find("}") != std::string::npos) {
+  if(oString.find("{") != std::string::npos
+     || oString.find("}") != std::string::npos) {
     errorMsg = "Invalid Syntax:\n" + iString;
     return 0;
   }
@@ -158,11 +171,13 @@ int ttkUtils::stringListToDoubleVector(const std::string &iString,
     return 0;
 
   size_t n = stringVector.size();
-  if(n>0){
-    v.resize(n);
-    for(size_t i = 0; i < n; i++)
-      v[i] = strtod(stringVector[i].c_str(), NULL);
-  }
+  v.resize(n);
+  // try {
+  for(size_t i = 0; i < n; i++)
+    v[i] = stod(stringVector[i]);
+  // } catch(std::invalid_argument &e) {
+  //   return 0;
+  // }
 
   return 1;
 }
@@ -176,7 +191,8 @@ vtkSmartPointer<vtkAbstractArray> ttkUtils::csvToVtkArray(std::string line) {
   std::string arrayName = line.substr(0, firstComma);
 
   std::vector<std::string> valuesAsString;
-  stringListToVector(line.substr(firstComma + 1, std::string::npos), valuesAsString);
+  stringListToVector(
+    line.substr(firstComma + 1, std::string::npos), valuesAsString);
   size_t nValues = valuesAsString.size();
   if(nValues < 1)
     return nullptr;
@@ -197,9 +213,13 @@ vtkSmartPointer<vtkAbstractArray> ttkUtils::csvToVtkArray(std::string line) {
     array->SetName(arrayName.data());
     array->SetNumberOfComponents(1);
     array->SetNumberOfTuples(nValues);
-    auto arrayData = (double *)array->GetVoidPointer(0);
-      for(size_t i = 0; i < nValues; i++)
-        arrayData[i] = strtod(valuesAsString[i].c_str(), NULL);
+    auto arrayData = reinterpret_cast<double *>(GetVoidPointer(array));
+    // try {
+    for(size_t i = 0; i < nValues; i++)
+      arrayData[i] = std::stod(valuesAsString[i]);
+    // } catch(std::invalid_argument &e) {
+    //   // return nullptr;
+    // }
     return array;
   } else {
     auto array = vtkSmartPointer<vtkStringArray>::New();
@@ -228,9 +248,65 @@ vtkSmartPointer<vtkDoubleArray> ttkUtils::csvToDoubleArray(std::string line) {
   array->SetName(arrayName.data());
   array->SetNumberOfComponents(1);
   array->SetNumberOfTuples(n);
-  auto arrayData = (double *)array->GetVoidPointer(0);
+  auto arrayData = reinterpret_cast<double *>(GetVoidPointer(array));
   for(size_t i = 0; i < n; i++)
     arrayData[i] = values[i];
 
   return array;
+}
+
+/// Retrieve pointer to the internal data
+/// This method is a workaround to emulate
+/// the old GetVoidPointer in vtkDataArray
+void *ttkUtils::GetVoidPointer(vtkDataArray *array, vtkIdType start) {
+  void *outPtr = nullptr;
+  switch(array->GetDataType()) {
+    vtkTemplateMacro(
+      auto *aosArray = vtkAOSDataArrayTemplate<VTK_TT>::FastDownCast(array);
+      if(aosArray) { outPtr = aosArray->GetVoidPointer(start); });
+  }
+  return outPtr;
+}
+void *ttkUtils::GetVoidPointer(vtkPoints *points, vtkIdType start) {
+  return GetVoidPointer(points->GetData(), start);
+}
+
+void *ttkUtils::WriteVoidPointer(vtkDataArray *array,
+                                 vtkIdType valueIdx,
+                                 vtkIdType numValues) {
+  void *outPtr = nullptr;
+  switch(array->GetDataType()) {
+    vtkTemplateMacro(auto *aosArray
+                     = vtkAOSDataArrayTemplate<VTK_TT>::FastDownCast(array);
+                     if(aosArray) {
+                       outPtr = aosArray->WriteVoidPointer(valueIdx, numValues);
+                     });
+  }
+  return outPtr;
+}
+
+void *ttkUtils::WritePointer(vtkDataArray *array,
+                             vtkIdType valueIdx,
+                             vtkIdType numValues) {
+  void *outPtr = nullptr;
+  switch(array->GetDataType()) {
+    vtkTemplateMacro(
+      auto *aosArray = vtkAOSDataArrayTemplate<VTK_TT>::FastDownCast(array);
+      if(aosArray) { outPtr = aosArray->WritePointer(valueIdx, numValues); });
+  }
+  return outPtr;
+}
+
+void ttkUtils::SetVoidArray(vtkDataArray *array,
+                            void *data,
+                            vtkIdType size,
+                            int save) {
+  switch(array->GetDataType()) {
+    vtkTemplateMacro(
+      auto *aosArray = vtkAOSDataArrayTemplate<VTK_TT>::FastDownCast(array);
+      if(aosArray) { aosArray->SetVoidArray(data, size, save); } else {
+        std::cerr << "SetVoidArray on incompatible vtkDataArray:" << endl;
+        array->Print(std::cerr);
+      });
+  }
 }

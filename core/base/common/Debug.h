@@ -154,9 +154,8 @@ namespace ttk {
                         const debug::Priority &priority = debug::Priority::INFO,
                         const debug::LineMode &lineMode = debug::LineMode::NEW,
                         std::ostream &stream = std::cout) const {
-      int priorityAsInt = static_cast<int>(priority);
-      if((this->debugLevel_ < priorityAsInt)
-         && (globalDebugLevel_ < priorityAsInt))
+      if((this->debugLevel_ < (int)priority)
+         && (globalDebugLevel_ < (int)priority))
         return 0;
 
       return this->printMsgInternal(msg, priority, lineMode, stream);
@@ -169,9 +168,8 @@ namespace ttk {
                         const debug::Priority &priority = debug::Priority::INFO,
                         const debug::LineMode &lineMode = debug::LineMode::NEW,
                         std::ostream &stream = std::cout) const {
-      int priorityAsInt = static_cast<int>(priority);
-      if((this->debugLevel_ < priorityAsInt)
-         && (globalDebugLevel_ < priorityAsInt))
+      if((this->debugLevel_ < (int)priority)
+         && (globalDebugLevel_ < (int)priority))
         return 0;
 
       size_t prints = 0;
@@ -214,18 +212,22 @@ namespace ttk {
                         const debug::Priority &priority
                         = debug::Priority::PERFORMANCE,
                         std::ostream &stream = std::cout) const {
-      int priorityAsInt = static_cast<int>(priority);
-      if((this->debugLevel_ < priorityAsInt)
-         && (globalDebugLevel_ < priorityAsInt))
+      if((this->debugLevel_ < (int)priority)
+         && (globalDebugLevel_ < (int)priority))
         return 0;
 
       std::vector<std::string> chunks(4);
       size_t q = 0;
 
       if(memory >= 0)
-        chunks[q++] = std::to_string(memory) + "mb";
-      if(time >= 0)
-        chunks[q++] = std::to_string(time) + "s";
+        chunks[q++] = std::to_string(static_cast<int>(memory)) + "MB";
+      if(time >= 0) {
+        std::stringstream sStream;
+        sStream.precision(3);
+        sStream << std::fixed;
+        sStream << time;
+        chunks[q++] = sStream.str() + "s";
+      }
       if(threads >= 0)
         chunks[q++] = std::to_string(threads) + "T";
       if(progress >= 0)
@@ -308,9 +310,8 @@ namespace ttk {
                         const bool hasHeader = true,
                         const debug::LineMode &lineMode = debug::LineMode::NEW,
                         std::ostream &stream = std::cout) const {
-      int priorityAsInt = static_cast<int>(priority);
-      if((this->debugLevel_ < priorityAsInt)
-         && (globalDebugLevel_ < priorityAsInt))
+      if((this->debugLevel_ < (int)priority)
+         && (globalDebugLevel_ < (int)priority))
         return 0;
 
       int nRows = rows.size();
@@ -354,9 +355,8 @@ namespace ttk {
                         const debug::LineMode &lineMode = debug::LineMode::NEW,
                         const debug::Priority &priority = debug::Priority::INFO,
                         std::ostream &stream = std::cout) const {
-      int priorityAsInt = static_cast<int>(priority);
-      if((this->debugLevel_ < priorityAsInt)
-         && (globalDebugLevel_ < priorityAsInt))
+      if((this->debugLevel_ < (int)priority)
+         && (globalDebugLevel_ < (int)priority))
         return 0;
 
       return this->printMsgInternal(
@@ -381,9 +381,8 @@ namespace ttk {
                         const debug::LineMode &lineMode = debug::LineMode::NEW,
                         const debug::Priority &priority = debug::Priority::INFO,
                         std::ostream &stream = std::cout) const {
-      int priorityAsInt = static_cast<int>(priority);
-      if((this->debugLevel_ < priorityAsInt)
-         && (globalDebugLevel_ < priorityAsInt))
+      if((this->debugLevel_ < (int)priority)
+         && (globalDebugLevel_ < (int)priority))
         return 0;
 
       return this->printMsgInternal(
@@ -403,7 +402,7 @@ namespace ttk {
 
     static debug::LineMode lastLineMode;
 
-    mutable std::string debugMsgPrefix_;
+    std::string debugMsgPrefix_;
 
     /**
      * Internal debug method that formats debug messages.
@@ -416,13 +415,12 @@ namespace ttk {
                        const debug::LineMode &lineMode = debug::LineMode::NEW,
                        std::ostream &stream = std::cout) const {
 
-      welcomeMsg(stream);
-
       std::string combinedMsg = msg;
 
       if(filler.length() > 0) {
-        if(msg.length()>0)
-            combinedMsg += " ";
+        if(msg.length() > 0)
+          combinedMsg += " ";
+
         int gapWidth = debug::LINEWIDTH - this->debugMsgPrefix_.length()
                        - combinedMsg.length() - right.length();
         gapWidth = std::max(gapWidth / filler.length(), (size_t)1);
@@ -444,12 +442,8 @@ namespace ttk {
                                 const debug::LineMode &lineMode,
                                 std::ostream &stream = std::cout) const {
 
-      welcomeMsg(stream);
-
-      int priorityAsInt = static_cast<int>(priority);
-
       // on error or warning print end of line
-      if(priorityAsInt < 2 && this->lastLineMode == debug::LineMode::REPLACE)
+      if((int)priority < 2 && this->lastLineMode == debug::LineMode::REPLACE)
         stream << "\n";
 
       // print prefix
@@ -458,10 +452,10 @@ namespace ttk {
                << debug::output::ENDCOLOR;
 
       // print error or warning prefix
-      if(priorityAsInt == 0)
+      if((int)priority == 0)
         stream << debug::output::RED << "[ERROR]" << debug::output::ENDCOLOR
                << " ";
-      else if(priorityAsInt == 1)
+      else if((int)priority == 1)
         stream << debug::output::YELLOW << "[WARNING]"
                << debug::output::ENDCOLOR << " ";
 
@@ -482,7 +476,7 @@ namespace ttk {
       return 1;
     }
 
-    int welcomeMsg(std::ostream &stream) const;
+    int welcomeMsg(std::ostream &stream);
   };
 
 } // namespace ttk
