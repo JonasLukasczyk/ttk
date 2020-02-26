@@ -3,7 +3,9 @@
 let DEV = false;
 Window.PPI = {  // global variable
     "selected-bin-id": "",
-}
+    "max_number_bins_top": 0,
+    "max_nubmer_bins_right": 0,
+} ;
 
 let COLOR_GREEN = ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"]; 
 let COLOR_GREY = ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"];
@@ -129,7 +131,7 @@ function calculateReliability(items, iComponent) {
     return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
 }
 
-function renderHistogram(extent, data, nComponents, fieldData, iComponent, socket, returned=false) {
+function renderHistogram(extent, data, nComponents, fieldData, iComponent, socket, returned=false, return_legend=false) {
     let w = extent[1] + 1;
     let h = extent[3] + 1;
     var txt = $("#threshold").val();
@@ -151,7 +153,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
 
     let vData = [];
     let dist_data = [] ;
-    let bins_data = [] ;
+    // let bins_data = [] ;
     // extract related information
     for (let i = 0; i < h; i++) {
         for (let j = 0; j < w; j++) {
@@ -162,7 +164,7 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
             let cal = calculateReliability(items, iComponent) ;
             vData.push([j + "", i + "", dd, items, idx, cal]);
             dist_data.push([cal, dd]) ;
-            bins_data.push([cal, 1]) ;
+            // bins_data.push([cal, 1]) ;
         }
     }
 
@@ -170,7 +172,11 @@ function renderHistogram(extent, data, nComponents, fieldData, iComponent, socke
         return dist_data ;
     }
 
-    drawLegend(dist_data, max_persistence_pairs) ;
+    let legend_val = drawLegend(dist_data, max_persistence_pairs, return_legend) ;
+    if (return_legend) {
+        return legend_val ;
+    }
+
 
     d3.select("#my_dataviz *").remove() ;
     Window.hist_w = w ;
@@ -462,7 +468,23 @@ function objectCallback(msg) {
                     0,
                     ttk.getSocketObject());
             }
-            
+
+            if ($("#s2").find("option:enabled").length > 0) {
+                let tmp = renderHistogram(msg['Extent'].Values,
+                    msg['PointData'][name].Values,
+                    msg['PointData'][name].NumberOfComponents,
+                    msg['FieldData'],
+                    parseInt($($("#s2").find("option:enabled")[0]).val()),
+                    null,
+                    false,
+                    true
+                );
+                Window.PPI = {
+                    "max_number_bins_top": tmp[0],
+                    "max_nubmer_bins_right": tmp[1],
+                }
+            }
+
             triggerEnterInput("#rel-window") ;
 
         } else if (msg.VtkDataObjectType.Values[0] === 1) {
@@ -667,6 +689,22 @@ $('#threshold').on('keypress', function (e) {
                 });
                 $("#s2").val("" + v).change();
                 $("#hidden-optimal-threshold").click();
+
+                if ($("#s2").find("option:enabled").length > 0) {
+                    let tmp = renderHistogram(Window.object['Extent'].Values,
+                        Window.object['PointData'][Window.APPIAttrName].Values,
+                        Window.object['PointData'][Window.APPIAttrName].NumberOfComponents,
+                        Window.object['FieldData'],
+                        parseInt($($("#s2").find("option:enabled")[0]).val()),
+                        null,
+                        false,
+                        true
+                    );
+                    Window.PPI = {
+                        "max_number_bins_top": tmp[0],
+                        "max_nubmer_bins_right": tmp[1],
+                    }
+                }
             }
         }
     }

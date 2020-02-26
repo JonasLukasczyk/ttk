@@ -1,4 +1,4 @@
-function drawLegend(data, max_persistence_pairs) {
+function drawLegend(data, max_persistence_pairs, return_legend=false) {
     function removeLastEqual(bins) {
         if ( bins.length > 0 ) {
             let lastEle = bins.slice(-1)[0] ;
@@ -21,12 +21,6 @@ function drawLegend(data, max_persistence_pairs) {
         width_partition = 20,
         height_partition = 10;
 
-    // updated notification
-    $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
-    
-    // define the container and svg
-    d3.select("#my_dataviz_legend *").remove();
-    
     let containerWidth = 301;
     let containerHeight = 201;
     let margin = {
@@ -40,20 +34,7 @@ function drawLegend(data, max_persistence_pairs) {
     let width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
 
-    let container = d3.select("#my_dataviz_legend")
-                    .append("svg")
-                    .attr("width", containerWidth)
-                    .attr("height", containerHeight);
-
-    // draw the top line SVG
-    let lineSvg = container
-                .append("g")
-                .attr("transform",
-                    "translate(" + margin.left + ", 5)")
-                .attr('overflow', 'hidden');
-
     let xLine = d3.scaleLinear().range([0, width]).domain([0, 1]);
-
     let histogram = d3.histogram()
         .value(function(d) { return d[0]; })   // I need to give the vector of value
         .domain(xLine.domain())  // then the domain of the graphic
@@ -66,11 +47,44 @@ function drawLegend(data, max_persistence_pairs) {
     }
     data = cc ;
     let bins = histogram(data);
-
     bins = removeLastEqual(bins) ;
 
     let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
     yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+
+    let xLineRight = d3.scaleLinear().range([0, height]).domain([0, max_persistence_pairs]);
+
+    let histogramRight = d3.histogram()
+        .value(function(d) { return d[1]; })   // I need to give the vector of value
+        .domain(xLineRight.domain())  // then the domain of the graphic
+        .thresholds(xLineRight.ticks(height_partition)); // then the numbers of bins
+
+    let binsRight = histogramRight(data);
+    binsRight = removeLastEqual(binsRight) ;
+    let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
+    yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+
+    if (return_legend) {
+        return [d3.max(bins, function(d) { return d.length; }), d3.max(binsRight, function(d) { return d.length; })] ;
+    }
+
+    // updated notification
+    $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
+
+    // define the container and svg
+    d3.select("#my_dataviz_legend *").remove();
+
+    let container = d3.select("#my_dataviz_legend")
+        .append("svg")
+        .attr("width", containerWidth)
+        .attr("height", containerHeight);
+
+    // draw the top line SVG
+    let lineSvg = container
+        .append("g")
+        .attr("transform",
+            "translate(" + margin.left + ", 5)")
+        .attr('overflow', 'hidden');
 
     lineSvg.selectAll("rect")
         .data(bins)
@@ -93,17 +107,7 @@ function drawLegend(data, max_persistence_pairs) {
             "translate(" + (margin.left + width + margin.right - 5) + ", "+ margin.top+") rotate(90)")
         .attr('overflow', 'hidden');
 
-    let xLineRight = d3.scaleLinear().range([0, height]).domain([0, max_persistence_pairs]);
 
-    let histogramRight = d3.histogram()
-        .value(function(d) { return d[1]; })   // I need to give the vector of value
-        .domain(xLineRight.domain())  // then the domain of the graphic
-        .thresholds(xLineRight.ticks(height_partition)); // then the numbers of bins
-
-    let binsRight = histogramRight(data);
-    binsRight = removeLastEqual(binsRight) ;
-    let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
-    yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
 
     lineSvgRight.selectAll("rect")
         .data(binsRight)
@@ -199,7 +203,7 @@ function drawLegend(data, max_persistence_pairs) {
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .style("font-size", "small")
-        .text("Color Scalar") ;
+        .text("# of bins") ;
 
     // Add x-axis title
     svg.append("text")

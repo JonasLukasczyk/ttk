@@ -115,6 +115,7 @@ int ttkWebSocketIO::RequestData(
 
     auto input = vtkDataSet::GetData( inputVector[0] );
     this->lastInput = vtkSmartPointer<vtkDataSet>::Take( input->NewInstance() );
+    input->Print(std::cout) ;
     this->lastInput->ShallowCopy( input );
 
     if (this->isListening() && this->getPortNumber() != this->PortNumber) {
