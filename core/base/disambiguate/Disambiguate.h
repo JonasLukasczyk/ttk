@@ -470,8 +470,8 @@ namespace ttk {
 
                     // if v is a saddle we have to check if the current thread is the last visitor
                     if(isSaddle){
-
                         propagationP->lastEncounteredSaddle = v;
+                        propagationP->terminated = 1;
 
                         idType numberOfRegisteredLargerVertices=0;
                         #pragma omp atomic capture
@@ -481,10 +481,8 @@ namespace ttk {
                         }
 
                         // if this thread did not register the last remaining larger vertices then terminate propagation
-                        if(numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1){
-                            propagationP->terminated = 1;
+                        if(numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1)
                             return 1;
-                        }
 
                         // Otherwise merge propagation data
                         for(idType n=0; n<nNeighbors; n++){
@@ -627,6 +625,7 @@ namespace ttk {
                 idType* queueMask, // used to mark vertices that have already been added to the queue by this thread
                 Propagation<idType>** propagationMask,
                 Propagation<idType>& propagation,
+                idType& nActivePropagations,
 
                 const ttk::Triangulation* triangulation,
                 const idType* offsets,
@@ -650,6 +649,8 @@ namespace ttk {
 
                 idType regionSize = 0;
 
+                idType counter = 0;
+
                 // grow region until it reaches a saddle and then decide if it should continue
                 while(!queue->empty()){
                     const idType v = std::get<1>(queue->top());
@@ -659,12 +660,13 @@ namespace ttk {
                     if(propagationMask[v]!=nullptr)
                         continue;
 
+                    // TODO
                     // if propagation reaches persistence threshold -> mark all children as terminated
-                    if( elderScalar-scalars[v] > persistenceThreshold ){
-                        for(auto c : propagationP->children)
-                            c->terminated = 1;
-                        return 1;
-                    }
+                    // if( elderScalar-scalars[v] > persistenceThreshold ){
+                    //     for(auto c : propagationP->children)
+                    //         c->terminated = 1;
+                    //     return 1;
+                    // }
 
                     const idType& offsetV = offsets[v];
 
@@ -688,8 +690,8 @@ namespace ttk {
                                 isSaddle = true;
                             else
                                 numberOfLargerNeighborsThisThreadVisited++;
-
-                        } else if(queueMask[u] != extremumIndex) {
+                        }
+                        else if(queueMask[u] != extremumIndex) {
                             queue->emplace(offsetU,u);
                             queueMask[u] = extremumIndex;
                         }
@@ -699,7 +701,15 @@ namespace ttk {
                     if(isSaddle){
                         propagationP->lastEncounteredSaddle = v;
                         propagationP->regionSize += regionSize;
+                        propagationP->terminated = 1;
                         regionSize = 0;
+
+                        // if(elderScalar-scalars[v]>persistenceThreshold ){
+                        //     propagationP->terminated = 0;
+                        //     for(auto c : propagationP->children)
+                        //         c->terminated = 1;
+                        //     return 1;
+                        // }
 
                         idType numberOfRegisteredLargerVertices=0;
                         #pragma omp atomic capture
@@ -710,7 +720,9 @@ namespace ttk {
 
                         // if this thread did not register the last remaining larger vertices then terminate propagation
                         if(numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1){
-                            propagationP->terminated = 1;
+                            #pragma omp atomic update
+                            nActivePropagations--;
+
                             return 1;
                         }
 
@@ -718,7 +730,6 @@ namespace ttk {
                         for(idType n=0; n<nNeighbors; n++){
                             idType u;
                             triangulation->getVertexNeighbor(v,n,u);
-
 
                             if(offsetV<offsets[u]){
                                 auto* propagationPu = propagationMask[u]->find2();
@@ -741,11 +752,240 @@ namespace ttk {
                     // mark vertex as visited and continue
                     propagationMask[v] = propagationP;
                     regionSize++;
+
+                    if(counter++>100){
+                        counter = 0;
+
+                        idType nActivePropagations_;
+                        #pragma omp atmic read
+                        nActivePropagations_ = nActivePropagations;
+
+                        if(nActivePropagations_==1){
+                            // // mark as unfinished propagation
+                            // propagationP->temp = 1;
+                            // propagationP->terminated = 1;
+                            // if(propagationP->lastEncounteredSaddle==-1)
+                            //     propagationP->lastEncounteredSaddle = propagationP->extremumIndex;
+                            return 1;
+                        }
+                    }
                 }
 
                 this->printErr("propagation reached global minimum");
 
                 return 0;
+            }
+
+            template<typename idType>
+            int computeTrunk(
+                std::vector<std::tuple<idType,idType,idType>>& sortedIndices,
+                Propagation<idType>** propagationMask,
+                std::vector<Propagation<idType>>& propagations,
+
+                const ttk::Triangulation* triangulation,
+                const idType* saddleMask,
+                const idType* offsets
+            ) const {
+                ttk::Timer timer;
+                this->printMsg(
+                    "Initializing trunk",
+                    0, 0, this->threadNumber_,
+                    debug::LineMode::REPLACE
+                );
+
+                const idType nVertices = triangulation->getNumberOfVertices();
+
+                // collect saddles
+                std::vector<std::pair<idType,idType>> saddleIndices;
+                idType nTrunkVertices = 0;
+                for(idType v=0; v<nVertices; v++){
+                    if(propagationMask[v]!=nullptr)
+                        continue;
+
+                    if(saddleMask[v]<-1)
+                        saddleIndices.push_back( {-offsets[v],v} );
+
+                    // update sortedIndices
+                    auto& tuple = sortedIndices[nTrunkVertices++];
+                    std::get<0>(tuple) = -offsets[v];
+                    std::get<1>(tuple) = v;
+                }
+
+                // sort saddles
+                std::sort(saddleIndices.begin(),saddleIndices.end());
+                // add last element to prevent overflow when trunk proceeds below last saddle
+                saddleIndices.push_back({0,-1});
+
+                // sort trunk
+                #ifdef TTK_ENABLE_OPENMP
+                    #ifdef __clang__
+                        this->printWrn("Caution, outside GCC, sequential sort");
+                        std::sort(sortedIndices.begin(), sortedIndices.begin()+nTrunkVertices);
+                    #else
+                        omp_set_num_threads(this->threadNumber_);
+                        __gnu_parallel::sort(sortedIndices.begin(), sortedIndices.begin()+nTrunkVertices);
+                        omp_set_num_threads(1);
+                    #endif
+                #else
+                    this->printWrn("Caution, outside GCC, sequential sort");
+                    std::sort(sortedIndices.begin(), sortedIndices.begin()+nTrunkVertices);
+                #endif
+
+                this->printMsg(
+                    "Initializing trunk",
+                    1, timer.getElapsedTime(), this->threadNumber_
+                );
+                timer.reStart();
+
+                this->printMsg(
+                    "Computing trunk",
+                    0, 0, this->threadNumber_,
+                    debug::LineMode::REPLACE
+                );
+
+                // get first propagation
+                Propagation<idType>* propagationP = nullptr;
+                {
+                    const idType& v = std::get<1>(sortedIndices[0]);
+                    const idType& offsetV = offsets[v];
+
+                    idType nNeighbors = triangulation->getVertexNeighborNumber(v);
+                    for(idType n=0; n<nNeighbors; n++){
+                        idType u;
+                        triangulation->getVertexNeighbor(v,n,u);
+
+                        if(offsetV<offsets[u]){
+                            propagationP = propagationMask[u]->find2();
+                            break;
+                        }
+                    }
+                }
+                if(propagationP==nullptr){
+                    this->printErr("WHAT");
+                }
+
+                idType nextSaddle = std::get<1>(saddleIndices[0]);
+                idType nSaddles = saddleIndices.size();
+
+                for(idType i=0, s=0; i<nTrunkVertices; i++){
+                    const idType& v = std::get<1>(sortedIndices[i]);
+                    const idType& offsetV = offsets[v];
+
+                    // this->printMsg(std::to_string(v)+" -> "+std::to_string(offsetV) + " " +std::to_string(nextSaddle));
+
+                    if(v==nextSaddle){
+                        nextSaddle = std::get<1>(saddleIndices[++s]);
+
+                        idType nNeighbors = triangulation->getVertexNeighborNumber(v);
+                        for(idType n=0; n<nNeighbors; n++){
+                            idType u;
+                            triangulation->getVertexNeighbor(v,n,u);
+
+                            if(offsetV<offsets[u]){
+                                auto* propagationPu = propagationMask[u]->find2();
+                                if(propagationP!=propagationPu){
+                                    // TODO: introduce unify3 without fib heap update
+                                    propagationP = Propagation<idType>::unify2(
+                                        propagationP,
+                                        propagationPu,
+                                        offsets
+                                    );
+                                }
+                            }
+                        }
+                    }
+
+                    propagationMask[v] = propagationP;
+                }
+
+                this->printMsg(
+                    "Computing trunk",
+                    1, timer.getElapsedTime(), this->threadNumber_
+                );
+
+                return 1;
+            }
+
+            template<typename idType, typename dataType>
+            int computeTrunkByPersistence(
+                Propagation<idType>* propagationP,
+                Propagation<idType>** propagationMask,
+
+                const ttk::Triangulation* triangulation,
+                const idType& seedVertex,
+                const idType* saddleMask,
+                const idType* offsets,
+                const dataType* scalars,
+                const dataType& persistenceThreshold
+            ) const {
+
+                // const dataType minValue = scalars[propagationP->extremumIndex]-persistenceThreshold;
+
+                // propagationP->temp = 1;
+
+                // std::vector<idType> queue(triangulation->getNumberOfVertices());
+                // idType queueIndex = 0;
+
+                // std::vector<std::pair<idType,idType>> saddleIndices;
+
+                // queue[queueIndex++] = seedVertex;
+                // propagationMask[seedVertex] = propagationP;
+
+                // while(queueIndex>0){
+                //     idType v = queue[--queueIndex];
+
+                //     propagationMask[v] = propagationP;
+
+                //     if(saddleMask[v]<-1)
+                //         saddleIndices.push_back( {-offsets[v],v} );
+
+                //     idType nNeighbors = triangulation->getVertexNeighborNumber(v);
+                //     for(idType n=0; n<nNeighbors; n++){
+                //         idType u;
+                //         triangulation->getVertexNeighbor(v,n,u);
+
+                //         if(propagationMask[u]==nullptr && scalars[u]>=minValue){
+                //             propagationMask[u] = propagationP;
+                //             queue[queueIndex++] = u;
+                //         }
+                //     }
+                // }
+
+                // // sort saddles
+                // std::sort(saddleIndices.begin(),saddleIndices.end());
+
+                // // merge propagations
+                // for(auto s: saddleIndices){
+                //     idType v = s.second;
+                //     const idType& offsetV = offsets[v];
+                //     idType nNeighbors = triangulation->getVertexNeighborNumber(v);
+                //     for(idType n=0; n<nNeighbors; n++){
+                //         idType u;
+                //         triangulation->getVertexNeighbor(v,n,u);
+
+                //         if(offsetV<offsets[u]){
+                //             auto* propagationPu = propagationMask[u]->find2();
+                //             if(propagationP!=propagationPu){
+                //                 // TODO: introduce unify3 without fib heap update
+                //                 propagationP = Propagation<idType>::unify2(
+                //                     propagationP,
+                //                     propagationPu,
+                //                     offsets
+                //                 );
+                //             }
+                //         }
+                //     }
+                // }
+
+                // for(auto c : propagationP->children)
+                //     c->terminated = 1;
+
+                // this->printMsg("");
+                // this->printMsg("Trunk Complete "+ std::to_string(saddleIndices.size()));
+                // for(auto i: saddleIndices)
+                //     this->printMsg(std::to_string(i.second)+": "+std::to_string(i.first));
+
+                return 1;
             }
 
             template<typename idType>
@@ -1164,14 +1404,16 @@ namespace ttk {
             ) const {
                 ttk::Timer timer;
 
+                int status = 1;
                 const idType nPropagations = propagations.size();
+                idType nActivePropagations = nPropagations;
+
                 this->printMsg(
                     "Computing dynamic propagations ("+std::to_string(nPropagations)+")",
                     0, 0, this->threadNumber_,
                     debug::LineMode::REPLACE
                 );
 
-                int status = 1;
                 // compute propagations
                 #pragma omp parallel for schedule(dynamic,1) num_threads(this->threadNumber_)
                 for(idType p=0; p<nPropagations; p++){
@@ -1180,13 +1422,13 @@ namespace ttk {
                         queueMask,
                         propagationMask,
                         propagations[p],
+                        nActivePropagations,
 
                         triangulation,
                         offsets,
                         scalars,
                         persistenceThreshold
                     );
-
                     if(!localStatus)
                         status = 0;
                 }
@@ -1194,22 +1436,22 @@ namespace ttk {
 
                 this->printMsg(
                     "Computing dynamic propagations ("+std::to_string(nPropagations)+")",
-                    0.9, timer.getElapsedTime(), this->threadNumber_,
-                    debug::LineMode::REPLACE
-                );
-
-                #pragma omp parallel for schedule(dynamic,1) num_threads(this->threadNumber_)
-                for(idType p=0; p<nPropagations; p++){
-                    auto* propagationP = &propagations[p];
-                    if(propagationP->terminated==1)
-                        for(auto c : propagationP->children)
-                            c->setParent2R(propagationP);
-                }
-
-                this->printMsg(
-                    "Computing dynamic propagations ("+std::to_string(nPropagations)+")",
                     1, timer.getElapsedTime(), this->threadNumber_
                 );
+
+                // this->printMsg(
+                //     "Computing dynamic propagations ("+std::to_string(nPropagations)+")",
+                //     0.9, timer.getElapsedTime(), this->threadNumber_,
+                //     debug::LineMode::REPLACE
+                // );
+
+                // #pragma omp parallel for schedule(dynamic,1) num_threads(this->threadNumber_)
+                // for(idType p=0; p<nPropagations; p++){
+                //     auto* propagationP = &propagations[p];
+                //     if(propagationP->terminated==1)
+                //         for(auto c : propagationP->children)
+                //             c->setParent2R(propagationP);
+                // }
 
                 return 1;
             }
@@ -1708,7 +1950,7 @@ namespace ttk {
 
                 // compute propagations
                 status = this->computeDynamicPropagations<idType,dataType>(
-                    regionMask,
+                    regionMask, // used here as saddle mask
                     queueMask,
                     propagationMask,
                     propagations,
@@ -1720,6 +1962,34 @@ namespace ttk {
                 );
                 if(!status) return 0;
 
+                status = this->computeTrunk<idType>(
+                    sortedIndices,
+                    propagationMask,
+                    propagations,
+
+                    triangulation,
+                    regionMask, // used here as saddle mask
+                    inputOffsets
+                );
+                if(!status) return 0;
+
+                // // TODO
+                // return 1;
+                // TODO
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                for(idType v=0; v<nVertices; v++)
+                    outputOffsets[v] = propagationMask[v]==nullptr
+                        ? -1
+                        : propagationMask[v]->extremumIndex;
+                        // : propagationMask[v]->find()->terminated==0
+                        //     ? -2
+                        //     : propagationMask[v]->find()->extremumIndex;
+                        // :
+                        // propagationMask[v]->find()->temp==1
+                        //     ? -3
+
+                return 1;
+
                 // finalize master propagations
                 status = this->finalizePropagations<idType>(
                     masterPropagations,
@@ -1730,15 +2000,23 @@ namespace ttk {
                 if(!status) return 0;
                 nRemovedMaxima = masterPropagations.size();
 
+                // TODO
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                for(idType v=0; v<nVertices; v++)
+                    outputOffsets[v] = -1;
+
                 // compute regions
                 status = this->computeRegions<idType>(
-                    regionMask,
+                    outputOffsets,
+                    // regionMask,
                     propagationMask,
                     masterPropagations,
 
                     triangulation
                 );
                 if(!status) return 0;
+
+                return 0;
 
                 // compute local order of regions
                 status = this->computeLocalOffsetsOfRegions<idType>(
@@ -1856,30 +2134,34 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                idType nMinPropagations = propagationsMin.size();
-                idType nMaxPropagations = propagationsMax.size();
-                idType nPropagations = nMinPropagations+nMaxPropagations;
-
-                #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
-                for(idType p=0; p<nPropagations; p++){
-                    auto& propagation = p<nMinPropagations
-                        ? propagationsMin[p]
-                        : propagationsMax[p-nMinPropagations];
-                    propagation.region = std::vector<idType>();
-                    propagation.queue = boost::heap::fibonacci_heap< std::pair<idType,idType> >();
+                #pragma omp parallel num_threads(this->threadNumber_)
+                #pragma omp single
+                {
+                    #pragma omp task
+                    propagationsMin.clear();
+                    #pragma omp task
+                    propagationsMax.clear();
+                    #pragma omp task
+                    inputOffsets.clear();
+                    #pragma omp task
+                    unauthorizedExtrema.clear();
+                    #pragma omp task
+                    regionMask.clear();
+                    #pragma omp task
+                    queueMask.clear();
+                    #pragma omp task
+                    propagationMask.clear();
+                    #pragma omp task
+                    localOffsets.clear();
+                    #pragma omp task
+                    sortedIndices.clear();
+                    #pragma omp task
+                    sortedIndicesII.clear();
+                    #pragma omp task
+                    masterPropagationsMax.clear();
+                    #pragma omp task
+                    masterPropagationsMin.clear();
                 }
-                propagationsMin.clear();
-                propagationsMax.clear();
-                inputOffsets.clear();
-                unauthorizedExtrema.clear();
-                regionMask.clear();
-                queueMask.clear();
-                propagationMask.clear();
-                localOffsets.clear();
-                sortedIndices.clear();
-                sortedIndicesII.clear();
-                masterPropagationsMax.clear();
-                masterPropagationsMin.clear();
 
                 this->printMsg(
                     "Deallocating memory",
@@ -2247,6 +2529,8 @@ namespace ttk {
                             useRegionBasedIterations
                         );
                         if(!status) return 0;
+                        // TODO
+                        return 1;
 
                         if(nRemovedMinima){
                             sortDirection=-1;
