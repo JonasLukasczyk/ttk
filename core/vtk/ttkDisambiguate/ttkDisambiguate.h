@@ -35,9 +35,19 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
     , public ttk::Disambiguate // and we inherit from the base class
 {
     private:
-        double PersistenceThreshold;
+        bool AddPerturbation{false};
+        bool UseRegionBasedIterations{false};
+        bool UseDeallocation{false};
+        double PersistenceThreshold{0};
+
 
     public:
+        vtkSetMacro(AddPerturbation, bool);
+        vtkGetMacro(AddPerturbation, bool);
+        vtkSetMacro(UseRegionBasedIterations, bool);
+        vtkGetMacro(UseRegionBasedIterations, bool);
+        vtkSetMacro(UseDeallocation, bool);
+        vtkGetMacro(UseDeallocation, bool);
         vtkGetMacro(PersistenceThreshold,double);
         vtkSetMacro(PersistenceThreshold,double);
 

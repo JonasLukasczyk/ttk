@@ -78,9 +78,9 @@ int ttkDisambiguate::RequestData(
                     triangulation,
                     (VTK_TT*) inputScalars->GetVoidPointer(0),
                     (VTK_TT)  this->PersistenceThreshold,
-                    true,
-                    false,
-                    true
+                    this->UseRegionBasedIterations,
+                    this->AddPerturbation,
+                    this->UseDeallocation
                 )
             );
         }

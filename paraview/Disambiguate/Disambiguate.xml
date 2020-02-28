@@ -30,6 +30,21 @@
                 <Documentation>TODO.</Documentation>
             </DoubleVectorProperty>
 
+            <IntVectorProperty name="UseRegionBasedIterations" command="SetUseRegionBasedIterations" label="UseRegionBasedIterations" number_of_elements="1" default_values="1">
+                <BooleanDomain name="bool"/>
+                <Documentation>TODO</Documentation>
+            </IntVectorProperty>
+
+            <IntVectorProperty name="UseDeallocation" command="SetUseDeallocation" label="Use explicit memory de-allocation" number_of_elements="1" default_values="0">
+                <BooleanDomain name="bool"/>
+                <Documentation>TODO</Documentation>
+            </IntVectorProperty>
+
+            <IntVectorProperty name="AddPerturbation" command="SetAddPerturbation" label="Add Numerical Perturbation" number_of_elements="1" default_values="0">
+                <BooleanDomain name="bool"/>
+                <Documentation>TODO</Documentation>
+            </IntVectorProperty>
+
             <PropertyGroup panel_widget="Line" label="Input Options">
                 <Property name="InputArray" />
             </PropertyGroup>
