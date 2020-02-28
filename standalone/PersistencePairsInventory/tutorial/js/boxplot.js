@@ -13,18 +13,6 @@ function formatInput(numberofcomponents, data) {
     return format_data;
 }
 
-d3.select("body")
-    .append("div")
-    .attr("id", "box_plot_tooltip")
-    .style("background", "black")
-    .style("opacity", 0.6)
-    .style("color", "white")
-    .style("border-radius", "5px")
-    .style("padding", "10px")
-    .style("position", "absolute")
-    .style("z-index", "10")
-    .style("visibility", "hidden");
-
 function drawBoxplotCurve(numberofcomponents, data) {
     Window.box_plot_config = {
         min_max_color: "#abdda4",
@@ -504,7 +492,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                     .style("opacity", "0");
                 d3.selectAll(".mouse-per-line text")
                     .style("opacity", "0");
-                return d3.select("#box_plot_tooltip").style("visibility", "hidden");
+                return d3.select("#tooltipBoxplot").style("visibility", "hidden");
             })
             .on('mouseover', function () { // on mouse in show line, circles and text
                 d3.select(".mouse-line")
@@ -512,7 +500,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 d3.selectAll(".mouse-per-line circle")
                     .style("opacity", "1");
 
-                return d3.select("#box_plot_tooltip").style("visibility", "visible");
+                return d3.select("#tooltipBoxplot").style("visibility", "visible");
             })
             .on('mousemove', function () { // update tooltip content, line, circles and text when mouse moves
                 var mouse = d3.mouse(this)
@@ -533,7 +521,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                         return "translate(" + xScale(d.values[idx][0]) + "," + yScale(d.values[idx][1]) + ")";
                     });
 
-                $("#box_plot_tooltip").html("");
+                $("#tooltipBoxplot").html("");
                 var xIdx = xScale.invert(mouse[0]);
                 var idx = -1;
                 res_nested.forEach(function (d) {
@@ -541,14 +529,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
                         idx = bisect(d.values, xIdx);
                     }
                     value = d.key.replace("group_", "") + ": <code>" + d.values[idx][1] + "</code>"
-                    if ($("#box_plot_tooltip").html() == "") {
-                        $("#box_plot_tooltip").html("<strong>Threshold: </strong> <code>" + (idx + 1) + "</code><br>- " + value);
+                    if ($("#tooltipBoxplot").html() == "") {
+                        $("#tooltipBoxplot").html("<strong>Threshold: </strong> <code>" + (idx + 1) + "</code><br>- " + value);
                     } else {
-                        $("#box_plot_tooltip").html($("#box_plot_tooltip").html() + "<br>- " + value);
+                        $("#tooltipBoxplot").html($("#tooltipBoxplot").html() + "<br>- " + value);
                     }
                 })
 
-                return d3.select("#box_plot_tooltip").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+                return d3.select("#tooltipBoxplot").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
             })
     }
 
@@ -559,13 +547,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
             return d.key
         }) ; // list of group names
 
-        $("#b1").html("<option value='all'>all</option>");
+        $("#boxplot-select-lines").html("<option value='all'>all</option>");
         for (var i = 0; i < res.length; i++) {
-            $('#b1').append('<option value=' + res[i] + '>' + res[i] + '</option>');
+            $('#boxplot-select-lines').append('<option value=' + res[i] + '>' + res[i] + '</option>');
         }
 
-        $("#b1").change(function () {
-            $("#b1 option:selected").each(function () {
+        $("#boxplot-select-lines").change(function () {
+            $("#boxplot-select-lines option:selected").each(function () {
                 if ($(this).val() == "all") {
                     $("[group_idx^=group]").each(function () {
                         $(this).css({

@@ -1,4 +1,4 @@
-function drawLegend(data, max_persistence_pairs, return_legend=false) {
+function drawLegend(data, max_persistence_pairs) {
     function removeLastEqual(bins) {
         if ( bins.length > 0 ) {
             let lastEle = bins.slice(-1)[0] ;
@@ -63,10 +63,6 @@ function drawLegend(data, max_persistence_pairs, return_legend=false) {
     binsRight = removeLastEqual(binsRight) ;
     let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
     yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-
-    if (return_legend) {
-        return [d3.max(bins, function(d) { return d.length; }), d3.max(binsRight, function(d) { return d.length; })] ;
-    }
 
     // updated notification
     $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
@@ -265,6 +261,6 @@ function drawLegend(data, max_persistence_pairs, return_legend=false) {
         }
 
         $("#my_dataviz_legend").attr("data-x_0", values[0]).attr("data-x_1", values[1]) ;
-        $("#s2").change() ;
+        $("#hist-threshold").change() ;
     }
 }

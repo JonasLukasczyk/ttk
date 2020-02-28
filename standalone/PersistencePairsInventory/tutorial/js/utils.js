@@ -1,3 +1,5 @@
+
+ 
 function getArray(n, ratio=1) {
     let ans = [];
     for (let i = 0; i < n; i++) { ans.push("" + ( i * ratio)); }
@@ -62,13 +64,13 @@ function customColor(reliability, ppi, max_persistence_pairs, default_color="#ff
     // from light to dark
     let lower = getFloatValue("#my_dataviz_legend", "data-x_0"),
         upper = getFloatValue("#my_dataviz_legend", "data-x_1") ;
-    let range_color = COLOR_GREEN;
+    let range_color = Window.PPI['color-green'];
     if (reliability >= 0 && reliability < lower) {
-        range_color = COLOR_RED;
+        range_color = Window.PPI['color-red'];
     } else if (reliability >= lower && reliability < upper) {
-        range_color = COLOR_GREY;
+        range_color = Window.PPI['color-gray'];
     } else {
-        range_color = COLOR_GREEN;
+        range_color = Window.PPI['color-green'];
     }
 
     if (ppi === 0) {
