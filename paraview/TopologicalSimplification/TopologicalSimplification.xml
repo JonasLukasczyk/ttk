@@ -376,12 +376,13 @@ offset field for flat plateau disambiguation).
       </PropertyGroup>
 
       <PropertyGroup panel_widget="Line" label="Output options">
-	<Property name="OutputOffsetScalarFieldName"/>
-	<Property name="AddPerturbation"/>
-	<Property name="UseTPTS"/>
-	<Property name="UseRegionBasedIterations"/>
-	<Property name="UseInterleaving"/>
-  <Property name="UseDeallocation"/>
+        <Property name="OutputOffsetScalarFieldName"/>
+        <Property name="AddPerturbation"/>
+        <Property name="UseTPTS"/>
+        <Property name="UseRegionBasedIterations"/>
+        <Property name="UseInterleaving"/>
+        <Property name="EnforceAuthorizedExtrema"/>
+        <Property name="UseDeallocation"/>
       </PropertyGroup>
 
       <Hints>

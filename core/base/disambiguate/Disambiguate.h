@@ -140,7 +140,7 @@ namespace ttk {
 
                 idType nEnforcedExtrema = 0;
 
-                // #pragma omp parallel for reduction(+:nEnforcedExtrema) num_threads(this->threadNumber_)
+                #pragma omp parallel for reduction(+:nEnforcedExtrema) num_threads(this->threadNumber_)
                 for(idType i=0; i<nAuthorizedExtremaIndices; i++){
                     const idType& v = authorizedExtremaIndices[i];
 
@@ -171,8 +171,6 @@ namespace ttk {
                         else
                             hasLargerNeighborInScalar = true;
                     }
-
-                    this->printMsg(std::to_string(v)+": "+std::to_string(hasSmallerNeighborInOffset)+" "+std::to_string(hasLargerNeighborInOffset)+" | "+std::to_string(hasSmallerNeighborInScalar)+" "+std::to_string(hasLargerNeighborInScalar));
 
                     // if v was a maximum but is not anymore
                     if(!hasLargerNeighborInScalar && hasLargerNeighborInOffset){
@@ -506,8 +504,6 @@ namespace ttk {
                     while(queueIndex>0){
                         const idType v = queue[--queueIndex];
 
-                        // if(regionIndex>=propagation->regionSize)
-                        //     this->printErr("Region size incorrect: "+std::to_string(regionIndex)+ " "+std::to_string(propagation->regionSize));
                         region[regionIndex++] = v;
 
                         idType nNeighbors = triangulation->getVertexNeighborNumber(v);
@@ -515,8 +511,6 @@ namespace ttk {
                             idType u;
                             triangulation->getVertexNeighbor(v,n,u);
                             if(regionMask[u]!=extremumIndex && propagationMask[u]!=nullptr && propagationMask[u]->find()==propagation){
-                                // if(queueIndex>=propagation->regionSize-1)
-                                //     this->printErr("Region size incorrect: "+std::to_string(regionIndex)+ " "+std::to_string(propagation->regionSize));
                                 queue[queueIndex++]=u;
                                 regionMask[u] = extremumIndex;
                             }
@@ -525,10 +519,8 @@ namespace ttk {
                 }
 
                 if(regionIndex!=propagation->regionSize){
-                    if(regionIndex<propagation->regionSize)
-                        this->printWrn("Region size incorrect: "+std::to_string(regionIndex)+ " "+std::to_string(propagation->regionSize));
-                    else
-                        this->printErr("Region size incorrect: "+std::to_string(regionIndex)+ " "+std::to_string(propagation->regionSize));
+                    this->printErr("Region size incorrect: "+std::to_string(regionIndex)+ " "+std::to_string(propagation->regionSize));
+                    return 0;
                 }
 
                 return 1;
@@ -1545,19 +1537,6 @@ namespace ttk {
                     );
                     if(!localStatus)
                         status = 0;
-
-                    // idType nActivePropagations_;
-                    // #pragma omp atomic read
-                    // nActivePropagations_ = nActivePropagations;
-
-                    // if(nActivePropagations_<100 || nActivePropagations_%10000==0){
-                    //     #pragma omp critical
-                    //     this->printMsg(
-                    //         "Computing dynamic propagations ("+std::to_string(nActivePropagations_)+")",
-                    //         1.0 - ((float)nActivePropagations_)/((float)nPropagations), timer.getElapsedTime(), this->threadNumber_,
-                    //         debug::LineMode::REPLACE
-                    //     );
-                    // }
                 }
                 if(!status) return 0;
 
@@ -2083,6 +2062,7 @@ namespace ttk {
                 );
                 if(!status) return 0;
 
+                // compute trunk
                 status = this->computeTrunk<idType>(
                     propagationMask,
                     propagations,
@@ -2093,21 +2073,6 @@ namespace ttk {
                     sortedIndices
                 );
                 if(!status) return 0;
-
-                // // // TODO
-                // #pragma omp parallel for num_threads(this->threadNumber_)
-                // for(idType v=0; v<nVertices; v++)
-                //     outputOffsets[v] = propagationMask[v]==nullptr
-                //         ? -1
-                //         : propagationMask[v]->find()->extremumIndex;
-                // //         // : propagationMask[v]->find()->terminated==0
-                // //         //     ? -2
-                // //         //     : propagationMask[v]->find()->extremumIndex;
-                // //         // :
-                // //         // propagationMask[v]->find()->temp==1
-                // //         //     ? -3
-
-                // return 1;
 
                 // finalize master propagations
                 status = this->finalizePropagationsByPersistence<idType,dataType>(
@@ -2120,26 +2085,6 @@ namespace ttk {
                 );
                 if(!status) return 0;
                 const idType nMasterPropagations = masterPropagations.size();
-
-                // // TODO
-                // if(TODO_TASKSUBDIVISION++>0){
-                //     #pragma omp parallel for num_threads(this->threadNumber_)
-                //     for(idType v=0; v<nVertices; v++)
-                //         outputOffsets[v] = propagationMask[v]==nullptr
-                //             ? -1
-                //             : propagationMask[v]->find()->temp==1
-                //                 ? 1
-                //                 : -2;
-                //             // : propagationMask[v]->find()->extremumIndex;
-
-                //     TODO_TASKSUBDIVISION = 1;
-                //     return 1;
-                // }
-
-                // // TODO
-                // #pragma omp parallel for num_threads(this->threadNumber_)
-                // for(idType v=0; v<nVertices; v++)
-                //     outputOffsets[v] = -1;
 
                 // compute regions
                 status = this->computeRegions<idType>(
@@ -2390,20 +2335,19 @@ namespace ttk {
                 size_t iteration=0;
                 int sortDirection = 0;
                 while(true){
-                    if(!useRegionBasedIterations){
+                    if(!useRegionBasedIterations)
                         this->printMsg(
                             "Iteration: "+std::to_string(iteration++),
                             ttk::debug::Separator::L2
                         );
-                    } else {
-                        this->printMsg(ttk::debug::Separator::L2);
-                    }
 
                     idType nRemovedMinima=0;
                     idType nRemovedMaxima=0;
 
                     // Minima
                     {
+                        this->printMsg("Removing unauthorized minima", ttk::debug::Separator::L2);
+
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
                             outputOffsets,
@@ -2447,6 +2391,8 @@ namespace ttk {
 
                     // Maxima
                     {
+                        this->printMsg("Removing unauthorized maxima", ttk::debug::Separator::L2);
+
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
                             outputOffsets,
@@ -2627,20 +2573,19 @@ namespace ttk {
                 int sortDirection = 0;
                 while(true){
 
-                    if(!useRegionBasedIterations){
+                    if(!useRegionBasedIterations)
                         this->printMsg(
                             "Iteration: "+std::to_string(iteration++),
                             ttk::debug::Separator::L2
                         );
-                    } else {
-                        this->printMsg(ttk::debug::Separator::L2);
-                    }
 
                     idType nRemovedMinima=0;
                     idType nRemovedMaxima=0;
 
                     // Minima
                     {
+                        this->printMsg("Removing minima", ttk::debug::Separator::L2);
+
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
                             outputOffsets,
@@ -2683,6 +2628,8 @@ namespace ttk {
 
                     // Maxima
                     {
+                        this->printMsg("Removing maxima", ttk::debug::Separator::L2);
+
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
                             outputOffsets,
