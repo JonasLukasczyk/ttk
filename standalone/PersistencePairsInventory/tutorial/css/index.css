@@ -4,6 +4,50 @@
 ;
     stroke-width: 2px;
 }
+
+.nospace {
+    display: none;
+}
+
+.bin {
+    stroke-width: 0.2 ;
+    stroke: black ;
+}
+
+.histogram_legend_boundary {
+    position: absolute; 
+    top: -42px;
+    right: 12px;
+}
+
+.histogram_viz_boundary {
+    width: 100%;
+    border: thin dotted gray;
+    padding-top: 10px;
+    padding-bottom: 5px;
+}
+
+.tooltipsHist {
+    background: white;
+    opacity: 0.8 ;
+    color: white ;
+    border-radius: 5px ;
+    position: absolute ;
+    z-index: 10 ;
+    visibility: hidden
+}
+
+.tooltipsBoxplot {
+    background: black;
+    opacity: 0.6 ;
+    color: white ;
+    border-radius: 5px ;
+    padding: 10px;
+    position: absolute ;
+    z-index: 10 ;
+    visibility: hidden
+}
+
 .axis path,
 .axis line {
     fill: none;

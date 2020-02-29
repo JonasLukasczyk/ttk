@@ -16,8 +16,8 @@ function drawLegend(data, max_persistence_pairs) {
     // more complicated
     // data processing
     // reduced_data: [(reliability, # of bins), ...]
-    let x_0 = getFloatValue("#my_dataviz_legend", "data-x_0"),
-        x_1 = getFloatValue("#my_dataviz_legend", "data-x_1"),
+    let x_0 = getFloatValue("#histogram_viz_legend", "data-x_0"),
+        x_1 = getFloatValue("#histogram_viz_legend", "data-x_1"),
         width_partition = 20,
         height_partition = 10;
 
@@ -68,9 +68,9 @@ function drawLegend(data, max_persistence_pairs) {
     $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
 
     // define the container and svg
-    d3.select("#my_dataviz_legend *").remove();
+    d3.select("#histogram_viz_legend *").remove();
 
-    let container = d3.select("#my_dataviz_legend")
+    let container = d3.select("#histogram_viz_legend")
         .append("svg")
         .attr("width", containerWidth)
         .attr("height", containerHeight);
@@ -260,7 +260,7 @@ function drawLegend(data, max_persistence_pairs) {
             [values[0], values[1]] = [values[1], values[0]] ;
         }
 
-        $("#my_dataviz_legend").attr("data-x_0", values[0]).attr("data-x_1", values[1]) ;
+        $("#histogram_viz_legend").attr("data-x_0", values[0]).attr("data-x_1", values[1]) ;
         $("#hist-threshold").change() ;
     }
 }

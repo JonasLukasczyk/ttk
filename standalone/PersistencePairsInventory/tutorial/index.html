@@ -80,9 +80,8 @@
                      polygon layer<code>|</code>
                      <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
                      <code> | </code>
-                     <input type="input" style="width: 72px;height: 24px;" placeholder="threshold" id="threshold" value="">
+                     <input type="input" style="width: 130px;height: 24px;" placeholder="boxplot-threshold" id="boxplot-threshold" value="">
                   </li>
-
                   <li>
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#exampleModal" >0-0, 0-0</span>
                      <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
@@ -90,7 +89,6 @@
                   </li>
                   
                </ul>
-
                <div id="box_dataviz" style="width: 100%;border: thin dotted gray;padding-top: 20px;padding-bottom: 5px;"></div>
                <hr>
                <div id='RendererContainer' style="border: thin dotted gray;padding-top: 20px;"></div>
@@ -106,18 +104,20 @@
                   </select></li>
                   <li>Reliability Window: &nbsp;
                      <input type="input" style="width: 64px;height: 24px;" id="rel-window" value="5" onkeydown="rel_window_keydown(event)"> &nbsp;
-                  <li><div id="histogram-notification"
-                     data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
-                     data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
-                <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span></li>
+                  <li>
+                     <div id="histogram-notification"
+                           data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
+                           data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
+                     Notification: <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                  </li>
+                  <li>
+                     <span id="switch_mode" mode="MDM" class="p-1 bg-success text-white rounded" style="font-size:12px;cursor:pointer;">Multi-DM</span>
+                  </li>
                </ul>
 
-               <div id="my_dataviz" style="width: 100%;border: thin dotted gray;padding-top: 20px;padding-bottom: 5px;"></div>
-               <!-- <img style="float:right;" src="./images/colorV2.png"> -->
-               <div id="my_dataviz_distribution"></div>
-               <div id="my_dataviz_distribution_bins"></div>
-               <div id="my_dataviz_distribution_sum"></div>
-               <div id="my_dataviz_legend" style="position: absolute; top: -68px;right: 12px;" data-x_0="0.1" data-x_1="0.9"></div>
+               <div id="MDM_histogram_viz" class="histogram_viz_boundary"></div>
+               <div style="display:none;" id="SDM_histogram_viz" class="histogram_viz_boundary">xx</div>
+               <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.1" data-x_1="0.9"></div>
             </div>
          </div>
       </div>
@@ -128,16 +128,17 @@
 <script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
 <script type="text/javascript" src="./js/legend.js"></script>
 <script type="text/javascript" src="./js/boxplot.js"></script>
+<script type="text/javascript" src="./js/histogram.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script type="text/javascript" src="./OrbitControls.js"></script>
 <script type="text/javascript" src="./vtkRenderer.js"></script>
 <script src="./js/index.js"></script>
 
 <!-- for purpose -->
-<image id="hidden-zoom-back" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-<image id="hidden-brush-mode" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-<image id="hidden-optimal-threshold" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-<image id="hidden-notification_xxyy" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
-<image id="hidden-notification_xxyy-zoom" style="width:0px;height: 0px;" src="./images/zoom_back.png"></image>
+<image id="hidden-zoom-back" class="nospace" src="./images/zoom_back.png"></image>
+<image id="hidden-brush-mode" class="nospace" src="./images/zoom_back.png"></image>
+<image id="hidden-optimal-threshold" class="nospace" src="./images/zoom_back.png"></image>
+<image id="hidden-notification_xxyy" class="nospace" src="./images/zoom_back.png"></image>
+<image id="hidden-notification_xxyy-zoom" class="nospace" src="./images/zoom_back.png"></image>
 </body>
 </html>

@@ -1,5 +1,16 @@
 
- 
+function addSvgLine(svg, x1, y1, x2, y2, transform, className="zero", stroke="black", stroke_width=1) {
+    svg.append("line")
+        .attr("class", className)
+        .attr("x1", x1)
+        .attr("y1", y1)
+        .attr("x2", x2)
+        .attr("y2", y2)
+        .style("stroke", stroke)
+        .style("stroke-width", stroke_width)
+        .attr("transform", transform);
+}
+
 function getArray(n, ratio=1) {
     let ans = [];
     for (let i = 0; i < n; i++) { ans.push("" + ( i * ratio)); }
@@ -62,8 +73,8 @@ function triggerEnterInput(selector) {
 function customColor(reliability, ppi, max_persistence_pairs, default_color="#ffffff") {
     //return customColorV2(reliability, ppi, max_persistence_pairs) ;
     // from light to dark
-    let lower = getFloatValue("#my_dataviz_legend", "data-x_0"),
-        upper = getFloatValue("#my_dataviz_legend", "data-x_1") ;
+    let lower = getFloatValue("#histogram_viz_legend", "data-x_0"),
+        upper = getFloatValue("#histogram_viz_legend", "data-x_1") ;
     let range_color = Window.PPI['color-green'];
     if (reliability >= 0 && reliability < lower) {
         range_color = Window.PPI['color-red'];
