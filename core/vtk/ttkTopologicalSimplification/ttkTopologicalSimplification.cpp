@@ -227,6 +227,7 @@ int ttkTopologicalSimplification::dispatch(
           (int) inputCriticalPointIdArray->GetNumberOfTuples(),
           this->UseRegionBasedIterations,
           this->UseInterleaving,
+          this->EnforceAuthorizedExtrema,
           this->AddPerturbation,
           this->UseDeallocation
         );

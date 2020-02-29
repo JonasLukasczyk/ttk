@@ -11,6 +11,7 @@
 #include <vtkFloatArray.h>
 #include <vtkDoubleArray.h>
 
+#include <ttkMacros.h>
 
 vtkStandardNewMacro(ttkDisambiguate);
 
@@ -68,20 +69,19 @@ int ttkDisambiguate::RequestData(
     // Compute Segmentation Mask
     {
         int status = -1;
-        switch (inputScalars->GetDataType()) {
+        switch(inputScalars->GetDataType()) {
             vtkTemplateMacro(
-                // status = this->removeZeroPersistencePairs(
-                status = this->removeExtremaByPersistence(
+                (status = this->removeExtremaByPersistence<int, VTK_TT>(
                     (VTK_TT*) outputScalars->GetVoidPointer(0),
                     (int*) outputOffsets->GetVoidPointer(0),
 
                     triangulation,
                     (VTK_TT*) inputScalars->GetVoidPointer(0),
-                    (VTK_TT)  this->PersistenceThreshold,
+                    (VTK_TT) this->PersistenceThreshold,
                     this->UseRegionBasedIterations,
                     this->AddPerturbation,
                     this->UseDeallocation
-                )
+                ))
             );
         }
         if(!status)

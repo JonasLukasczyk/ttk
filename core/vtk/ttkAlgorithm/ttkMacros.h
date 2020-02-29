@@ -1,3 +1,5 @@
+#define TTK_COMMA ,
+
 #define ttkVtkTemplateMacroCase( \
 dataType, triangulationType, triangulationClass, call) \
 case triangulationType: { \
