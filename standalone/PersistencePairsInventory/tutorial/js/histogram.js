@@ -62,7 +62,7 @@ function drawHistogram(iComponent, socket) {
     drawLegend(dist_data, max_persistence_pairs) ;
 
     // draw histogram
-    d3.select("#MDM_histogram_viz *").remove() ;
+    d3.select("#histogram_viz *").remove() ;
     let myGroups = getArray( Window.PPI['histogram-width']);
     let myVars = getArray( Window.PPI['histogram-height']);
 
@@ -79,7 +79,7 @@ function drawHistogram(iComponent, socket) {
     } ;
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
-    let container = d3.select("#MDM_histogram_viz")
+    let container = d3.select("#histogram_viz")
         .append("svg")
         .attr("width", containerWidth)
         .attr("height", containerHeight) ;
@@ -136,6 +136,12 @@ function drawHistogram(iComponent, socket) {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("click", function (d, i) {
+            // FLAG
+            if (event.ctrlKey) {  // click & ctrl then selected column to SDM
+
+            }
+
+            console.log("xx", event.ctrlKey) ;
             // SELECT one bin
             Window.PPI['selected-bin-id'] = $(this).attr("id")
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
@@ -294,19 +300,3 @@ $("#hist-threshold").change(function () {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
 });
-
-// switch between SDM and MDM
-$("#switch_mode").unbind().click(function(e) {
-    ele = $(this)
-    if (ele.attr("mode") == "MDM") {
-        ele.attr("mode", "SDM") ;
-        ele.text("Single-DM") ;
-        $("#SDM_histogram_viz").css("display", "block") ;
-        $("#MDM_histogram_viz").css("display", "none") ;
-    } else {
-        ele.attr("mode", "MDM");
-        ele.text("Multi-DM");
-        $("#SDM_histogram_viz").css("display", "none") ;
-        $("#MDM_histogram_viz").css("display", "block") ;
-    }
-}) ;

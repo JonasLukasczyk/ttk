@@ -135,7 +135,6 @@ $(document).keydown(function (e) {
 		var j = Math.floor(g_idx / Window.PPI['histogram-width']);
 		var i = g_idx % Window.PPI['histogram-width'];
 		selected = true;
-		console.log(i, j, e.key);
 	}
 
 	switch (e.key) {
@@ -174,8 +173,5 @@ $(document).keydown(function (e) {
 				}
 			}
 			break;
-
-		default:
-			console.log("do nothing!");
 	}
 });
