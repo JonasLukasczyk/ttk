@@ -141,7 +141,6 @@ function drawHistogram(iComponent, socket) {
 
             }
 
-            console.log("xx", event.ctrlKey) ;
             // SELECT one bin
             Window.PPI['selected-bin-id'] = $(this).attr("id")
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");

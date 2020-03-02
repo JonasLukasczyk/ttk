@@ -2,6 +2,8 @@
 Window.PPI = {
     "DEV": false,
     "selected-bin-id": "",
+    "selected-time": 0,
+    "selected-threshold": 0,
     "APPIAttrName": "",
     "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
     "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
