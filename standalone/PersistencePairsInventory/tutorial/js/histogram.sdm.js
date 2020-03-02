@@ -1,0 +1,181 @@
+// iComponent: for the time index
+// socket: to-do
+function drawSDMHistogram(iComponent, socket) {
+    $("#hist-time").val(iComponent) ;
+    
+    let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
+    let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
+    let fieldData = Window.PPI['image-object']['FieldData'] ;
+
+    max_persistence_pairs = getMaxPersistencePairs(data, nComponents)
+
+    let vData = [];
+    
+    // extract information
+    let window_size = parseInt($("#rel-window").val())
+    let hist_time_idx = iComponent ;
+    for (let i = 0; i < Window.PPI['histogram-height']; i++) {
+        for (let j = 0; j < Window.PPI['sdm-histogram-width']; j++) {
+            let idx = (i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents + j;
+            // (x-axis, y-axis, PPI)
+            vData.push([j + "", i + "", data[idx]]);
+        }
+    }
+
+    // draw histogram
+    d3.select("#sdm-histogram_viz *").remove() ;
+    let myGroups = getArray( Window.PPI['sdm-histogram-width'] );
+    let myVars = getArray( Window.PPI['histogram-height']);
+
+    let containerWidth = 1201;
+    let containerHeight = containerWidth * Window.PPI['histogram-height'] / Window.PPI['sdm-histogram-width'];
+    if (containerHeight > 724) {
+        containerHeight = 724;
+    }
+    let margin = {
+        top: 2,
+        right: 0,
+        bottom: 40,
+        left: 80
+    } ;
+    var width = containerWidth - margin.left - margin.right,
+        height = containerHeight - margin.top - margin.bottom;
+    let container = d3.select("#sdm-histogram_viz")
+        .append("svg")
+        .attr("width", containerWidth)
+        .attr("height", containerHeight) ;
+
+    var svg = container
+                .append("g")
+                .attr("transform",
+                    "translate("+margin.left+", "+margin.top+")")
+                .attr('overflow', 'hidden');
+
+    let x = d3.scaleBand()
+        .range([0, width])
+        .domain(myGroups) ;
+
+    svg.append("g")
+        .attr('class', 'sdm-axis--hist--x')
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x).ticks(2, "s"));
+
+    let y = d3.scaleBand()
+        .range([height, 0])
+        .domain(myVars) ;
+
+    svg.append("g")
+        .attr('class', 'sdm-axis--hist--y')
+        .call(d3.axisLeft(y).ticks(2, "s"));
+
+    let lower = getFloatValue("#histogram_viz_legend", "data-x_0"),
+        upper = getFloatValue("#histogram_viz_legend", "data-x_1") ;
+
+    svg.selectAll()
+        .data(vData)
+        .enter()
+        .append("rect")
+        .attr("class", "sdm-bin")
+        .attr("id", function(d, i) { return "sdm-hist-bin-" + i ; })
+        .attr("x", function (d) {
+            return x(d[0]);
+        })
+        .attr("y", function (d) {
+            return y(d[1])
+        })
+        .attr("title", function(d) { return "PPI:" + d[2] ; })
+        .attr("width", x.bandwidth())
+        .attr("height", y.bandwidth())
+        .style("fill", function (d) {
+            return customColor((lower + upper) / 2, d[2], max_persistence_pairs);
+        })
+
+    // Add y-axis title
+    svg.append("text")
+        .attr("class", "sdm-hist-yaxis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - 42 )
+        .attr("x", 0 - (height / 2))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Scalar") ;
+
+    // dd x-axis title
+    svg.append("text")
+        .attr("class", "sdm-hist-xaxis-title")
+        .attr("y", (height + 24) )
+        .attr("x", (width / 2.5 + 110))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Threshold");
+
+    // reset x-axis, y-axis, TRICKY
+    removeNiceByKicks(".sdm-axis--hist--x g") ;
+    removeNiceByKicks(".sdm-axis--hist--y g") ;
+
+    // cover the shadow
+    let threshold_idx = parseInt($("#hist-threshold").val())
+    var idx_first = x(threshold_idx)
+    var idx_sec = threshold_idx + parseFloat($("#rel-window").val());
+    
+    idx_sec = x(idx_sec);
+
+    svg.append("rect")
+        .attr("class", "zero")
+        .attr("x", idx_first)
+        .attr("y", 0)
+        .attr("height", height)
+        .attr("width", idx_sec - idx_first)
+        .style("fill", "none")
+        .style("stroke-width", 1)
+        .style("stroke", "rgb(0,0,0)")
+        .attr("transform", "translate(0, 0)");
+
+    // Add extra column
+    // extract information
+    relData = []
+    for (let i = 0; i < Window.PPI['histogram-height']; i++) {
+        let items = data.slice((i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents, (i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents + nComponents);
+        let cal = calculateReliability(items, threshold_idx, window_size) ;
+        relData.push([i, cal, items[threshold_idx]]);
+    }
+
+    let xAPPI = d3.scaleBand()
+        .range([0, x.bandwidth()])  // [0, x.bandwidth()]
+        .domain(["0"]) ;
+
+    let yAPPI = d3.scaleBand()
+        .range([height, 0])
+        .domain(myVars) ;
+
+        var sdm_svg = container
+                    .append("g")
+                    .attr("transform",
+                        "translate("+10+", "+margin.top+")")
+                    .attr('overflow', 'hidden');
+                    sdm_svg.selectAll()
+        .data(relData)
+        .enter()
+        .append("rect")
+        .attr("class", "sdm-vertical-bin")
+        .attr("id", function(d, i) { return "sdm-vertical-hist-bin-" + i ; })
+        .attr("x", function (d) {
+            return xAPPI("0");
+        })
+        .attr("y", function (d) {
+            return yAPPI(d[0])
+        })
+        .attr("width", xAPPI.bandwidth())
+        .attr("height", yAPPI.bandwidth())
+        .style("fill", function (d) {
+            return customColor(d[1], d[2], max_persistence_pairs);
+    })
+}
+
+$("#hist-time").change(function () {
+    $("#hist-time option:selected").each(function () {
+        drawSDMHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+    });
+});

@@ -8,22 +8,7 @@ d3.select("body")
     .style("height", "160px")
     .style("padding-top", "4px");
 
-
-// items: the # of bins over threshold, in the test dataset, it would be 50
-// iComponent: the start index of calculating, the range of the calculated window would be [iCompent, iCompent + window.size] 
-function calculateReliability(items, iComponent, windowSize) {
-    var sliceItems = items.slice(iComponent, iComponent + windowSize), sum = 0;
-    for (var i = 0; i < sliceItems.length; i++) {
-        sum += sliceItems[i];
-    }
-    if (Math.max(...sliceItems) === 0) {
-        return 1;
-    }
-    // get the multiple trpezoid area
-    return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
-}
-
-// iComponent: used for determining the # of bins and start point of the shade window
+// iComponent: for the threshold index
 // socket: webSocketIO object
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket) {
@@ -31,17 +16,7 @@ function drawHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    // get the max PPI since iComponents
-    // cut off the part where threshold is less than $("#boxplot-threshold").val() 
-    let startIdx = $("#boxplot-threshold").val().replace(" ", "") === "" ? 0: 
-                        Math.ceil(parseFloat($("#boxplot-threshold").val()) / (Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']));
-
-    var max_persistence_pairs = 0 ;
-    for (let i = 0; i < data.length; i++) {
-        if (i % nComponents >= startIdx && data[i] > max_persistence_pairs) {
-            max_persistence_pairs = data[i] ;
-        }
-    }
+    max_persistence_pairs = getMaxPersistencePairs(data, nComponents)
 
     let vData = [];
     let dist_data = [] ;
@@ -138,7 +113,8 @@ function drawHistogram(iComponent, socket) {
         .on("click", function (d, i) {
             // FLAG
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
-
+                
+                return ;
             }
 
             // SELECT one bin
@@ -293,7 +269,8 @@ $('#rel-window').on('keypress', function (e) {
 $("#hist-threshold").change(function () {
     $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
-    drawHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: ttk.getSocketObject()); });
+        drawHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+    });
     $('#histogram-view-container').plainOverlay('hidden');
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;

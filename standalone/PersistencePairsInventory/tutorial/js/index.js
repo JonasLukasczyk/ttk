@@ -2,13 +2,12 @@
 Window.PPI = {
     "DEV": false,
     "selected-bin-id": "",
-    "selected-time": 0,
-    "selected-threshold": 0,
     "APPIAttrName": "",
     "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
     "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
     "color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
-    "histogram-width": 0,
+	"histogram-width": 0,
+	"sdm-histogram-width": 0,
     "histogram-height": 0,
     "image-object": null,
     "numberOfThreshold-histogram": 0,
@@ -18,7 +17,9 @@ Window.PPI = {
         "box_box": false,
         "box_polygon": true,
         "box_optimal": false
-    }
+	},
+	"max_persistence_pairs": {},
+	"histogram-mode": "multi", // multi or single
 } ;
 
 let ttk, ttk_render;
@@ -31,14 +32,15 @@ function objectCallback(msg) {
     }
     // MUST be ImageData
     // initialize the global variable 
-    Window.PPI['histogram-width'] = msg.Extent.Values[1] + 1 ;
+	Window.PPI['histogram-width'] = msg.Extent.Values[1] + 1 ;
     Window.PPI['histogram-height'] = msg.Extent.Values[3] + 1 ;
     Window.PPI['image-object'] = msg ;
     // MUST contain one element
     Window.PPI['APPIAttrName'] = Object.keys(msg.PointData)[0] ;
     Window.PPI['numberOfThreshold-histogram'] = msg.PointData[Window.PPI['APPIAttrName']].NumberOfComponents ;
     Window.PPI['numberOfThreshold-boxplot'] = msg.FieldData.PersistenceCurves.NumberOfComponents ;
-    Window.PPI['image-object'] = msg ;
+	Window.PPI['image-object'] = msg ;
+	Window.PPI['sdm-histogram-width'] = Window.PPI['numberOfThreshold-histogram'] ;
 
     // clear action
     d3.select("#box_dataviz *").remove() ;
@@ -59,6 +61,7 @@ function objectCallback(msg) {
     $("[name='box_box']").attr("visibility", "hidden");    
     // END clear action
 
+	// fill in the histogram multi-view
     $("#hist-threshold").html("");
     $("#hist-threshold").attr("title", "");
     $('#hist-threshold').attr("title", 'for ' + Window.PPI['APPIAttrName']);
@@ -67,7 +70,14 @@ function objectCallback(msg) {
     }
     $("#rel-window").attr("title", "range: [2 - " + msg['PointData'][Window.PPI['APPIAttrName']].NumberOfComponents + "]") ;
     drawHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
-    triggerEnterInput("#rel-window") ;
+	triggerEnterInput("#rel-window") ;
+	
+	// fill in the histogram single-view
+	$("#hist-time").html("");
+    for (let vv = 0; vv < Window.PPI['histogram-width']; vv++) {
+        $('#hist-time').append('<option class="sdm-histogram-selector" value=' + vv + '>' + vv + '</option>');
+    }
+    drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
 
     $('body').plainOverlay('hide');
 }
@@ -140,6 +150,21 @@ $(document).keydown(function (e) {
 	}
 
 	switch (e.key) {
+		case "v":
+			if (Window.PPI['histogram-mode'] == "multi") {
+				Window.PPI['histogram-mode'] = "single" ;
+				$("#histogram-view-container").css("display", "none") ;
+				$("#sdm-histogram-view-container").css("display", "block") ;
+				drawSDMHistogram(0, 
+								 Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+			} else {
+				Window.PPI['histogram-mode'] = "multi" ;
+				$("#histogram-view-container").css("display", "block") ;
+				$("#sdm-histogram-view-container").css("display", "none") ;
+				drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+			}
+			break ;
+
 		case "b":
 			$("#hidden-brush-mode").click();
 			break;

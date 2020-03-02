@@ -115,6 +115,17 @@
                <div id="histogram_viz" class="histogram_viz_boundary"></div>
                <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.1" data-x_1="0.9"></div>
             </div>
+
+            <div class="text-justify p-2 border bg-light" style="height: 100%;display:none;" id="sdm-histogram-view-container">
+               <h4>Histogram View</h4>
+               <ul>
+                  <li>Time:&nbsp;<select id="hist-time">
+                     <option> - </option>
+                  </select></li>
+               </ul>
+
+               <div id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
+            </div>
          </div>
       </div>
    </div>
@@ -125,6 +136,7 @@
 <script type="text/javascript" src="./js/legend.js"></script>
 <script type="text/javascript" src="./js/boxplot.js"></script>
 <script type="text/javascript" src="./js/histogram.js"></script>
+<script type="text/javascript" src="./js/histogram.sdm.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script type="text/javascript" src="./OrbitControls.js"></script>
 <script type="text/javascript" src="./vtkRenderer.js"></script>

@@ -14,6 +14,16 @@
     stroke: black ;
 }
 
+.sdm-bin {
+    stroke-width: 0.2 ;
+    stroke: black ;
+}
+
+.sdm-vertical-bin {
+    stroke-width: 0.2 ;
+    stroke: black ;
+}
+
 .histogram_legend_boundary {
     position: absolute; 
     top: -64px;

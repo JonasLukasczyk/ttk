@@ -1,4 +1,38 @@
 
+function getMaxPersistencePairs(data, nComponents) {
+    // data: image-object => PointData => PersistencePairInventory
+    // get the max PPI since iComponents
+    // cut off the part where threshold is less than $("#boxplot-threshold").val() 
+    let startIdx = $("#boxplot-threshold").val().replace(" ", "") === "" ? 0: 
+                        Math.ceil(parseFloat($("#boxplot-threshold").val()) / (Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']));
+
+    if ( Window.PPI["max_persistence_pairs"].hasOwnProperty(startIdx) ) {
+        return Window.PPI["max_persistence_pairs"][startIdx] ;
+    } 
+    var max_persistence_pairs = 0 ;
+    for (let i = 0; i < data.length; i++) {
+        if (i % nComponents >= startIdx && data[i] > max_persistence_pairs) {
+            max_persistence_pairs = data[i] ;
+        }
+    }
+    Window.PPI["max_persistence_pairs"][startIdx] = max_persistence_pairs ;
+    return max_persistence_pairs
+}
+
+// items: the # of bins over threshold, in the test dataset, it would be 50
+// iComponent: the start index of calculating, the range of the calculated window would be [iCompent, iCompent + window.size] 
+function calculateReliability(items, iComponent, windowSize) {
+    var sliceItems = items.slice(iComponent, iComponent + windowSize), sum = 0;
+    for (var i = 0; i < sliceItems.length; i++) {
+        sum += sliceItems[i];
+    }
+    if (Math.max(...sliceItems) === 0) {
+        return 1;
+    }
+    // get the multiple trpezoid area
+    return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
+}
+
 function addSvgLine(svg, x1, y1, x2, y2, transform, className="zero", stroke="black", stroke_width=1) {
     svg.append("line")
         .attr("class", className)
@@ -60,6 +94,7 @@ function triggerEnterInput(selector) {
     e.keyCode = 13;
     $(selector).trigger(e);
 }
+
 
 /**
  * return the color
