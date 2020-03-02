@@ -16,13 +16,14 @@ namespace ttk {
   struct Propagation {
 
     // union find members
-    Propagation<idType>* parent{nullptr};
+    Propagation<idType>* parent{this};
 
     std::vector<Propagation<idType>*> childBranches;
     Propagation<idType>* parentBranch{nullptr};
     int rank{0};
     signed char terminated{0};
-    signed char temp{0};
+    signed char simplified{0};
+    signed char persistent{0};
     mutable idType nIterations{0};
 
     std::vector<idType> saddles;
@@ -45,7 +46,7 @@ namespace ttk {
     // };
 
     inline Propagation *find(){
-        if(this->parent == nullptr)
+        if(this->parent == this)
             return this;
         else {
             auto tmp = this->parent->find();
@@ -88,17 +89,10 @@ namespace ttk {
 
     static inline Propagation<idType>* unify2(
         Propagation<idType>* uf0,
-        Propagation<idType>* uf1,
-        const idType* offsets
+        Propagation<idType>* uf1
     ){
         Propagation<idType>* master = uf0->find();
         Propagation<idType>* slave  = uf1->find();
-
-        if(offsets[master->extremumIndex]<offsets[slave->extremumIndex]){
-            Propagation<idType>* temp = master;
-            master = slave;
-            slave  = temp;
-        }
 
         // update union find tree
         slave->setParent(master);
@@ -110,7 +104,7 @@ namespace ttk {
         // merge f. heaps
         master->queue.merge(slave->queue);
 
-        // merge region sized
+        // merge region sizes
         master->regionSize += slave->regionSize;
 
         // mark both as not terminated
@@ -122,17 +116,10 @@ namespace ttk {
 
     static inline Propagation<idType>* unify3(
         Propagation<idType>* uf0,
-        Propagation<idType>* uf1,
-        const idType* offsets
+        Propagation<idType>* uf1
     ){
         Propagation<idType>* master = uf0->find();
         Propagation<idType>* slave  = uf1->find();
-
-        if(offsets[master->extremumIndex]<offsets[slave->extremumIndex]){
-            Propagation<idType>* temp = master;
-            master = slave;
-            slave  = temp;
-        }
 
         // update union find tree
         slave->setParent(master);
@@ -141,7 +128,7 @@ namespace ttk {
         slave->parentBranch = master;
         master->childBranches.push_back(slave);
 
-        // merge region sized
+        // merge region sizes
         master->regionSize += slave->regionSize;
 
         // mark both as not terminated

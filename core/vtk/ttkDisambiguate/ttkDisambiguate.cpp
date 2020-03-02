@@ -79,6 +79,7 @@ int ttkDisambiguate::RequestData(
                     (VTK_TT*) inputScalars->GetVoidPointer(0),
                     (VTK_TT) this->PersistenceThreshold,
                     this->UseRegionBasedIterations,
+                    this->UseInterleaving,
                     this->AddPerturbation,
                     this->UseDeallocation
                 ))

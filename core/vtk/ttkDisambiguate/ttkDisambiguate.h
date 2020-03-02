@@ -37,6 +37,7 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
     private:
         bool AddPerturbation{false};
         bool UseRegionBasedIterations{false};
+        bool UseInterleaving{false};
         bool UseDeallocation{false};
         double PersistenceThreshold{0};
 
@@ -46,6 +47,8 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
         vtkGetMacro(AddPerturbation, bool);
         vtkSetMacro(UseRegionBasedIterations, bool);
         vtkGetMacro(UseRegionBasedIterations, bool);
+        vtkSetMacro(UseInterleaving, bool);
+        vtkGetMacro(UseInterleaving, bool);
         vtkSetMacro(UseDeallocation, bool);
         vtkGetMacro(UseDeallocation, bool);
         vtkGetMacro(PersistenceThreshold,double);

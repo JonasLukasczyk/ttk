@@ -35,6 +35,11 @@
                 <Documentation>TODO</Documentation>
             </IntVectorProperty>
 
+            <IntVectorProperty name="UseInterleaving" command="SetUseInterleaving" label="UseInterleaving" number_of_elements="1" default_values="0">
+                <BooleanDomain name="bool"/>
+                <Documentation>TODO</Documentation>
+            </IntVectorProperty>
+
             <IntVectorProperty name="UseDeallocation" command="SetUseDeallocation" label="Use explicit memory de-allocation" number_of_elements="1" default_values="0">
                 <BooleanDomain name="bool"/>
                 <Documentation>TODO</Documentation>
