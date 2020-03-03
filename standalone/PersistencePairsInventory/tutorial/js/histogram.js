@@ -112,8 +112,9 @@ function drawHistogram(iComponent, socket) {
         })
         .on("click", function (d, i) {
             // FLAG
-            if (event.ctrlKey) {  // click & ctrl then selected column to SDM
-                
+            // alt + click
+            if (event.altKey) {  // click & ctrl then selected column to SDM
+                alert("alt + click") ;
                 return ;
             }
 
