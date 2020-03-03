@@ -12,11 +12,11 @@
    <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
-<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="boxplotRange" tabindex="-1" role="dialog" aria-labelledby="boxplotRangeLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
       <div class="modal-content">
          <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">change the range of x-axis, y-axis </h5>
+            <h5 class="modal-title" id="boxplotRangeLabel">change the range of x-axis, y-axis </h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                <span aria-hidden="true">&times;</span>
             </button>
@@ -25,8 +25,29 @@
             <input type="input" placeholder="1-60, 1-100" id="x-y-range-change" value="">
          </div>
          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="exampleModalLabel-close">Close</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="boxplotRangeLabel-close">Close</button>
             <button type="button" class="btn btn-primary" id="save-xy-axis">Save changes</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+<div class="modal fade" id="histRescaleCustom" tabindex="-1" role="dialog" aria-labelledby="histRescaleCustomLabel" aria-hidden="true">
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="histRescaleCustomLabel">reScale to the custom range</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <input type="input" placeholder="lower" id="histRescaleCustomLower" value="">
+            <input type="input" placeholder="upper" id="histRescaleCustomUpper" value="">
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="histRescaleCustom-close">Close</button>
+            <button type="button" class="btn btn-primary" id="histRescaleCustom">Save changes</button>
          </div>
       </div>
    </div>
@@ -79,11 +100,11 @@
                      <input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">
                      polygon layer<code>|</code>
                      <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
-                     <code> | </code>
-                     <input type="input" style="width: 130px;height: 24px;" placeholder="boxplot-threshold" id="boxplot-threshold" value="">
+                     <!-- <code> | </code>
+                     <input type="input" style="width: 130px;height: 24px;" placeholder="boxplot-threshold" id="boxplot-threshold" value=""> -->
                   </li>
                   <li>
-                     <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#exampleModal" >0-0, 0-0</span>
+                     <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span>
                      <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
                      <image id="box_zoom_back" style="width:20px;" src="./images/zoom_back.png"></image>
                   </li>
@@ -99,9 +120,13 @@
             <div class="text-justify p-2 border bg-light" style="height: 100%;" id="histogram-view-container">
                <h4>Histogram View</h4>
                <ul>
-                  <li>Threshold:&nbsp;<select id="hist-threshold" title="*">
-                     <option> - </option>
-                  </select></li>
+                  <li>Threshold:&nbsp;
+                     <select id="hist-threshold" title="*">
+                        <option> - </option>
+                     </select>
+                     <span id="hist-rescale" class="p-1 bg-success text-white rounded" style="font-size:10px;cursor:pointer;" >reScale</span>
+                     <span id="hist-rescale-custom" class="p-1 bg-success text-white rounded" style="font-size:10px;cursor:pointer;" data-toggle="modal" data-target="#histRescaleCustom">reScale range</span>
+                  </li>
                   <li>Reliability Window: &nbsp;
                      <input type="input" style="width: 64px;height: 24px;" id="rel-window" value="5" onkeydown="rel_window_keydown(event)"> &nbsp;
                   <li>
@@ -145,8 +170,11 @@
 <!-- for purpose -->
 <image id="hidden-zoom-back" class="nospace" src="./images/zoom_back.png"></image>
 <image id="hidden-brush-mode" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-optimal-threshold" class="nospace" src="./images/zoom_back.png"></image>
+<!-- <image id="hidden-optimal-threshold" class="nospace" src="./images/zoom_back.png"></image> -->
+
+<!-- automatically fill-in the xxyy input value -->
 <image id="hidden-notification_xxyy" class="nospace" src="./images/zoom_back.png"></image>
+<!-- implement clicking event -->
 <image id="hidden-notification_xxyy-zoom" class="nospace" src="./images/zoom_back.png"></image>
 </body>
 </html>

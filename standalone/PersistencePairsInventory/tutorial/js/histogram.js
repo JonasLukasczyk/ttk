@@ -16,7 +16,7 @@ function drawHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    max_persistence_pairs = getMaxPersistencePairs(data, nComponents)
+    max_persistence_pairs = getMaxPersistencePairs()
 
     let vData = [];
     let dist_data = [] ;
@@ -97,6 +97,7 @@ function drawHistogram(iComponent, socket) {
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
         .style("fill", function (d) {
+            // if the range is customed, ignore the max_persistence_pairs
             return customColor(d[5], d[2], max_persistence_pairs);
         })
         .on("mouseover", function (d, i) {
@@ -215,13 +216,22 @@ function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs
         .style("opacity", 0.3)
         .attr("transform", "translate(28, 0)");
 
+    let lower = 0, upper = 0 ;
+    if (Window.PPI['max_persistence_pairs']['is_custom']) {
+        let lower = Window.PPI['max_persistence_pairs']['custom_lower'] ;
+        let upper = Window.PPI['max_persistence_pairs']['custom_upper'] ;
+    } else {
+        lower = 0 ;
+        upper = max_persistence_pairs ;
+    }
+
     svg.append("text")
         .attr("x", 132)
         .attr("y", 16)
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .style("font-family", "sans-serif")
-        .text("reliability: " + reliability.toFixed(2) + ", max_PPI: " + max_persistence_pairs + ", PPI: " + pp);
+        .text("reliability: " + reliability.toFixed(2) + ", range PPI: (" + lower + ", "+ upper+ ")" + ", PPI: " + pp);
 
     svg.append("g")
         .attr("transform", "translate(28, 136)")
@@ -277,3 +287,10 @@ $("#hist-threshold").change(function () {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
 });
+
+$("#hist-rescale").unbind().click(function() {
+    Window.PPI['max_persistence_pairs']['is_custom'] = true ;
+    Window.PPI['max_persistence_pairs']['custom_upper'] = getMaxPersistencePairs() ;
+    Window.PPI['max_persistence_pairs']['custom_lower'] = 0 ;
+
+}) ;

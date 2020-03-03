@@ -187,18 +187,18 @@ function drawBoxplotCurve(numberofcomponents, data) {
     drawPolygon();
     drawLine();
 
-    function drawOptimalLine(idx) {
-        // a few features for the box
-        main.append("line")
-            .attr("name", "box_optimal")
-            .attr("class", "optimal-threshold")
-            .attr("x1", xScale(idx))
-            .attr("y1", 0)
-            .attr("x2", xScale(idx))
-            .attr("y2", Window.box_plot_config.containerHeight)
-            .style("stroke", "green")
-            .style("stroke-width", 5);
-    }
+    // function drawOptimalLine(idx) {
+    //     // a few features for the box
+    //     main.append("line")
+    //         .attr("name", "box_optimal")
+    //         .attr("class", "optimal-threshold")
+    //         .attr("x1", xScale(idx))
+    //         .attr("y1", 0)
+    //         .attr("x2", xScale(idx))
+    //         .attr("y2", Window.box_plot_config.containerHeight)
+    //         .style("stroke", "green")
+    //         .style("stroke-width", 5);
+    // }
 
     function brushended() {
         var s = d3.event.selection;
@@ -210,8 +210,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
             svg.select(".brush").call(brush.move, null);
         }
         zoom();
-
-        $("#hidden-optimal-threshold").click();
+        
+        // $("#hidden-optimal-threshold").click();
         $("#hidden-notification_xxyy").click();
     }
 
@@ -220,16 +220,16 @@ function drawBoxplotCurve(numberofcomponents, data) {
         yScale.domain(Window.box_plot_config.y_domain);
         zoom();
 
-        $("#hidden-optimal-threshold").click();
+        // $("#hidden-optimal-threshold").click();
         $("#hidden-notification_xxyy").click();
     });
 
-    $("#hidden-optimal-threshold").unbind().click(function () {
-        d3.select(".optimal-threshold").remove();
-        if ($("#boxplot-threshold").val().replace(" ", "") !== "") {
-            drawOptimalLine(parseFloat($("#boxplot-threshold").val()));
-        }
-    });
+    // $("#hidden-optimal-threshold").unbind().click(function () {
+    //     d3.select(".optimal-threshold").remove();
+    //     if ($("#boxplot-threshold").val().replace(" ", "") !== "") {
+    //         drawOptimalLine(parseFloat($("#boxplot-threshold").val()));
+    //     }
+    // });
 
     $("#customSwitches--x").unbind().click(function () {
         if ($("#customSwitches--x").is(':checked')) {
@@ -296,8 +296,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         zoom();
 
         $("#hidden-notification_xxyy").click();
-        $("#exampleModalLabel-close").click();
-        $("#hidden-optimal-threshold").click();
+        $("#boxplotRangeLabel-close").click();
+        // $("#hidden-optimal-threshold").click();
     });
 
     function zoom() {
@@ -630,33 +630,33 @@ $("#brush_mode").unbind().click(function() {
     $("#hidden-brush-mode").click(); 
 }) ;
 
-$('#boxplot-threshold').on('keypress', function (e) {
-    if (e.which === 13) {
-        if ($(this).val().replace(" ", "") == "") {
-            $("#hist-threshold").val("0").change();
-            $(".histogram-selector").prop("disabled", false);
-            d3.select(".optimal-threshold").remove();
-        } else if (isNaN($(this).val())) {
-            alert("this is not valid number");
-        } else {
-            // interaction with histogram View
-            if (Window.PPI['numberOfThreshold-boxplot'] && Window.PPI['numberOfThreshold-histogram']) {
-                let v = Math.ceil(parseFloat($(this).val()) / (Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']));
-                $(".histogram-selector").each(function () {
-                    if (parseInt($(this).val()) < v) {
-                        $(this).prop("disabled", true);
-                    } else {
-                        $(this).prop("disabled", false);
-                    }
-                });
-                $("#hist-threshold").val("" + v).change();
-                $("#hidden-optimal-threshold").click();
-            }
-        }
-    }
-});
+// $('#boxplot-threshold').on('keypress', function (e) {
+//     if (e.which === 13) {
+//         if ($(this).val().replace(" ", "") == "") {
+//             $("#hist-threshold").val("0").change();
+//             $(".histogram-selector").prop("disabled", false);
+//             d3.select(".optimal-threshold").remove();
+//         } else if (isNaN($(this).val())) {
+//             alert("this is not valid number");
+//         } else {
+//             // interaction with histogram View
+//             if (Window.PPI['numberOfThreshold-boxplot'] && Window.PPI['numberOfThreshold-histogram']) {
+//                 let v = Math.ceil(parseFloat($(this).val()) / (Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']));
+//                 $(".histogram-selector").each(function () {
+//                     if (parseInt($(this).val()) < v) {
+//                         $(this).prop("disabled", true);
+//                     } else {
+//                         $(this).prop("disabled", false);
+//                     }
+//                 });
+//                 $("#hist-threshold").val("" + v).change();
+//                 $("#hidden-optimal-threshold").click();
+//             }
+//         }
+//     }
+// });
 
-$('#exampleModal').on('show.bs.modal', function (event) {
+$('#boxplotRange').on('show.bs.modal', function (event) {
     $("#x-y-range-change").val($("#notification_xxyy").text());
 });
 

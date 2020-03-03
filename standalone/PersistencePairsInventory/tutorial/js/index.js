@@ -18,7 +18,12 @@ Window.PPI = {
         "box_polygon": true,
         "box_optimal": false
 	},
-	"max_persistence_pairs": {},
+    "max_persistence_pairs": {
+        "is_custom": false,
+        "custom_upper": -1, 
+        "custom_lower": -1, 
+        // based on each frame
+    },  
 	"histogram-mode": "multi", // multi or single
 } ;
 
@@ -51,7 +56,7 @@ function objectCallback(msg) {
     $("#boxplot-select-lines").html("<option>lines</option>");
     $("#boxplot-checkbox-polygon").prop("checked", true);
     $("#download_raw_data").attr("href", "") ;
-    $("#boxplot-threshold").val("");
+    // $("#boxplot-threshold").val("");
     $("#notification_xxyy").text("0-0, 0-0");
     $("#brush_mode").text("view mode").attr("mode", "view");
     drawBoxplotCurve(msg.FieldData.PersistenceCurves.NumberOfComponents, msg.FieldData.PersistenceCurves.Values);

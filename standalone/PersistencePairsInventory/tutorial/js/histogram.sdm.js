@@ -7,7 +7,7 @@ function drawSDMHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    max_persistence_pairs = getMaxPersistencePairs(data, nComponents)
+    max_persistence_pairs = getMaxPersistencePairs()
 
     let vData = [];
     
