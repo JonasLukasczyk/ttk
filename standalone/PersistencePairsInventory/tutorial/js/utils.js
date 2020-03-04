@@ -37,14 +37,28 @@ function getRangeOfPPI() {
 // iComponent: the start index of calculating, the range of the calculated window would be [iCompent, iCompent + window.size] 
 function calculateReliability(items, iComponent, windowSize) {
     var sliceItems = items.slice(iComponent, iComponent + windowSize), sum = 0;
-    for (var i = 0; i < sliceItems.length; i++) {
-        sum += sliceItems[i];
-    }
+    
     if (Math.max(...sliceItems) === 0) {
         return 1;
     }
+
+    tmp = getRangeOfPPI()
+    let lower = tmp[0] ;
+    let upper = tmp[1] ;
+    var ppi = 0;
+    for (var i = 0; i < sliceItems.length; i ++) {
+        if ( sliceItems[i] > 4) {
+            console.log(ppi)
+        }
+        sliceItems[i] = Math.min(upper, sliceItems[i])
+        sliceItems[i] = Math.max(lower, ppi)
+    }
+    for (var i = 0; i < sliceItems.length; i++) {
+        sum += sliceItems[i];
+    }
     // get the multiple trpezoid area
-    return ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
+    let rel = ( 2 * sum - sliceItems[0] - sliceItems[sliceItems.length - 1] ) / ( ( sliceItems.length - 1 )  * Math.max(...sliceItems) * 2 );
+    return rel;
 }
 
 function addSvgLine(svg, x1, y1, x2, y2, transform, className="zero", stroke="black", stroke_width=1) {
@@ -139,23 +153,12 @@ function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, gr
     if (ppi === 0) {  // special for PPI == 0
         return default_color ;
     } else {
-        if (Window.PPI['persistence_pairs_range']['is_custom']) {  // based on custom
-            let lower = Window.PPI['persistence_pairs_range']['custom_lower'] ;
-            let upper = Window.PPI['persistence_pairs_range']['custom_upper'] ;
-            if ( ppi <= lower ) {
-                return range_color[0]
-            } else if ( ppi > upper ) {
-                return range_color[4]
-            } else {
-                return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];    
-            }
-        } else { // based on current threshold
-            // (a, b]
-            tmp = getRangeOfPPIByThreshold();
-            let lower = tmp[0] ;
-            let upper = tmp[1] ;
-            return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];  
-        }
+        tmp = getRangeOfPPI()
+        let lower = tmp[0] ;
+        let upper = tmp[1] ;
+        ppi = Math.min(upper, ppi)
+        ppi = Math.max(lower + 0.01, ppi)
+        return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];    
     }
 }
 
