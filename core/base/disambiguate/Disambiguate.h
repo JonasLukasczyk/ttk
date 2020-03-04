@@ -58,7 +58,8 @@ namespace ttk {
                 const idType* rank2,
                 const idType& nVertices,
 
-                std::tuple<idType,idType,idType>* sortedIndicesCopy = nullptr
+                std::tuple<idType,idType,idType>* sortedIndicesCopy = nullptr,
+                idType* sortedIndicesCopyII = nullptr
             ) const {
                 ttk::Timer timer;
 
@@ -103,6 +104,13 @@ namespace ttk {
                         const idType& v = std::get<2>(sortedIndices[i]);
                         outputOffsets[v] = i;
                         std::get<2>(sortedIndicesCopy[i]) = v;
+                    }
+                } else if(sortedIndicesCopyII) {
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType i=0; i<nVertices; i++){
+                        const idType& v = std::get<2>(sortedIndices[i]);
+                        outputOffsets[v] = i;
+                        sortedIndicesCopyII[i] = v;
                     }
                 } else {
                     #pragma omp parallel for num_threads(this->threadNumber_)
@@ -265,16 +273,31 @@ namespace ttk {
                 idType* outputOffsets,
                 idType* inputOffsets,
 
-                const idType& nVertices
+                const idType& nVertices,
+
+                idType* sortedIndices = nullptr
             ) const {
                 ttk::Timer timer;
                 this->printMsg("Inverting fields",0,0,this->threadNumber_,debug::LineMode::REPLACE);
 
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++){
-                    idType& outputOffsetV = outputOffsets[v];
-                    inputOffsets[v] = -outputOffsetV;
-                    outputOffsetV = -outputOffsetV;
+                if(!sortedIndices){
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType v=0; v<nVertices; v++){
+                        idType& outputOffsetV = outputOffsets[v];
+                        inputOffsets[v] = -outputOffsetV;
+                        outputOffsetV = -outputOffsetV;
+                    }
+                } else {
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType v=0; v<nVertices; v++){
+                        idType& outputOffsetV = outputOffsets[v];
+                        inputOffsets[v] = -outputOffsetV;
+                        outputOffsetV = -outputOffsetV;
+                    }
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType v=0; v<nVertices/2; v++){
+                        std::swap(sortedIndices[v], sortedIndices[nVertices-v-1]);
+                    }
                 }
 
                 this->printMsg("Inverting fields",1,timer.getElapsedTime(),this->threadNumber_);
@@ -493,18 +516,7 @@ namespace ttk {
                         regionMask[extremumIndex] = extremumIndex;
 
                         if(propagationMask[extremumIndex]->find()!=propagation){
-                            this->printMsg("WHAT");
-                        }
-
-                        const idType& saddleIndex = propagation->lastEncounteredCriticalPoint;
-                        idType nNeighbors = triangulation->getVertexNeighborNumber(saddleIndex);
-                        for(idType n=0; n<nNeighbors; n++){
-                            idType u;
-                            triangulation->getVertexNeighbor(saddleIndex,n,u);
-                            if(propagationMask[u]!=nullptr && propagationMask[u]->find()==propagation){
-                                // queue[queueIndex++]=u;
-                                // regionMask[u] = extremumIndex;
-                            }
+                            this->printErr("WHAT");
                         }
                     }
 
@@ -842,7 +854,8 @@ namespace ttk {
                 idType& nActivePropagations,
 
                 const ttk::Triangulation* triangulation,
-                const idType* offsets
+                const idType* offsets,
+                const idType& escapeInterval
             ) const {
 
                 // pointer used to compare against representative
@@ -914,12 +927,8 @@ namespace ttk {
                         }
 
                         // if this thread did not register the last remaining larger vertices then terminate propagation
-                        if(numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1){
-                            #pragma omp atomic update
-                            nActivePropagations--;
-
+                        if(numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1)
                             return 1;
-                        }
 
                         // get most persistent branch
                         this->getSaddlePropagations<idType>(
@@ -948,7 +957,7 @@ namespace ttk {
                     currentPropagation->regionSize++;
                     propagationMask[v] = currentPropagation;
 
-                    if(counter++>1000){
+                    if(counter++>escapeInterval){
                         counter = 0;
 
                         idType nActivePropagations_;
@@ -961,8 +970,6 @@ namespace ttk {
                         }
                     }
                 }
-
-                this->printMsg("GM");
 
                 // if thread reached the global minimum finish propagation
                 currentPropagation->terminated = 1;
@@ -1204,7 +1211,8 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* inputOffsets,
                 const dataType* scalars,
-                const dataType& persistenceThreshold
+                const dataType& persistenceThreshold,
+                const idType& escapeInterval
             ) const {
 
                 // pointer used to compare against representative
@@ -1320,7 +1328,7 @@ namespace ttk {
                     if(currentPropagation->persistent==1)
                         return 1;
 
-                    if(counter++>1000){
+                    if(counter++>TODO_TASKSUBDIVISION){
                         counter = 0;
 
                         idType nActivePropagations_;
@@ -1330,6 +1338,15 @@ namespace ttk {
                         if(nActivePropagations_==1){
                             currentPropagation->terminated = 1;
                             return 1;
+                        } else if (currentPropagation->persistent==0){
+                            const dataType persistence = elderScalar>scalars[v]
+                                ? elderScalar-scalars[v]
+                                : scalars[v]-elderScalar;
+                            if(persistence>persistenceThreshold){
+                                // this->printErr("ESC");
+                                currentPropagation->persistent = 1;
+                                return 1;
+                            }
                         }
                     }
                 }
@@ -1349,7 +1366,7 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* saddleMask,
                 const idType* offsets,
-                const std::vector<std::tuple<idType,idType,idType>>& sortedIndices
+                const idType* sortedIndices
             ) const {
                 ttk::Timer timer;
                 this->printMsg(
@@ -1365,10 +1382,8 @@ namespace ttk {
                 idType trunkIndex;
 
                 // get largest unfinished propagation
-                for(trunkIndex=0; trunkIndex<nVertices; trunkIndex++){
-                    const idType& v = std::get<2>(sortedIndices[trunkIndex]);
-
-                    // this->printMsg(std::to_string(offsets[v]));
+                for(trunkIndex=nVertices-1; trunkIndex>=0; trunkIndex--){
+                    const idType& v = sortedIndices[trunkIndex];
 
                     if(propagationMask[v]!=nullptr)
                         continue;
@@ -1378,15 +1393,16 @@ namespace ttk {
                         idType u;
                         triangulation->getVertexNeighbor(v,n,u);
 
-                        if(propagationMask[u]!=nullptr && (currentPropagation==nullptr || offsets[currentPropagation->lastEncounteredCriticalPoint]<offsets[propagationMask[u]->find()->lastEncounteredCriticalPoint] )){
+                        if(propagationMask[u]!=nullptr && (currentPropagation==nullptr || offsets[currentPropagation->extremumIndex]<offsets[propagationMask[u]->find()->extremumIndex] )){
                             currentPropagation = propagationMask[u]->find();
                         }
                     }
 
-                    if(currentPropagation==nullptr)
+                    if(currentPropagation==nullptr){
                         this->printErr("WHAT");
-                    else
-                        break;
+                        return 0;
+                    }
+                    break;
                 }
 
                 idType nSaddles = 0;
@@ -1394,8 +1410,8 @@ namespace ttk {
                 std::vector<Propagation<idType>*> saddlePropagations(32,nullptr);
                 if(currentPropagation!=nullptr){
                     // continue propagation in sorted order
-                    for(; trunkIndex<nVertices; trunkIndex++){
-                        const idType& v = std::get<2>(sortedIndices[trunkIndex]);
+                    for(; trunkIndex>=0; trunkIndex--){
+                        const idType& v = sortedIndices[trunkIndex];
 
                         if(propagationMask[v]!=nullptr)
                             continue;
@@ -1489,15 +1505,12 @@ namespace ttk {
                         idType u;
                         triangulation->getVertexNeighbor(v,n,u);
 
-                        if(propagationMask[u]!=nullptr && (currentPropagation==nullptr || offsets[currentPropagation->lastEncounteredCriticalPoint]<offsets[propagationMask[u]->find()->lastEncounteredCriticalPoint] )){
+                        if(propagationMask[u]!=nullptr && (currentPropagation==nullptr || offsets[currentPropagation->extremumIndex]<offsets[propagationMask[u]->find()->extremumIndex] )){
                             currentPropagation = propagationMask[u]->find();
                         }
                     }
 
-                    if(currentPropagation==nullptr)
-                        this->printErr("WHAT");
-                    else
-                        break;
+                    break;
                 }
 
                 idType nSaddles = 0;
@@ -1848,13 +1861,14 @@ namespace ttk {
             template<typename idType>
             int initializePropagations(
                 std::vector<Propagation<idType>>& propagations,
-                idType* regionMask,
-                idType* localOffsets,
+                idType* saddleOrRegionMask,
                 idType* queueMask,
                 Propagation<idType>** propagationMask,
 
                 const std::vector<idType>& unauthorizedExtrema,
-                const idType& nVertices
+                const idType& nVertices,
+
+                idType* localOffsets = nullptr
             ) const {
                 ttk::Timer timer;
 
@@ -1867,12 +1881,21 @@ namespace ttk {
                 );
 
                 // init region/queue/propagation mask
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType i=0; i<nVertices; i++){
-                    regionMask[i] = -1;
-                    localOffsets[i] = 1;
-                    queueMask[i] = -1;
-                    propagationMask[i] = nullptr;
+                if(localOffsets){
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType i=0; i<nVertices; i++){
+                        saddleOrRegionMask[i] = -1;
+                        localOffsets[i] = 1;
+                        queueMask[i] = -1;
+                        propagationMask[i] = nullptr;
+                    }
+                } else {
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType i=0; i<nVertices; i++){
+                        saddleOrRegionMask[i] = -1;
+                        queueMask[i] = -1;
+                        propagationMask[i] = nullptr;
+                    }
                 }
 
                 propagations.clear();
@@ -1937,6 +1960,63 @@ namespace ttk {
                 std::vector<Propagation<idType>>& propagations,
 
                 const dataType* scalars,
+                const idType nVertices
+            ) const {
+                ttk::Timer timer;
+
+                const idType nPropagations = propagations.size();
+
+                this->printMsg(
+                    "Finalizing propagations ("+std::to_string(nPropagations)+")",
+                    0, timer.getElapsedTime(), this->threadNumber_,
+                    debug::LineMode::REPLACE
+                );
+
+                idType nRegionVertices = 0;
+                idType nMasterPropagations=0;
+                masterPropagations.clear();
+                masterPropagations.resize(nPropagations);
+                #pragma omp parallel for num_threads(threadNumber_) reduction(+:nRegionVertices)
+                for(idType p=0; p<nPropagations; p++){
+                    Propagation<idType>* propagation = &propagations[p];
+
+                    // if the propagation is persistent or a is the child of a persistent branch skip
+                    if(propagation->persistent==1 || propagation->parentBranch)
+                        continue;
+
+                    propagation->setParentRecursive(propagation);
+                    propagation->simplified = 1;
+
+                    idType nMasterPropagations_;
+                    #pragma omp atomic capture
+                    nMasterPropagations_ = nMasterPropagations++;
+
+                    masterPropagations[nMasterPropagations_] = propagation;
+
+                    nRegionVertices += propagation->regionSize;
+                }
+                masterPropagations.resize(nMasterPropagations);
+
+                std::stringstream pFraction, vFraction;
+                pFraction << std::fixed << std::setprecision(2) << ((float)nMasterPropagations/(float)nPropagations);
+                vFraction << std::fixed << std::setprecision(2) << ((float)nRegionVertices/(float)nVertices);
+
+                this->printMsg(
+                    "Finalizing propagations ("+std::to_string(nMasterPropagations)+"|"+pFraction.str()+"|"+vFraction.str()+")",
+                    1, timer.getElapsedTime(), this->threadNumber_
+                );
+
+                return 1;
+            };
+
+            template<typename idType, typename dataType>
+            int finalizePropagationsByPersistenceII(
+                std::vector<Propagation<idType>*>& masterPropagations,
+                std::vector<Propagation<idType>>& propagations,
+
+                const ttk::Triangulation* triangulation,
+                const idType* offsets,
+                const dataType* scalars,
                 const dataType& persistenceThreshold,
                 const idType nVertices
             ) const {
@@ -1958,10 +2038,41 @@ namespace ttk {
                 for(idType p=0; p<nPropagations; p++){
                     Propagation<idType>* propagation = &propagations[p];
 
-                    idType nRegionVertices_ = 0;
+                    const dataType persistence = scalars[propagation->extremumIndex]>scalars[propagation->lastEncounteredCriticalPoint]
+                        ? scalars[propagation->extremumIndex]-scalars[propagation->lastEncounteredCriticalPoint]
+                        : scalars[propagation->lastEncounteredCriticalPoint]-scalars[propagation->extremumIndex];
 
-                    // if the propagation is not persistent and has no parent branch (i.e., is left over from early escape)
-                    if(propagation->persistent==0 && propagation->simplified==0 && propagation->parentBranch==nullptr){
+                    propagation->persistent = persistence>persistenceThreshold ? 1 : 0;
+
+                    if(propagation->persistent==1 || !propagation->parentBranch){
+                        propagation->parent = propagation;
+                    } else {
+                        const dataType parentPersistence =
+                            scalars[propagation->parentBranch->extremumIndex]>scalars[propagation->parentBranch->lastEncounteredCriticalPoint]
+                            ? scalars[propagation->parentBranch->extremumIndex]-scalars[propagation->parentBranch->lastEncounteredCriticalPoint]
+                            : scalars[propagation->parentBranch->lastEncounteredCriticalPoint]-scalars[propagation->parentBranch->extremumIndex];
+
+                        if(parentPersistence<=persistenceThreshold)
+                            continue;
+
+                        // check if a propagation is still an extremum
+                        bool hasLargerNeighbor = false;
+                        bool hasSmallerNeighbor = false;
+
+                        idType nNeighbors = triangulation->getVertexNeighborNumber( propagation->extremumIndex );
+                        for(idType n=0; n<nNeighbors; n++){
+                            idType u;
+                            triangulation->getVertexNeighbor(propagation->extremumIndex,n,u);
+
+                            if( offsets[propagation->extremumIndex]<offsets[u] )
+                                hasLargerNeighbor = true;
+                            else
+                                hasSmallerNeighbor = true;
+                        }
+
+                        if(hasLargerNeighbor && hasSmallerNeighbor){
+                            continue;
+                        }
 
                         propagation->setParentRecursive(propagation);
                         propagation->simplified = 1;
@@ -1972,35 +2083,8 @@ namespace ttk {
 
                         masterPropagations[nMasterPropagations_] = propagation;
 
-                        nRegionVertices_ += propagation->regionSize;
-
-                        continue;
+                        nRegionVertices += propagation->regionSize;
                     }
-
-                    // if the propagation is not persistent
-                    if(propagation->persistent==0)
-                        continue;
-
-                    // otherwise add all childBranches that are not persistent to the masterPropagations
-                    for(auto* c : propagation->childBranches){
-                        // skip if childBranch is persistent
-                        if(c->persistent==1 || c->simplified==1)
-                            continue;
-
-                        c->setParentRecursive(c);
-                        c->simplified = 1;
-
-                        idType nMasterPropagations_;
-                        #pragma omp atomic capture
-                        nMasterPropagations_ = nMasterPropagations++;
-
-                        masterPropagations[nMasterPropagations_] = c;
-
-                        nRegionVertices_ += c->regionSize;
-                    }
-
-                    if(nRegionVertices_>0)
-                        nRegionVertices += nRegionVertices_;
                 }
                 masterPropagations.resize(nMasterPropagations);
 
@@ -2071,7 +2155,8 @@ namespace ttk {
                 std::vector<Propagation<idType>>& propagations,
 
                 const ttk::Triangulation* triangulation,
-                const idType* offsets
+                const idType* offsets,
+                const idType& escapeInterval
             ) const {
                 ttk::Timer timer;
 
@@ -2096,10 +2181,14 @@ namespace ttk {
                         nActivePropagations,
 
                         triangulation,
-                        offsets
+                        offsets,
+                        escapeInterval
                     );
                     if(!localStatus)
                         status = 0;
+
+                    #pragma omp atomic update
+                    nActivePropagations--;
                 }
                 if(!status) return 0;
 
@@ -2121,7 +2210,8 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* offsets,
                 const dataType* scalars,
-                const dataType& persistenceThreshold
+                const dataType& persistenceThreshold,
+                const idType& escapeInterval
             ) const {
                 ttk::Timer timer;
 
@@ -2148,7 +2238,8 @@ namespace ttk {
                         triangulation,
                         offsets,
                         scalars,
-                        persistenceThreshold
+                        persistenceThreshold,
+                        escapeInterval
                     );
                     if(!localStatus)
                         status = 0;
@@ -2561,12 +2652,13 @@ namespace ttk {
                 status = this->initializePropagations<idType>(
                     propagations,
                     regionMask,
-                    localOffsets,
                     queueMask,
                     propagationMask,
 
                     unauthorizedMaxima,
-                    nVertices
+                    nVertices,
+
+                    localOffsets
                 );
                 if(!status) return 0;
 
@@ -2701,8 +2793,8 @@ namespace ttk {
                 const dataType& persistenceThreshold,
                 const dataType* inputScalars,
                 const idType* inputOffsets,
-                const bool& useRegionBasedIterations,
-                const bool& useInterleaving
+                const idType& escapeInterval,
+                const bool& useRegionBasedIterations
             ) const {
                 const idType nVertices = triangulation->getNumberOfVertices();
 
@@ -2729,59 +2821,29 @@ namespace ttk {
                 status = this->initializePropagations<idType>(
                     propagations,
                     regionMask,
-                    localOffsets,
                     queueMask,
                     propagationMask,
 
                     maxima,
-                    nVertices
+                    nVertices,
+
+                    localOffsets
                 );
                 if(!status) return 0;
 
                 // compute propagations
-                if(!useInterleaving)
-                    status = this->computePersistenceBasedPropagations<idType,dataType>(
-                        regionMask, // used here as saddle mask
-                        queueMask,
-                        propagationMask,
-                        propagations,
+                status = this->computePersistenceBasedPropagations<idType,dataType>(
+                    regionMask, // used here as saddle mask
+                    queueMask,
+                    propagationMask,
+                    propagations,
 
-                        triangulation,
-                        inputOffsets,
-                        inputScalars,
-                        persistenceThreshold
-                    );
-                    // status = this->computeDynamicPropagations<idType>(
-                    //     regionMask, // used here as saddle mask
-                    //     queueMask,
-                    //     propagationMask,
-                    //     propagations,
-
-                    //     triangulation,
-                    //     inputOffsets
-                    // );
-                else
-                    status = this->computeInterleavedPropagations<idType,dataType>(
-                        regionMask,  // ALSO used here as saddle mask (safe because regions do not cover preserved saddles)
-                        queueMask,
-                        propagationMask,
-                        propagations,
-                        regionMask,
-                        localOffsets,
-                        outputOffsets, // used here as distance field
-
-                        triangulation,
-                        inputOffsets,
-                        inputScalars,
-                        persistenceThreshold,
-                        useRegionBasedIterations
-                    );
-                if(!status) return 0;
-
-                // // TODO
-                // for(idType v=0; v<nVertices; v++)
-                //     outputOffsets[v] = propagationMask[v] ? propagationMask[v]->find()->extremumIndex : -1;
-                // return 0;
+                    triangulation,
+                    inputOffsets,
+                    inputScalars,
+                    persistenceThreshold,
+                    escapeInterval
+                );
 
                 // compute trunk
                 status = this->computeTrunkII<idType>(
@@ -2803,15 +2865,10 @@ namespace ttk {
                     propagations,
 
                     inputScalars,
-                    persistenceThreshold,
                     nVertices
                 );
                 if(!status) return 0;
                 idType nMasterPropagations = masterPropagations.size();
-
-                // TODO
-                // for(idType v=0; v<nVertices; v++)
-                //     outputOffsets[v] = -1;
 
                 // compute regions
                 status = this->computeRegions<idType>(
@@ -2822,9 +2879,6 @@ namespace ttk {
                     triangulation
                 );
                 if(!status) return 0;
-
-                // // TODO
-                // return 0;
 
                 // compute local order of regions
                 status = this->computeLocalOffsetsOfRegions<idType>(
@@ -2838,18 +2892,6 @@ namespace ttk {
                     useRegionBasedIterations
                 );
                 if(!status) return 0;
-
-                // TODO
-                if(useInterleaving){
-                    idType nPropagations = propagations.size();
-                    masterPropagations.resize(nPropagations);
-                    nMasterPropagations = 0;
-                    for(idType p=0; p<nPropagations; p++){
-                        if(propagations[p].nIterations>0)
-                            masterPropagations[nMasterPropagations++] = &propagations[p];
-                    }
-                    masterPropagations.resize(nMasterPropagations);
-                }
 
                 // use region mask as temporary array
                 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -2885,19 +2927,183 @@ namespace ttk {
             };
 
             template<typename idType, typename dataType>
-            int allocateMemory(
-                std::vector<idType>& inputOffsets,
-                std::vector<idType>& unauthorizedExtrema,
-                std::vector<idType>& regionMask,
-                std::vector<idType>& queueMask,
-                std::vector<Propagation<idType>*>& propagationMask,
-                std::vector<idType>& localOffsets,
+            int removeBranchesByPersistence(
+                idType* outputOffsets,
+                idType* localOffsets,
+                idType* regionMask,
+                Propagation<idType>** propagationMask,
+                std::vector<Propagation<idType>>& propagations,
+                std::vector<Propagation<idType>*>& masterPropagations,
                 std::vector<std::tuple<idType,idType,idType>>& sortedIndices,
-                std::vector<std::tuple<dataType,idType,idType>>& sortedIndicesII,
-                std::vector<Propagation<idType>>& propagationsMax,
-                std::vector<Propagation<idType>*>& masterPropagationsMax,
-                std::vector<Propagation<idType>>& propagationsMin,
-                std::vector<Propagation<idType>*>& masterPropagationsMin,
+                idType& nRemovedMaxima,
+
+                const ttk::Triangulation* triangulation,
+                const dataType& persistenceThreshold,
+                const dataType* inputScalars,
+                const idType* inputOffsets,
+                const bool& useRegionBasedIterations
+            ) const {
+                const idType nVertices = triangulation->getNumberOfVertices();
+
+                int status = 0;
+
+                // finalize master propagations
+                status = this->finalizePropagationsByPersistenceII<idType,dataType>(
+                    masterPropagations,
+                    propagations,
+
+                    triangulation,
+                    inputOffsets,
+                    inputScalars,
+                    persistenceThreshold,
+                    nVertices
+                );
+                if(!status) return 0;
+                idType nMasterPropagations = masterPropagations.size();
+
+                // compute regions
+                status = this->computeRegions<idType>(
+                    regionMask,
+                    propagationMask,
+                    masterPropagations,
+
+                    triangulation
+                );
+                if(!status) return 0;
+
+                // compute local order of regions
+                status = this->computeLocalOffsetsOfRegions<idType>(
+                    localOffsets,
+                    outputOffsets, // used here to temporarily store distance field
+
+                    triangulation,
+                    regionMask,
+                    inputOffsets,
+                    masterPropagations,
+                    useRegionBasedIterations
+                );
+                if(!status) return 0;
+
+                // use region mask as temporary array
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                for(idType v=0; v<nVertices; v++)
+                    regionMask[v] = inputOffsets[v];
+
+                // flatten regions to offset of last encountered saddles
+                // and force that saddles are last in the local offset order
+                #pragma omp parallel for schedule(static,4) num_threads(this->threadNumber_)
+                for(idType p=0; p<nMasterPropagations; p++){
+                    const auto* propagation = masterPropagations[p];
+                    for(const auto& v : propagation->region)
+                        regionMask[v] = inputOffsets[propagation->lastEncounteredCriticalPoint];
+
+                    // enforce that each saddle has the largest local offset
+                    localOffsets[propagation->lastEncounteredCriticalPoint]=0;
+                }
+
+                // compute global offsets
+                status = this->computeGlobalOffsets<idType,idType>(
+                    outputOffsets,
+                    sortedIndices,
+
+                    regionMask,
+                    localOffsets,
+                    nVertices
+                );
+                if(!status) return 0;
+
+                nRemovedMaxima = masterPropagations.size();
+
+                return 1;
+            };
+
+            template<typename idType>
+            int computeSplitTree(
+                std::vector<idType>& maxima,
+                idType* saddleMask,
+                idType* queueMask,
+                Propagation<idType>** propagationMask,
+                std::vector<Propagation<idType>>& propagations,
+
+                const ttk::Triangulation* triangulation,
+                const idType* inputOffsets,
+                const idType* sortedIndices,
+                const idType& escapeInterval
+            ) const {
+                const idType nVertices = triangulation->getNumberOfVertices();
+
+                int status = 0;
+
+                // Classify Critical Points
+                status = this->detectMaxima<idType>(
+                    maxima,
+
+                    triangulation,
+                    inputOffsets
+                );
+                if(!status) return 0;
+
+                // sort critical points
+                status = this->sortMaxima<idType>(
+                    maxima,
+
+                    inputOffsets
+                );
+                if(!status) return 0;
+
+                // init propagations
+                status = this->initializePropagations<idType>(
+                    propagations,
+                    saddleMask,
+                    queueMask,
+                    propagationMask,
+
+                    maxima,
+                    nVertices
+                );
+                if(!status) return 0;
+
+                // compute propagations
+                status = this->computeDynamicPropagations<idType>(
+                    saddleMask,
+                    queueMask,
+                    propagationMask,
+                    propagations,
+
+                    triangulation,
+                    inputOffsets,
+                    escapeInterval
+                );
+
+                // compute trunk
+                status = this->computeTrunk<idType>(
+                    propagationMask,
+                    propagations,
+
+                    triangulation,
+                    saddleMask,
+                    inputOffsets,
+                    sortedIndices
+                );
+                if(!status) return 0;
+
+                return 1;
+            };
+
+            template<typename idType, typename dataType>
+            int allocateMemory(
+                std::vector<idType>* inputOffsets,
+                std::vector<idType>* unauthorizedExtrema,
+                std::vector<idType>* regionMask,
+                std::vector<idType>* queueMask,
+                std::vector<Propagation<idType>*>* propagationMask,
+                std::vector<idType>* localOffsets,
+                std::vector<std::tuple<idType,idType,idType>>* sortedIndices,
+                std::vector<std::tuple<dataType,idType,idType>>* sortedIndicesII,
+                std::vector<Propagation<idType>>* propagationsMax,
+                std::vector<Propagation<idType>*>* masterPropagationsMax,
+                std::vector<Propagation<idType>>* propagationsMin,
+                std::vector<Propagation<idType>*>* masterPropagationsMin,
 
                 const idType& nVertices
             ) const {
@@ -2910,18 +3116,25 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
-                inputOffsets.resize(nVertices);
-                unauthorizedExtrema.resize(nVertices);
-                regionMask.resize(nVertices);
-                queueMask.resize(nVertices);
-                propagationMask.resize(nVertices);
-                localOffsets.resize(nVertices);
-                sortedIndices.resize(nVertices);
-                sortedIndicesII.resize(nVertices);
+                if(inputOffsets){
+                    inputOffsets->resize(nVertices);
+                    auto& inputOffsets_ = *inputOffsets;
+                    #pragma omp parallel for num_threads(this->threadNumber_)
+                    for(idType v=0; v<nVertices; v++)
+                        inputOffsets_[v] = v;
+                }
+                if(unauthorizedExtrema) unauthorizedExtrema->resize(nVertices);
+                if(regionMask) regionMask->resize(nVertices);
+                if(queueMask) queueMask->resize(nVertices);
+                if(propagationMask) propagationMask->resize(nVertices);
+                if(localOffsets) localOffsets->resize(nVertices);
+                if(sortedIndices) sortedIndices->resize(nVertices);
+                if(sortedIndicesII) sortedIndicesII->resize(nVertices);
 
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++)
-                    inputOffsets[v] = v;
+                if(propagationsMax) propagationsMax->clear();
+                if(masterPropagationsMax) masterPropagationsMax->clear();
+                if(propagationsMin) propagationsMin->clear();
+                if(masterPropagationsMin) masterPropagationsMin->clear();
 
                 this->printMsg(
                     "Allocating memory",
@@ -2932,20 +3145,37 @@ namespace ttk {
                 return 1;
             }
 
+            template<typename t>
+            int deallocateMemory_(
+                std::vector<t>* vector
+            ) const {
+                if(vector==nullptr)
+                    return 0;
+
+                #pragma omp task
+                {
+                    vector->clear();
+                    auto temp = std::vector<t>();
+                    (*vector) = temp;
+                }
+                return 1;
+            }
+
+
             template<typename idType, typename dataType>
             int deallocateMemory(
-                std::vector<idType>& inputOffsets,
-                std::vector<idType>& unauthorizedExtrema,
-                std::vector<idType>& regionMask,
-                std::vector<idType>& queueMask,
-                std::vector<Propagation<idType>*>& propagationMask,
-                std::vector<idType>& localOffsets,
-                std::vector<std::tuple<idType,idType,idType>>& sortedIndices,
-                std::vector<std::tuple<dataType,idType,idType>>& sortedIndicesII,
-                std::vector<Propagation<idType>>& propagationsMax,
-                std::vector<Propagation<idType>*>& masterPropagationsMax,
-                std::vector<Propagation<idType>>& propagationsMin,
-                std::vector<Propagation<idType>*>& masterPropagationsMin
+                std::vector<idType>* inputOffsets,
+                std::vector<idType>* unauthorizedExtrema,
+                std::vector<idType>* regionMask,
+                std::vector<idType>* queueMask,
+                std::vector<Propagation<idType>*>* propagationMask,
+                std::vector<idType>* localOffsets,
+                std::vector<std::tuple<idType,idType,idType>>* sortedIndices,
+                std::vector<std::tuple<dataType,idType,idType>>* sortedIndicesII,
+                std::vector<Propagation<idType>>* propagationsMax,
+                std::vector<Propagation<idType>*>* masterPropagationsMax,
+                std::vector<Propagation<idType>>* propagationsMin,
+                std::vector<Propagation<idType>*>* masterPropagationsMin
             ) const {
                 ttk::Timer timer;
 
@@ -2956,33 +3186,22 @@ namespace ttk {
                     debug::LineMode::REPLACE
                 );
 
+
                 #pragma omp parallel num_threads(this->threadNumber_)
                 #pragma omp single
                 {
-                    #pragma omp task
-                    propagationsMin.clear();
-                    #pragma omp task
-                    propagationsMax.clear();
-                    #pragma omp task
-                    inputOffsets.clear();
-                    #pragma omp task
-                    unauthorizedExtrema.clear();
-                    #pragma omp task
-                    regionMask.clear();
-                    #pragma omp task
-                    queueMask.clear();
-                    #pragma omp task
-                    propagationMask.clear();
-                    #pragma omp task
-                    localOffsets.clear();
-                    #pragma omp task
-                    sortedIndices.clear();
-                    #pragma omp task
-                    sortedIndicesII.clear();
-                    #pragma omp task
-                    masterPropagationsMax.clear();
-                    #pragma omp task
-                    masterPropagationsMin.clear();
+                    this->deallocateMemory_(propagationsMin);
+                    this->deallocateMemory_(propagationsMax);
+                    this->deallocateMemory_(inputOffsets);
+                    this->deallocateMemory_(unauthorizedExtrema);
+                    this->deallocateMemory_(regionMask);
+                    this->deallocateMemory_(queueMask);
+                    this->deallocateMemory_(propagationMask);
+                    this->deallocateMemory_(localOffsets);
+                    this->deallocateMemory_(sortedIndices);
+                    this->deallocateMemory_(sortedIndicesII);
+                    this->deallocateMemory_(masterPropagationsMax);
+                    this->deallocateMemory_(masterPropagationsMin);
                 }
 
                 this->printMsg(
@@ -3004,7 +3223,7 @@ namespace ttk {
                 const bool&   useInterleaving,
                 const bool&   enforceAuthorizedExtrema,
                 const bool&   addPerturbation,
-                const bool&   useDeallocation
+                const bool&   useExplicitDeallocation
             ) const {
 
                 this->printMsg(debug::Separator::L1);
@@ -3013,7 +3232,7 @@ namespace ttk {
                     {"Use Interleaving", std::string(useInterleaving ? "true" : "false")},
                     {"Enforce Authorized Extrema", std::string(enforceAuthorizedExtrema ? "true" : "false")},
                     {"Add Perturbation", std::string(addPerturbation ? "true" : "false")},
-                    {"Use Explicit Deallocation", std::string(useDeallocation ? "true" : "false")}
+                    {"Use Explicit Deallocation", std::string(useExplicitDeallocation ? "true" : "false")}
                 });
                 this->printMsg(debug::Separator::L2);
 
@@ -3034,18 +3253,18 @@ namespace ttk {
                 std::vector<Propagation<idType>*> masterPropagationsMin;
 
                 this->allocateMemory<idType>(
-                    inputOffsets,
-                    unauthorizedExtrema,
-                    regionMask,
-                    queueMask,
-                    propagationMask,
-                    localOffsets,
-                    sortedIndices,
-                    sortedIndicesII,
-                    propagationsMax,
-                    masterPropagationsMax,
-                    propagationsMin,
-                    masterPropagationsMin,
+                    &inputOffsets,
+                    &unauthorizedExtrema,
+                    &regionMask,
+                    &queueMask,
+                    &propagationMask,
+                    &localOffsets,
+                    &sortedIndices,
+                    &sortedIndicesII,
+                    &propagationsMax,
+                    &masterPropagationsMax,
+                    &propagationsMin,
+                    &masterPropagationsMin,
 
                     nVertices
                 );
@@ -3208,20 +3427,20 @@ namespace ttk {
                 this->printMsg(debug::Separator::L2);
                 this->printMsg("Complete", 1, timer.getElapsedTime(), this->threadNumber_);
 
-                if(useDeallocation){
-                    status = this->deallocateMemory(
-                        inputOffsets,
-                        unauthorizedExtrema,
-                        regionMask,
-                        queueMask,
-                        propagationMask,
-                        localOffsets,
-                        sortedIndices,
-                        sortedIndicesII,
-                        propagationsMax,
-                        masterPropagationsMax,
-                        propagationsMin,
-                        masterPropagationsMin
+                if(useExplicitDeallocation){
+                    status = this->deallocateMemory<idType,dataType>(
+                        &inputOffsets,
+                        &unauthorizedExtrema,
+                        &regionMask,
+                        &queueMask,
+                        &propagationMask,
+                        &localOffsets,
+                        &sortedIndices,
+                        &sortedIndicesII,
+                        &propagationsMax,
+                        &masterPropagationsMax,
+                        &propagationsMin,
+                        &masterPropagationsMin
                     );
                     if(!status) return 0;
                 }
@@ -3242,15 +3461,18 @@ namespace ttk {
                 const bool& useRegionBasedIterations,
                 const bool& useInterleaving,
                 const bool& addPerturbation,
-                const bool& useDeallocation
+                const bool& useExplicitDeallocation,
+                const idType& escapeInterval = 1000
             ) const {
+
                 this->printMsg(debug::Separator::L1);
                 this->printMsg({
                     {"Persistence Threshold", std::to_string(persistenceThreshold)},
+                    {"Escape Interval", std::to_string(escapeInterval)},
                     {"Use Region-Based Iterations", std::string(useRegionBasedIterations ? "true" : "false")},
                     {"Use Interleaving", std::string(useInterleaving ? "true" : "false")},
                     {"Add Perturbation", std::string(addPerturbation ? "true" : "false")},
-                    {"Use Explicit Deallocation", std::string(useDeallocation ? "true" : "false")}
+                    {"Use Explicit Deallocation", std::string(useExplicitDeallocation ? "true" : "false")}
                 });
                 this->printMsg(debug::Separator::L2);
 
@@ -3258,7 +3480,7 @@ namespace ttk {
 
                 // Allocating Memory
                 std::vector<idType> inputOffsets;
-                std::vector<idType> unauthorizedExtrema;
+                std::vector<idType> extrema;
                 std::vector<idType> regionMask;
                 std::vector<idType> queueMask;
                 std::vector<Propagation<idType>*> propagationMask;
@@ -3271,18 +3493,18 @@ namespace ttk {
                 std::vector<Propagation<idType>*> masterPropagationsMin;
 
                 this->allocateMemory<idType>(
-                    inputOffsets,
-                    unauthorizedExtrema,
-                    regionMask,
-                    queueMask,
-                    propagationMask,
-                    localOffsets,
-                    sortedIndices,
-                    sortedIndicesII,
-                    propagationsMax,
-                    masterPropagationsMax,
-                    propagationsMin,
-                    masterPropagationsMin,
+                    &inputOffsets,
+                    &extrema,
+                    &regionMask,
+                    &queueMask,
+                    &propagationMask,
+                    &localOffsets,
+                    &sortedIndices,
+                    &sortedIndicesII,
+                    &propagationsMax,
+                    &masterPropagationsMax,
+                    &propagationsMin,
+                    &masterPropagationsMin,
 
                     nVertices
                 );
@@ -3312,7 +3534,6 @@ namespace ttk {
                     if(!status) return 0;
                 }
 
-
                 // execute iterations
                 size_t iteration=0;
                 int sortDirection = 0;
@@ -3341,7 +3562,7 @@ namespace ttk {
                         if(!status) return 0;
 
                         status = this->detectAndRemoveMaximaByPersistence<idType,dataType>(
-                            unauthorizedExtrema,
+                            extrema,
                             outputOffsets,
                             localOffsets.data(),
                             regionMask.data(),
@@ -3356,8 +3577,8 @@ namespace ttk {
                             persistenceThreshold,
                             outputScalars,
                             inputOffsets.data(),
-                            useRegionBasedIterations,
-                            useInterleaving
+                            escapeInterval,
+                            useRegionBasedIterations
                         );
                         if(!status) return 0;
 
@@ -3386,7 +3607,7 @@ namespace ttk {
                         if(!status) return 0;
 
                         status = this->detectAndRemoveMaximaByPersistence<idType,dataType>(
-                            unauthorizedExtrema,
+                            extrema,
                             outputOffsets,
                             localOffsets.data(),
                             regionMask.data(),
@@ -3401,8 +3622,8 @@ namespace ttk {
                             persistenceThreshold,
                             outputScalars,
                             inputOffsets.data(),
-                            useRegionBasedIterations,
-                            useInterleaving
+                            escapeInterval,
+                            useRegionBasedIterations
                         );
                         if(!status) return 0;
 
@@ -3436,20 +3657,362 @@ namespace ttk {
                 this->printMsg(debug::Separator::L2);
                 this->printMsg("Complete", 1, timer.getElapsedTime(), this->threadNumber_);
 
-                if(useDeallocation){
-                    this->deallocateMemory(
-                        inputOffsets,
-                        unauthorizedExtrema,
-                        regionMask,
-                        queueMask,
-                        propagationMask,
-                        localOffsets,
-                        sortedIndices,
+                if(useExplicitDeallocation){
+                    this->deallocateMemory<idType,dataType>(
+                        &inputOffsets,
+                        &extrema,
+                        &regionMask,
+                        &queueMask,
+                        &propagationMask,
+                        &localOffsets,
+                        &sortedIndices,
+                        &sortedIndicesII,
+                        &propagationsMax,
+                        &masterPropagationsMax,
+                        &propagationsMin,
+                        &masterPropagationsMin
+                    );
+                }
+
+                this->printMsg(debug::Separator::L1);
+
+                return 1;
+            }
+
+            template<typename idType, typename dataType>
+            int computeMergeTreeSegmentations(
+                std::vector<Propagation<idType>>& propagationsMin,
+                std::vector<Propagation<idType>>& propagationsMax,
+                std::vector<Propagation<idType>*>& propagationMaskMin,
+                std::vector<Propagation<idType>*>& propagationMaskMax,
+
+                const ttk::Triangulation* triangulation,
+                const dataType* inputScalars,
+                const bool& useExplicitDeallocation = false,
+                const idType& escapeInterval = 1000
+            ) const {
+                this->printMsg(debug::Separator::L1);
+                this->printMsg({
+                    {"Escape Interval", std::to_string(escapeInterval)},
+                    {"Use Explicit Deallocation", std::string(useExplicitDeallocation ? "true" : "false")}
+                });
+                this->printMsg(debug::Separator::L2);
+
+                idType nVertices = triangulation->getNumberOfVertices();
+
+                ttk::Timer allocationTimer;
+
+                // Allocating memory
+                this->printMsg(
+                    "Allocating memory",
+                    0,0,this->threadNumber_,
+                    debug::LineMode::REPLACE
+                );
+
+                std::vector<idType> inputOffsets(nVertices);
+                std::vector<idType> outputOffsets(nVertices);
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                for(idType v=0; v<nVertices; v++)
+                    inputOffsets[v] = v;
+
+                std::vector<idType> extrema(nVertices);
+                std::vector<idType> saddleMask(nVertices);
+                std::vector<idType> queueMask(nVertices);
+                std::vector<std::tuple<dataType,idType,idType>> sortedIndices(nVertices);
+                std::vector<idType> sortedIndicesII(nVertices);
+
+                propagationsMin.clear();
+                propagationsMax.clear();
+                propagationMaskMin.clear();
+                propagationMaskMin.resize(nVertices,nullptr);
+                propagationMaskMax.clear();
+                propagationMaskMax.resize(nVertices,nullptr);
+
+                this->printMsg(
+                    "Allocating memory",
+                    1,allocationTimer.getElapsedTime(),this->threadNumber_
+                );
+
+                ttk::Timer timer;
+                int status = 0;
+
+                // Initialize offsets and scalars
+                status = this->computeGlobalOffsets<dataType,idType>(
+                    outputOffsets.data(),
+                    sortedIndices,
+
+                    inputScalars,
+                    inputOffsets.data(),
+                    nVertices,
+
+                    nullptr,
+                    sortedIndicesII.data()
+                );
+                if(!status) return 0;
+
+                this->printMsg("Computing Split Tree", ttk::debug::Separator::L2);
+                status = this->computeSplitTree<idType>(
+                    extrema,
+                    saddleMask.data(),
+                    queueMask.data(),
+                    propagationMaskMax.data(),
+                    propagationsMax,
+
+                    triangulation,
+                    outputOffsets.data(),
+                    sortedIndicesII.data(),
+                    escapeInterval
+                );
+                if(!status) return 0;
+
+                this->printMsg("Computing Join Tree", ttk::debug::Separator::L2);
+
+                // invert offsets to compute the join tree
+                status = this->invertField<idType>(
+                    outputOffsets.data(),
+                    inputOffsets.data(),
+
+                    nVertices,
+
+                    sortedIndicesII.data()
+                );
+                if(!status) return 0;
+
+                status = this->computeSplitTree<idType>(
+                    extrema,
+                    saddleMask.data(),
+                    queueMask.data(),
+                    propagationMaskMin.data(),
+                    propagationsMin,
+
+                    triangulation,
+                    outputOffsets.data(),
+                    sortedIndicesII.data(),
+                    escapeInterval
+                );
+                if(!status) return 0;
+
+                this->printMsg(debug::Separator::L2);
+                this->printMsg("Complete", 1, timer.getElapsedTime(), this->threadNumber_);
+
+
+                this->printMsg(debug::Separator::L1);
+
+                return 1;
+            }
+
+            template<typename idType, typename dataType>
+            int removeExtremaByPersistenceFromMTS(
+                dataType* outputScalars,
+                idType* outputOffsets,
+
+                std::vector<Propagation<idType>>& propagationsMin,
+                std::vector<Propagation<idType>>& propagationsMax,
+                std::vector<Propagation<idType>*>& propagationMaskMin,
+                std::vector<Propagation<idType>*>& propagationMaskMax,
+
+                const ttk::Triangulation* triangulation,
+                const dataType* inputScalars,
+                const dataType& persistenceThreshold,
+                const bool& useRegionBasedIterations,
+                const bool& addPerturbation,
+                const bool& useExplicitDeallocation
+            ) const {
+
+                this->printMsg(debug::Separator::L1);
+                this->printMsg({
+                    {"Persistence Threshold", std::to_string(persistenceThreshold)},
+                    {"Use Region-Based Iterations", std::string(useRegionBasedIterations ? "true" : "false")},
+                    {"Add Perturbation", std::string(addPerturbation ? "true" : "false")},
+                    {"Use Explicit Deallocation", std::string(useExplicitDeallocation ? "true" : "false")}
+                });
+                this->printMsg(debug::Separator::L2);
+
+                idType nVertices = triangulation->getNumberOfVertices();
+
+                // Allocating Memory
+                std::vector<idType> inputOffsets;
+                std::vector<idType> regionMask;
+                std::vector<idType> localOffsets;
+                std::vector<std::tuple<idType,idType,idType>> sortedIndices;
+                std::vector<std::tuple<dataType,idType,idType>> sortedIndicesII;
+
+                std::vector<Propagation<idType>*> masterPropagationsMin;
+                std::vector<Propagation<idType>*> masterPropagationsMax;
+
+                this->allocateMemory<idType>(
+                    &inputOffsets,
+                    nullptr,
+                    &regionMask,
+                    nullptr,
+                    nullptr,
+                    &localOffsets,
+                    &sortedIndices,
+                    &sortedIndicesII,
+                    nullptr,
+                    &masterPropagationsMax,
+                    nullptr,
+                    &masterPropagationsMin,
+
+                    nVertices
+                );
+
+                // Initialize offsets and scalars
+                ttk::Timer timer;
+                int status = 0;
+                {
+                    status = this->computeGlobalOffsets<dataType,idType>(
+                        outputOffsets,
                         sortedIndicesII,
-                        propagationsMax,
-                        masterPropagationsMax,
-                        propagationsMin,
-                        masterPropagationsMin
+
+                        inputScalars,
+                        inputOffsets.data(),
+                        nVertices,
+
+                        sortedIndices.data()
+                    );
+                    if(!status) return 0;
+
+                    status = this->initializeScalars<idType,dataType>(
+                        outputScalars,
+
+                        inputScalars,
+                        nVertices
+                    );
+                    if(!status) return 0;
+                }
+
+                // execute iterations
+                size_t iteration=0;
+                int sortDirection = 0;
+                while(true){
+
+                    if(!useRegionBasedIterations)
+                        this->printMsg(
+                            "Iteration: "+std::to_string(iteration++),
+                            ttk::debug::Separator::L2
+                        );
+
+                    idType nRemovedMinima=0;
+                    idType nRemovedMaxima=0;
+
+                    // Minima
+                    {
+                        this->printMsg("Removing minima", ttk::debug::Separator::L2);
+
+                        // invert offsets to first remove minima (now maxima)
+                        status = this->invertField<idType>(
+                            outputOffsets,
+                            inputOffsets.data(),
+
+                            nVertices
+                        );
+                        if(!status) return 0;
+
+                        status = this->removeBranchesByPersistence<idType,dataType>(
+                            outputOffsets,
+                            localOffsets.data(),
+                            regionMask.data(),
+                            propagationMaskMin.data(),
+                            propagationsMin,
+                            masterPropagationsMin,
+                            sortedIndices,
+                            nRemovedMinima,
+
+                            triangulation,
+                            persistenceThreshold,
+                            inputScalars,
+                            inputOffsets.data(),
+                            useRegionBasedIterations
+                        );
+                        if(!status) return 0;
+
+                        if(nRemovedMinima){
+                            sortDirection=-1;
+                            status = this->flattenScalars<dataType,idType>(
+                                outputScalars,
+
+                                masterPropagationsMin
+                            );
+                            if(!status) return 0;
+                        }
+                    }
+
+                    // Maxima
+                    {
+                        this->printMsg("Removing maxima", ttk::debug::Separator::L2);
+
+                        // invert offsets again to now remove maxima
+                        status = this->invertField<idType>(
+                            outputOffsets,
+                            inputOffsets.data(),
+
+                            nVertices
+                        );
+                        if(!status) return 0;
+
+                        status = this->removeBranchesByPersistence<idType,dataType>(
+                            outputOffsets,
+                            localOffsets.data(),
+                            regionMask.data(),
+                            propagationMaskMax.data(),
+                            propagationsMax,
+                            masterPropagationsMax,
+                            sortedIndices,
+                            nRemovedMaxima,
+
+                            triangulation,
+                            persistenceThreshold,
+                            inputScalars,
+                            inputOffsets.data(),
+                            useRegionBasedIterations
+                        );
+                        if(!status) return 0;
+
+                        if(nRemovedMaxima){
+                            sortDirection=+1;
+                            status = this->flattenScalars<dataType,idType>(
+                                outputScalars,
+
+                                masterPropagationsMax
+                            );
+                            if(!status) return 0;
+                        }
+                    }
+
+                    if(useRegionBasedIterations || (nRemovedMinima+nRemovedMaxima)==0)
+                        break;
+                }
+
+                // optionally add perturbation
+                if(addPerturbation && sortDirection!=0){
+                    this->printMsg(debug::Separator::L2);
+                    this->computeNumericalPerturbation<dataType,idType>(
+                        outputScalars,
+
+                        outputOffsets,
+                        sortedIndices,
+                        sortDirection
+                    );
+                }
+
+                this->printMsg(debug::Separator::L2);
+                this->printMsg("Complete", 1, timer.getElapsedTime(), this->threadNumber_);
+
+                if(useExplicitDeallocation){
+                    this->deallocateMemory<idType,dataType>(
+                        &inputOffsets,
+                        nullptr,
+                        &regionMask,
+                        nullptr,
+                        nullptr,
+                        &localOffsets,
+                        &sortedIndices,
+                        &sortedIndicesII,
+                        nullptr,
+                        &masterPropagationsMax,
+                        nullptr,
+                        &masterPropagationsMin
                     );
                 }
 
