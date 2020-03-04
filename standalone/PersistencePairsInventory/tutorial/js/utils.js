@@ -105,15 +105,15 @@ function triggerEnterInput(selector) {
  * @param {*} upper
  * @param default_color
  */
-function customColor(reliability, ppi, max_persistence_pairs, default_color="#ffffff") {
+function customColor(reliability, ppi, max_persistence_pairs, default_color="#ffffff", ignore=false) {
     //return customColorV2(reliability, ppi, max_persistence_pairs) ;
     // from light to dark
-    let lower = getFloatValue("#histogram_viz_legend", "data-x_0"),
-        upper = getFloatValue("#histogram_viz_legend", "data-x_1") ;
+    let left = getFloatValue("#histogram_viz_legend", "data-x_0"),
+        right = getFloatValue("#histogram_viz_legend", "data-x_1") ;
     let range_color = Window.PPI['color-green'];
-    if (reliability >= 0 && reliability < lower) {
+    if (reliability >= 0 && reliability < left) {
         range_color = Window.PPI['color-red'];
-    } else if (reliability >= lower && reliability < upper) {
+    } else if (reliability >= left && reliability < right) {
         range_color = Window.PPI['color-gray'];
     } else {
         range_color = Window.PPI['color-green'];
@@ -122,15 +122,15 @@ function customColor(reliability, ppi, max_persistence_pairs, default_color="#ff
     if (ppi === 0) {  // special for PPI == 0
         return default_color ;
     } else {
-        if (Window.PPI['max_persistence_pairs']['is_custom']) {
-            let lower = Window.PPI['max_persistence_pairs']['custom_lower']
-            let upper = Window.PPI['max_persistence_pairs']['custom_upper']
+        if (Window.PPI['max_persistence_pairs']['is_custom'] && ignore === false) {
+            let lower = Window.PPI['max_persistence_pairs']['custom_lower'] ;
+            let upper = Window.PPI['max_persistence_pairs']['custom_upper'] ;
             if ( ppi <= lower ) {
                 return range_color[0]
-            } else if ( upper ) {
+            } else if ( ppi > upper ) {
                 return range_color[4]
             } else {
-                return range_color[Math.ceil((ppi - lower) / ( (max_persistence_pairs - lower) / 5)) - 1];    
+                return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];    
             }
         } else {
             // (a, b]

@@ -218,8 +218,8 @@ function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs
 
     let lower = 0, upper = 0 ;
     if (Window.PPI['max_persistence_pairs']['is_custom']) {
-        let lower = Window.PPI['max_persistence_pairs']['custom_lower'] ;
-        let upper = Window.PPI['max_persistence_pairs']['custom_upper'] ;
+        lower = Window.PPI['max_persistence_pairs']['custom_lower'] ;
+        upper = Window.PPI['max_persistence_pairs']['custom_upper'] ;
     } else {
         lower = 0 ;
         upper = max_persistence_pairs ;

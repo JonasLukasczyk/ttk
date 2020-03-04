@@ -103,8 +103,6 @@ function drawLegend(data, max_persistence_pairs) {
             "translate(" + (margin.left + width + margin.right - 5) + ", "+ margin.top+") rotate(90)")
         .attr('overflow', 'hidden');
 
-
-
     lineSvgRight.selectAll("rect")
         .data(binsRight)
         .enter()
@@ -181,11 +179,11 @@ function drawLegend(data, max_persistence_pairs) {
         .attr("height", y.bandwidth())
         .style("fill", function(d, i) {
             if ( i % 3 === 0) {
-                return customColor(x_0 / 2, Math.floor(i / 3) + 0.01, 5);
+                return customColor(x_0 / 2, Math.floor(i / 3) + 0.01, 5, undefined, true);
             } else if ( i % 3 === 1) {
-                return customColor(x_0 + (x_1 - x_0) / 2, Math.floor(i / 3) + 0.01, 5);
+                return customColor(x_0 + (x_1 - x_0) / 2, Math.floor(i / 3) + 0.01, 5, undefined, true);
             } else {
-                return customColor(x_1 + (1 - x_1) / 2, Math.floor(i / 3) + 0.01, 5);
+                return customColor(x_1 + (1 - x_1) / 2, Math.floor(i / 3) + 0.01, 5, undefined, true);
             }
         });
     removeNiceByKicks(".axis--legend--y", 0);
