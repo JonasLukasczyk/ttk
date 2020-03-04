@@ -1,22 +1,36 @@
 
-function getMaxPersistencePairs() {
+function getRangeOfPPIByThreshold() {
     // data: image-object => PointData => PersistencePairInventory
     // get the max PPI at iComponents
     let iComponent = parseInt($("#hist-threshold").val()) ;
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
 
-    if ( Window.PPI["max_persistence_pairs"].hasOwnProperty(iComponent) ) {
-        return Window.PPI["max_persistence_pairs"][iComponent] ;
+    if ( Window.PPI["persistence_pairs_range"].hasOwnProperty(iComponent) ) {
+        return Window.PPI["persistence_pairs_range"][iComponent] ;
     } 
-    var max_persistence_pairs = 0 ;
+    var max_persistence_pairs = 0, min_persistence_pairs = Number.MAX_SAFE_INTEGER ;
     for (let i = 0; i < data.length; i++) {
-        if (i % nComponents == iComponent && data[i] > max_persistence_pairs) {
-            max_persistence_pairs = data[i] ;
+        if (i % nComponents == iComponent ) {
+            if( data[i] > max_persistence_pairs) {
+                max_persistence_pairs = data[i] ;
+            }
+
+            if ( data[i] < min_persistence_pairs) {
+                min_persistence_pairs = data[i] ;
+            }
         }
     }
-    Window.PPI["max_persistence_pairs"][iComponent] = max_persistence_pairs ;
-    return max_persistence_pairs
+    Window.PPI["persistence_pairs_range"][iComponent] = [min_persistence_pairs, max_persistence_pairs] ;
+    return [min_persistence_pairs, max_persistence_pairs]
+}
+
+function getRangeOfPPI() {
+    if (Window.PPI['persistence_pairs_range']['is_custom']) {
+        return [Window.PPI['persistence_pairs_range']['custom_lower'], Window.PPI['persistence_pairs_range']['custom_upper']] ;
+    } else {
+        return getRangeOfPPIByThreshold()
+    }
 }
 
 // items: the # of bins over threshold, in the test dataset, it would be 50
@@ -100,13 +114,8 @@ function triggerEnterInput(selector) {
  * return the color
  * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1]
  * @param {*} ppi: # of features
- * @param {*} max_persistence_pairs
- * @param {*} lower
- * @param {*} upper
- * @param default_color
  */
-function customColor(reliability, ppi, max_persistence_pairs, default_color="#ffffff", ignore=false) {
-    //return customColorV2(reliability, ppi, max_persistence_pairs) ;
+function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, grayReplaceBlue=false) {
     // from light to dark
     let left = getFloatValue("#histogram_viz_legend", "data-x_0"),
         right = getFloatValue("#histogram_viz_legend", "data-x_1") ;
@@ -114,17 +123,25 @@ function customColor(reliability, ppi, max_persistence_pairs, default_color="#ff
     if (reliability >= 0 && reliability < left) {
         range_color = Window.PPI['color-red'];
     } else if (reliability >= left && reliability < right) {
-        range_color = Window.PPI['color-gray'];
+        if (grayReplaceBlue) {
+            range_color = Window.PPI['color-blue'] ;
+        } else {
+            range_color = Window.PPI['color-gray'];
+        }
     } else {
         range_color = Window.PPI['color-green'];
+    }
+
+    if (index != -1) {
+        return range_color[index] ;
     }
 
     if (ppi === 0) {  // special for PPI == 0
         return default_color ;
     } else {
-        if (Window.PPI['max_persistence_pairs']['is_custom'] && ignore === false) {
-            let lower = Window.PPI['max_persistence_pairs']['custom_lower'] ;
-            let upper = Window.PPI['max_persistence_pairs']['custom_upper'] ;
+        if (Window.PPI['persistence_pairs_range']['is_custom']) {  // based on custom
+            let lower = Window.PPI['persistence_pairs_range']['custom_lower'] ;
+            let upper = Window.PPI['persistence_pairs_range']['custom_upper'] ;
             if ( ppi <= lower ) {
                 return range_color[0]
             } else if ( ppi > upper ) {
@@ -132,9 +149,12 @@ function customColor(reliability, ppi, max_persistence_pairs, default_color="#ff
             } else {
                 return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];    
             }
-        } else {
+        } else { // based on current threshold
             // (a, b]
-            return range_color[Math.ceil(ppi / (max_persistence_pairs / 5)) - 1];
+            tmp = getRangeOfPPIByThreshold();
+            let lower = tmp[0] ;
+            let upper = tmp[1] ;
+            return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];  
         }
     }
 }

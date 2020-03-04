@@ -1,4 +1,4 @@
-function drawLegend(data, max_persistence_pairs) {
+function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
     function removeLastEqual(bins) {
         if ( bins.length > 0 ) {
             let lastEle = bins.slice(-1)[0] ;
@@ -27,7 +27,7 @@ function drawLegend(data, max_persistence_pairs) {
         top: 60,
         right: 60,
         bottom: 20,
-        left: 20
+        left: 40
     };
 
     // http://bl.ocks.org/nnattawat/8916402
@@ -52,7 +52,7 @@ function drawLegend(data, max_persistence_pairs) {
     let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
     yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
 
-    let xLineRight = d3.scaleLinear().range([0, height]).domain([0, max_persistence_pairs]);
+    let xLineRight = d3.scaleLinear().range([0, height]).domain([0, max_persistence_pairs - min_persistence_pairs]);
 
     let histogramRight = d3.histogram()
         .value(function(d) { return d[1]; })   // I need to give the vector of value
@@ -110,7 +110,7 @@ function drawLegend(data, max_persistence_pairs) {
         .attr("transform", function(d) { return "translate(" + xLineRight(d.x0) + "," + yLineRight(d.length) + ")"; })
         .attr("width", function(d) {
             if ( d.x0 === d.x1 ) {
-                return xLineRight(max_persistence_pairs * 0.01) - xLineRight(0) ;
+                return xLineRight( ( max_persistence_pairs - min_persistence_pairs ) * 0.01) - xLineRight(0) ;
             }
             return xLineRight(d.x1) - xLineRight(d.x0);
         })
@@ -179,11 +179,11 @@ function drawLegend(data, max_persistence_pairs) {
         .attr("height", y.bandwidth())
         .style("fill", function(d, i) {
             if ( i % 3 === 0) {
-                return customColor(x_0 / 2, Math.floor(i / 3) + 0.01, 5, undefined, true);
+                return customColor(x_0 / 2, undefined, undefined, Math.floor(i / 3));
             } else if ( i % 3 === 1) {
-                return customColor(x_0 + (x_1 - x_0) / 2, Math.floor(i / 3) + 0.01, 5, undefined, true);
+                return customColor(x_0 + (x_1 - x_0) / 2, undefined, undefined, Math.floor(i / 3));
             } else {
-                return customColor(x_1 + (1 - x_1) / 2, Math.floor(i / 3) + 0.01, 5, undefined, true);
+                return customColor(x_1 + (1 - x_1) / 2, undefined, undefined, Math.floor(i / 3));
             }
         });
     removeNiceByKicks(".axis--legend--y", 0);
@@ -198,6 +198,24 @@ function drawLegend(data, max_persistence_pairs) {
         .style("text-anchor", "middle")
         .style("font-size", "small")
         .text("# of bins") ;
+
+    svg.append("text")
+        .attr("y", height - 10)
+        .attr("x", 0 - 10)
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "small")
+        .text(min_persistence_pairs + "-") ;
+
+    svg.append("text")
+        .attr("y", 0 - 4)
+        .attr("x", 0 - 14)
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "small")
+        .text(max_persistence_pairs + "+") ;
 
     // Add x-axis title
     svg.append("text")

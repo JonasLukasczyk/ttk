@@ -16,7 +16,9 @@ function drawHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    max_persistence_pairs = getMaxPersistencePairs()
+    tmp = getRangeOfPPI()
+    min_persistence_pairs = tmp[0]
+    max_persistence_pairs = tmp[1]
 
     let vData = [];
     let dist_data = [] ;
@@ -34,7 +36,7 @@ function drawHistogram(iComponent, socket) {
         }
     }
 
-    drawLegend(dist_data, max_persistence_pairs) ;
+    drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
 
     // draw histogram
     d3.select("#histogram_viz *").remove() ;
@@ -97,12 +99,12 @@ function drawHistogram(iComponent, socket) {
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
         .style("fill", function (d) {
-            // if the range is customed, ignore the max_persistence_pairs
-            return customColor(d[5], d[2], max_persistence_pairs);
+            // if the range is customed
+            return customColor(d[5], d[2]);
         })
         .on("mouseover", function (d, i) {
             d3.select("#tooltipSvg").selectAll("*").remove();
-            drawCurveLine("tooltipSvg", d[3], iComponent, d[5], max_persistence_pairs, d[2]);
+            drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
             return d3.select("#tooltip").style("visibility", "visible");
         })
         .on("mousemove", function () {
@@ -167,7 +169,7 @@ function drawHistogram(iComponent, socket) {
 }
 
 // draw a curve for histogram of each bins when hovering it
-function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs, pp) {
+function drawCurveLine(key, data, iComponent, reliability, pp) {
     let svg = d3.select("#" + key);
     let x = d3.scaleLinear().range([0, 240]);
     let y = d3.scaleLinear().range([132, 0]);
@@ -216,14 +218,10 @@ function drawCurveLine(key, data, iComponent, reliability, max_persistence_pairs
         .style("opacity", 0.3)
         .attr("transform", "translate(28, 0)");
 
-    let lower = 0, upper = 0 ;
-    if (Window.PPI['max_persistence_pairs']['is_custom']) {
-        lower = Window.PPI['max_persistence_pairs']['custom_lower'] ;
-        upper = Window.PPI['max_persistence_pairs']['custom_upper'] ;
-    } else {
-        lower = 0 ;
-        upper = max_persistence_pairs ;
-    }
+    
+    tmp = getRangeOfPPI();
+    let lower = tmp[0]
+    let upper = tmp[1]
 
     svg.append("text")
         .attr("x", 132)
@@ -289,8 +287,23 @@ $("#hist-threshold").change(function () {
 });
 
 $("#hist-rescale").unbind().click(function() {
-    Window.PPI['max_persistence_pairs']['is_custom'] = true ;
-    Window.PPI['max_persistence_pairs']['custom_upper'] = getMaxPersistencePairs() ;
-    Window.PPI['max_persistence_pairs']['custom_lower'] = 0 ;
+    tmp = getRangeOfPPIByThreshold() ;
+    Window.PPI['persistence_pairs_range']['is_custom'] = true ;
+    Window.PPI['persistence_pairs_range']['custom_upper'] = tmp[1] ;
+    Window.PPI['persistence_pairs_range']['custom_lower'] = tmp[0] ;
+    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject());
+}) ;
 
+$("#histRescaleCustom").unbind().click(function() {
+    console.log("xxx") ;
+    if (isNaN($("#histRescaleCustomLower").val()) || isNaN($("#histRescaleCustomUpper").val())) {
+        alert("lower and upper should be number") ;
+        return ;
+    }
+    Window.PPI['persistence_pairs_range']['is_custom'] = true ;
+    Window.PPI['persistence_pairs_range']['custom_lower'] = parseFloat($("#histRescaleCustomLower").val()) ;
+    Window.PPI['persistence_pairs_range']['custom_upper'] = parseFloat($("#histRescaleCustomUpper").val());
+    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject());
+    // re-draw the histogram
+    $("#histRescaleCustom-close").click() ;
 }) ;

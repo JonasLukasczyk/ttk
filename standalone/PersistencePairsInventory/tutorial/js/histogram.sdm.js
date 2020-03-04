@@ -7,8 +7,6 @@ function drawSDMHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    max_persistence_pairs = getMaxPersistencePairs()
-
     let vData = [];
     
     // extract information
@@ -87,7 +85,7 @@ function drawSDMHistogram(iComponent, socket) {
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
         .style("fill", function (d) {
-            return customColor((lower + upper) / 2, d[2], max_persistence_pairs);
+            return customColor((lower + upper) / 2, d[2], undefined, undefined, true);
         })
 
     // Add y-axis title
@@ -170,7 +168,7 @@ function drawSDMHistogram(iComponent, socket) {
         .attr("width", xAPPI.bandwidth())
         .attr("height", yAPPI.bandwidth())
         .style("fill", function (d) {
-            return customColor(d[1], d[2], max_persistence_pairs);
+            return customColor(d[1], d[2]);
     })
 }
 

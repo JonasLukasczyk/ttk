@@ -5,7 +5,8 @@ Window.PPI = {
     "APPIAttrName": "",
     "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
     "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
-    "color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
+	"color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
+	"color-blue": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],
 	"histogram-width": 0,
 	"sdm-histogram-width": 0,
     "histogram-height": 0,
@@ -18,11 +19,12 @@ Window.PPI = {
         "box_polygon": true,
         "box_optimal": false
 	},
-    "max_persistence_pairs": {
+    "persistence_pairs_range": {
         "is_custom": false,
         "custom_upper": -1, 
-        "custom_lower": -1, 
-        // based on each frame
+		"custom_lower": -1, 
+		// {threshold_index} => [minPPI, maxPPI] 
+
     },  
 	"histogram-mode": "multi", // multi or single
 } ;
