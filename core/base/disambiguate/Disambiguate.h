@@ -29,8 +29,6 @@
 
 typedef ttk::SimplexId ttkInt;
 
-int TODO_TASKSUBDIVISION = 1;
-
 namespace ttk {
 
     class Disambiguate : virtual public Debug {
@@ -978,6 +976,7 @@ namespace ttk {
                 return 1;
             }
 
+            // TODO: NEEDS LOGIC UPDATE
             template<typename idType, typename dataType>
             int computePropagationIV(
                 idType* saddleMask,
@@ -1328,7 +1327,7 @@ namespace ttk {
                     if(currentPropagation->persistent==1)
                         return 1;
 
-                    if(counter++>TODO_TASKSUBDIVISION){
+                    if(counter++>escapeInterval){
                         counter = 0;
 
                         idType nActivePropagations_;
@@ -1343,7 +1342,6 @@ namespace ttk {
                                 ? elderScalar-scalars[v]
                                 : scalars[v]-elderScalar;
                             if(persistence>persistenceThreshold){
-                                // this->printErr("ESC");
                                 currentPropagation->persistent = 1;
                                 return 1;
                             }
@@ -1981,7 +1979,7 @@ namespace ttk {
                     Propagation<idType>* propagation = &propagations[p];
 
                     // if the propagation is persistent or a is the child of a persistent branch skip
-                    if(propagation->persistent==1 || propagation->parentBranch)
+                    if(propagation->persistent==1 || (propagation->parentBranch && propagation->parentBranch->persistent==0))
                         continue;
 
                     propagation->setParentRecursive(propagation);
