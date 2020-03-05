@@ -2526,6 +2526,7 @@ namespace ttk {
                 idType nActivePropagations = nPropagations;
                 idType nFirstPhasePropagations = nPropagations;
 
+
                 // compute propagations
                 #pragma omp parallel num_threads(this->threadNumber_)
                 #pragma omp single
@@ -2588,10 +2589,28 @@ namespace ttk {
                 }
                 if(!status) return 0;
 
-                this->printMsg(
-                    "Computing persistent propagations ("+std::to_string(nPropagations)+")",
-                    1, timer.getElapsedTime(), this->threadNumber_
-                );
+
+
+                idType regionSizes = 0;
+                if(this->debugLevel_>3){
+                    double t = timer.getElapsedTime();
+                    idType nVertices = triangulation->getNumberOfVertices();
+                    #pragma omp parallel for num_threads(this->threadNumber_) reduction(+:regionSizes)
+                    for(idType v=0; v<nVertices; v++)
+                        if(propagationMask[v]!=nullptr) regionSizes ++;
+
+                    std::stringstream vFraction;
+                    vFraction << std::fixed << std::setprecision(2) << ((float)regionSizes/(float)nVertices);
+                    this->printMsg(
+                        "Computing persistent propagations ("+std::to_string(nPropagations)+"|"+vFraction.str()+")",
+                        1, t, this->threadNumber_
+                    );
+                } else
+                    this->printMsg(
+                        "Computing persistent propagations ("+std::to_string(nPropagations)+")",
+                        1, timer.getElapsedTime(), this->threadNumber_
+                    );
+
 
                 return 1;
             }
@@ -3177,17 +3196,6 @@ namespace ttk {
                     escapeInterval
                 );
 
-                if(this->debugLevel_>3){
-                    idType count = 0;
-                    for(idType i=0; i<nVertices; i++)
-                        if(propagationMask[i]!=nullptr)
-                            count++;
-
-                    std::stringstream vFraction;
-                    vFraction << std::fixed << std::setprecision(2) << ((float)count/(float)nVertices);
-                    this->printMsg( "Visited volume fraction during propagation: " + vFraction.str() );
-                }
-
                 // compute trunk
                 status = this->computeTrunkII<idType>(
                     propagationMask,
@@ -3201,17 +3209,6 @@ namespace ttk {
                     persistenceThreshold
                 );
                 if(!status) return 0;
-
-                if(this->debugLevel_>3){
-                    idType count = 0;
-                    for(idType i=0; i<nVertices; i++)
-                        if(propagationMask[i]!=nullptr)
-                            count++;
-
-                    std::stringstream vFraction;
-                    vFraction << std::fixed << std::setprecision(2) << ((float)count/(float)nVertices);
-                    this->printMsg( "Visited volume fraction during propagation + trunk: " + vFraction.str() );
-                }
 
                 // finalize master propagations
                 status = this->finalizePropagationsByPersistence<idType,dataType>(
@@ -3647,7 +3644,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("-------- [Removing unauthorized minima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing unauthorized minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3692,7 +3689,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("-------- [Removing unauthorized maxima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing unauthorized maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
@@ -3888,7 +3885,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("-------- [Removing non-persistent minima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing non-persistent minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3933,7 +3930,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("-------- [Removing non-persistent maxima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing non-persistent maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
@@ -4236,7 +4233,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("-------- [Removing minima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -4278,7 +4275,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("-------- [Removing maxima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
