@@ -1,0 +1,9 @@
+NAME
+  ttkPLTSimplification
+SOURCES
+  ttkPLTSimplification.cpp
+HEADERS
+  ttkPLTSimplification.h
+DEPENDS
+  pltSimplification
+  ttkAlgorithm

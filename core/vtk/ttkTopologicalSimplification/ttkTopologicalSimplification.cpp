@@ -1,6 +1,6 @@
 #include <ttkTopologicalSimplification.h>
 
-#include <Disambiguate.h>
+#include <PLTSimplification.h>
 
 using namespace std;
 using namespace ttk;
@@ -200,10 +200,9 @@ int ttkTopologicalSimplification::dispatch(
         ret = topologicalSimplification_.execute<dataType, vtkIdType>();
       }
   } else {
-      auto tpts = ttk::Disambiguate();
-      tpts.setDebugMsgPrefix( "TPTS" );
-      tpts.setThreadNumber( this->threadNumber_ );
-      tpts.setDebugLevel( this->debugLevel_ );
+      auto plts = ttk::PLTSimplification();
+      plts.setThreadNumber( this->threadNumber_ );
+      plts.setDebugLevel( this->debugLevel_ );
 
       if(outputOffsetArray->GetDataType()!=inputCriticalPointIdArray->GetDataType()){
           this->printErr("Id type missmatch");
@@ -216,7 +215,7 @@ int ttkTopologicalSimplification::dispatch(
 
       if(outputOffsetArray->GetDataType() == VTK_INT) {
         Timer t;
-        status = tpts.removeUnauthorizedExtrema(
+        status = plts.removeUnauthorizedExtrema(
           (dataType*) outputScalarArray->GetVoidPointer(0),
           (int*) outputOffsetArray->GetVoidPointer(0),
 
