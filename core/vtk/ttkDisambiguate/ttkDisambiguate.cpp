@@ -53,9 +53,11 @@ int ttkDisambiguate::RequestData(
     // Precondition triangulation
     this->PreconditionTriangulation( triangulation );
 
+    // Get input array
     auto inputPD = input->GetPointData();
     auto inputScalars = this->GetInputArrayToProcess(0, inputVector);
 
+    // Create output arrays
     auto outputScalars = vtkSmartPointer<vtkDataArray>::Take( inputScalars->NewInstance() );
     outputScalars->SetName( inputScalars->GetName() );
     outputScalars->SetNumberOfComponents(1);
@@ -66,81 +68,28 @@ int ttkDisambiguate::RequestData(
     outputOffsets->SetNumberOfComponents(1);
     outputOffsets->SetNumberOfTuples( nVertices );
 
-    if(this->PrecomputeMergeTreeSegmentations){
-        if(this->LastInputTriangulation!=triangulation){
-            this->LastInputTriangulation = triangulation;
+    // Compute persistence-based simplification
+    int status = -1;
+    switch(inputScalars->GetDataType()) {
+        vtkTemplateMacro(
+            (status = this->removeExtremaByPersistence<int, VTK_TT>(
+                (VTK_TT*) outputScalars->GetVoidPointer(0),
+                (int*) outputOffsets->GetVoidPointer(0),
 
-            // precompute merge tree (once)
-            int status = -1;
-            switch(inputScalars->GetDataType()) {
-                vtkTemplateMacro(
-                    (status = this->computeMergeTreeSegmentations<int, VTK_TT>(
-                        this->PropagationsMin,
-                        this->PropagationsMax,
-                        this->PropagationMaskMin,
-                        this->PropagationMaskMax,
-
-                        triangulation,
-                        (VTK_TT*) inputScalars->GetVoidPointer(0),
-                        this->UseDeallocation,
-                        this->EscapeInterval
-                    ))
-                );
-            }
-            if(!status)
-                return 0;
-        }
-
-        // compute persistence-based simplification on precomputed segmentation
-        int status = -1;
-        switch(inputScalars->GetDataType()) {
-            vtkTemplateMacro(
-                (status = this->removeExtremaByPersistenceFromMTS<int, VTK_TT>(
-                    (VTK_TT*) outputScalars->GetVoidPointer(0),
-                    (int*) outputOffsets->GetVoidPointer(0),
-
-                    this->PropagationsMin,
-                    this->PropagationsMax,
-                    this->PropagationMaskMin,
-                    this->PropagationMaskMax,
-
-                    triangulation,
-                    (VTK_TT*) inputScalars->GetVoidPointer(0),
-                    (VTK_TT) this->PersistenceThreshold,
-                    this->UseRegionBasedIterations,
-                    this->AddPerturbation,
-                    this->UseDeallocation
-                ))
-            );
-        }
-        if(!status)
-            return 0;
-
-    } else {
-        // compute persistence-based simplification on the fly
-        int status = -1;
-        switch(inputScalars->GetDataType()) {
-            vtkTemplateMacro(
-                (status = this->removeExtremaByPersistence<int, VTK_TT>(
-                    (VTK_TT*) outputScalars->GetVoidPointer(0),
-                    (int*) outputOffsets->GetVoidPointer(0),
-
-                    triangulation,
-                    (VTK_TT*) inputScalars->GetVoidPointer(0),
-                    (VTK_TT) this->PersistenceThreshold,
-                    this->UseRegionBasedIterations,
-                    this->UseInterleaving,
-                    this->AddPerturbation,
-                    this->UseDeallocation,
-                    this->EscapeInterval
-                ))
-            );
-        }
-        if(!status)
-            return 0;
+                triangulation,
+                (VTK_TT*) inputScalars->GetVoidPointer(0),
+                (VTK_TT) this->PersistenceThreshold,
+                this->UseRegionBasedIterations,
+                this->AddPerturbation,
+                this->UseDeallocation,
+                this->EscapeInterval
+            ))
+        );
     }
+    if(!status)
+        return 0;
 
-    // Get the output
+    // Create the output
     auto output = vtkDataSet::GetData( outputVector );
     output->ShallowCopy( input );
 

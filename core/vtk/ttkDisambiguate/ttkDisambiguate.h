@@ -37,17 +37,9 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
     private:
         bool AddPerturbation{false};
         bool UseRegionBasedIterations{false};
-        bool UseInterleaving{false};
         bool UseDeallocation{false};
         double PersistenceThreshold{0};
-        bool PrecomputeMergeTreeSegmentations{false};
         int EscapeInterval{1000};
-
-        ttk::Triangulation* LastInputTriangulation{nullptr};
-        std::vector<ttk::Propagation<int>> PropagationsMin;
-        std::vector<ttk::Propagation<int>> PropagationsMax;
-        std::vector<ttk::Propagation<int>*> PropagationMaskMin;
-        std::vector<ttk::Propagation<int>*> PropagationMaskMax;
 
     public:
         vtkSetMacro(AddPerturbation, bool);
@@ -56,14 +48,8 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
         vtkSetMacro(UseRegionBasedIterations, bool);
         vtkGetMacro(UseRegionBasedIterations, bool);
 
-        vtkSetMacro(UseInterleaving, bool);
-        vtkGetMacro(UseInterleaving, bool);
-
         vtkSetMacro(UseDeallocation, bool);
         vtkGetMacro(UseDeallocation, bool);
-
-        vtkSetMacro(PrecomputeMergeTreeSegmentations, bool);
-        vtkGetMacro(PrecomputeMergeTreeSegmentations, bool);
 
         vtkGetMacro(PersistenceThreshold,double);
         vtkSetMacro(PersistenceThreshold,double);

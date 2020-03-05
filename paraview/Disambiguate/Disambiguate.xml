@@ -35,11 +35,6 @@
                 <Documentation>TODO</Documentation>
             </IntVectorProperty>
 
-            <IntVectorProperty name="UseInterleaving" command="SetUseInterleaving" label="Use Interleaving" number_of_elements="1" default_values="0">
-                <BooleanDomain name="bool"/>
-                <Documentation>TODO</Documentation>
-            </IntVectorProperty>
-
             <IntVectorProperty name="UseDeallocation" command="SetUseDeallocation" label="Use explicit memory de-allocation" number_of_elements="1" default_values="0">
                 <BooleanDomain name="bool"/>
                 <Documentation>TODO</Documentation>
@@ -53,22 +48,15 @@
             <IntVectorProperty name="EscapeInterval" command="SetEscapeInterval" label="Escape Interval" number_of_elements="1" default_values="1000">
             </IntVectorProperty>
 
-            <IntVectorProperty name="PrecomputeMergeTreeSegmentations" command="SetPrecomputeMergeTreeSegmentations" label="Precompute Merge Tree Segmentations" number_of_elements="1" default_values="0">
-                <BooleanDomain name="bool"/>
-                <Documentation>TODO</Documentation>
-            </IntVectorProperty>
-
             <PropertyGroup panel_widget="Line" label="Input Options">
                 <Property name="InputArray" />
             </PropertyGroup>
             <PropertyGroup panel_widget="Line" label="Output Options">
                 <Property name="PersistenceThreshold" />
                 <Property name="UseRegionBasedIterations" />
-                <Property name="UseInterleaving" />
                 <Property name="UseDeallocation" />
                 <Property name="AddPerturbation" />
                 <Property name="EscapeInterval" />
-                <Property name="PrecomputeMergeTreeSegmentations" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}

@@ -29,6 +29,8 @@
 
 typedef ttk::SimplexId ttkInt;
 
+// int TODO_IDTYPE_PARAM = 0;
+
 namespace ttk {
 
     class Disambiguate : virtual public Debug {
@@ -1205,7 +1207,6 @@ namespace ttk {
                 idType* queueMask,
                 Propagation<idType>** propagationMask,
                 Propagation<idType>& propagation,
-                idType& nActivePropagations,
 
                 const ttk::Triangulation* triangulation,
                 const idType* inputOffsets,
@@ -1278,13 +1279,10 @@ namespace ttk {
                         currentPropagation->lastEncounteredCriticalPoint = v;
                         currentPropagation->terminated = 1;
 
-                        if(currentPropagation->persistent==0){
-                            const dataType persistence = elderScalar>scalars[v]
-                                ? elderScalar-scalars[v]
-                                : scalars[v]-elderScalar;
-                            if(persistence>persistenceThreshold)
-                                currentPropagation->persistent = 1;
-                        }
+                        const dataType persistence = elderScalar>scalars[v]
+                            ? elderScalar-scalars[v]
+                            : scalars[v]-elderScalar;
+                        currentPropagation->persistent = persistence>persistenceThreshold ? 1 : 0;
 
                         idType numberOfRegisteredLargerVertices=0;
                         #pragma omp atomic capture
@@ -1324,28 +1322,306 @@ namespace ttk {
                     currentPropagation->regionSize++;
                     propagationMask[v] = currentPropagation;
 
+                    if(counter++>escapeInterval){
+                        counter = 0;
+                        const dataType persistence = elderScalar>scalars[v]
+                            ? elderScalar-scalars[v]
+                            : scalars[v]-elderScalar;
+                        currentPropagation->persistent = persistence>persistenceThreshold ? 1 : 0;
+                    }
+
                     if(currentPropagation->persistent==1)
                         return 1;
+                }
+
+                // if thread reached the global minimum finish propagation
+                currentPropagation->terminated = 1;
+                currentPropagation->lastEncounteredCriticalPoint = v;
+
+                return 1;
+            }
+
+            // propagate until trunk mode, or when getting persistent spawn new task
+            template<typename idType, typename dataType>
+            int computePropagationVI(
+                idType* saddleMask,
+                idType* queueMask,
+                Propagation<idType>** propagationMask,
+                Propagation<idType>& propagation,
+                Propagation<idType>*& earlyEscapedPropagation,
+
+                const ttk::Triangulation* triangulation,
+                const idType* offsets,
+                const dataType* scalars,
+                const dataType& persistenceThreshold,
+                const idType& escapeInterval,
+                const idType& nActivePropagations
+            ) const {
+
+                // pointer used to compare against representative
+                auto* currentPropagation = &propagation;
+
+                // frequently used propagation members
+                const idType& extremumIndex = currentPropagation->extremumIndex;
+                currentPropagation->lastEncounteredCriticalPoint = extremumIndex;
+                auto* queue = &currentPropagation->queue;
+
+                // largest maximum
+                dataType elderScalar = scalars[extremumIndex];
+
+                // a vector that will hold saddle propagations
+                std::vector<Propagation<idType>*> saddlePropagations(32,nullptr);
+
+                // add extremumIndex to queue
+                queue->emplace(offsets[extremumIndex],extremumIndex);
+                queueMask[extremumIndex] = extremumIndex;
+
+                idType counter = 0;
+
+                // grow region until it reaches a saddle and then decide if it should continue
+                idType v = -1;
+                while(!queue->empty()){
+                    v = std::get<1>(queue->top());
+                    queue->pop();
+
+                    // continue if this thread has already seen this vertex
+                    if(propagationMask[v]!=nullptr)
+                        continue;
+
+                    const idType& offsetV = offsets[v];
+
+                    // add neighbors to queue AND check if v is a saddle
+                    bool isSaddle = false;
+                    const idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+
+                    idType numberOfLargerNeighbors = 0;
+                    idType numberOfLargerNeighborsThisThreadVisited = 0;
+                    for(idType n=0; n<nNeighbors; n++){
+                        idType u;
+                        triangulation->getVertexNeighbor(v,n,u);
+
+                        const idType& offsetU = offsets[u];
+
+                        // if larger neighbor
+                        if( offsetU>offsetV ){
+                            numberOfLargerNeighbors++;
+
+                            if(propagationMask[u]==nullptr || currentPropagation!=propagationMask[u]->find())
+                                isSaddle = true;
+                            else
+                                numberOfLargerNeighborsThisThreadVisited++;
+                        }
+                        else if(queueMask[u] != extremumIndex) {
+                            queue->emplace(offsetU,u);
+                            queueMask[u] = extremumIndex;
+                        }
+                    }
+
+                    // if v is a saddle check if the current thread is the last visitor
+                    if(isSaddle){
+                        currentPropagation->lastEncounteredCriticalPoint = v;
+                        currentPropagation->terminated = 1;
+
+                        const dataType persistence = elderScalar>scalars[v]
+                            ? elderScalar-scalars[v]
+                            : scalars[v]-elderScalar;
+                        currentPropagation->persistent = persistence>persistenceThreshold ? 1 : 0;
+
+                        idType numberOfRegisteredLargerVertices=0;
+                        #pragma omp atomic capture
+                        {
+                            saddleMask[v] -= numberOfLargerNeighborsThisThreadVisited;
+                            numberOfRegisteredLargerVertices = saddleMask[v];
+                        }
+
+                        // if this thread did not register the last remaining larger vertices then terminate propagation
+                        if( numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1 )
+                            return 1;
+
+                        // get most persistent branch
+                        this->getSaddlePropagations<idType>(
+                            saddlePropagations,
+                            currentPropagation,
+                            propagationMask,
+
+                            triangulation,
+                            v,
+                            offsetV,
+                            nNeighbors,
+                            offsets
+                        );
+
+                        // merge other branches into most persistent branch
+                        this->mergeSaddlePropagations<idType>(
+                            saddlePropagations,
+                            currentPropagation
+                        );
+
+                        queue = &currentPropagation->queue;
+                        elderScalar = scalars[currentPropagation->extremumIndex];
+                    }
+
+                    // mark vertex as visited and continue
+                    currentPropagation->regionSize++;
+                    propagationMask[v] = currentPropagation;
 
                     if(counter++>escapeInterval){
                         counter = 0;
 
-                        idType nActivePropagations_;
+                        // check if persistence threshold is reached
+                        const dataType persistence = elderScalar>scalars[v]
+                            ? elderScalar-scalars[v]
+                            : scalars[v]-elderScalar;
+                        currentPropagation->persistent = persistence>persistenceThreshold ? 1 : 0;
+
+                        // check if trunk mode can be started
+                        idType nActivePropagations_ = 0;
                         #pragma omp atomic read
                         nActivePropagations_ = nActivePropagations;
 
-                        if(nActivePropagations_==1){
-                            currentPropagation->terminated = 1;
+                        if(nActivePropagations_==1)
                             return 1;
-                        } else if (currentPropagation->persistent==0){
-                            const dataType persistence = elderScalar>scalars[v]
-                                ? elderScalar-scalars[v]
-                                : scalars[v]-elderScalar;
-                            if(persistence>persistenceThreshold){
-                                currentPropagation->persistent = 1;
-                                return 1;
-                            }
+                    }
+
+                    if(currentPropagation->persistent==1){
+                        earlyEscapedPropagation = currentPropagation;
+                        return 1;
+                    }
+                }
+
+                // if thread reached the global minimum finish propagation
+                currentPropagation->terminated = 1;
+                currentPropagation->lastEncounteredCriticalPoint = v;
+
+                return 1;
+            }
+
+            // continue propagations until all other propagations are persistent or we hit trunk mode
+            template<typename idType>
+            int computePropagationVII(
+                idType* saddleMask,
+                idType* queueMask,
+                Propagation<idType>** propagationMask,
+                Propagation<idType>& propagation,
+
+                const ttk::Triangulation* triangulation,
+                const idType* offsets,
+                const idType& escapeInterval,
+                const idType& nFirstPhasePropagations
+            ) const {
+
+                // pointer used to compare against representative
+                auto* currentPropagation = &propagation;
+
+                // frequently used propagation members
+                const idType& extremumIndex = currentPropagation->extremumIndex;
+                auto* queue = &currentPropagation->queue;
+
+                // a vector that will hold saddle propagations
+                std::vector<Propagation<idType>*> saddlePropagations(32,nullptr);
+
+                // if this is a new Propagation
+                if(currentPropagation->extremumIndex<0){
+                    currentPropagation->lastEncounteredCriticalPoint = extremumIndex;
+
+                    // add extremumIndex to queue
+                    queue->emplace(offsets[extremumIndex],extremumIndex);
+                    queueMask[extremumIndex] = extremumIndex;
+                }
+
+                idType counter = 0;
+
+                // grow region until it reaches a saddle and then decide if it should continue
+                idType v = -1;
+                while(!queue->empty()){
+                    v = std::get<1>(queue->top());
+                    queue->pop();
+
+                    // continue if this thread has already seen this vertex
+                    if(propagationMask[v]!=nullptr)
+                        continue;
+
+                    const idType& offsetV = offsets[v];
+
+                    // add neighbors to queue AND check if v is a saddle
+                    bool isSaddle = false;
+                    const idType nNeighbors = triangulation->getVertexNeighborNumber( v );
+
+                    idType numberOfLargerNeighbors = 0;
+                    idType numberOfLargerNeighborsThisThreadVisited = 0;
+                    for(idType n=0; n<nNeighbors; n++){
+                        idType u;
+                        triangulation->getVertexNeighbor(v,n,u);
+
+                        const idType& offsetU = offsets[u];
+
+                        // if larger neighbor
+                        if( offsetU>offsetV ){
+                            numberOfLargerNeighbors++;
+
+                            if(propagationMask[u]==nullptr || currentPropagation!=propagationMask[u]->find())
+                                isSaddle = true;
+                            else
+                                numberOfLargerNeighborsThisThreadVisited++;
                         }
+                        else if(queueMask[u] != extremumIndex) {
+                            queue->emplace(offsetU,u);
+                            queueMask[u] = extremumIndex;
+                        }
+                    }
+
+                    // if v is a saddle we have to check if the current thread is the last visitor
+                    if(isSaddle){
+                        currentPropagation->lastEncounteredCriticalPoint = v;
+                        currentPropagation->terminated = 1;
+
+                        idType numberOfRegisteredLargerVertices=0;
+                        #pragma omp atomic capture
+                        {
+                            saddleMask[v] -= numberOfLargerNeighborsThisThreadVisited;
+                            numberOfRegisteredLargerVertices = saddleMask[v];
+                        }
+
+                        // if this thread did not register the last remaining larger vertices then terminate propagation
+                        if( numberOfRegisteredLargerVertices != -numberOfLargerNeighbors-1 )
+                            return 1;
+
+                        // get most persistent branch
+                        this->getSaddlePropagations<idType>(
+                            saddlePropagations,
+                            currentPropagation,
+                            propagationMask,
+
+                            triangulation,
+                            v,
+                            offsetV,
+                            nNeighbors,
+                            offsets
+                        );
+
+                        // merge other branches into most persistent branch
+                        this->mergeSaddlePropagations<idType>(
+                            saddlePropagations,
+                            currentPropagation
+                        );
+
+                        queue = &currentPropagation->queue;
+                    }
+
+                    // mark vertex as visited and continue
+                    currentPropagation->regionSize++;
+                    propagationMask[v] = currentPropagation;
+
+                    // check if all other propagations reached a persistent branch
+                    if(counter++>escapeInterval){
+                        counter = 0;
+
+                        idType nFirstPhasePropagations_ = 0;
+                        #pragma omp atomic read
+                        nFirstPhasePropagations_ = nFirstPhasePropagations;
+
+                        if(nFirstPhasePropagations_<1)
+                            return 1;
                     }
                 }
 
@@ -1493,8 +1769,6 @@ namespace ttk {
                 for(trunkIndex=0; trunkIndex<nVertices; trunkIndex++){
                     const idType& v = std::get<2>(sortedIndices[trunkIndex]);
 
-                    // this->printMsg(std::to_string(offsets[v]));
-
                     if(propagationMask[v]!=nullptr)
                         continue;
 
@@ -1513,7 +1787,7 @@ namespace ttk {
 
                 idType nSaddles = 0;
                 idType nTrunkVertices = 0;
-                if(currentPropagation!=nullptr && currentPropagation->persistent==0){
+                if(currentPropagation!=nullptr){
 
                     dataType elderScalar = scalars[currentPropagation->extremumIndex];
                     std::vector<Propagation<idType>*> saddlePropagations(32,nullptr);
@@ -2199,7 +2473,7 @@ namespace ttk {
             }
 
             template<typename idType, typename dataType>
-            int computePersistenceBasedPropagations(
+            int computePersistentPropagations(
                 idType* saddleMask,
                 idType* queueMask,
                 Propagation<idType>** propagationMask,
@@ -2215,40 +2489,81 @@ namespace ttk {
 
                 int status = 1;
                 const idType nPropagations = propagations.size();
-                idType nActivePropagations = nPropagations;
 
                 this->printMsg(
-                    "Computing persistence-based propagations ("+std::to_string(nPropagations)+")",
+                    "Computing persistent propagations ("+std::to_string(nPropagations)+")",
                     0, 0, this->threadNumber_,
                     debug::LineMode::REPLACE
                 );
 
+                idType propagationIndex = 0;
+                idType nActivePropagations = nPropagations;
+                idType nFirstPhasePropagations = nPropagations;
+
                 // compute propagations
-                #pragma omp parallel for schedule(dynamic,1) num_threads(this->threadNumber_)
-                for(idType p=0; p<nPropagations; p++){
-                    int localStatus = this->computePropagationV<idType>(
-                        saddleMask,
-                        queueMask,
-                        propagationMask,
-                        propagations[p],
-                        nActivePropagations,
+                #pragma omp parallel num_threads(this->threadNumber_)
+                #pragma omp single
+                for(idType t=0; t<this->threadNumber_; t++){
+                    #pragma omp task
+                    {
+                        idType propagationIndex_;
+                        while(true){
+                            #pragma omp atomic capture
+                            propagationIndex_ = propagationIndex++;
 
-                        triangulation,
-                        offsets,
-                        scalars,
-                        persistenceThreshold,
-                        escapeInterval
-                    );
-                    if(!localStatus)
-                        status = 0;
+                            if(propagationIndex_>=nPropagations)
+                                break;
 
-                    #pragma omp atomic update
-                    nActivePropagations--;
+                            Propagation<idType>* earlyEscapedPropagation = nullptr;
+                            int localStatus = this->computePropagationVI<idType,dataType>(
+                                saddleMask,
+                                queueMask,
+                                propagationMask,
+                                propagations[propagationIndex_],
+                                earlyEscapedPropagation,
+
+                                triangulation,
+                                offsets,
+                                scalars,
+                                persistenceThreshold,
+                                escapeInterval,
+                                nActivePropagations
+                            );
+                            if(!localStatus)
+                                status = 0;
+
+                            #pragma omp atomic update
+                            nFirstPhasePropagations--;
+
+                            if(earlyEscapedPropagation){
+                                #pragma omp task firstprivate(earlyEscapedPropagation)
+                                {
+                                    this->computePropagationVII<idType>(
+                                        saddleMask,
+                                        queueMask,
+                                        propagationMask,
+                                        *earlyEscapedPropagation,
+
+                                        triangulation,
+                                        offsets,
+                                        escapeInterval,
+                                        nFirstPhasePropagations
+                                    );
+
+                                    #pragma omp atomic update
+                                    nActivePropagations--;
+                                }
+                            } else {
+                                #pragma omp atomic update
+                                nActivePropagations--;
+                            }
+                        }
+                    }
                 }
                 if(!status) return 0;
 
                 this->printMsg(
-                    "Computing persistence-based propagations ("+std::to_string(nPropagations)+")",
+                    "Computing persistent propagations ("+std::to_string(nPropagations)+")",
                     1, timer.getElapsedTime(), this->threadNumber_
                 );
 
@@ -2791,8 +3106,8 @@ namespace ttk {
                 const dataType& persistenceThreshold,
                 const dataType* inputScalars,
                 const idType* inputOffsets,
-                const idType& escapeInterval,
-                const bool& useRegionBasedIterations
+                const bool& useRegionBasedIterations,
+                const idType& escapeInterval
             ) const {
                 const idType nVertices = triangulation->getNumberOfVertices();
 
@@ -2830,7 +3145,7 @@ namespace ttk {
                 if(!status) return 0;
 
                 // compute propagations
-                status = this->computePersistenceBasedPropagations<idType,dataType>(
+                status = this->computePersistentPropagations<idType,dataType>(
                     regionMask, // used here as saddle mask
                     queueMask,
                     propagationMask,
@@ -2890,6 +3205,17 @@ namespace ttk {
                     useRegionBasedIterations
                 );
                 if(!status) return 0;
+
+                // // flatten offsets
+                // status = this->flattenOffsets<idType>(
+                //     regionMask,
+                //     localOffsets,
+
+                //     masterPropagations,
+
+                // );
+                // if(!status) return 0;
+
 
                 // use region mask as temporary array
                 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -3305,7 +3631,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("Removing unauthorized minima", ttk::debug::Separator::L2);
+                        this->printMsg("-------- [Removing unauthorized minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3350,7 +3676,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("Removing unauthorized maxima", ttk::debug::Separator::L2);
+                        this->printMsg("-------- [Removing unauthorized maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
@@ -3457,7 +3783,6 @@ namespace ttk {
                 const dataType* inputScalars,
                 const dataType& persistenceThreshold,
                 const bool& useRegionBasedIterations,
-                const bool& useInterleaving,
                 const bool& addPerturbation,
                 const bool& useExplicitDeallocation,
                 const idType& escapeInterval = 1000
@@ -3468,7 +3793,6 @@ namespace ttk {
                     {"Persistence Threshold", std::to_string(persistenceThreshold)},
                     {"Escape Interval", std::to_string(escapeInterval)},
                     {"Use Region-Based Iterations", std::string(useRegionBasedIterations ? "true" : "false")},
-                    {"Use Interleaving", std::string(useInterleaving ? "true" : "false")},
                     {"Add Perturbation", std::string(addPerturbation ? "true" : "false")},
                     {"Use Explicit Deallocation", std::string(useExplicitDeallocation ? "true" : "false")}
                 });
@@ -3548,7 +3872,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("Removing minima", ttk::debug::Separator::L2);
+                        this->printMsg("-------- [Removing non-persistent minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3575,8 +3899,8 @@ namespace ttk {
                             persistenceThreshold,
                             outputScalars,
                             inputOffsets.data(),
-                            escapeInterval,
-                            useRegionBasedIterations
+                            useRegionBasedIterations,
+                            escapeInterval
                         );
                         if(!status) return 0;
 
@@ -3593,7 +3917,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("Removing maxima", ttk::debug::Separator::L2);
+                        this->printMsg("-------- [Removing non-persistent maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
@@ -3620,8 +3944,8 @@ namespace ttk {
                             persistenceThreshold,
                             outputScalars,
                             inputOffsets.data(),
-                            escapeInterval,
-                            useRegionBasedIterations
+                            useRegionBasedIterations,
+                            escapeInterval
                         );
                         if(!status) return 0;
 
@@ -3896,7 +4220,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("Removing minima", ttk::debug::Separator::L2);
+                        this->printMsg("-------- [Removing minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3938,7 +4262,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("Removing maxima", ttk::debug::Separator::L2);
+                        this->printMsg("-------- [Removing maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
