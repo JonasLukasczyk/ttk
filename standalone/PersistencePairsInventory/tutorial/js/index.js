@@ -33,6 +33,7 @@ Window.PPI = {
 		// "threshold index" => [minPPI, maxPPI] 
     },  
 	"histogram-mode": "multi", // multi or single
+	"thresholdRatio": 1,
 } ;
 
 let ttk, ttk_render;
@@ -61,7 +62,7 @@ function resetHist() {
 	// fill in the multi-view
     $('#hist-threshold').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
-        $('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
+        $('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     }
     $("#rel-window").attr("title", "range: [2 - " + Window.PPI['numberOfThreshold-histogram'] + "]") ;
 	triggerEnterInput("#rel-window") ;
@@ -88,6 +89,8 @@ function objectCallback(msg) {
     Window.PPI['numberOfThreshold-histogram'] = msg.PointData[Window.PPI['APPIAttrName']].NumberOfComponents ;
     Window.PPI['numberOfThreshold-boxplot'] = msg.FieldData.PersistenceCurves.NumberOfComponents ;
 	Window.PPI['sdm-histogram-width'] = Window.PPI['numberOfThreshold-histogram'] ;
+	// it should be a integer otherwise error may occur
+	Window.PPI['thresholdRatio'] = Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'] ;
     resetBoxplot() ;
     resetHist() ;
 

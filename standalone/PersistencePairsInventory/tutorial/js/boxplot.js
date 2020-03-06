@@ -630,32 +630,6 @@ $("#brush_mode").unbind().click(function() {
     $("#hidden-brush-mode").click(); 
 }) ;
 
-// $('#boxplot-threshold').on('keypress', function (e) {
-//     if (e.which === 13) {
-//         if ($(this).val().replace(" ", "") == "") {
-//             $("#hist-threshold").val("0").change();
-//             $(".histogram-selector").prop("disabled", false);
-//             d3.select(".optimal-threshold").remove();
-//         } else if (isNaN($(this).val())) {
-//             alert("this is not valid number");
-//         } else {
-//             // interaction with histogram View
-//             if (Window.PPI['numberOfThreshold-boxplot'] && Window.PPI['numberOfThreshold-histogram']) {
-//                 let v = Math.ceil(parseFloat($(this).val()) / (Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']));
-//                 $(".histogram-selector").each(function () {
-//                     if (parseInt($(this).val()) < v) {
-//                         $(this).prop("disabled", true);
-//                     } else {
-//                         $(this).prop("disabled", false);
-//                     }
-//                 });
-//                 $("#hist-threshold").val("" + v).change();
-//                 $("#hidden-optimal-threshold").click();
-//             }
-//         }
-//     }
-// });
-
 $('#boxplotRange').on('show.bs.modal', function (event) {
     $("#x-y-range-change").val($("#notification_xxyy").text());
 });

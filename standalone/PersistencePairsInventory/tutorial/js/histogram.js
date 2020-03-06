@@ -13,6 +13,7 @@ d3.select("body")
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket) {
     console.log("invoke draw histogram functionaility") ;
+    
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
@@ -25,6 +26,7 @@ function drawHistogram(iComponent, socket) {
     let dist_data = [] ;
     
     // extract information
+    var t0 = performance.now()
     let window_size = parseInt($("#rel-window").val())
     for (let i = 0; i < Window.PPI['histogram-height']; i++) {
         for (let j = 0; j < Window.PPI['histogram-width']; j++) {
@@ -38,6 +40,8 @@ function drawHistogram(iComponent, socket) {
             }
         }
     }
+    var t1 = performance.now()
+    console.log("retrieve related data for rendering histogram took " + (t1 - t0) + " milliseconds.") ;
 
     drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
 
@@ -186,7 +190,7 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
 
     let dl = d3.line()
         .x(function (d, i) {
-            return x(i * Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']);
+            return x(i * Window.PPI['thresholdRatio']);
         })
         .y(function (d) {
             return y(d);
@@ -194,7 +198,7 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
 
     // Scale the range of the data
     x.domain(d3.extent(data, function (d, i) {
-        return i * Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'];
+        return i * Window.PPI['thresholdRatio'];
     })).nice();
 
     // start from 0
@@ -207,8 +211,8 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         .style("stroke", "red")
         .attr("transform", "translate(28" + ", 4" + ")");
 
-    var idx_first = x(iComponent * Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram']);
-    var idx_sec = iComponent * Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'] + (x.domain()[1] - x.domain()[0]) * ( (parseFloat($("#rel-window").val()) - 1) / Window.PPI['numberOfThreshold-histogram']);
+    var idx_first = x(iComponent * Window.PPI['thresholdRatio']);
+    var idx_sec = iComponent * Window.PPI['thresholdRatio'] + (x.domain()[1] - x.domain()[0]) * ( (parseFloat($("#rel-window").val()) - 1) / Window.PPI['numberOfThreshold-histogram']);
     
     if (idx_sec >= x.domain()[1] - (x.domain()[1] - x.domain()[0]) / Window.PPI['numberOfThreshold-histogram']) {
         idx_sec = x.domain()[1] - (x.domain()[1] - x.domain()[0]) / Window.PPI['numberOfThreshold-histogram'] ;
@@ -282,7 +286,7 @@ $('#rel-window').on('keypress', function (e) {
 $("#hist-threshold").change(function () {
     $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
-        drawHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
     });
     $('#histogram-view-container').plainOverlay('hidden');
     if (Window.PPI['selected-bin-id']) {
