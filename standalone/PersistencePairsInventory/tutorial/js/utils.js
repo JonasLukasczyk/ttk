@@ -49,7 +49,11 @@ function calculateReliability(items, iComponent, max_threshold_window) {
     var sliceItems = items.slice(iComponent, max_threshold_window + 1), sum = 0;
     
     if (Math.max(...sliceItems) === 0) {
-        return 1;
+        return 1 ;
+    }
+
+    if (sliceItems.length === 1) {
+        return 1 ;
     }
 
     for (var i = 0; i < sliceItems.length; i++) {

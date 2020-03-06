@@ -130,28 +130,25 @@
                      <select id="threshold-window" data-value='1' title="*">
                         <option> - </option>
                      </select>
-                  <li>
-                  <div id="histogram-notification"
-                        data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
-                        data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
-                  Notification: <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                  </li>
+                  <li element-show="sdm" style="display:none;">Time:&nbsp;
+                     <select id="hist-time">
+                        <option> - </option>
+                     </select>
+                   </li>
+                  <li element-show="mdm">
+                     <div id="histogram-notification"
+                           data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
+                           data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
+                     Notification: <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
                   </li>
                </ul>
 
-               <div id="histogram_viz" class="histogram_viz_boundary"></div>
-               <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.1" data-x_1="0.9"></div>
+               <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary"></div>
+               <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
+               <div element-show="mdm" id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.1" data-x_1="0.9"></div>
             </div>
 
-            <div class="text-justify p-2 border bg-light" style="height: 100%;display:none;" id="sdm-histogram-view-container">
-               <h4>Histogram View</h4>
-               <ul>
-                  <li>Time:&nbsp;<select id="hist-time">
-                     <option> - </option>
-                  </select></li>
-               </ul>
-
-               <div id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
-            </div>
          </div>
       </div>
    </div>
@@ -176,5 +173,7 @@
 <image id="hidden-notification_xxyy" class="nospace" src="./images/zoom_back.png"></image>
 <!-- implement clicking event -->
 <image id="hidden-notification_xxyy-zoom" class="nospace" src="./images/zoom_back.png"></image>
+<image id="hidden-sdm-move-next" class="nospace" src="./images/zoom_back.png"></image>
+<image id="hidden-sdm-move-prev" class="nospace" src="./images/zoom_back.png"></image>
 </body>
 </html>
