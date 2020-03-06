@@ -12,6 +12,7 @@ d3.select("body")
 // socket: webSocketIO object
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket) {
+    console.log("invoke draw histogram functionaility") ;
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
@@ -29,10 +30,12 @@ function drawHistogram(iComponent, socket) {
         for (let j = 0; j < Window.PPI['histogram-width']; j++) {
             let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
             let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
-            let cal = calculateReliability(items, iComponent, window_size) ;
+            let cal = calculateReliability(trim(items, min_persistence_pairs, max_persistence_pairs), iComponent, window_size) ;
             // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
             vData.push([j + "", i + "", data[idx], items, idx, cal]);
-            dist_data.push([cal, data[idx]]) ;
+            if (data[idx] != 0) {
+                dist_data.push([cal, trim(data[idx], min_persistence_pairs, max_persistence_pairs)]) ;
+            }
         }
     }
 
@@ -133,6 +136,8 @@ function drawHistogram(iComponent, socket) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
+            console.log("the values of selected bins, ", d[3]) ;
+
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
 
             console.log(backMsg) ;
@@ -170,6 +175,11 @@ function drawHistogram(iComponent, socket) {
 
 // draw a curve for histogram of each bins when hovering it
 function drawCurveLine(key, data, iComponent, reliability, pp) {
+    tmp = getRangeOfPPI();
+    let lower = tmp[0]
+    let upper = tmp[1]
+
+    data = trim(data, lower, upper) ;
     let svg = d3.select("#" + key);
     let x = d3.scaleLinear().range([0, 240]);
     let y = d3.scaleLinear().range([132, 0]);
@@ -187,9 +197,8 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         return i * Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'];
     })).nice();
 
-    y.domain([0, d3.max(data, function (d) {
-        return d;
-    })]);
+    // start from 0
+    y.domain([0, upper]);
 
     svg.append("path")
         .attr("class", "line2")
@@ -218,13 +227,8 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         .style("opacity", 0.3)
         .attr("transform", "translate(28, 0)");
 
-    
-    tmp = getRangeOfPPI();
-    let lower = tmp[0]
-    let upper = tmp[1]
-
     svg.append("text")
-        .attr("x", 132)
+        .attr("x", 140)
         .attr("y", 16)
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
@@ -272,7 +276,7 @@ $('#rel-window').on('keypress', function (e) {
             }
         }
         $(this).blur();
-    }2
+    }
 });
 
 $("#hist-threshold").change(function () {
@@ -295,7 +299,6 @@ $("#hist-rescale").unbind().click(function() {
 }) ;
 
 $("#histRescaleCustom").unbind().click(function() {
-    console.log("xxx") ;
     if (isNaN($("#histRescaleCustomLower").val()) || isNaN($("#histRescaleCustomUpper").val())) {
         alert("lower and upper should be number") ;
         return ;

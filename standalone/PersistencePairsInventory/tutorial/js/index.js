@@ -1,15 +1,22 @@
 // define a global variable to control everything
 Window.PPI = {
     "DEV": false,
+    // the id of the bin selected in the histogram view
     "selected-bin-id": "",
+    // it MUST be only one value
     "APPIAttrName": "",
+    // color range
     "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
     "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
 	"color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
 	"color-blue": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],
+	// the number of elements for the width in the histogram
 	"histogram-width": 0,
-	"sdm-histogram-width": 0,
+	// the number of elements for the height in the histogram
     "histogram-height": 0,
+	// the number of elements for the height in the SDM histogram
+	"sdm-histogram-width": 0,
+	// the received ImageData object
     "image-object": null,
     "numberOfThreshold-histogram": 0,
     "numberOfThreshold-boxplot": 0,
@@ -23,68 +30,66 @@ Window.PPI = {
         "is_custom": false,
         "custom_upper": -1, 
 		"custom_lower": -1, 
-		// {threshold_index} => [minPPI, maxPPI] 
-
+		// "threshold index" => [minPPI, maxPPI] 
     },  
 	"histogram-mode": "multi", // multi or single
 } ;
 
 let ttk, ttk_render;
-RENDERER = new vtkRenderer('RendererContainer', 581, 321);
+let RENDERER = new vtkRenderer('RendererContainer', 581, 321);
 
-// callback when getting an ImageData object from Paraview
-function objectCallback(msg) {
-    if (msg.VtkDataObjectType.Values[0] !== 2) {
-        alert("MUST be ImageData") ;
-    }
-    // MUST be ImageData
-    // initialize the global variable 
-	Window.PPI['histogram-width'] = msg.Extent.Values[1] + 1 ;
-    Window.PPI['histogram-height'] = msg.Extent.Values[3] + 1 ;
-    Window.PPI['image-object'] = msg ;
-    // MUST contain one element
-    Window.PPI['APPIAttrName'] = Object.keys(msg.PointData)[0] ;
-    Window.PPI['numberOfThreshold-histogram'] = msg.PointData[Window.PPI['APPIAttrName']].NumberOfComponents ;
-    Window.PPI['numberOfThreshold-boxplot'] = msg.FieldData.PersistenceCurves.NumberOfComponents ;
-	Window.PPI['image-object'] = msg ;
-	Window.PPI['sdm-histogram-width'] = Window.PPI['numberOfThreshold-histogram'] ;
-
-    // clear action
-    d3.select("#box_dataviz *").remove() ;
-    d3.select("#box_dataviz_total *").remove() ;
+// reset the content of boxplot
+function resetBoxplot() {
+	d3.select("#box_dataviz *").remove() ;
     $("#customSwitches--x").prop('checked', false);
     $("#customSwitches--y").prop('checked', true);
     $("#boxplot-checkbox-lines").prop("checked", false);
     $("#boxplot-select-lines").html("<option>lines</option>");
     $("#boxplot-checkbox-polygon").prop("checked", true);
     $("#download_raw_data").attr("href", "") ;
-    // $("#boxplot-threshold").val("");
     $("#notification_xxyy").text("0-0, 0-0");
     $("#brush_mode").text("view mode").attr("mode", "view");
-    drawBoxplotCurve(msg.FieldData.PersistenceCurves.NumberOfComponents, msg.FieldData.PersistenceCurves.Values);
-    $("#hidden-notification_xxyy").click();
-    
+    // redraw the curve
+    drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents, 
+    				 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
+    $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
     $("[name='box_line']").attr("visibility", "hidden");
     $("[name='box_box']").attr("visibility", "hidden");    
-    // END clear action
+}
 
-	// fill in the histogram multi-view
-    $("#hist-threshold").html("");
-    $("#hist-threshold").attr("title", "");
-    $('#hist-threshold').attr("title", 'for ' + Window.PPI['APPIAttrName']);
-    for (let vv = 0; vv < msg['PointData'][Window.PPI['APPIAttrName']].NumberOfComponents; vv++) {
-        $('#hist-threshold').append('<option class="histogram-selector" value=' + vv + '>' + vv + '</option>');
+function resetHist() {
+	// fill in the multi-view
+    $('#hist-threshold').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
+    for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
+        $('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
     }
-    $("#rel-window").attr("title", "range: [2 - " + msg['PointData'][Window.PPI['APPIAttrName']].NumberOfComponents + "]") ;
-    drawHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+    $("#rel-window").attr("title", "range: [2 - " + Window.PPI['numberOfThreshold-histogram'] + "]") ;
 	triggerEnterInput("#rel-window") ;
 	
-	// fill in the histogram single-view
+	// fill in the single-view
 	$("#hist-time").html("");
-    for (let vv = 0; vv < Window.PPI['histogram-width']; vv++) {
-        $('#hist-time').append('<option class="sdm-histogram-selector" value=' + vv + '>' + vv + '</option>');
+    for (let i = 0; i < Window.PPI['histogram-width']; i++) {
+        $('#hist-time').append('<option class="sdm-histogram-selector" value=' + i + '>' + i + '</option>');
     }
     drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+}
+
+// callback when getting an ImageData object from Paraview
+function objectCallback(msg) {
+    if (msg.VtkDataObjectType.Values[0] !== 2) {
+        alert("MUST be ImageData") ;
+    }
+    // initialize the global variable 
+    Window.PPI['image-object'] = msg ;
+	Window.PPI['histogram-width'] = msg.Extent.Values[1] + 1 ;
+    Window.PPI['histogram-height'] = msg.Extent.Values[3] + 1 ;
+    // MUST contain one element
+    Window.PPI['APPIAttrName'] = Object.keys(msg.PointData)[0] ;
+    Window.PPI['numberOfThreshold-histogram'] = msg.PointData[Window.PPI['APPIAttrName']].NumberOfComponents ;
+    Window.PPI['numberOfThreshold-boxplot'] = msg.FieldData.PersistenceCurves.NumberOfComponents ;
+	Window.PPI['sdm-histogram-width'] = Window.PPI['numberOfThreshold-histogram'] ;
+    resetBoxplot() ;
+    resetHist() ;
 
     $('body').plainOverlay('hide');
 }
@@ -130,6 +135,11 @@ function Connect() {
 function Request() {
 	if (ttk)
 		ttk.send("requestData");
+
+	if (Window.PPI['DEV']) {
+		var testdataset = loadTestDataFromString();
+		objectCallback(testdataset);
+	}
 }
 
 function LoadTest() {

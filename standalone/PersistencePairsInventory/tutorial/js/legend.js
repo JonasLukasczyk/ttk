@@ -7,14 +7,12 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
                 for (let i = 0; i < lastEle.length ; i ++) {
                     lastSecondEle.push(lastEle[i]) ;
                 }
+                bins = bins.slice(0, -1) ;
             }
-            bins = bins.slice(0, -1) ;
         }
         return bins ;
     }
 
-    // more complicated
-    // data processing
     // reduced_data: [(reliability, # of bins), ...]
     let x_0 = getFloatValue("#histogram_viz_legend", "data-x_0"),
         x_1 = getFloatValue("#histogram_viz_legend", "data-x_1"),
@@ -30,52 +28,28 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         left: 40
     };
 
-    // http://bl.ocks.org/nnattawat/8916402
-    let width = containerWidth - margin.left - margin.right,
-        height = containerHeight - margin.top - margin.bottom;
-
-    let xLine = d3.scaleLinear().range([0, width]).domain([0, 1]);
-    let histogram = d3.histogram()
-        .value(function(d) { return d[0]; })   // I need to give the vector of value
-        .domain(xLine.domain())  // then the domain of the graphic
-        .thresholds(xLine.ticks(width_partition)); // then the numbers of bins
-    let cc = [] ;
-    for (var i = 0; i < data.length ; i++) {
-        if (data[i][1] !== 0) {
-            cc.push(data[i]) ;
-        }
-    }
-    data = cc ;
-    let bins = histogram(data);
-    bins = removeLastEqual(bins) ;
-
-    let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
-    yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-
-    let xLineRight = d3.scaleLinear().range([0, height]).domain([0, max_persistence_pairs - min_persistence_pairs]);
-
-    let histogramRight = d3.histogram()
-        .value(function(d) { return d[1]; })   // I need to give the vector of value
-        .domain(xLineRight.domain())  // then the domain of the graphic
-        .thresholds(xLineRight.ticks(height_partition)); // then the numbers of bins
-
-    let binsRight = histogramRight(data);
-    binsRight = removeLastEqual(binsRight) ;
-    let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
-    yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-
-    // updated notification
-    $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
-
     // define the container and svg
     d3.select("#histogram_viz_legend *").remove();
-
     let container = d3.select("#histogram_viz_legend")
         .append("svg")
         .attr("width", containerWidth)
         .attr("height", containerHeight);
 
-    // draw the top line SVG
+    // http://bl.ocks.org/nnattawat/8916402
+    let width = containerWidth - margin.left - margin.right,
+        height = containerHeight - margin.top - margin.bottom;
+
+    // ============================= draw the top bar chart
+    let xLine = d3.scaleLinear().range([0, width]).domain([0, 1]);
+    let histogram = d3.histogram()
+        .value(function(d) { return d[0]; })   // I need to give the vector of value
+        .domain(xLine.domain())  // then the domain of the graphic
+        .thresholds(xLine.ticks(width_partition)); // then the numbers of bins
+
+    let bins = histogram(data);
+    bins = removeLastEqual(bins) ;
+    let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
+    yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
     let lineSvg = container
         .append("g")
         .attr("transform",
@@ -88,36 +62,52 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .append("rect")
         .attr("transform", function(d) { return "translate(" + xLine(d.x0) + "," + yLine(d.length) + ")"; })
         .attr("width", function(d) {
-            if ( d.x0 === d.x1 ) {
-                return xLine(0.01) - xLine(0);
-            }
             return xLine(d.x1) - xLine(d.x0);
         })
         .attr("height", function(d) { return margin.top - 5 - yLine(d.length); })
         .style("fill", "black") ;
 
-    // draw the right SVG
+    // ============================= draw the right bar chart
+    let xLineRight = d3.scaleLinear().range([0, height]).domain([min_persistence_pairs, max_persistence_pairs]);
+
+    let histogramRight = d3.histogram()
+        .value(function(d) { return d[1]; })   // I need to give the vector of value
+        .domain(xLineRight.domain())  // then the domain of the graphic
+        .thresholds(xLineRight.ticks(height_partition)); // then the numbers of bins
+
+    let binsRight = histogramRight(data);
+    binsRight = removeLastEqual(binsRight) ;
+    let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
+    yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+
     let lineSvgRight = container
         .append("g")
         .attr("transform",
             "translate(" + (margin.left + width + margin.right - 5) + ", "+ margin.top+") rotate(90)")
         .attr('overflow', 'hidden');
-
+    
+    binsRight = binsRight.reverse()
+    var x2 = min_persistence_pairs ;
+    for (var i = 0; i < binsRight.length; i ++) {
+        binsRight[i].x2 = x2 ;
+        x2 += (binsRight[i].x1 - binsRight[i].x0)
+    }
     lineSvgRight.selectAll("rect")
         .data(binsRight)
         .enter()
         .append("rect")
-        .attr("transform", function(d) { return "translate(" + xLineRight(d.x0) + "," + yLineRight(d.length) + ")"; })
+        .attr("transform", function(d) { return "translate(" + xLineRight(d.x2) + "," + yLineRight(d.length) + ")"; })
         .attr("width", function(d) {
-            if ( d.x0 === d.x1 ) {
-                return xLineRight( ( max_persistence_pairs - min_persistence_pairs ) * 0.01) - xLineRight(0) ;
-            }
             return xLineRight(d.x1) - xLineRight(d.x0);
         })
         .attr("height", function(d) { return margin.right - 5 - yLineRight(d.length); })
         .style("fill", "black") ;
 
-    // GET errors
+    console.log("top bar bins and right bar bins: ", bins, binsRight) ;
+
+    // updated notification
+    $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
+
     // draw the main body SVG
     let widthGroups = getArray(3);
     let heightGroups = getArray(5);
@@ -254,7 +244,6 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
 
     function dragstarted() {
         d3.select(this).attr('class', 'active-d3-item-line');
-
     }
 
     function dragged(d) {

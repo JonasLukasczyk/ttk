@@ -1,3 +1,13 @@
+function trim(v, lower, higher) {
+    if (Array.isArray(v)) {
+        var ans = [] ;
+        for (var i = 0; i < v.length; i ++) {
+            ans.push(trim(v[i], lower, higher)) ;
+        }
+        return ans ;
+    }
+    return Math.max(Math.min(v, higher), lower)
+}
 
 function getRangeOfPPIByThreshold() {
     // data: image-object => PointData => PersistencePairInventory
@@ -42,17 +52,6 @@ function calculateReliability(items, iComponent, windowSize) {
         return 1;
     }
 
-    tmp = getRangeOfPPI()
-    let lower = tmp[0] ;
-    let upper = tmp[1] ;
-    var ppi = 0;
-    for (var i = 0; i < sliceItems.length; i ++) {
-        if ( sliceItems[i] > 4) {
-            console.log(ppi)
-        }
-        sliceItems[i] = Math.min(upper, sliceItems[i])
-        sliceItems[i] = Math.max(lower, ppi)
-    }
     for (var i = 0; i < sliceItems.length; i++) {
         sum += sliceItems[i];
     }
@@ -122,6 +121,7 @@ function triggerEnterInput(selector) {
     e.keyCode = 13;
     $(selector).trigger(e);
 }
+
 
 
 /**
