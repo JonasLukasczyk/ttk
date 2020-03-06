@@ -81,8 +81,8 @@ function resetHist() {
     for (let i = 0; i < Window.PPI['histogram-width']; i++) {
         $('#hist-time').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
     }
-    // FLAG
-    drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+    
+    //drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
 }
 
 // callback when getting an ImageData object from Paraview
