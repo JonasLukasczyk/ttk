@@ -126,8 +126,6 @@ function triggerEnterInput(selector) {
     $(selector).trigger(e);
 }
 
-
-
 /**
  * return the color
  * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1]

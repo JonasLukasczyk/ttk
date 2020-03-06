@@ -163,6 +163,21 @@ function LoadTest() {
 	$("#connect").attr("disabled", true);
 }
 
+
+function triggerCtrlV() {
+	if (Window.PPI['histogram-mode'] == "multi") {
+		Window.PPI['histogram-mode'] = "single" ;
+		$("[element-show='mdm']").css("display", "none") ;
+		$("[element-show='sdm']").css("display", "") ;
+		drawSDMHistogram(Window.PPI['selected-time-id'], Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+	} else {
+		Window.PPI['histogram-mode'] = "multi" ;
+		$("[element-show='mdm']").css("display", "") ;
+		$("[element-show='sdm']").css("display", "none") ;
+		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+	}
+}
+
 $(document).keydown(function (e) {
 	if (!e.ctrlKey) {
 		return ;
@@ -181,17 +196,7 @@ $(document).keydown(function (e) {
 
 	switch (e.key) {
 		case "v":
-			if (Window.PPI['histogram-mode'] == "multi") {
-				Window.PPI['histogram-mode'] = "single" ;
-				$("[element-show='mdm']").css("display", "none") ;
-				$("[element-show='sdm']").css("display", "") ;
-				drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
-			} else {
-				Window.PPI['histogram-mode'] = "multi" ;
-				$("[element-show='mdm']").css("display", "") ;
-				$("[element-show='sdm']").css("display", "none") ;
-				drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject()) ;
-			}
+			triggerCtrlV() ;
 			break ;
 
 		case "b":

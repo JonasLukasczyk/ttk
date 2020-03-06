@@ -1,6 +1,8 @@
 // iComponent: for the time index
 
 function drawSDMHistogram(iComponent, socket) {
+    $("#hist-time").val(iComponent) ;
+    iComponent = parseInt(iComponent) ;
     function coverShadow() {
         $(".sdm-rect-cover").remove() ;
         // cover the shadow

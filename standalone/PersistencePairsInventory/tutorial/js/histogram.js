@@ -122,8 +122,9 @@ function drawHistogram(iComponent, socket) {
         })
         .on("click", function (d, i) {
             // alt + click
-            if (event.altKey) {  // click & ctrl then selected column to SDM
-                alert("alt + click") ;
+            if (event.ctrlKey) {  // click & ctrl then selected column to SDM
+                Window.PPI['selected-time-id'] = d[0] ;
+                triggerCtrlV() ;
                 return ;
             }
 
