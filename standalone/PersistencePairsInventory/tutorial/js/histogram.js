@@ -14,6 +14,25 @@ d3.select("body")
 function drawHistogram(iComponent, socket) {
     console.log("invoke draw histogram functionaility") ;
     
+    function coverShadow(time_idx) {
+        time_idx = parseInt(time_idx) ;
+        $(".rect-cover").remove() ;
+        // cover the shadow
+        var idx_first = x(time_idx)
+        var idx_sec = x(time_idx + 1) ;
+        
+        svg.append("rect")
+            .attr("class", "rect-cover")
+            .attr("x", x(time_idx))
+            .attr("y", 0)
+            .attr("height", height)
+            .attr("width", idx_sec - idx_first)
+            .style("fill", "none")
+            .style("stroke-width", 1)
+            .style("stroke", "rgb(0,0,0)")
+            .attr("transform", "translate(0, 0)");
+    }
+
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
@@ -124,6 +143,7 @@ function drawHistogram(iComponent, socket) {
             // alt + click
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
                 Window.PPI['selected-time-id'] = d[0] ;
+                coverShadow(d[0]) ;
                 triggerCtrlV() ;
                 return ;
             }
@@ -175,6 +195,10 @@ function drawHistogram(iComponent, socket) {
     // reset x-axis, y-axis, TRICKY
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
+
+    if ( Window.PPI['selected-time-id'] != -1 ) {
+        coverShadow(Window.PPI['selected-time-id']) ;
+    }
 }
 
 // draw a curve for histogram of each bins when hovering it
