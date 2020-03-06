@@ -179,6 +179,30 @@ function triggerCtrlV() {
 }
 
 $(document).keydown(function (e) {
+	// alt + event
+	if (e.ctrlKey && e.shiftKey) {
+		switch(e.key) {
+			case "ArrowRight":
+				// single view
+				if (Window.PPI['histogram-mode'] == "multi") {
+					
+				} else {
+					$("#hidden-sdm-move-left-next").click() ;
+				}
+				break;
+			case "ArrowLeft":
+				// single view
+				if (Window.PPI['histogram-mode'] == "multi") {
+					
+				} else {
+					$("#hidden-sdm-move-left-prev").click() ;
+				}
+				break;
+		}
+		return ;
+	}
+
+	// control + event
 	if (!e.ctrlKey) {
 		return ;
 	}

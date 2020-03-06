@@ -204,6 +204,20 @@ function drawSDMHistogram(iComponent, socket) {
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
+
+    $("#hidden-sdm-move-left-prev").unbind().click(function() {
+        $('#threshold-window option:selected').prev().prop('selected', true) ;
+
+        coverShadow() ;
+        drawVerticalColumn() ;
+    }) ;
+
+    $("#hidden-sdm-move-left-next").unbind().click(function() {
+        $('#threshold-window option:selected').next().prop('selected', true) ;
+
+        coverShadow() ;
+        drawVerticalColumn() ;
+    }) ;
 }
 
 $("#hist-time").change(function () {
