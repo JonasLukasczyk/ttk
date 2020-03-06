@@ -8,9 +8,12 @@ function drawSDMHistogram(iComponent, socket) {
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
     let vData = [];
+    tmp = getRangeOfPPI();
+    min_persistence_pairs = tmp[0]
+    max_persistence_pairs = tmp[1]
     
     // extract information
-    let window_size = parseInt($("#rel-window").val())
+    let max_threshold_window = parseInt($("#threshold-window").val())
     let hist_time_idx = iComponent ;
     for (let i = 0; i < Window.PPI['histogram-height']; i++) {
         for (let j = 0; j < Window.PPI['sdm-histogram-width']; j++) {
@@ -116,10 +119,8 @@ function drawSDMHistogram(iComponent, socket) {
     // cover the shadow
     let threshold_idx = parseInt($("#hist-threshold").val())
     var idx_first = x(threshold_idx)
-    var idx_sec = threshold_idx + parseFloat($("#rel-window").val());
+    var idx_sec = x(max_threshold_window) ;
     
-    idx_sec = x(idx_sec);
-
     svg.append("rect")
         .attr("class", "zero")
         .attr("x", idx_first)
@@ -136,7 +137,7 @@ function drawSDMHistogram(iComponent, socket) {
     relData = []
     for (let i = 0; i < Window.PPI['histogram-height']; i++) {
         let items = data.slice((i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents, (i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents + nComponents);
-        let cal = calculateReliability(items, threshold_idx, window_size) ;
+        let cal = calculateReliability(items, threshold_idx, max_threshold_window) ;
         relData.push([i, cal, items[threshold_idx]]);
     }
 
@@ -148,12 +149,13 @@ function drawSDMHistogram(iComponent, socket) {
         .range([height, 0])
         .domain(myVars) ;
 
-        var sdm_svg = container
+    var sdm_svg = container
                     .append("g")
                     .attr("transform",
                         "translate("+10+", "+margin.top+")")
                     .attr('overflow', 'hidden');
-                    sdm_svg.selectAll()
+    
+    sdm_svg.selectAll()
         .data(relData)
         .enter()
         .append("rect")
@@ -168,8 +170,10 @@ function drawSDMHistogram(iComponent, socket) {
         .attr("width", xAPPI.bandwidth())
         .attr("height", yAPPI.bandwidth())
         .style("fill", function (d) {
-            return customColor(d[1], d[2]);
-    })
+            return customColor(d[1], d[2]) ;
+        })
+        .append("title")
+        .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] });
 }
 
 $("#hist-time").change(function () {

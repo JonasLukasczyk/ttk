@@ -27,12 +27,12 @@ function drawHistogram(iComponent, socket) {
     
     // extract information
     var t0 = performance.now()
-    let window_size = parseInt($("#rel-window").val())
+    let max_threshold_window = parseInt($("#threshold-window").val())
     for (let i = 0; i < Window.PPI['histogram-height']; i++) {
         for (let j = 0; j < Window.PPI['histogram-width']; j++) {
             let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
             let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
-            let cal = calculateReliability(trim(items, min_persistence_pairs, max_persistence_pairs), iComponent, window_size) ;
+            let cal = calculateReliability(trim(items, min_persistence_pairs, max_persistence_pairs), iComponent, max_threshold_window) ;
             // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
             vData.push([j + "", i + "", data[idx], items, idx, cal]);
             if (data[idx] != 0) {
@@ -121,7 +121,6 @@ function drawHistogram(iComponent, socket) {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("click", function (d, i) {
-            // FLAG
             // alt + click
             if (event.altKey) {  // click & ctrl then selected column to SDM
                 alert("alt + click") ;
@@ -211,14 +210,10 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         .style("stroke", "red")
         .attr("transform", "translate(28" + ", 4" + ")");
 
+    let max_threshold_window = parseInt($("#threshold-window").val())
     var idx_first = x(iComponent * Window.PPI['thresholdRatio']);
-    var idx_sec = iComponent * Window.PPI['thresholdRatio'] + (x.domain()[1] - x.domain()[0]) * ( (parseFloat($("#rel-window").val()) - 1) / Window.PPI['numberOfThreshold-histogram']);
+    var idx_sec = x(max_threshold_window * Window.PPI['thresholdRatio'])
     
-    if (idx_sec >= x.domain()[1] - (x.domain()[1] - x.domain()[0]) / Window.PPI['numberOfThreshold-histogram']) {
-        idx_sec = x.domain()[1] - (x.domain()[1] - x.domain()[0]) / Window.PPI['numberOfThreshold-histogram'] ;
-    }
-    idx_sec = x(idx_sec);
-
     addSvgLine(svg, idx_first, 0, idx_first, 136, "translate(28, 0)") ;
     addSvgLine(svg, idx_sec, 0, idx_sec, 136, "translate(28, 0)")
     
@@ -249,41 +244,15 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         .call(d3.axisLeft(y));
 }
 
-function rel_window_keydown(event) {
-    let ele = $("#rel-window") ;
-    if (event.key === "ArrowUp") {
-        ele.val(parseInt(ele.val()) + 1) ;
-        triggerEnterInput("#rel-window") ;
-    } else if ( event.key === "ArrowDown") {
-        ele.val(parseInt(ele.val()) - 1) ;
-        triggerEnterInput("#rel-window") ;
-    }
-    ele.focus() ;
-}
-
-$('#rel-window').on('keypress', function (e) {
-    if (e.which === 13) {
-        if (isNaN($(this).val())) {
-            alert("this is not valid number");
-        } else {
-            if (typeof Window.PPI['numberOfThreshold-histogram'] != 'undefined') {
-                if (parseInt($(this).val()) > Window.PPI['numberOfThreshold-histogram']) {
-                    $(this).val(Window.PPI['numberOfThreshold-histogram']) ; 
-                 }
-
-                 if (parseInt($(this).val()) < 2) {
-                    alert("must be integer and larger than 1") ;
-                    $(this).val("2") ;
-                } else  {
-                    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject());
-                } 
-            }
-        }
-        $(this).blur();
-    }
-});
-
 $("#hist-threshold").change(function () {
+    v0 = parseInt($($("#hist-threshold option:selected")[0]).val()) ;
+    v1 = parseInt($($("#threshold-window option:selected")[0]).val()) ;
+    if ( v0 >= v1 ) {
+        alert('threshold-window must be large than hist-threshold') ;
+        $(this).val($(this).attr("data-value")) ;
+        return false;
+    }
+    $(this).attr("data-value", v0) ;
     $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
         drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
@@ -293,6 +262,26 @@ $("#hist-threshold").change(function () {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
 });
+
+$("#threshold-window").change(function() {
+    v0 = parseInt($($("#hist-threshold option:selected")[0]).val()) ;
+    v1 = parseInt($($("#threshold-window option:selected")[0]).val()) ;
+    if ( v0 >= v1 ) {
+        alert('threshold-window must be large than hist-threshold') ;
+        $(this).val($(this).attr("data-value")) ;
+        return false;
+    }
+    $(this).attr("data-value", v1) ;
+    $('#histogram-view-container').plainOverlay("show");
+
+    $("#hist-threshold option:selected").each(function () {
+        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+    });
+    $('#histogram-view-container').plainOverlay('hidden');
+    if (Window.PPI['selected-bin-id']) {
+        d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+    }
+}) ;
 
 $("#hist-rescale").unbind().click(function() {
     tmp = getRangeOfPPIByThreshold() ;

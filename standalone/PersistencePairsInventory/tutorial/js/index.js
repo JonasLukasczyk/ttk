@@ -64,14 +64,23 @@ function resetHist() {
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
         $('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     }
-    $("#rel-window").attr("title", "range: [2 - " + Window.PPI['numberOfThreshold-histogram'] + "]") ;
-	triggerEnterInput("#rel-window") ;
-	
+
+    $('#threshold-window').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
+    for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
+    	if ( i == 1 ) {
+        	$('#threshold-window').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+    	} else {
+	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+    	}
+    }
+    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject());
+
 	// fill in the single-view
 	$("#hist-time").html("");
     for (let i = 0; i < Window.PPI['histogram-width']; i++) {
-        $('#hist-time').append('<option class="sdm-histogram-selector" value=' + i + '>' + i + '</option>');
+        $('#hist-time').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
     }
+    // FLAG
     drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
 }
 

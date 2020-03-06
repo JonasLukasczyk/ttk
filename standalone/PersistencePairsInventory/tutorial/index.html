@@ -101,8 +101,6 @@
                      <input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">
                      polygon layer<code>|</code>
                      <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
-                     <!-- <code> | </code>
-                     <input type="input" style="width: 130px;height: 24px;" placeholder="boxplot-threshold" id="boxplot-threshold" value=""> -->
                   </li>
                   <li>
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span>
@@ -122,19 +120,21 @@
                <h4>Histogram View</h4>
                <ul>
                   <li>Threshold:&nbsp;
-                     <select id="hist-threshold" title="*">
+                     <select id="hist-threshold" data-value='0' title="*">
                         <option> - </option>
                      </select>
                      <span id="hist-rescale" class="p-1 bg-success text-white rounded" style="font-size:10px;cursor:pointer;" >reScale</span>
                      <span id="hist-rescale-custom" class="p-1 bg-success text-white rounded" style="font-size:10px;cursor:pointer;" data-toggle="modal" data-target="#histRescaleCustomModel">reScale range</span>
                   </li>
-                  <li>Reliability Window: &nbsp;
-                     <input type="input" style="width: 64px;height: 24px;" id="rel-window" value="5" onkeydown="rel_window_keydown(event)"> &nbsp;
+                   <li>Threshold window: &nbsp;
+                     <select id="threshold-window" data-value='1' title="*">
+                        <option> - </option>
+                     </select>
                   <li>
-                     <div id="histogram-notification"
-                           data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
-                           data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
-                     Notification: <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                  <div id="histogram-notification"
+                        data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
+                        data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
+                  Notification: <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
                   </li>
                </ul>
 

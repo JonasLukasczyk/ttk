@@ -45,8 +45,8 @@ function getRangeOfPPI() {
 
 // items: the # of bins over threshold, in the test dataset, it would be 50
 // iComponent: the start index of calculating, the range of the calculated window would be [iCompent, iCompent + window.size] 
-function calculateReliability(items, iComponent, windowSize) {
-    var sliceItems = items.slice(iComponent, iComponent + windowSize), sum = 0;
+function calculateReliability(items, iComponent, max_threshold_window) {
+    var sliceItems = items.slice(iComponent, max_threshold_window + 1), sum = 0;
     
     if (Math.max(...sliceItems) === 0) {
         return 1;
