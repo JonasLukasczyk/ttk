@@ -150,11 +150,11 @@ function Connect() {
 			console.log("on_clbinose");
 		},
 		objectCallback,
-		ip = $("#msg-host").val());
+		ip = $("#msg-host").val(), false);
 
 	ttk_render = new ttkWebSocketIO(PORT_RENDER, function () {
 		console.log("on_open for render");
-	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), true);
+	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), false);
 }
 
 function Request() {
