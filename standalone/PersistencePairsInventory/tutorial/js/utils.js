@@ -1,5 +1,5 @@
 function trim(v, lower, higher) {
-    if (Array.isArray(v)) {
+    if (typeof v === "object") {
         var ans = [] ;
         for (var i = 0; i < v.length; i ++) {
             ans.push(trim(v[i], lower, higher)) ;
@@ -48,12 +48,13 @@ function getRangeOfPPI() {
 function calculateReliability(items, iComponent, max_threshold_window) {
     var sliceItems = items.slice(iComponent, max_threshold_window + 1), sum = 0;
     
-    if (Math.max(...sliceItems) === 0) {
+    if (Math.max(...sliceItems) === 0 || sliceItems.length === 1) {
         return 1 ;
     }
 
-    if (sliceItems.length === 1) {
-        return 1 ;
+    var vBase = Math.min(...sliceItems) ;
+    for (var i = 0; i < sliceItems.length; i ++) {
+        sliceItems[i] = sliceItems[i] - vBase ;
     }
 
     for (var i = 0; i < sliceItems.length; i++) {

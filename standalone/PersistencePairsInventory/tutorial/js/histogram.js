@@ -51,7 +51,8 @@ function drawHistogram(iComponent, socket) {
         for (let j = 0; j < Window.PPI['histogram-width']; j++) {
             let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
             let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
-            let cal = calculateReliability(trim(items, min_persistence_pairs, max_persistence_pairs), iComponent, max_threshold_window) ;
+            items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
+            let cal = calculateReliability(items, iComponent, max_threshold_window) ;
             // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
             vData.push([j + "", i + "", data[idx], items, idx, cal]);
             if (data[idx] != 0) {
@@ -139,15 +140,18 @@ function drawHistogram(iComponent, socket) {
         .on("mouseout", function () {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
-        .on("click", function (d, i) {
-            // alt + click
+        .on("mousedown", function (d, i) {
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
                 Window.PPI['selected-time-id'] = d[0] ;
                 coverShadow(d[0]) ;
-                triggerCtrlV() ;
-                return ;
             }
-
+        })
+        .on("mouseup", function (d, i) {
+            if (event.ctrlKey) {
+                triggerCtrlV() ;
+            }
+        })
+        .on("click", function (d, i) {
             // SELECT one bin
             Window.PPI['selected-bin-id'] = $(this).attr("id")
             d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
@@ -195,10 +199,6 @@ function drawHistogram(iComponent, socket) {
     // reset x-axis, y-axis, TRICKY
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
-
-    if ( Window.PPI['selected-time-id'] != -1 ) {
-        coverShadow(Window.PPI['selected-time-id']) ;
-    }
 }
 
 // draw a curve for histogram of each bins when hovering it
@@ -226,7 +226,7 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
     })).nice();
 
     // start from 0
-    y.domain([0, upper]);
+    y.domain([lower, upper]);
 
     svg.append("path")
         .attr("class", "line2")

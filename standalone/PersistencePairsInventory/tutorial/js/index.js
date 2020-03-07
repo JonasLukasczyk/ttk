@@ -81,7 +81,6 @@ function resetHist() {
     for (let i = 0; i < Window.PPI['histogram-width']; i++) {
         $('#hist-time').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
     }
-    
     //drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
 }
 
@@ -162,7 +161,6 @@ function LoadTest() {
 	$("#load_test").attr("disabled", "disabled");
 	$("#connect").attr("disabled", true);
 }
-
 
 function triggerCtrlV() {
 	if (Window.PPI['histogram-mode'] == "multi") {
