@@ -37,31 +37,13 @@ function drawHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    tmp = getRangeOfPPI()
-    min_persistence_pairs = tmp[0]
-    max_persistence_pairs = tmp[1]
+    var tmp = getRangeOfPPI()
+    min_persistence_pairs = tmp[0] ; 
+    max_persistence_pairs = tmp[1] ;
 
-    let vData = [];
-    let dist_data = [] ;
-    
-    // extract information
-    var t0 = performance.now()
     let max_threshold_window = parseInt($("#threshold-window").val())
-    for (let i = 0; i < Window.PPI['histogram-height']; i++) {
-        for (let j = 0; j < Window.PPI['histogram-width']; j++) {
-            let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
-            let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
-            items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
-            let cal = calculateReliability(items, iComponent, max_threshold_window) ;
-            // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
-            vData.push([j + "", i + "", data[idx], items, idx, cal]);
-            if (data[idx] != 0) {
-                dist_data.push([cal, trim(data[idx], min_persistence_pairs, max_persistence_pairs)]) ;
-            }
-        }
-    }
-    var t1 = performance.now()
-    console.log("retrieve related data for rendering histogram took " + (t1 - t0) + " milliseconds.") ;
+    let vData = getHistogramFrameData(min_persistence_pairs, iComponent, max_threshold_window, max_persistence_pairs, nComponents) ;
+    let dist_data = getLegendData(vData) ;
 
     drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
 
@@ -164,7 +146,7 @@ function drawHistogram(iComponent, socket) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
-            console.log("the values of selected bins, ", d[3]) ;
+            console.log("the values of selected bins: ", d[3]) ;
 
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
 
@@ -196,7 +178,7 @@ function drawHistogram(iComponent, socket) {
         .style("text-anchor", "middle")
         .text("Time");
 
-    // reset x-axis, y-axis, TRICKY
+    // reset x-axis, y-axis
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
 }

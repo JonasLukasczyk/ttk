@@ -33,7 +33,7 @@ function drawSDMHistogram(iComponent, socket) {
         relData = []
         for (let i = 0; i < Window.PPI['histogram-height']; i++) {
             let items = data.slice((i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents, (i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents + nComponents);
-            let cal = calculateReliability(items, threshold_idx, max_threshold_window) ;
+            let cal = calculateReliability(items, threshold_idx, max_threshold_window, min_persistence_pairs) ;
             relData.push([i, cal, items[threshold_idx]]);
         }
 
@@ -77,6 +77,7 @@ function drawSDMHistogram(iComponent, socket) {
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
+    let threshold_idx = parseInt($("#hist-threshold").val()) ;
 
     let vData = [];
     tmp = getRangeOfPPI();
@@ -93,6 +94,14 @@ function drawSDMHistogram(iComponent, socket) {
         }
     }
 
+    var tmp = getRangeOfPPI() ;
+    min_persistence_pairs = tmp[0] ; 
+    max_persistence_pairs = tmp[1] ;
+
+    let max_threshold_window = parseInt($("#threshold-window").val()) ;
+    let dist_data = getLegendData(getHistogramFrameData(min_persistence_pairs, threshold_idx, max_threshold_window, max_persistence_pairs, nComponents)) ;
+    drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
+
     // draw histogram
     d3.select("#sdm-histogram_viz *").remove() ;
     let myGroups = getArray( Window.PPI['sdm-histogram-width'] );
@@ -104,9 +113,7 @@ function drawSDMHistogram(iComponent, socket) {
         containerWidth = maxWidth * Window.PPI['sdm-histogram-width'] ;
     }
     let containerHeight = containerWidth * Window.PPI['histogram-height'] / Window.PPI['sdm-histogram-width'];
-    // if (containerHeight > 824) {
-    //     containerHeight = 824;
-    // }
+
     let margin = {
         top: 2,
         right: 0,
@@ -195,6 +202,7 @@ function drawSDMHistogram(iComponent, socket) {
     coverShadow() ;
     drawVerticalColumn() ;
 
+    // FLAG, handle the edge case
     $("#hidden-sdm-move-prev").unbind().click(function() {
         $('#hist-threshold option:selected').prev().prop('selected', true) ;
         $('#threshold-window option:selected').prev().prop('selected', true) ;
@@ -211,14 +219,14 @@ function drawSDMHistogram(iComponent, socket) {
         drawVerticalColumn() ;
     }) ;
 
-    $("#hidden-sdm-move-left-prev").unbind().click(function() {
+    $("#hidden-sdm-move-right-prev").unbind().click(function() {
         $('#threshold-window option:selected').prev().prop('selected', true) ;
 
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
 
-    $("#hidden-sdm-move-left-next").unbind().click(function() {
+    $("#hidden-sdm-move-right-next").unbind().click(function() {
         $('#threshold-window option:selected').next().prop('selected', true) ;
 
         coverShadow() ;

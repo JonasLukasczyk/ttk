@@ -35,6 +35,8 @@ Window.PPI = {
 	"histogram-mode": "multi", // multi or single
 	"thresholdRatio": 1,
 	"selected-time-id": 0,
+	// {min_persistence_pairs}_{left_threshold}_{right_threshold}_{max_persistence_pairs}
+	"histogram_frame_data": { },
 } ;
 
 let ttk, ttk_render;
@@ -51,7 +53,10 @@ function resetBoxplot() {
     $("#download_raw_data").attr("href", "") ;
     $("#notification_xxyy").text("0-0, 0-0");
     $("#brush_mode").text("view mode").attr("mode", "view");
-    // redraw the curve
+}
+
+function drawBoxPlot() {
+	// redraw the curve
     drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents, 
     				 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
     $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
@@ -74,14 +79,12 @@ function resetHist() {
 	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     	}
     }
-    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject());
 
 	// fill in the single-view
 	$("#hist-time").html("");
     for (let i = 0; i < Window.PPI['histogram-width']; i++) {
         $('#hist-time').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
     }
-    //drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()) ;
 }
 
 // callback when getting an ImageData object from Paraview
@@ -101,7 +104,17 @@ function objectCallback(msg) {
 	// it should be a integer otherwise error may occur
 	Window.PPI['thresholdRatio'] = Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'] ;
     resetBoxplot() ;
+    drawBoxPlot() ;
     resetHist() ;
+
+    var mCount = 20 ;
+    if (Window.PPI['histogram-width'] <= mCount) {
+    	Window.PPI['histogram-mode'] = "multi" ;  // show the single-view at first
+    } else {
+    	Window.PPI['histogram-mode'] = "single" ; // show the multi-view at first
+    }
+	
+	triggerCtrlV() ;
 
     $('body').plainOverlay('hide');
 }
@@ -185,7 +198,7 @@ $(document).keydown(function (e) {
 				if (Window.PPI['histogram-mode'] == "multi") {
 					
 				} else {
-					$("#hidden-sdm-move-left-next").click() ;
+					$("#hidden-sdm-move-right-next").click() ;
 				}
 				break;
 			case "ArrowLeft":
@@ -193,7 +206,7 @@ $(document).keydown(function (e) {
 				if (Window.PPI['histogram-mode'] == "multi") {
 					
 				} else {
-					$("#hidden-sdm-move-left-prev").click() ;
+					$("#hidden-sdm-move-right-prev").click() ;
 				}
 				break;
 		}
@@ -328,6 +341,7 @@ $("#hist-rescale").unbind().click(function() {
     } else {
 	    drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()); 
     }
+
 }) ;
 
 $("#histRescaleCustom").unbind().click(function() {
