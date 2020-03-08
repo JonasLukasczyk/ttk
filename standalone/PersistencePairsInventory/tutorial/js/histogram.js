@@ -33,6 +33,12 @@ function drawHistogram(iComponent, socket) {
             .attr("transform", "translate(0, 0)");
     }
 
+    var zoom = d3.zoom()
+                 .scaleExtent([1, 10])
+                 .on("zoom", zoomed);
+
+    console.log(zoom.scaleExtent()[0], zoom.scaleExtent()[1]);
+
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
@@ -70,6 +76,14 @@ function drawHistogram(iComponent, socket) {
         .attr("width", containerWidth)
         .attr("height", containerHeight) ;
 
+    var slider = d3.select("#range_input")
+        .datum({})
+        .attr("value", zoom.scaleExtent()[0])
+        .attr("min", zoom.scaleExtent()[0])
+        .attr("max", zoom.scaleExtent()[1])
+        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+        .on("input", slided);
+
     var svg = container
                 .append("g")
                 .attr("transform",
@@ -83,7 +97,7 @@ function drawHistogram(iComponent, socket) {
     svg.append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(2, "s"));
+        .call(d3.axisBottom(x).ticks(2, "s"))
 
     let y = d3.scaleBand()
         .range([height, 0])
@@ -93,7 +107,8 @@ function drawHistogram(iComponent, socket) {
         .attr('class', 'axis--hist--y')
         .call(d3.axisLeft(y).ticks(2, "s"));
 
-    svg.selectAll()
+    // scale region
+    var main = svg.selectAll()
         .data(vData)
         .enter()
         .append("rect")
@@ -155,7 +170,9 @@ function drawHistogram(iComponent, socket) {
                 Window.socket = socket ;
                 socket.send(backMsg) ;
             }
-     }) ;
+        })
+        .call(zoom)
+        .on("mousedown.zoom", null)  ;  // disable the drag event
 
     // Add y-axis title
     svg.append("text")
@@ -181,6 +198,16 @@ function drawHistogram(iComponent, socket) {
     // reset x-axis, y-axis
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
+
+    function zoomed() {
+        const currentTransform = d3.event.transform;
+        main.attr("transform", currentTransform);
+        slider.property("value", currentTransform.k);
+    }
+
+    function slided(d) {
+        zoom.scaleTo(svg, d3.select(this).property("value"));
+    }
 }
 
 // draw a curve for histogram of each bins when hovering it

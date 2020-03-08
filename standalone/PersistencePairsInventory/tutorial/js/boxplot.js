@@ -187,19 +187,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
     drawPolygon();
     drawLine();
 
-    // function drawOptimalLine(idx) {
-    //     // a few features for the box
-    //     main.append("line")
-    //         .attr("name", "box_optimal")
-    //         .attr("class", "optimal-threshold")
-    //         .attr("x1", xScale(idx))
-    //         .attr("y1", 0)
-    //         .attr("x2", xScale(idx))
-    //         .attr("y2", Window.box_plot_config.containerHeight)
-    //         .style("stroke", "green")
-    //         .style("stroke-width", 5);
-    // }
-
     function brushended() {
         var s = d3.event.selection;
         if (!s) {
@@ -223,13 +210,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
         // $("#hidden-optimal-threshold").click();
         $("#hidden-notification_xxyy").click();
     });
-
-    // $("#hidden-optimal-threshold").unbind().click(function () {
-    //     d3.select(".optimal-threshold").remove();
-    //     if ($("#boxplot-threshold").val().replace(" ", "") !== "") {
-    //         drawOptimalLine(parseFloat($("#boxplot-threshold").val()));
-    //     }
-    // });
 
     $("#customSwitches--x").unbind().click(function () {
         if ($("#customSwitches--x").is(':checked')) {
@@ -297,7 +277,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         $("#hidden-notification_xxyy").click();
         $("#boxplotRangeLabel-close").click();
-        // $("#hidden-optimal-threshold").click();
     });
 
     function zoom() {
