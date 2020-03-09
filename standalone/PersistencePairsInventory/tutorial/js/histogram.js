@@ -105,9 +105,19 @@ function drawHistogram(iComponent, socket) {
         .range([height, 0])
         .domain(myVars) ;
 
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'cc-hist-clip')
+        .append('rect')
+        .attr('x', 0 - 20)
+        .attr('y', 0)
+        .attr('width', 20)
+        .attr('height', height);
+
     svg//.append("svg")
        // .attr("height", height)
-        .append("g")  // FLAG
+        .append("g")   // FLAG
+        .attr('clip-path', 'url(#cc-hist-clip)')
         .attr('class', 'axis--hist--y')
         .attr("transform", "translate(0,0)")
         .call(d3.axisLeft(y));
@@ -222,7 +232,6 @@ function drawHistogram(iComponent, socket) {
         d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
         slider.property("value", currentTransform.k);
 
-        // $($(".axis--hist--y g")[0]).attr("transform")
         $(".axis--hist--x g").each(function() {
             var v = $(this).attr("transform") ;
             var vItems = v.split(" scale") ;
