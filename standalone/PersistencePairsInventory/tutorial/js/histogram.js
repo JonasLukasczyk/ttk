@@ -16,21 +16,29 @@ function drawHistogram(iComponent, socket) {
     
     function coverShadow(time_idx) {
         time_idx = parseInt(time_idx) ;
-        $(".rect-cover").remove() ;
-        // cover the shadow
-        var idx_first = x(time_idx)
-        var idx_sec = x(time_idx + 1) ;
+        $("[id^=hist-bin-]").each(function(e) { 
+            var id = parseInt($(this).attr("id").replace("hist-bin-", ""))
+            if ( id % Window.PPI['histogram-width'] === time_idx ) {
+                $(this).css("stroke-width", "1px") ;
+            }
+        })
+
+        // time_idx = parseInt(time_idx) ;
+        // $(".rect-cover").remove() ;
+        // // cover the shadow
+        // var idx_first = x(time_idx)
+        // var idx_sec = x(time_idx + 1) ;
         
-        svg.append("rect")
-            .attr("class", "rect-cover")
-            .attr("x", x(time_idx))
-            .attr("y", 0)
-            .attr("height", height)
-            .attr("width", idx_sec - idx_first)
-            .style("fill", "none")
-            .style("stroke-width", 1)
-            .style("stroke", "rgb(0,0,0)")
-            .attr("transform", "translate(0, 0)");
+        // svg.append("rect")
+        //     .attr("class", "rect-cover")
+        //     .attr("x", x(time_idx))
+        //     .attr("y", 0)
+        //     .attr("height", height)
+        //     .attr("width", idx_sec - idx_first)
+        //     .style("fill", "none")
+        //     .style("stroke-width", 1)
+        //     .style("stroke", "rgb(0,0,0)")
+        //     .attr("transform", "translate(0, 0)");
     }
 
     var zoom = d3.zoom()
