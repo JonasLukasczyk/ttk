@@ -171,28 +171,39 @@ function triggerEnterInput(selector) {
  * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1]
  * @param {*} ppi: # of features
  */
-function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, grayReplaceBlue=false) {
+function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, grayReplaceBlue=false, useClass=false) {
     // from light to dark
     let left = getFloatValue("#histogram_viz_legend", "data-x_0"),
         right = getFloatValue("#histogram_viz_legend", "data-x_1") ;
     let range_color = Window.PPI['color-green'];
+    let prefix = "color-green-" ;
     if (reliability >= 0 && reliability < left) {
         range_color = Window.PPI['color-red'];
+        prefix = "color-red-" ;
     } else if (reliability >= left && reliability < right) {
         if (grayReplaceBlue) {
             range_color = Window.PPI['color-blue'] ;
+            prefix = "color-blue-" ;
         } else {
             range_color = Window.PPI['color-gray'];
+            prefix = "color-gray-" ;
         }
     } else {
         range_color = Window.PPI['color-green'];
+        prefix = "color-green-" ;
     }
 
     if (index != -1) {
+        if (useClass) {
+            return prefix + index ;
+        }
         return range_color[index] ;
     }
 
     if (ppi === 0) {  // special for PPI == 0
+        if (useClass) {
+            return "color-default" ;
+        }
         return default_color ;
     } else {
         tmp = getRangeOfPPI()
@@ -200,7 +211,11 @@ function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, gr
         let upper = tmp[1] ;
         ppi = Math.min(upper, ppi)
         ppi = Math.max(lower + 0.01, ppi)
-        return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];    
+        var idx = Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1 ;
+        if (useClass) {
+            return prefix + idx ;
+        }
+        return range_color[idx];    
     }
 }
 

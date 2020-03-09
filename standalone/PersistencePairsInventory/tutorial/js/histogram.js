@@ -134,7 +134,7 @@ function drawHistogram(iComponent, socket) {
         .data(vData)
         .enter()
         .append("rect")
-        .attr("class", "bin")
+        .attr("name", "bin")
         .attr("id", function(d, i) { return "hist-bin-" + i ; })
         .attr("x", function (d) {
             return x(d[0]);
@@ -144,14 +144,9 @@ function drawHistogram(iComponent, socket) {
         })
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
-        .style("fill", function (d) {
-            return customColor(d[5], d[2]);
-    }) ;
-        
-    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
-        main.call(zoom) ; 
-        main.on("mousedown.zoom", null)  ;  // disable the drag event
-        main.on("mouseover", function (d, i) {
+        .attr("class", function(d) {
+            return customColor(d[5], d[2], undefined, undefined, undefined, true);
+        }).on("mouseover", function (d, i) {
             if (!event.ctrlKey) {
                 d3.select("#tooltipSvg").selectAll("*").remove();
                 drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
@@ -178,7 +173,7 @@ function drawHistogram(iComponent, socket) {
         .on("click", function (d, i) {
             // SELECT one bin
             Window.PPI['selected-bin-id'] = $(this).attr("id")
-            d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
+            d3.selectAll("[name=bin]").style("stroke-width", 0.2).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (Window.PPI['histogram-height'] - 1) + fieldData['ScalarBounds'].Values[0]) ;
@@ -198,6 +193,10 @@ function drawHistogram(iComponent, socket) {
                 socket.send(backMsg) ;
             }
         }) ;
+        
+    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
+        main.call(zoom) ; 
+        main.on("mousedown.zoom", null)  ;  // disable the drag event
     }
     setTimeout(callFunc, 0) ;
     
@@ -230,6 +229,7 @@ function drawHistogram(iComponent, socket) {
     removeNiceByKicks(".axis--hist--y g") ;
 
     function zoomed() {
+        var x0 = performance.now() ;
         const currentTransform = d3.event.transform;
         main.attr("transform", currentTransform);
         d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
@@ -255,6 +255,9 @@ function drawHistogram(iComponent, socket) {
         $(".axis--hist--y path").each(function() {
             $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
         }) ;
+
+        var x1 = performance.now() ;
+        console.log("cost for zoom :" + (x1 - x0))
     }
 
     function slided(d) {
