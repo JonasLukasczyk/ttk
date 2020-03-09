@@ -107,8 +107,19 @@ function drawHistogram(iComponent, socket) {
         .attr('class', 'axis--hist--y')
         .call(d3.axisLeft(y).ticks(2, "s"));
 
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'hist-clip')
+        .append('rect')
+        .attr('x', 1)
+        .attr('y', 0)
+        .attr('width', width)
+        .attr('height', height);
+
     // scale region
-    var main = svg.selectAll()
+    var main = svg.append("g")
+        .attr('clip-path', 'url(#hist-clip)')
+        .selectAll()
         .data(vData)
         .enter()
         .append("rect")
@@ -202,7 +213,30 @@ function drawHistogram(iComponent, socket) {
     function zoomed() {
         const currentTransform = d3.event.transform;
         main.attr("transform", currentTransform);
+        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")").style("font-size", "12px;");
+        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")").style("font-size", "12px;");
         slider.property("value", currentTransform.k);
+
+        // $($(".axis--hist--y g")[0]).attr("transform")
+        $(".axis--hist--x g").each(function() {
+            var v = $(this).attr("transform") ;
+            var vItems = v.split(" scale") ;
+            $(this).attr("transform", vItems[0] + " " + "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        $(".axis--hist--x path").each(function() {
+            $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        $(".axis--hist--y g").each(function() {
+            var v = $(this).attr("transform") ;
+            var vItems = v.split(" scale") ;
+            $(this).attr("transform", vItems[0] + " " + "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        $(".axis--hist--y path").each(function() {
+            $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
     }
 
     function slided(d) {
