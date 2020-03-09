@@ -19,33 +19,17 @@ function drawHistogram(iComponent, socket) {
         $("[id^=hist-bin-]").each(function(e) { 
             var id = parseInt($(this).attr("id").replace("hist-bin-", ""))
             if ( id % Window.PPI['histogram-width'] === time_idx ) {
-                $(this).css("stroke-width", "1px") ;
+                $(this).css("opacity", 1) ;
+            } else {
+                $(this).css("opacity", 0.1) ;
             }
         })
-
-        // time_idx = parseInt(time_idx) ;
-        // $(".rect-cover").remove() ;
-        // // cover the shadow
-        // var idx_first = x(time_idx)
-        // var idx_sec = x(time_idx + 1) ;
-        
-        // svg.append("rect")
-        //     .attr("class", "rect-cover")
-        //     .attr("x", x(time_idx))
-        //     .attr("y", 0)
-        //     .attr("height", height)
-        //     .attr("width", idx_sec - idx_first)
-        //     .style("fill", "none")
-        //     .style("stroke-width", 1)
-        //     .style("stroke", "rgb(0,0,0)")
-        //     .attr("transform", "translate(0, 0)");
+       
     }
 
     var zoom = d3.zoom()
                  .scaleExtent([1, 10])
                  .on("zoom", zoomed);
-
-    console.log(zoom.scaleExtent()[0], zoom.scaleExtent()[1]);
 
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
@@ -59,7 +43,10 @@ function drawHistogram(iComponent, socket) {
     let vData = getHistogramFrameData(min_persistence_pairs, iComponent, max_threshold_window, max_persistence_pairs, nComponents) ;
     let dist_data = getLegendData(vData) ;
 
+    var t00 = performance.now() ;
     drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
+    var t11 = performance.now() ;
+    console.log("the cost of time for rendering legend: " + (t11 - t00) + " milliseconds");
 
     // draw histogram
     d3.select("#histogram_viz *").remove() ;
@@ -140,6 +127,7 @@ function drawHistogram(iComponent, socket) {
         .attr('height', height);
 
     // scale region
+    var t000 = performance.now() ;
     var main = svg.append("g")
         .attr('clip-path', 'url(#hist-clip)')
         .selectAll()
@@ -157,13 +145,18 @@ function drawHistogram(iComponent, socket) {
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
         .style("fill", function (d) {
-            // if the range is customed
             return customColor(d[5], d[2]);
-        })
-        .on("mouseover", function (d, i) {
-            d3.select("#tooltipSvg").selectAll("*").remove();
-            drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
-            return d3.select("#tooltip").style("visibility", "visible");
+    }) ;
+        
+    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
+        main.call(zoom) ; 
+        main.on("mousedown.zoom", null)  ;  // disable the drag event
+        main.on("mouseover", function (d, i) {
+            if (!event.ctrlKey) {
+                d3.select("#tooltipSvg").selectAll("*").remove();
+                drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
+                return d3.select("#tooltip").style("visibility", "visible");
+            }
         })
         .on("mousemove", function () {
             return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
@@ -204,9 +197,12 @@ function drawHistogram(iComponent, socket) {
                 Window.socket = socket ;
                 socket.send(backMsg) ;
             }
-        })
-        .call(zoom)
-        .on("mousedown.zoom", null)  ;  // disable the drag event
+        }) ;
+    }
+    setTimeout(callFunc, 0) ;
+    
+    var t111 = performance.now() ;
+    console.log("the cost of time for rendering bins of histogram without any events: " + (t111 - t000) + " milliseconds");
 
     // Add y-axis title
     svg.append("text")
