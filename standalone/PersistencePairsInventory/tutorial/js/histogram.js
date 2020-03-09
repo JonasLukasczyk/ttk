@@ -94,18 +94,23 @@ function drawHistogram(iComponent, socket) {
         .range([0, width])
         .domain(myGroups) ;
 
-    svg.append("g")
+    svg.append("svg")
+        .attr("width", width)
+        .append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(2, "s"))
+        .call(d3.axisBottom(x)) ;
 
     let y = d3.scaleBand()
         .range([height, 0])
         .domain(myVars) ;
 
-    svg.append("g")
+    svg//.append("svg")
+       // .attr("height", height)
+        .append("g")  // FLAG
         .attr('class', 'axis--hist--y')
-        .call(d3.axisLeft(y).ticks(2, "s"));
+        .attr("transform", "translate(0,0)")
+        .call(d3.axisLeft(y));
 
     svg.append('defs')
         .append('clipPath')
@@ -213,8 +218,8 @@ function drawHistogram(iComponent, socket) {
     function zoomed() {
         const currentTransform = d3.event.transform;
         main.attr("transform", currentTransform);
-        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")").style("font-size", "12px;");
-        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")").style("font-size", "12px;");
+        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
+        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
         slider.property("value", currentTransform.k);
 
         // $($(".axis--hist--y g")[0]).attr("transform")
