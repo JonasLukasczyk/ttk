@@ -46,17 +46,43 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .domain(xLine.domain())  // then the domain of the graphic
         .thresholds(xLine.ticks(width_partition)); // then the numbers of bins
 
+    var lHeight = margin.top - 5 ;
     let bins = histogram(data);
     bins = removeLastEqual(bins) ;
-    let yLine = d3.scaleLinear().range([margin.top - 5, 0]);
-    yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+    let yLine = d3.scaleLinear().range([lHeight, 0]);
+    // Y domain should be fixed
+    // yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
+    yLine.domain([0, Window.PPI['histogram-width'] * Window.PPI['histogram-height']]);   // d3.hist has to be called before the Y axis obviously
     let lineSvg = container
         .append("g")
         .attr("transform",
             "translate(" + margin.left + ", 5)")
         .attr('overflow', 'hidden');
+    
+    let dragTop = d3.drag()
+        .on('start', topDragstarted)
+        .on('drag', topDragged)
+        .on('end', topDragended);
 
-    lineSvg.selectAll("rect")
+    function topDragstarted() {
+        d3.select(this).attr('class', 'active-d3-item-line2');
+    }
+
+    function topDragged(d) {
+        d = yLine.invert(d3.event.y);
+        d3.select(this)
+            .attr('y1', yLine(d))
+            .attr('y2', yLine(d)) ;
+        d3.select(this).attr("data-value", yLine(d)) ;
+    }
+
+    function topDragended() {
+        d3.select(this).attr('class', 'inactive-d3-item-line2');
+        d3.select("#top-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
+    }
+
+    lineSvg.append("g")
+        .selectAll("rect")
         .data(bins)
         .enter()
         .append("rect")
@@ -64,8 +90,26 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .attr("width", function(d) {
             return xLine(d.x1) - xLine(d.x0);
         })
-        .attr("height", function(d) { return margin.top - 5 - yLine(d.length); })
+        .attr("height", function(d) { return lHeight - yLine(d.length); })
         .style("fill", "black") ;
+
+    lineSvg.append('rect')
+        .attr("x", 0)
+        .attr("id", "top-legend-rect-cover")
+        .attr("y", 0)
+        .attr("width", width)
+        .attr("height", 0.6 * lHeight)
+        .attr("fill", "white") ;
+
+    // Add a Line
+    lineSvg.append('line')
+        .attr("x1", 0)
+        .attr("y1", 0.6 * lHeight)
+        .attr("x2", width)
+        .attr("y2", 0.6 * lHeight)
+        .attr("class", "inactive-d3-item-line2")
+        .style("cursor", "pointer")
+        .call(dragTop) ;
 
     // ============================= draw the right bar chart
     let xLineRight = d3.scaleLinear().range([0, height]).domain([min_persistence_pairs, max_persistence_pairs]);
@@ -78,13 +122,35 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
     let binsRight = histogramRight(data);
     binsRight = removeLastEqual(binsRight) ;
     let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
-    yLineRight.domain([0, d3.max(binsRight, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-
+    yLineRight.domain([0,  Window.PPI['histogram-width'] * Window.PPI['histogram-height']]);   // d3.hist has to be called before the Y axis obviously
+    rHeight = margin.right - 5 ;
     let lineSvgRight = container
         .append("g")
         .attr("transform",
             "translate(" + (margin.left + width + margin.right - 5) + ", "+ margin.top+") rotate(90)")
         .attr('overflow', 'hidden');
+
+    let dragRight = d3.drag()
+        .on('start', rightDragstarted)
+        .on('drag', rightDragged)
+        .on('end', rightDragended);
+
+    function rightDragstarted() {
+        d3.select(this).attr('class', 'active-d3-item-line2');
+    }
+
+    function rightDragged(d) {
+        d = yLineRight.invert(d3.event.y);
+        d3.select(this)
+            .attr('y1', yLineRight(d))
+            .attr('y2', yLineRight(d)) ;
+        d3.select(this).attr("data-value", yLineRight(d)) ;
+    }
+
+    function rightDragended() {
+        d3.select(this).attr('class', 'inactive-d3-item-line2');
+        d3.select("#right-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
+    }
     
     binsRight = binsRight.reverse()
     var x2 = min_persistence_pairs ;
@@ -103,7 +169,24 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .attr("height", function(d) { return margin.right - 5 - yLineRight(d.length); })
         .style("fill", "black") ;
 
-    // console.log("top bar bins and right bar bins: ", bins, binsRight) ;
+    lineSvgRight.append('rect')
+        .attr("x", 0)
+        .attr("id", "right-legend-rect-cover")
+        .attr("y", 0)
+        .attr("width", height)
+        .attr("height", 0.6 * rHeight)
+        .attr("fill", "white") ;
+
+    // Add a Line
+    lineSvgRight.append('line')
+        .attr("x1", 0)
+        .attr("y1", 0.6 * rHeight)
+        .attr("x2", height)
+        .attr("y2", 0.6 * rHeight)
+        .attr("class", "inactive-d3-item-line2")
+        .style("cursor", "pointer")
+        .call(dragRight) ;
+    // ===================================================================================================================
 
     // updated notification
     $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;

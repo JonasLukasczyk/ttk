@@ -255,3 +255,14 @@ div.inline {
     stroke: #0b2e13;
     stroke-width: 3;
 }
+
+.active-d3-item-line2 {
+    cursor: pointer;
+    stroke: magenta;
+    stroke-width: 4;
+}
+
+.inactive-d3-item-line2 {
+    stroke: #3d8814;
+    stroke-width: 3;
+}

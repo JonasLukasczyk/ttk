@@ -96,7 +96,7 @@ function drawHistogram(iComponent, socket) {
         .append('clipPath')
         .attr('id', 'hist-clip')
         .append('rect')
-        .attr('x', 1)
+        .attr('x', 0)
         .attr('y', 0)
         .attr('width', width)
         .attr('height', height);
@@ -140,7 +140,7 @@ function drawHistogram(iComponent, socket) {
         })
         .on("mousedown", function (d, i) {
             console.log(d3.event) ;
-            d3.event.stopPropagation();
+            // d3.event.stopPropagation();
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
                 Window.PPI['selected-time-id'] = d[0] ;
                 coverShadow(d[0]) ;

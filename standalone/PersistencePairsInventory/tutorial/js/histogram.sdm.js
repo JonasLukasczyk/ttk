@@ -113,6 +113,9 @@ function drawSDMHistogram(iComponent, socket) {
         containerWidth = maxWidth * Window.PPI['sdm-histogram-width'] ;
     }
     let containerHeight = containerWidth * Window.PPI['histogram-height'] / Window.PPI['sdm-histogram-width'];
+    if (containerHeight > 724) {
+        containerHeight = 724;
+    }
 
     let margin = {
         top: 2,
