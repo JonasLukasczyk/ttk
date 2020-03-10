@@ -29,7 +29,9 @@ function drawHistogram(iComponent, socket) {
 
     var zoom = d3.zoom()
                  .scaleExtent([1, 10])
-                 .on("zoom", zoomed);
+                 .on("zoom", zoomed)
+                 .on("start", zoomstart)
+                 .on("end", zoomend) ;
 
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
@@ -128,7 +130,8 @@ function drawHistogram(iComponent, socket) {
 
     // scale region
     var t000 = performance.now() ;
-    var main = svg.append("g")
+    var svg_main = svg.append("svg") ;
+    var main = svg_main.append("g")
         .attr('clip-path', 'url(#hist-clip)')
         .selectAll()
         .data(vData)
@@ -160,18 +163,19 @@ function drawHistogram(iComponent, socket) {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("mousedown", function (d, i) {
+            d3.event.stopPropagation();
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
                 Window.PPI['selected-time-id'] = d[0] ;
                 coverShadow(d[0]) ;
             }
         })
+        // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire 
         .on("mouseup", function (d, i) {
             if (event.ctrlKey) {
                 triggerCtrlV() ;
             }
         })
         .on("click", function (d, i) {
-            // SELECT one bin
             Window.PPI['selected-bin-id'] = $(this).attr("id")
             d3.selectAll("[name=bin]").style("stroke-width", 0.2).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
@@ -195,13 +199,13 @@ function drawHistogram(iComponent, socket) {
         }) ;
         
     function callFunc() { // most time-consuming part, avg time is 1.5 seconds
-        main.call(zoom) ; 
-        main.on("mousedown.zoom", null)  ;  // disable the drag event
+        svg_main.call(zoom) ; 
+        //svg_main.on("mousedown.zoom", null)  ;  // disable the drag event
     }
     setTimeout(callFunc, 0) ;
     
     var t111 = performance.now() ;
-    console.log("the cost of time for rendering bins of histogram without any events: " + (t111 - t000) + " milliseconds");
+    console.log("the cost of time for rendering bins of histogram: " + (t111 - t000) + " milliseconds");
 
     // Add y-axis title
     svg.append("text")
@@ -228,13 +232,33 @@ function drawHistogram(iComponent, socket) {
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
 
-    function zoomed() {
+    function zoomed() { }
+
+    function zoomstart() { } 
+
+    function slided(d) {
+        zoom.scaleTo(svg, d3.select(this).property("value"));
+    }
+
+    function zoomend() {
         var x0 = performance.now() ;
-        const currentTransform = d3.event.transform;
+        var currentTransform = d3.event.transform;
+        if (parseFloat(currentTransform.k) <= 1.05) {
+            // reset
+            currentTransform.x = 0;
+            currentTransform.y = 0;
+            currentTransform.k = 1 ;
+        } 
+        //main.transition().attr("transform", currentTransform).duration(100);
         main.attr("transform", currentTransform);
+        console.log(currentTransform) ;
+
+        var x1 = performance.now() ;
         d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
         d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        var x2 = performance.now() ;
         slider.property("value", currentTransform.k);
+        var x3 = performance.now() ;
 
         $(".axis--hist--x g").each(function() {
             var v = $(this).attr("transform") ;
@@ -256,12 +280,8 @@ function drawHistogram(iComponent, socket) {
             $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
         }) ;
 
-        var x1 = performance.now() ;
-        console.log("cost for zoom :" + (x1 - x0))
-    }
-
-    function slided(d) {
-        zoom.scaleTo(svg, d3.select(this).property("value"));
+        var x4 = performance.now() ;
+        console.log("cost for zoom the histogram: x0-x1, " + (x1 - x0) + ", x1-x2: " + (x2 - x1) + ", x2-x3: " + (x3 - x2) + ", x3-x4:" + (x4 - x3)) ;
     }
 }
 
