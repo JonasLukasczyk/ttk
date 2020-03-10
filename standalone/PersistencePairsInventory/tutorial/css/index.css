@@ -265,4 +265,5 @@ div.inline {
 .inactive-d3-item-line2 {
     stroke: #3d8814;
     stroke-width: 3;
+    opacity: 0.1;
 }
