@@ -69,6 +69,7 @@ function drawHistogram(iComponent, socket) {
 
     var svg = container
                 .append("g")
+                .attr("id", "hist-id-g")
                 .attr("transform",
                     "translate("+margin.left+", "+margin.top+")")
                 .attr('overflow', 'hidden');
@@ -125,9 +126,11 @@ function drawHistogram(iComponent, socket) {
             return customColor(d[5], d[2], undefined, undefined, undefined, true);
         }).on("mouseover", function (d, i) {
             if (!event.ctrlKey) {
-                d3.select("#tooltipSvg").selectAll("*").remove();
-                drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
-                return d3.select("#tooltip").style("visibility", "visible");
+                if (Window.PPI["X-mode"] === 0) {
+                    d3.select("#tooltipSvg").selectAll("*").remove();
+                    drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
+                    return d3.select("#tooltip").style("visibility", "visible");
+                }
             }
         })
         .on("mousemove", function () {
@@ -161,8 +164,6 @@ function drawHistogram(iComponent, socket) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
-            // console.log("the values of selected bins: ", d[3]) ;
-
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
 
             console.log(backMsg) ;
@@ -173,9 +174,30 @@ function drawHistogram(iComponent, socket) {
         }) ;
     
     var drag = d3.drag()
-        .on("start", drag_start)
-        .on("drag", drag_drag);
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
 
+    function dragstarted(d) {
+            d3.event.sourceEvent.stopPropagation();
+            d3.select(this).classed("dragging", true);
+    }
+
+    function dragged(d) {
+        var v = $(this).attr("transform") ;
+        var vItems = v.split(" scale") ;
+        vItems = vItems[0].split(",") ;
+        var x = parseFloat(vItems[0].replace("translate(", "")) ;
+        var y = parseFloat(vItems[1].replace(")", "")) ;
+        x += d3.event.dx;
+        y += d3.event.dy;
+        d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
+    }
+
+    function dragended(d) {
+        d3.select(this).classed("dragging", false);
+    }
+    
     var zoom = d3.zoom()
                  .scaleExtent([1, 10])
                  .on("zoom", zoomed)
@@ -190,17 +212,8 @@ function drawHistogram(iComponent, socket) {
         .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
         .on("input", slided);
 
-    function drag_start() {
-        console.log("drag_start") ;
-    }
-
-    function drag_drag() {
-        console.log("drag_drag") ;
-    }
-
     function callFunc() { // most time-consuming part, avg time is 1.5 seconds
-        svg.call(zoom) ;
-        // svg.call(drag) ;
+        main.call(drag).call(zoom);
     }
     setTimeout(callFunc, 0) ;
     
@@ -248,6 +261,7 @@ function drawHistogram(iComponent, socket) {
         var currentTransform ;
         if (d === "zoom_back") {
             currentTransform = {"x":0, "y":0, "k":1}
+            d3.select("#hist-id-g").attr("transform", "translate(" + [margin.left, margin.top] + ")") ;
         } else {
             currentTransform = d3.event.transform;
         }
@@ -277,6 +291,7 @@ function drawHistogram(iComponent, socket) {
             $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
         }) ;
     }
+    $("#histogram_zoom_back").click() ;
 }
 
 // draw a curve for histogram of each bins when hovering it

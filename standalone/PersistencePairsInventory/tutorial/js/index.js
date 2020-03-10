@@ -37,6 +37,7 @@ Window.PPI = {
 	"selected-time-id": 0,
 	// {min_persistence_pairs}_{left_threshold}_{right_threshold}_{max_persistence_pairs}
 	"histogram_frame_data": { },
+	"X-mode": 0,
 } ;
 
 let ttk, ttk_render;
@@ -232,6 +233,10 @@ $(document).keydown(function (e) {
 	switch (e.key) {
 		case "v":
 			triggerCtrlV() ;
+			break ;
+
+		case "x":
+			Window.PPI["X-mode"] = 1 - Window.PPI["X-mode"] ;
 			break ;
 
 		case "b":
