@@ -16,54 +16,37 @@ function drawHistogram(iComponent, socket) {
     
     function coverShadow(time_idx) {
         time_idx = parseInt(time_idx) ;
-        $(".rect-cover").remove() ;
-        // cover the shadow
-        var idx_first = x(time_idx)
-        var idx_sec = x(time_idx + 1) ;
-        
-        svg.append("rect")
-            .attr("class", "rect-cover")
-            .attr("x", x(time_idx))
-            .attr("y", 0)
-            .attr("height", height)
-            .attr("width", idx_sec - idx_first)
-            .style("fill", "none")
-            .style("stroke-width", 1)
-            .style("stroke", "rgb(0,0,0)")
-            .attr("transform", "translate(0, 0)");
+        $("[id^=hist-bin-]").each(function(e) { 
+            var id = parseInt($(this).attr("id").replace("hist-bin-", ""))
+            if ( id % Window.PPI['histogram-width'] === time_idx ) {
+                $(this).css("opacity", 1) ;
+            } else {
+                $(this).css("opacity", 0.1) ;
+            }
+        })
+       
     }
+
+    var zoom = d3.zoom()
+                 .scaleExtent([1, 10])
+                 .on("zoom", zoomed);
 
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
 
-    tmp = getRangeOfPPI()
-    min_persistence_pairs = tmp[0]
-    max_persistence_pairs = tmp[1]
+    var tmp = getRangeOfPPI()
+    min_persistence_pairs = tmp[0] ; 
+    max_persistence_pairs = tmp[1] ;
 
-    let vData = [];
-    let dist_data = [] ;
-    
-    // extract information
-    var t0 = performance.now()
     let max_threshold_window = parseInt($("#threshold-window").val())
-    for (let i = 0; i < Window.PPI['histogram-height']; i++) {
-        for (let j = 0; j < Window.PPI['histogram-width']; j++) {
-            let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
-            let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
-            items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
-            let cal = calculateReliability(items, iComponent, max_threshold_window) ;
-            // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
-            vData.push([j + "", i + "", data[idx], items, idx, cal]);
-            if (data[idx] != 0) {
-                dist_data.push([cal, trim(data[idx], min_persistence_pairs, max_persistence_pairs)]) ;
-            }
-        }
-    }
-    var t1 = performance.now()
-    console.log("retrieve related data for rendering histogram took " + (t1 - t0) + " milliseconds.") ;
+    let vData = getHistogramFrameData(min_persistence_pairs, iComponent, max_threshold_window, max_persistence_pairs, nComponents) ;
+    let dist_data = getLegendData(vData) ;
 
+    var t00 = performance.now() ;
     drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
+    var t11 = performance.now() ;
+    console.log("the cost of time for rendering legend: " + (t11 - t00) + " milliseconds");
 
     // draw histogram
     d3.select("#histogram_viz *").remove() ;
@@ -88,6 +71,14 @@ function drawHistogram(iComponent, socket) {
         .attr("width", containerWidth)
         .attr("height", containerHeight) ;
 
+    var slider = d3.select("#range_input")
+        .datum({})
+        .attr("value", zoom.scaleExtent()[0])
+        .attr("min", zoom.scaleExtent()[0])
+        .attr("max", zoom.scaleExtent()[1])
+        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+        .on("input", slided);
+
     var svg = container
                 .append("g")
                 .attr("transform",
@@ -98,24 +89,52 @@ function drawHistogram(iComponent, socket) {
         .range([0, width])
         .domain(myGroups) ;
 
-    svg.append("g")
+    svg.append("svg")
+        .attr("width", width)
+        .append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
-        .call(d3.axisBottom(x).ticks(2, "s"));
+        .call(d3.axisBottom(x)) ;
 
     let y = d3.scaleBand()
         .range([height, 0])
         .domain(myVars) ;
 
-    svg.append("g")
-        .attr('class', 'axis--hist--y')
-        .call(d3.axisLeft(y).ticks(2, "s"));
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'cc-hist-clip')
+        .append('rect')
+        .attr('x', 0 - 20)
+        .attr('y', 0)
+        .attr('width', 20)
+        .attr('height', height);
 
-    svg.selectAll()
+    svg//.append("svg")
+       // .attr("height", height)
+        .append("g")   // FLAG
+        .attr('clip-path', 'url(#cc-hist-clip)')
+        .attr('class', 'axis--hist--y')
+        .attr("transform", "translate(0,0)")
+        .call(d3.axisLeft(y));
+
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'hist-clip')
+        .append('rect')
+        .attr('x', 1)
+        .attr('y', 0)
+        .attr('width', width)
+        .attr('height', height);
+
+    // scale region
+    var t000 = performance.now() ;
+    var main = svg.append("g")
+        .attr('clip-path', 'url(#hist-clip)')
+        .selectAll()
         .data(vData)
         .enter()
         .append("rect")
-        .attr("class", "bin")
+        .attr("name", "bin")
         .attr("id", function(d, i) { return "hist-bin-" + i ; })
         .attr("x", function (d) {
             return x(d[0]);
@@ -125,14 +144,14 @@ function drawHistogram(iComponent, socket) {
         })
         .attr("width", x.bandwidth())
         .attr("height", y.bandwidth())
-        .style("fill", function (d) {
-            // if the range is customed
-            return customColor(d[5], d[2]);
-        })
-        .on("mouseover", function (d, i) {
-            d3.select("#tooltipSvg").selectAll("*").remove();
-            drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
-            return d3.select("#tooltip").style("visibility", "visible");
+        .attr("class", function(d) {
+            return customColor(d[5], d[2], undefined, undefined, undefined, true);
+        }).on("mouseover", function (d, i) {
+            if (!event.ctrlKey) {
+                d3.select("#tooltipSvg").selectAll("*").remove();
+                drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
+                return d3.select("#tooltip").style("visibility", "visible");
+            }
         })
         .on("mousemove", function () {
             return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
@@ -154,7 +173,7 @@ function drawHistogram(iComponent, socket) {
         .on("click", function (d, i) {
             // SELECT one bin
             Window.PPI['selected-bin-id'] = $(this).attr("id")
-            d3.selectAll(".bin").style("stroke-width", 0.2).attr("bin-selected", "off");
+            d3.selectAll("[name=bin]").style("stroke-width", 0.2).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (Window.PPI['histogram-height'] - 1) + fieldData['ScalarBounds'].Values[0]) ;
@@ -164,7 +183,7 @@ function drawHistogram(iComponent, socket) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
-            console.log("the values of selected bins, ", d[3]) ;
+            console.log("the values of selected bins: ", d[3]) ;
 
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
 
@@ -173,7 +192,16 @@ function drawHistogram(iComponent, socket) {
                 Window.socket = socket ;
                 socket.send(backMsg) ;
             }
-     }) ;
+        }) ;
+        
+    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
+        main.call(zoom) ; 
+        main.on("mousedown.zoom", null)  ;  // disable the drag event
+    }
+    setTimeout(callFunc, 0) ;
+    
+    var t111 = performance.now() ;
+    console.log("the cost of time for rendering bins of histogram without any events: " + (t111 - t000) + " milliseconds");
 
     // Add y-axis title
     svg.append("text")
@@ -196,9 +224,45 @@ function drawHistogram(iComponent, socket) {
         .style("text-anchor", "middle")
         .text("Time");
 
-    // reset x-axis, y-axis, TRICKY
+    // reset x-axis, y-axis
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
+
+    function zoomed() {
+        var x0 = performance.now() ;
+        const currentTransform = d3.event.transform;
+        main.attr("transform", currentTransform);
+        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
+        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        slider.property("value", currentTransform.k);
+
+        $(".axis--hist--x g").each(function() {
+            var v = $(this).attr("transform") ;
+            var vItems = v.split(" scale") ;
+            $(this).attr("transform", vItems[0] + " " + "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        $(".axis--hist--x path").each(function() {
+            $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        $(".axis--hist--y g").each(function() {
+            var v = $(this).attr("transform") ;
+            var vItems = v.split(" scale") ;
+            $(this).attr("transform", vItems[0] + " " + "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        $(".axis--hist--y path").each(function() {
+            $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
+        }) ;
+
+        var x1 = performance.now() ;
+        console.log("cost for zoom :" + (x1 - x0))
+    }
+
+    function slided(d) {
+        zoom.scaleTo(svg, d3.select(this).property("value"));
+    }
 }
 
 // draw a curve for histogram of each bins when hovering it

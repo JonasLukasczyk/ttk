@@ -103,7 +103,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .attr("height", function(d) { return margin.right - 5 - yLineRight(d.length); })
         .style("fill", "black") ;
 
-    console.log("top bar bins and right bar bins: ", bins, binsRight) ;
+    // console.log("top bar bins and right bar bins: ", bins, binsRight) ;
 
     // updated notification
     $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;

@@ -9,6 +9,46 @@ function trim(v, lower, higher) {
     return Math.max(Math.min(v, higher), lower)
 }
 
+function getHistogramFrameData(min_persistence_pairs, left_threshold, right_threshold, max_persistence_pairs, nComponents) {
+    var iComponent = left_threshold ;
+    var max_threshold_window = right_threshold ;
+    var vData = [] ;
+    var key = min_persistence_pairs + ":" + left_threshold + ":" + right_threshold + ":" + max_persistence_pairs ;
+    if ( Window.PPI['histogram_frame_data'].hasOwnProperty(key) ) {
+        return Window.PPI['histogram_frame_data'][key] ;
+    }
+
+    let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
+    var t0 = performance.now()
+    for (let i = 0; i < Window.PPI['histogram-height']; i++) {
+        for (let j = 0; j < Window.PPI['histogram-width']; j++) {
+            let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
+            let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
+            items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
+            let cal = calculateReliability(items, iComponent, max_threshold_window, min_persistence_pairs) ;
+            // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
+            vData.push([j + "", i + "", data[idx], items, idx, cal]);
+        }
+    }
+    var t1 = performance.now() ;
+    Window.PPI['histogram_frame_data'][key] = vData ;
+    console.log("retrieve related data for rendering histogram took " + (t1 - t0) + " milliseconds.") 
+    return vData ;
+}
+
+function getLegendData(vData) {
+    var tmp = getRangeOfPPI()
+    min_persistence_pairs = tmp[0]
+    max_persistence_pairs = tmp[1]
+    var dist_data = [] ;
+    for (var i = 0; i < vData.length; i ++) {
+        if (vData[2] != 0) {
+            dist_data.push([vData[i][5], trim(vData[i][2], min_persistence_pairs, max_persistence_pairs)]) ;
+        }
+    }
+    return dist_data ;
+}
+
 function getRangeOfPPIByThreshold() {
     // data: image-object => PointData => PersistencePairInventory
     // get the max PPI at iComponents
@@ -45,16 +85,15 @@ function getRangeOfPPI() {
 
 // items: the # of bins over threshold, in the test dataset, it would be 50
 // iComponent: the start index of calculating, the range of the calculated window would be [iCompent, iCompent + window.size] 
-function calculateReliability(items, iComponent, max_threshold_window) {
+function calculateReliability(items, iComponent, max_threshold_window, min_persistence_pairs) {
     var sliceItems = items.slice(iComponent, max_threshold_window + 1), sum = 0;
-    
-    if (Math.max(...sliceItems) === 0 || sliceItems.length === 1) {
-        return 1 ;
-    }
-
-    var vBase = Math.min(...sliceItems) ;
+    var vBase = min_persistence_pairs ;
     for (var i = 0; i < sliceItems.length; i ++) {
         sliceItems[i] = sliceItems[i] - vBase ;
+    }
+
+    if (Math.max(...sliceItems) === 0 || sliceItems.length === 1) {
+        return 1 ;
     }
 
     for (var i = 0; i < sliceItems.length; i++) {
@@ -132,28 +171,39 @@ function triggerEnterInput(selector) {
  * @param {*} reliability: three regions, [0, lower), [lower, upper), [upper, 1]
  * @param {*} ppi: # of features
  */
-function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, grayReplaceBlue=false) {
+function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, grayReplaceBlue=false, useClass=false) {
     // from light to dark
     let left = getFloatValue("#histogram_viz_legend", "data-x_0"),
         right = getFloatValue("#histogram_viz_legend", "data-x_1") ;
     let range_color = Window.PPI['color-green'];
+    let prefix = "color-green-" ;
     if (reliability >= 0 && reliability < left) {
         range_color = Window.PPI['color-red'];
+        prefix = "color-red-" ;
     } else if (reliability >= left && reliability < right) {
         if (grayReplaceBlue) {
             range_color = Window.PPI['color-blue'] ;
+            prefix = "color-blue-" ;
         } else {
             range_color = Window.PPI['color-gray'];
+            prefix = "color-gray-" ;
         }
     } else {
         range_color = Window.PPI['color-green'];
+        prefix = "color-green-" ;
     }
 
     if (index != -1) {
+        if (useClass) {
+            return prefix + index ;
+        }
         return range_color[index] ;
     }
 
     if (ppi === 0) {  // special for PPI == 0
+        if (useClass) {
+            return "color-default" ;
+        }
         return default_color ;
     } else {
         tmp = getRangeOfPPI()
@@ -161,7 +211,11 @@ function customColor(reliability, ppi=0, default_color="#ffffff", index = -1, gr
         let upper = tmp[1] ;
         ppi = Math.min(upper, ppi)
         ppi = Math.max(lower + 0.01, ppi)
-        return range_color[Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1];    
+        var idx = Math.ceil((ppi - lower) / ( (upper - lower) / 5)) - 1 ;
+        if (useClass) {
+            return prefix + idx ;
+        }
+        return range_color[idx];    
     }
 }
 

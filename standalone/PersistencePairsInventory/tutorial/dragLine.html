@@ -1,125 +1,137 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<style type="text/css">
+<html lang="en">
 
-    svg {
-        font-family: "Helvetica Neue", Helvetica;
-    }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        .dot circle {
+            fill: lightsteelblue;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
 
-    line {
-        shape-rendering: crispEdges;
-        vector-effect: non-scaling-stroke;
+        .dot circle.dragging {
+            fill: red;
+            stroke: brown;
+        }
 
-        stroke: #000;
-        stroke-width: 5px;
-    }
+        .axis line {
+            fill: none;
+            stroke: #ddd;
+            shape-rendering: crispEdges;
+        }
+    </style>
+    <title></title>
+</head>
 
-    .active-d3-item {
-        cursor: pointer;
-
-        stroke: magenta;
-    }
-
-</style>
 <body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script>
-    var width = 960,
-        height = 500,
-        activeClassName = 'active-d3-item';
+    <script src="./js/d3.v4.js"></script>
+    <script>
+        var margin = { top: -5, right: -5, bottom: -5, left: -5 },
+            width = 460 - margin.left - margin.right,
+            height = 300 - margin.top - margin.bottom;
 
-    var svg = d3.select('body').append('svg');
-    svg.attr('width', width);
-    svg.attr('height', height);
+        var zoom = d3.zoom()
+            .scaleExtent([1, 10])
+            .on("zoom", zoomed);
 
-    //The data for our lines and endpoints
-    var data = [
-        {
-            'x1': 350,
-            'y1': 15,
-            'x2': 250,
-            'y2': 33
-        },
-        {
-            'x1': 420,
-            'y1': 420,
-            'x2': 250,
-            'y2': 333
-        },
-        {
-            'x1': 140,
-            'y1': 120,
-            'x2': 220,
-            'y2': 220
-        },
-        {
-            'x1': 180,
-            'y1': 55,
-            'x2': 330,
-            'y2': 320
-        },
-        {
-            'x1': 200,
-            'y1': 260,
-            'x2': 150,
-            'y2': 180
+        console.log(zoom.scaleExtent()[0], zoom.scaleExtent()[1]);
+
+        var drag = d3.drag()
+            .subject(function (d) { return d; })
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+
+        var slider = d3.select("body").append("p").append("input")
+            .datum({})
+            .attr("type", "range")
+            .attr("value", zoom.scaleExtent()[0])
+            .attr("min", zoom.scaleExtent()[0])
+            .attr("max", zoom.scaleExtent()[1])
+            .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+            .on("input", slided);
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")    
+            .attr("transform", "translate(" + margin.left + "," + margin.right + ")")
+            .call(zoom);
+
+        var rect = svg.append("rect")
+            .attr("width", width)
+            .attr("height", height)
+            .style("fill", "none")
+            .style("pointer-events", "all");
+
+        var container = svg.append("g");
+
+        container.append("g")
+            .attr("class", "x axis")
+            .selectAll("line")
+            .data(d3.range(0, width, 10))
+            .enter().append("line")
+            .attr("x1", function (d) { return d; })
+            .attr("y1", 0)
+            .attr("x2", function (d) { return d; })
+            .attr("y2", height);
+
+        container.append("g")
+            .attr("class", "y axis")
+            .selectAll("line")
+            .data(d3.range(0, height, 10))
+            .enter().append("line")
+            .attr("x1", 0)
+            .attr("y1", function (d) { return d; })
+            .attr("x2", width)
+            .attr("y2", function (d) { return d; });
+
+        d3.tsv("dots.tsv", dottype, function (error, dots) {
+            dot = container.append("g")
+                .attr("class", "dot")
+                .selectAll("circle")
+                .data(dots)
+                .enter().append("circle")
+                .attr("r", 5)
+                .attr("cx", function (d) { return d.x; })
+                .attr("cy", function (d) { return d.y; })
+                .call(drag);
+        });
+
+        function dottype(d) {
+            d.x = +d.x;
+            d.y = +d.y;
+            return d;
         }
-    ];
 
-    // Generating the svg lines attributes
-    var lineAttributes = {
-        'x1': function(d) {
-            return d.x1;
-        },
-        'y1': function(d) {
-            return d.y1;
-        },
-        'x2': function(d) {
-            return d.x2;
-        },
-        'y2': function(d) {
-            return d.y2;
+        function zoomed() {
+            const currentTransform = d3.event.transform;
+            container.attr("transform", currentTransform);
+            slider.property("value", currentTransform.k);
         }
-    };
 
-    var drag = d3.behavior.drag()
-        .origin(function(d) { return d; })
-        .on('dragstart', dragstarted)
-        .on('drag', dragged)
-        .on('dragend', dragended);
+        function dragstarted(d) {``
+            d3.event.sourceEvent.stopPropagation();
+            d3.select(this).classed("dragging", true);
+        }
 
-    // Pointer to the d3 lines
-    var lines = svg
-        .selectAll('line')
-        .data(data)
-        .enter()
-        .append('line')
-        .attr(lineAttributes)
-        .call(drag);
+        function dragged(d) {
+            d3.select(this).attr("cx", d.x = d3.event.x).attr("cy", d.y = d3.event.y);
+        }
 
-    function dragstarted() {
-        d3.select(this).classed(activeClassName, true);
-    }
+        function dragended(d) {
+            d3.select(this).classed("dragging", false);
+        }
 
-    function dragged() {
-        var x = d3.event.dx;
-        var y = d3.event.dy;
+        function slided(d) {
+            zoom.scaleTo(svg, d3.select(this).property("value"));
+        }
 
-        var line = d3.select(this);
+    </script>
 
-        // Update the line properties
-        var attributes = {
-            x1: parseInt(line.attr('x1')) + x,
-            y1: parseInt(line.attr('y1')) + y,
+</body>
 
-            x2: parseInt(line.attr('x2')) + x,
-            y2: parseInt(line.attr('y2')) + y,
-        };
-
-        line.attr(attributes);
-    }
-
-    function dragended() {
-        d3.select(this).classed(activeClassName, false);
-    }
-</script>
+</html>
