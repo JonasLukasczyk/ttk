@@ -22,7 +22,7 @@ Window.PPI = {
     "numberOfThreshold-boxplot": 0,
     "boxplot-element-visibility": {
         "box_line": false,
-        "box_box": false,
+       // "box_box": false,
         "box_polygon": true,
         "box_optimal": false
 	},
@@ -37,7 +37,13 @@ Window.PPI = {
 	"selected-time-id": 0,
 	// {min_persistence_pairs}_{left_threshold}_{right_threshold}_{max_persistence_pairs}
 	"histogram_frame_data": { },
+	// the mode: hide/show the hover in the histogram
 	"X-mode": 0,
+	"boxplot-timestamp-range-mode": {
+		"enable": false,
+		"start": 2,
+		"end": 12, // inclusive
+	}
 } ;
 
 let ttk, ttk_render;
@@ -62,7 +68,7 @@ function drawBoxPlot() {
     				 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
     $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
     $("[name='box_line']").attr("visibility", "hidden");
-    $("[name='box_box']").attr("visibility", "hidden");    
+    //$("[name='box_box']").attr("visibility", "hidden");    
 }
 
 function resetHist() {
@@ -118,6 +124,27 @@ function objectCallback(msg) {
 	triggerCtrlV() ;
 
     $('body').plainOverlay('hide');
+
+    // https://jqueryui.com/slider/#range
+	$( "#slider-range" ).unbind().slider({
+		range: true,
+		min: 0,
+		max: Window.PPI['histogram-width'] - 1,
+		values: [0, Window.PPI['histogram-width'] - 1],
+		slide: function( event, ui ) {
+			$("#custom-handle0").text(ui.values[0]) ;
+			$("#custom-handle1").text(ui.values[1]) ;
+			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
+			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.values[0] ;
+			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.values[1] ;
+			resetBoxplot() ;
+    		drawBoxPlot() ;
+		},
+		create: function() {
+			$("#custom-handle0").text(0) ;
+			$("#custom-handle1").text(Window.PPI['histogram-width'] - 1) ;
+		}
+	});
 }
 
 function Connect() {
@@ -157,16 +184,6 @@ function Connect() {
 		console.log("on_open for render");
 	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), false);
 }
-
-// function Request() {
-// 	if (ttk)
-// 		ttk.send("requestData");
-
-// 	if (Window.PPI['DEV']) {
-// 		var testdataset = loadTestDataFromString();
-// 		objectCallback(testdataset);
-// 	}
-// }
 
 function LoadTest() {
 	Window.PPI['DEV'] = true;
@@ -292,11 +309,13 @@ $(document).keydown(function (e) {
 $("#hist-threshold").change(function () {
     v0 = parseInt($($("#hist-threshold option:selected")[0]).val()) ;
     v1 = parseInt($($("#threshold-window option:selected")[0]).val()) ;
-    if ( v0 > v1 ) {
-        alert('threshold-window must be larger than hist-threshold') ;
-        $(this).val($(this).attr("data-value")) ;
-        return false;
-    }
+    // if ( v0 > v1 ) {
+    //     alert('threshold-window must be larger than hist-threshold') ;
+    //     $(this).val($(this).attr("data-value")) ;
+    //     return false;
+    // }
+    $("#threshold-window").attr("data-value", v0 + v1 - parseInt($(this).attr("data-value"))) ;
+    $("#threshold-window").val(v0 + v1 - parseInt($(this).attr("data-value"))) ;
     $(this).attr("data-value", v0) ;
     $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
@@ -365,3 +384,4 @@ $("#histRescaleCustom").unbind().click(function() {
     // re-draw the histogram
     $("#histRescaleCustom-close").click() ;
 }) ;
+

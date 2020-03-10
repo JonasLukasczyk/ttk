@@ -88,7 +88,6 @@ function drawHistogram(iComponent, socket) {
         .domain(myVars) ;
 
     svg.append("g")
-        .attr('clip-path', 'url(#cc-hist-clip)')
         .attr('class', 'axis--hist--y')
         .attr("transform", "translate(0,0)")
         .call(d3.axisLeft(y));
@@ -179,19 +178,19 @@ function drawHistogram(iComponent, socket) {
             .on("end", dragended);
 
     function dragstarted(d) {
-            d3.event.sourceEvent.stopPropagation();
-            d3.select(this).classed("dragging", true);
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed("dragging", true);
     }
 
+    // FLAG, get the ideas from this article, http://bl.ocks.org/jgbos/9752277
     function dragged(d) {
-        var v = $(this).attr("transform") ;
-        var vItems = v.split(" scale") ;
-        vItems = vItems[0].split(",") ;
-        var x = parseFloat(vItems[0].replace("translate(", "")) ;
-        var y = parseFloat(vItems[1].replace(")", "")) ;
+        var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
+        var x = trans[0] ;
+        var y = trans[1] ;
         x += d3.event.dx;
         y += d3.event.dy;
-        d3.select(this).attr("transform", "translate(" + x + "," + y + ")");
+
+        d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + d3.select("#range_input").property("value") + ")" );
     }
 
     function dragended(d) {
@@ -239,7 +238,7 @@ function drawHistogram(iComponent, socket) {
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .text("Time");
+        .text("Time"); 
 
     // reset x-axis, y-axis
     removeNiceByKicks(".axis--hist--x g") ;
@@ -267,29 +266,25 @@ function drawHistogram(iComponent, socket) {
         }
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
-        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
-        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        // d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
+        // d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
         slider.property("value", currentTransform.k);
 
-        $(".axis--hist--x g").each(function() {
-            var v = $(this).attr("transform") ;
-            var vItems = v.split(" scale") ;
-            $(this).attr("transform", vItems[0] + " " + "scale(" + 1 / currentTransform.k+")") ;
-        }) ;
+        // $(".axis--hist--x g").each(function() {
+        //     $(this).attr("transform", transFormApply($(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        // }) ;
 
-        $(".axis--hist--x path").each(function() {
-            $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
-        }) ;
+        // $(".axis--hist--x path").each(function() {
+        //     $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
+        // }) ;
 
-        $(".axis--hist--y g").each(function() {
-            var v = $(this).attr("transform") ;
-            var vItems = v.split(" scale") ;
-            $(this).attr("transform", vItems[0] + " " + "scale(" + 1 / currentTransform.k+")") ;
-        }) ;
+        // $(".axis--hist--y g").each(function() {
+        //     $(this).attr("transform", transFormApply($(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        // }) ;
 
-        $(".axis--hist--y path").each(function() {
-            $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
-        }) ;
+        // $(".axis--hist--y path").each(function() {
+        //     $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
+        // }) ;
     }
     $("#histogram_zoom_back").click() ;
 }

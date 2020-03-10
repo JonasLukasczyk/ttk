@@ -8,8 +8,10 @@
    <script type="text/javascript" src="./js/bootstrap.min.js"></script>
    <script type="text/javascript" src="./js/testdataset.js"></script>
    <script src="./js/d3.v4.js"></script>
+   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
    <link rel="stylesheet" href="./css/bootstrap.min.css">
    <link rel="stylesheet" href="./css/index.css">
+   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 </head>
 
 <body>
@@ -105,7 +107,7 @@
                   <li>
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span>
                      <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
-                     <image id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"></image>
+                     <image id="box_zoom_back" style="width:20px;cursor: pointer;float:right;" src="./images/zoom_back.png"></image>
                   </li>
                   
                </ul>
@@ -148,10 +150,13 @@
                </ul>
 
                <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary"></div>
+               <div element-show="mdm" id="slider-range">
+                    <div id="custom-handle0" style="text-align: -webkit-center;" class="ui-slider-handle"></div>
+                    <div id="custom-handle1" style="text-align: -webkit-center;" class="ui-slider-handle"></div>
+               </div>
                <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
                <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.1" data-x_1="0.9"></div>
             </div>
-
          </div>
       </div>
    </div>
@@ -165,6 +170,7 @@
 <script type="text/javascript" src="./js/histogram.sdm.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+
 <script type="text/javascript" src="./OrbitControls.js"></script>
 <script type="text/javascript" src="./vtkRenderer.js"></script>
 <script src="./js/index.js"></script>

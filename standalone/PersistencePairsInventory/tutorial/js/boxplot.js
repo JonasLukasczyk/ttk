@@ -10,7 +10,13 @@ function formatInput(numberofcomponents, data) {
         com_idx = 0;
     for (let i = 0; i < data.length; i++) {
         com_idx += 1;
-        format_data.push([com_idx, data[i], "group" + group_idx]) // index: start from 1
+        if ( Window.PPI['boxplot-timestamp-range-mode']['enable'] ) {
+            if ( group_idx >= Window.PPI['boxplot-timestamp-range-mode']['start'] && group_idx <= Window.PPI['boxplot-timestamp-range-mode']['end']) {
+                format_data.push([com_idx, data[i], "group" + group_idx]) 
+            }
+        } else {
+            format_data.push([com_idx, data[i], "group" + group_idx]) // index: start from 1
+        }
         if (com_idx == numberofcomponents) {
             com_idx = 0;
             group_idx += 1;
@@ -173,7 +179,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
     for (let i = 0; i < numberofcomponents; i++) {
         let items = [];
         for (let j = 0; j < data.length / numberofcomponents; j++) {
-            items.push(data[i + j * numberofcomponents]);
+            if (Window.PPI['boxplot-timestamp-range-mode']['enable']) {
+                if ( j >= Window.PPI['boxplot-timestamp-range-mode']['start'] && j <= Window.PPI['boxplot-timestamp-range-mode']['end'] ) {
+                    items.push(data[i + j * numberofcomponents]);
+                }
+            } else {
+                items.push(data[i + j * numberofcomponents]);
+            }
         }
         var ret = drawBoxPlot(i + 1, items);
         points['max'].push(ret['max']);
@@ -336,42 +348,42 @@ function drawBoxplotCurve(numberofcomponents, data) {
         ret['min'] = [idx, min, "group_min"];
 
         // Show the main vertical line
-        main
-            .append("line")
-            .attr("name", "box_box")
-            .attr("x1", center)
-            .attr("x2", center)
-            .attr("y1", yScale(min))
-            .attr("y2", yScale(max))
-            .attr("stroke", "black")
+        // main
+        //     .append("line")
+        //     .attr("name", "box_box")
+        //     .attr("x1", center)
+        //     .attr("x2", center)
+        //     .attr("y1", yScale(min))
+        //     .attr("y2", yScale(max))
+        //     .attr("stroke", "black")
 
-        // Show the box
-        main
-            .append("rect")
-            .attr("name", "box_box")
-            .attr("x", center - width / 2)
-            .attr("y", yScale(q3))
-            .attr("height", (yScale(q1) - yScale(q3)))
-            .attr("width", width)
-            .attr("stroke", "black")
-            .style("fill", "#69b3a2")
+        // // Show the box
+        // main
+        //     .append("rect")
+        //     .attr("name", "box_box")
+        //     .attr("x", center - width / 2)
+        //     .attr("y", yScale(q3))
+        //     .attr("height", (yScale(q1) - yScale(q3)))
+        //     .attr("width", width)
+        //     .attr("stroke", "black")
+        //     .style("fill", "#69b3a2")
 
-        // show median, min and max horizontal lines
-        main
-            .selectAll("toto")
-            .data([min, median, max])
-            .enter()
-            .append("line")
-            .attr("name", "box_box")
-            .attr("x1", center - width / 2)
-            .attr("x2", center + width / 2)
-            .attr("y1", function (d) {
-                return (yScale(d))
-            })
-            .attr("y2", function (d) {
-                return (yScale(d))
-            })
-            .attr("stroke", "black");
+        // // show median, min and max horizontal lines
+        // main
+        //     .selectAll("toto")
+        //     .data([min, median, max])
+        //     .enter()
+        //     .append("line")
+        //     .attr("name", "box_box")
+        //     .attr("x1", center - width / 2)
+        //     .attr("x2", center + width / 2)
+        //     .attr("y1", function (d) {
+        //         return (yScale(d))
+        //     })
+        //     .attr("y2", function (d) {
+        //         return (yScale(d))
+        //     })
+        //     .attr("stroke", "black");
         return ret;
     }
 

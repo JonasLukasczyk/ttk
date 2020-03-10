@@ -49,6 +49,44 @@ function getLegendData(vData) {
     return dist_data ;
 }
 
+
+function transFormApply(u, x=-1000000, y=-1000000, k=-1000000, val=false) {
+    var xx, yy, kk ;
+    if ( u.indexOf("translate") === -1 ) {
+        xx = -1000000 ;
+        yy = -1000000 ;
+        kk = -1000000 ;
+    } else {
+        var vItems = u.split(" scale(") ;
+        var trans = vItems[0].split(",") ;
+        xx = parseFloat(trans[0].replace("translate(", "")) ;
+        yy = parseFloat(trans[1].replace(")", "")) ;
+        kk = -1000000 ;
+        if (vItems.length > 1) {
+            kk = parseFloat(vItems[1].replace(")", "")) ;
+        }
+    }
+    
+    xx = x == -1000000 ? xx: x ;
+    yy = y == -1000000 ? yy: y ;
+    kk = k == -1000000 ? kk: k ;
+
+    if (val) {
+        return [xx, yy, kk] ;
+    }
+
+    var ans = "" ;
+    if (xx != -1000000 && yy != -1000000) {
+        ans += "translate(" + [xx, yy] + ")" ;
+    } 
+
+    if (kk != -1000000) {
+        ans += " scale(" + kk + ")" ;
+    }
+
+    return ans ;
+}
+
 function getRangeOfPPIByThreshold() {
     // data: image-object => PointData => PersistencePairInventory
     // get the max PPI at iComponents
