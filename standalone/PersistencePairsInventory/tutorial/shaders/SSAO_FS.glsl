@@ -1,5 +1,8 @@
 precision highp float;
 
+// #extension GL_EXT_shader_texture_lod : enable
+// #extension GL_OES_standard_derivatives : enable
+
 uniform sampler2D tex; // color
 varying vec4 vPos;
 
@@ -14,7 +17,7 @@ uniform float uJLUKAOFactor;
 uniform float uJLUKNormalFactor;
 uniform float uJLUKLuminanceFactor;
 
-const int samples = 128;
+const int samples = 64;
 const float samplesF = float(samples);
 
 #define DL 2.399963229728653  // PI * ( 3.0 - sqrt( 5.0 ) )
@@ -29,12 +32,14 @@ vec2 rand( const vec2 coord ){
 }
 
 float readDepth( const in vec2 coord ){
-    float cameraFarMinusNear = uJLUKScale - 1.0;
-    float cameraFarPlusNear = uJLUKScale + 1.0;
+    // float z = texture2D( tex, coord ).a;
+    // return 2.0 / ( (uCamNearFar.y+uCamNearFar.x) - z * (uCamNearFar.y-uCamNearFar.x) );
 
     float w = texture2D( tex, coord ).a;
-    return (w-uCamNearFar.x)/(uCamNearFar.y-uCamNearFar.x);
+    return uJLUKScale*(w-uCamNearFar.x)/(uCamNearFar.y-uCamNearFar.x);
 
+    // float cameraFarMinusNear = uJLUKScale - 1.0;
+    // float cameraFarPlusNear = uJLUKScale + 1.0;
     // return 2.0 / ( cameraFarPlusNear - z * cameraFarMinusNear );
     // float cameraFarMinusNear = uJLUKScale - 1.0;
     // float cameraFarPlusNear = uJLUKScale + 1.0;
@@ -45,7 +50,7 @@ float readDepth( const in vec2 coord ){
 
 const float gDisplace = 0.5;  // gauss bell center
 float compareDepths( const in float depth1, const in float depth2, inout int far ) {
-    float garea = 8.0;        // gauss bell width
+    float garea = 16.0;        // gauss bell width
     float diff = ( depth1 - depth2 ) * 100.0;  // depth difference (0-100)
 
     // reduce left bell width to avoid self-shadowing
@@ -112,18 +117,24 @@ void main() {
     vec3 luminance = vec3( dot( color, lumcoeff ) );
 
     // Silhouette Effect
-    vec3 eps = vec3( pixelSize.x, pixelSize.y, 0 );
-    float dxdz = texture2D(tex, vPos.xy + eps.xz).r - texture2D(tex, vPos.xy - eps.xz).r;
-    float dydz = texture2D(tex, vPos.xy + eps.yz).r - texture2D(tex, vPos.xy - eps.yz).r;
+    vec3 eps = 2.0*vec3( pixelSize.x, pixelSize.y, 0 );
+    float dxdz = readDepth(vPos.xy + eps.xz) - readDepth(vPos.xy - eps.xz);
+    float dydz = readDepth(vPos.xy + eps.yz) - readDepth(vPos.xy - eps.yz);
+    // float dxdz = dFdx(texture2D(tex, vPos.xy).a);
+    // float dydz = dFdy(texture2D(tex, vPos.xy).a);
     vec3 n = normalize( vec3(dxdz, dydz, 1./uJLUKNormalFactor) );
     vec3 lightPos = vec3(0,0,1);
     float lightInt = 1.5*dot(n,normalize(lightPos));
 
     vec3 cAO = vec3( color * mix( vec3(ao), vec3(1.0), luminance * uJLUKLuminanceFactor ) );
+    // vec3 cAO = vec3( color * mix( vec3(ao), vec3(1.0), luminance ) );
 
     vec3 final = w>0.1
         // ? cAO
+        // ? vec3(ao)
+        // ? cAO*lightInt
         ? cAO*0.2 + cAO*lightInt
+        // ? cAO*0.2 + cAO*lightInt
         // ? n
         : vec3(1);
 

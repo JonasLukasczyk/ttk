@@ -43,6 +43,7 @@ namespace ttk {
 
                 const size_t& nRows,
                 const dataType scalarBounds[2],
+                const bool& useBinning,
                 const std::vector<dataType*>& scalars,
                 const dataType* persistenceThresholds,
                 const size_t& nPersistenceThresholds,
@@ -57,10 +58,11 @@ namespace ttk {
                 const size_t& nCols,
                 const size_t columnIndex,
                 const dataType scalarBounds[2],
+                const bool& useBinning,
                 const dataType* scalars,
                 const dataType* persistenceThresholds,
                 const size_t& nPersistenceThresholds,
-                const idType* connectivityList,
+                const idType* connectivityLists,
                 const size_t& nEdges
             ) const;
 
@@ -184,6 +186,7 @@ int ttk::PersistencePairInventory::ComputePPI(
 
     const size_t& nRows,
     const dataType scalarBounds[2],
+    const bool& useBinning,
     const std::vector<dataType*>& scalars,
     const dataType* persistenceThresholds,
     const size_t& nPersistenceThresholds,
@@ -206,9 +209,10 @@ int ttk::PersistencePairInventory::ComputePPI(
         this->printMsg( ttk::debug::Separator::L2 );
         this->printMsg({
             {"#Threads", std::to_string(this->threadNumber_)},
-            {"#Rows", std::to_string(nRows)},
+            {"#Scalar Values", std::to_string(nRows)},
+            {"UseBinning", std::to_string(useBinning)},
             {"#Cols", std::to_string(nCols)},
-            {"#P.Intervals", std::to_string(nPersistenceThresholds)},
+            {"#P.Thresholds", std::to_string(nPersistenceThresholds)},
             {"Range", "["+std::to_string(scalarBounds[0])+", "+std::to_string(scalarBounds[1])+"]"}
         });
         this->printMsg( ttk::debug::Separator::L2 );
@@ -230,6 +234,7 @@ int ttk::PersistencePairInventory::ComputePPI(
                 nCols,
                 i,
                 scalarBounds,
+                useBinning,
                 scalars[i],
                 persistenceThresholds,
                 nPersistenceThresholds,
@@ -263,6 +268,7 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
     const size_t& nCols,
     const size_t columnIndex,
     const dataType scalarBounds[2],
+    const bool& useBinning,
     const dataType* scalars,
     const dataType* persistenceThresholds,
     const size_t& nPersistenceThresholds,
@@ -283,44 +289,87 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
     // process pairs
     {
         dataType range = scalarBounds[1]-scalarBounds[0];
-        dataType nRowsM1 = nRows-1;
 
         size_t rowOffset = nPersistenceThresholds*nCols;
-        for(size_t i=0,j=1; i<nEdges; i++,j+=3){
-            const idType& v0 = connectivityLists[j];
-            const idType& v1 = connectivityLists[j+1];
 
-            const dataType& s0_ = scalars[v0];
-            const dataType& s1_ = scalars[v1];
+        if(useBinning){
+            // for(size_t i=0,j=1; i<nEdges; i++,j+=3){
+            //     const idType& v0 = connectivityLists[j];
+            //     const idType& v1 = connectivityLists[j+1];
 
-            // enforce order
-            dataType s0 = s0_<s1_ ? s0_ : s1_;
-            dataType s1 = s0_<s1_ ? s1_ : s0_;
+            //     const dataType& s0_ = scalars[v0];
+            //     const dataType& s1_ = scalars[v1];
 
-            // skip if edge does not intersect interval
-            if(s1<scalarBounds[0] || s0>scalarBounds[1]) continue;
+            //     // enforce order
+            //     dataType s0 = s0_<s1_ ? s0_ : s1_;
+            //     dataType s1 = s0_<s1_ ? s1_ : s0_;
 
-            dataType persistence = s1-s0;
+            //     // skip if edge does not intersect bounds
+            //     if(s1<scalarBounds[0] || s0>scalarBounds[1]) continue;
 
-            // force bounds for bin index computation
-            s0 = s0<scalarBounds[0] ? scalarBounds[0] : s0;
-            s1 = s1>scalarBounds[1] ? scalarBounds[1] : s1;
+            //     const dataType persistence = s1-s0;
 
-            // compute bin indices
-            size_t b0 = (s0-scalarBounds[0])/range*nRows;
-            size_t b1 = (s1-scalarBounds[0])/range*nRows;
-            b1 = b1>nRows ? nRows : b1;
+            //     // force bounds for bin index computation
+            //     s0 = s0<scalarBounds[0] ? scalarBounds[0] : s0;
+            //     s1 = s1>scalarBounds[1] ? scalarBounds[1] : s1;
 
-            // compute last persistence interval index for which pair still exists
-            size_t p1 = 0;
-            while(p1<nPersistenceThresholds && persistenceThresholds[p1]<=persistence)
-                p1++;
+            //     // compute bin indices
+            //     size_t b0 = ((s0-scalarBounds[0])/range)*nRows;
+            //     size_t b1 = ((s1-scalarBounds[0])/range)*nRows;
+            //     b1 = b1>=nRows ? nRows : b1;
 
-            size_t offset = columnIndex*nPersistenceThresholds + b0*rowOffset;
-            for(size_t b=b0; b<b1; b++){
-                for(size_t p=0; p<p1; p++)
-                    ppi[offset+p]++;
-                offset+=rowOffset;
+            //     // compute last persistence interval index for which pair still exists
+            //     size_t p1 = 0;
+            //     while(p1<nPersistenceThresholds && persistenceThresholds[p1]<=persistence)
+            //         p1++;
+
+            //     size_t offset = columnIndex*nPersistenceThresholds + b0*rowOffset;
+            //     for(size_t b=b0; b<b1; b++){
+            //         for(size_t p=0; p<p1; p++)
+            //             ppi[offset+p]++;
+            //         offset+=rowOffset;
+            //     }
+            // }
+            return 0;
+        } else {
+
+            dataType delta = range/((dataType)(nRows-1));
+
+            for(size_t i=0,j=1; i<nEdges; i++,j+=3){
+                const idType& v0 = connectivityLists[j];
+                const idType& v1 = connectivityLists[j+1];
+
+                const dataType& s0_ = scalars[v0];
+                const dataType& s1_ = scalars[v1];
+
+                // enforce order
+                dataType s0 = s0_<s1_ ? s0_ : s1_;
+                dataType s1 = s0_<s1_ ? s1_ : s0_;
+
+                // skip if edge does not intersect bounds
+                if(s1<scalarBounds[0] || s0>scalarBounds[1]) continue;
+
+                const dataType persistence = s1-s0;
+
+                // force bounds for bin index computation
+                s0 = s0<scalarBounds[0] ? scalarBounds[0] : s0;
+                s1 = s1>scalarBounds[1] ? scalarBounds[1] : s1;
+
+                // compute bin indices
+                size_t b0 = ceil((s0-scalarBounds[0])/delta);
+                size_t b1 = floor((s1-scalarBounds[0])/delta);
+
+                // compute last persistence interval index for which pair still exists
+                size_t p1 = 0;
+                while(p1<nPersistenceThresholds && persistenceThresholds[p1]<=persistence)
+                    p1++;
+
+                size_t offset = columnIndex*nPersistenceThresholds + b0*rowOffset;
+                for(size_t b=b0; b<b1; b++){
+                    for(size_t p=0; p<p1; p++)
+                        ppi[offset+p]++;
+                    offset+=rowOffset;
+                }
             }
         }
     }

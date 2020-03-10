@@ -51,15 +51,19 @@
                 </Hints>
                 <Documentation>TODO</Documentation>
             </DoubleVectorProperty>
-            <IntVectorProperty name="NumberOfScalarBins" label="Scalar Bin Number" command="SetNumberOfScalarBins" number_of_elements="1" default_values="1">
+            <IntVectorProperty name="NumberOfScalarValues" label="# Scalar Values" command="SetNumberOfScalarValues" number_of_elements="1" default_values="2">
                 <Documentation>TODO</Documentation>
             </IntVectorProperty>
-            <IntVectorProperty name="NumberOfPersistenceIntervals" label="Persistence Intervals" command="SetNumberOfPersistenceIntervals" number_of_elements="1" default_values="1">
+            <IntVectorProperty name="NumberOfPersistenceThresholds" label="# Persistence Thresholds" command="SetNumberOfPersistenceThresholds" number_of_elements="1" default_values="1">
                 <Documentation>TODO</Documentation>
             </IntVectorProperty>
-            <DoubleVectorProperty name="PersistenceInterval" label="Persistence Interval" command="SetPersistenceInterval" number_of_elements="1" default_values="1">
+            <DoubleVectorProperty name="PersistenceDelta" label="Persistence Delta" command="SetPersistenceDelta" number_of_elements="1" default_values="1">
                 <Documentation>TODO</Documentation>
             </DoubleVectorProperty>
+            <IntVectorProperty name="UseBinning" label="Use Scalar Bins" command="SetUseBinning" number_of_elements="1" default_values="0">
+                <BooleanDomain name="bool"/>
+                <Documentation>TODO</Documentation>
+            </IntVectorProperty>
 
             <PropertyGroup panel_widget="Line" label="Input Options">
                 <Property name="ScalarArray" />
@@ -68,9 +72,10 @@
             <PropertyGroup panel_widget="Line" label="Output Options">
                 <Property name="UseEntireScalarRange" />
                 <Property name="ScalarRange" />
-                <Property name="NumberOfScalarBins" />
-                <Property name="NumberOfPersistenceIntervals" />
-                <Property name="PersistenceInterval" />
+                <Property name="NumberOfScalarValues" />
+                <Property name="NumberOfPersistenceThresholds" />
+                <Property name="PersistenceDelta" />
+                <Property name="UseBinning" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}

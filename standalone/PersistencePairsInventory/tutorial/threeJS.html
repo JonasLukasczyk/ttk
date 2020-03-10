@@ -5,9 +5,21 @@
       <title>ttkWebSocketIO library examples</title>
       <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
       <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.js"></script>
       <script type="text/javascript" src="./OrbitControls.js"></script>
       <script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
       <script type="text/javascript" src="./vtkRenderer.js"></script>
+      <style>
+        #RendererContainer {
+            position: relative;
+        }
+        .dg.main {
+            position: absolute;
+            top:0;
+            right:0;
+        }
+
+      </style>
    </head>
    <body>
       <div >

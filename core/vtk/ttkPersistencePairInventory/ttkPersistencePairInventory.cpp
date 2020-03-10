@@ -54,7 +54,12 @@ int ttkPersistencePairInventory::RequestData(
         return 0;
     }
 
-    size_t nRows = this->GetNumberOfScalarBins();
+    if(this->UseBinning && this->NumberOfScalarValues<2){
+        this->printErr("Binning requires at least two scalar values.");
+        return 0;
+    }
+
+    size_t nRows = this->UseBinning ? this->NumberOfScalarValues-1 : this->NumberOfScalarValues;
     size_t nCols = inputAsMB->GetNumberOfBlocks();
     if(nCols<0){
         this->printErr("Input 'vtkMultiBlockDataSet' object has no blocks.");
@@ -74,12 +79,12 @@ int ttkPersistencePairInventory::RequestData(
     // Prepare output point buffer
     auto ppiArray = vtkSmartPointer<vtkIntArray>::New();
     ppiArray->SetName("PersistencePairInventory");
-    ppiArray->SetNumberOfComponents( this->NumberOfPersistenceIntervals );
+    ppiArray->SetNumberOfComponents( this->NumberOfPersistenceThresholds );
     ppiArray->SetNumberOfTuples( nRows*nCols );
 
     auto pcArray = vtkSmartPointer<vtkIntArray>::New();
     pcArray->SetName("PersistenceCurves");
-    pcArray->SetNumberOfComponents( this->NumberOfPersistenceIntervals );
+    pcArray->SetNumberOfComponents( this->NumberOfPersistenceThresholds );
     pcArray->SetNumberOfTuples( nCols );
 
     auto scalarBoundsArray = vtkSmartPointer<vtkDoubleArray>::New();
@@ -90,7 +95,7 @@ int ttkPersistencePairInventory::RequestData(
     auto persistenceThresholdArray = vtkSmartPointer<vtkDataArray>::Take( scalarArray->NewInstance() );
     persistenceThresholdArray->SetName("PersistenceThresholds");
     persistenceThresholdArray->SetNumberOfComponents( 1 );
-    persistenceThresholdArray->SetNumberOfTuples( this->NumberOfPersistenceIntervals );
+    persistenceThresholdArray->SetNumberOfTuples( this->NumberOfPersistenceThresholds );
 
     auto imageObject = vtkSmartPointer<vtkImageData>::New();
     imageObject->SetExtent(
@@ -187,15 +192,14 @@ int ttkPersistencePairInventory::RequestData(
                 scalarBoundsArray->SetValue(1, scalarBounds[1]);
 
                 auto persistenceThresholdArrayData = (VTK_TT*) persistenceThresholdArray->GetVoidPointer(0);
-                for(size_t i=0; i<this->NumberOfPersistenceIntervals; i++)
-                    persistenceThresholdArrayData[i] = i*this->PersistenceInterval;
-
+                for(size_t i=0; i<this->NumberOfPersistenceThresholds; i++)
+                    persistenceThresholdArrayData[i] = i*this->PersistenceDelta;
 
                 status = this->ComputePersistenceCurves(
                     (int*) pcArray->GetVoidPointer(0),
 
                     persistenceThresholdArrayData,
-                    this->NumberOfPersistenceIntervals,
+                    this->NumberOfPersistenceThresholds,
                     scalarsPerElement,
                     connectivityListPerElement,
                     nEdgesPerElement
@@ -207,9 +211,10 @@ int ttkPersistencePairInventory::RequestData(
 
                     nRows,
                     scalarBounds,
+                    this->UseBinning,
                     scalarsPerElement,
                     persistenceThresholdArrayData,
-                    this->NumberOfPersistenceIntervals,
+                    this->NumberOfPersistenceThresholds,
                     connectivityListPerElement,
                     nEdgesPerElement
                 );

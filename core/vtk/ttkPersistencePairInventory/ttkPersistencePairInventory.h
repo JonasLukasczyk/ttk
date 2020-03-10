@@ -37,21 +37,24 @@ class TTKPERSISTENCEPAIRINVENTORY_EXPORT ttkPersistencePairInventory
     private:
         bool UseEntireScalarRange{true};
         double ScalarRange[2]{0,0};
-        int NumberOfScalarBins{1};
-        int NumberOfPersistenceIntervals{1};
-        int PersistenceInterval{1};
+        int NumberOfScalarValues{2};
+        bool UseBinning{false};
+        int NumberOfPersistenceThresholds{1};
+        int PersistenceDelta{1};
 
     public:
         vtkSetMacro(UseEntireScalarRange, bool);
         vtkGetMacro(UseEntireScalarRange, bool);
         vtkSetVector2Macro(ScalarRange, double);
         vtkGetVector2Macro(ScalarRange, double);
-        vtkSetMacro(NumberOfScalarBins, int);
-        vtkGetMacro(NumberOfScalarBins, int);
-        vtkSetMacro(NumberOfPersistenceIntervals, int);
-        vtkGetMacro(NumberOfPersistenceIntervals, int);
-        vtkSetMacro(PersistenceInterval, double);
-        vtkGetMacro(PersistenceInterval, double);
+        vtkSetMacro(NumberOfScalarValues, int);
+        vtkGetMacro(NumberOfScalarValues, int);
+        vtkSetMacro(UseBinning, bool);
+        vtkGetMacro(UseBinning, bool);
+        vtkSetMacro(NumberOfPersistenceThresholds, int);
+        vtkGetMacro(NumberOfPersistenceThresholds, int);
+        vtkSetMacro(PersistenceDelta, double);
+        vtkGetMacro(PersistenceDelta, double);
 
         static ttkPersistencePairInventory *New();
         vtkTypeMacro(ttkPersistencePairInventory, ttkAlgorithm);
