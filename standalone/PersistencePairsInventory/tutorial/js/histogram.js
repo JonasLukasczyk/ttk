@@ -27,12 +27,6 @@ function drawHistogram(iComponent, socket) {
        
     }
 
-    var zoom = d3.zoom()
-                 .scaleExtent([1, 10])
-                 .on("zoom", zoomed)
-                 .on("start", zoomstart)
-                 .on("end", zoomend) ;
-
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
@@ -73,14 +67,6 @@ function drawHistogram(iComponent, socket) {
         .attr("width", containerWidth)
         .attr("height", containerHeight) ;
 
-    var slider = d3.select("#range_input")
-        .datum({})
-        .attr("value", zoom.scaleExtent()[0])
-        .attr("min", zoom.scaleExtent()[0])
-        .attr("max", zoom.scaleExtent()[1])
-        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
-        .on("input", slided);
-
     var svg = container
                 .append("g")
                 .attr("transform",
@@ -91,9 +77,7 @@ function drawHistogram(iComponent, socket) {
         .range([0, width])
         .domain(myGroups) ;
 
-    svg.append("svg")
-        .attr("width", width)
-        .append("g")
+    svg.append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(x)) ;
@@ -102,18 +86,7 @@ function drawHistogram(iComponent, socket) {
         .range([height, 0])
         .domain(myVars) ;
 
-    svg.append('defs')
-        .append('clipPath')
-        .attr('id', 'cc-hist-clip')
-        .append('rect')
-        .attr('x', 0 - 20)
-        .attr('y', 0)
-        .attr('width', 20)
-        .attr('height', height);
-
-    svg//.append("svg")
-       // .attr("height", height)
-        .append("g")   // FLAG
+    svg.append("g")
         .attr('clip-path', 'url(#cc-hist-clip)')
         .attr('class', 'axis--hist--y')
         .attr("transform", "translate(0,0)")
@@ -130,10 +103,11 @@ function drawHistogram(iComponent, socket) {
 
     // scale region
     var t000 = performance.now() ;
-    var svg_main = svg.append("svg") ;
-    var main = svg_main.append("g")
-        .attr('clip-path', 'url(#hist-clip)')
-        .selectAll()
+    var g_main = svg.append("g").attr('clip-path', 'url(#hist-clip)');
+
+    var main = g_main.append("g") ;
+
+    main.selectAll()
         .data(vData)
         .enter()
         .append("rect")
@@ -163,7 +137,7 @@ function drawHistogram(iComponent, socket) {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("mousedown", function (d, i) {
-            d3.event.stopPropagation();
+           // d3.event.stopPropagation();
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
                 Window.PPI['selected-time-id'] = d[0] ;
                 coverShadow(d[0]) ;
@@ -187,7 +161,7 @@ function drawHistogram(iComponent, socket) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
-            console.log("the values of selected bins: ", d[3]) ;
+            // console.log("the values of selected bins: ", d[3]) ;
 
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
 
@@ -197,10 +171,36 @@ function drawHistogram(iComponent, socket) {
                 socket.send(backMsg) ;
             }
         }) ;
-        
+    
+    var drag = d3.drag()
+        .on("start", drag_start)
+        .on("drag", drag_drag);
+
+    var zoom = d3.zoom()
+                 .scaleExtent([1, 10])
+                 .on("zoom", zoomed)
+                 .on("start", zoomstart)
+                 .on("end", zoomend) ;
+
+    var slider = d3.select("#range_input")
+        .datum({})
+        .attr("value", zoom.scaleExtent()[0])
+        .attr("min", zoom.scaleExtent()[0])
+        .attr("max", zoom.scaleExtent()[1])
+        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+        .on("input", slided);
+
+    function drag_start() {
+        console.log("drag_start") ;
+    }
+
+    function drag_drag() {
+        console.log("drag_drag") ;
+    }
+
     function callFunc() { // most time-consuming part, avg time is 1.5 seconds
-        svg_main.call(zoom) ; 
-        //svg_main.on("mousedown.zoom", null)  ;  // disable the drag event
+        svg.call(zoom) ;
+        // svg.call(drag) ;
     }
     setTimeout(callFunc, 0) ;
     
@@ -240,25 +240,22 @@ function drawHistogram(iComponent, socket) {
         zoom.scaleTo(svg, d3.select(this).property("value"));
     }
 
-    function zoomend() {
-        var x0 = performance.now() ;
-        var currentTransform = d3.event.transform;
-        if (parseFloat(currentTransform.k) <= 1.05) {
-            // reset
-            currentTransform.x = 0;
-            currentTransform.y = 0;
-            currentTransform.k = 1 ;
-        } 
-        //main.transition().attr("transform", currentTransform).duration(100);
-        main.attr("transform", currentTransform);
-        console.log(currentTransform) ;
+    $("#histogram_zoom_back").unbind().click(function() {
+        zoomend("zoom_back") ;
+    }) ;
 
-        var x1 = performance.now() ;
+    function zoomend(d) {
+        var currentTransform ;
+        if (d === "zoom_back") {
+            currentTransform = {"x":0, "y":0, "k":1}
+        } else {
+            currentTransform = d3.event.transform;
+        }
+        main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+
         d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
         d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
-        var x2 = performance.now() ;
         slider.property("value", currentTransform.k);
-        var x3 = performance.now() ;
 
         $(".axis--hist--x g").each(function() {
             var v = $(this).attr("transform") ;
@@ -279,9 +276,6 @@ function drawHistogram(iComponent, socket) {
         $(".axis--hist--y path").each(function() {
             $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
         }) ;
-
-        var x4 = performance.now() ;
-        console.log("cost for zoom the histogram: x0-x1, " + (x1 - x0) + ", x1-x2: " + (x2 - x1) + ", x2-x3: " + (x3 - x2) + ", x3-x4:" + (x4 - x3)) ;
     }
 }
 

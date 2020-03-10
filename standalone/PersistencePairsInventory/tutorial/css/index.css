@@ -4,6 +4,16 @@
     stroke-width: 2px;
 }
 
+#RendererContainer {
+    position: relative;
+}
+
+.dg.main {
+    position: absolute;
+    top:0;
+    right:0;
+}
+
 .color-default {
     fill: #ffffff;
     stroke-width: 0.2 ;
@@ -159,6 +169,12 @@
     position: absolute; 
     top: 124px;
     right: 25px;
+}
+
+.histogram_zoom_back {
+    position: absolute; 
+    top: 124px;
+    right: 160px;
 }
 
 .histogram_viz_boundary {

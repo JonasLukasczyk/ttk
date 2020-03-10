@@ -69,7 +69,7 @@
                Port for render:
                <input id="msg-render" type="text" value="9289" style="width: 50px;">
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
-               <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button>
+               <!-- <button id="request" onclick="Request();" class="btn btn-primary btn-sm">Request Data</button> -->
                &nbsp; -<code> OR </code>- &nbsp; 
                <button id="load_test" onclick="LoadTest();" class="btn btn-secondary btn-sm">Test dataset</button>
                <br>
@@ -105,7 +105,7 @@
                   <li>
                      <span id="notification_xxyy" class="p-1 bg-success text-white rounded" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span>
                      <span id="brush_mode" class="p-1 bg-success text-white rounded" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
-                     <image id="box_zoom_back" style="width:20px;" src="./images/zoom_back.png"></image>
+                     <image id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"></image>
                   </li>
                   
                </ul>
@@ -144,6 +144,7 @@
                   </li>
                      
                   <input element-show="mdm" type="range" class="histogram_slider" id="range_input" value="1" min="1" max="10" step="0.09">
+                  <img element-show="mdm" id="histogram_zoom_back" class="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
                </ul>
 
                <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary"></div>
@@ -162,6 +163,7 @@
 <script type="text/javascript" src="./js/boxplot.js"></script>
 <script type="text/javascript" src="./js/histogram.js"></script>
 <script type="text/javascript" src="./js/histogram.sdm.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
 <script type="text/javascript" src="./OrbitControls.js"></script>
 <script type="text/javascript" src="./vtkRenderer.js"></script>

@@ -157,15 +157,15 @@ function Connect() {
 	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), false);
 }
 
-function Request() {
-	if (ttk)
-		ttk.send("requestData");
+// function Request() {
+// 	if (ttk)
+// 		ttk.send("requestData");
 
-	if (Window.PPI['DEV']) {
-		var testdataset = loadTestDataFromString();
-		objectCallback(testdataset);
-	}
-}
+// 	if (Window.PPI['DEV']) {
+// 		var testdataset = loadTestDataFromString();
+// 		objectCallback(testdataset);
+// 	}
+// }
 
 function LoadTest() {
 	Window.PPI['DEV'] = true;
