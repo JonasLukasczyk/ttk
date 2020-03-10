@@ -139,7 +139,8 @@ function drawHistogram(iComponent, socket) {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("mousedown", function (d, i) {
-           // d3.event.stopPropagation();
+            console.log(d3.event) ;
+            d3.event.stopPropagation();
             if (event.ctrlKey) {  // click & ctrl then selected column to SDM
                 Window.PPI['selected-time-id'] = d[0] ;
                 coverShadow(d[0]) ;
