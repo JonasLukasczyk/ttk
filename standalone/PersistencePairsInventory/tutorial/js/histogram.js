@@ -164,6 +164,7 @@ function drawHistogram(iComponent, socket) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
+            $("#histogram-notification-placeholder-default").html("") ;
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
 
             console.log(backMsg) ;

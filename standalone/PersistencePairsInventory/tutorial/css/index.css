@@ -16,127 +16,127 @@
 
 .color-default {
     fill: #ffffff;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-green-0 {
     fill: #edf8e9;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-green-1 {
     fill: #bae4b3;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-green-2 {
     fill: #74c476;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-green-3 {
     fill: #31a354;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-green-4 {
     fill: #006d2c;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-gray-0 {
     fill: #f7f7f7 ;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-gray-1 {
     fill: #d9d9d9 ;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-gray-2 {
     fill: #bdbdbd ;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-gray-3 {
     fill: #969696 ;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-gray-4 {
     fill: #636363 ;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-red-0 {
     fill: #fee5d9;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-red-1 {
     fill: #fcae91;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-red-2 {
     fill: #fb6a4a;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-red-3 {
     fill: #de2d26;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-red-4 {
     fill: #a50f15;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-blue-0 {
     fill: #eff3ff;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-blue-1 {
     fill: #bdd7e7;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-blue-2 {
     fill: #6baed6;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-blue-3 {
     fill: #3182bd;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
 .color-blue-4 {
     fill: #08519c;
-    stroke-width: 0.2 ;
+    stroke-width: 0.1 ;
     stroke: black ;
 }
 
@@ -161,8 +161,8 @@
 
 .histogram_legend_boundary {
     position: absolute; 
-    top: -76px;
-    right: 28px;
+    top: -54px;
+    right: 160px;
 }
 
 .histogram_slider {
@@ -173,8 +173,8 @@
 
 .histogram_zoom_back {
     position: absolute; 
-    top: 124px;
-    right: 160px;
+    top: 100px;
+    right: 26px;
 }
 
 .histogram_viz_boundary {
@@ -252,7 +252,7 @@ div.inline {
 }
 
 .inactive-d3-item-line {
-    stroke: #0b2e13;
+    stroke: #111;
     stroke-width: 3;
 }
 
@@ -263,7 +263,7 @@ div.inline {
 }
 
 .inactive-d3-item-line2 {
-    stroke: #3d8814;
+    stroke: #111;
     stroke-width: 3;
-    opacity: 0.1;
+    opacity: 0.3;
 }

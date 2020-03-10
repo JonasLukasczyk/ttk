@@ -20,7 +20,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         height_partition = 10;
 
     let containerWidth = 301;
-    let containerHeight = 201;
+    let containerHeight = 191;
     let margin = {
         top: 60,
         right: 60,
@@ -70,6 +70,12 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
 
     function topDragged(d) {
         d = yLine.invert(d3.event.y);
+        if ( d <= 1) {
+            return ;
+        }
+        if ( d3.event.y <= 1) {
+            return ;
+        }
         d3.select(this)
             .attr('y1', yLine(d))
             .attr('y2', yLine(d)) ;
@@ -141,6 +147,13 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
 
     function rightDragged(d) {
         d = yLineRight.invert(d3.event.y);
+        if ( d <= 1) {
+            return ;
+        }
+
+        if ( d3.event.y <= 1) {
+            return ;
+        }
         d3.select(this)
             .attr('y1', yLineRight(d))
             .attr('y2', yLineRight(d)) ;
@@ -189,6 +202,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
     // ===================================================================================================================
 
     // updated notification
+    $("#histogram-notification-placeholder-default").html("") ;
     $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
 
     // draw the main body SVG
