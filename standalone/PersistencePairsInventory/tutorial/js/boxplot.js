@@ -70,10 +70,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $("[name=box_optimal_left]").remove() ;
         $("[name=box_optimal_right]").remove() ;
         // cover the shadow
-        let threshold_idx = parseInt($("#hist-threshold").val()) * Window.PPI['thresholdRatio'] ;
-        let max_threshold_window = parseInt($("#threshold-window").val()) * Window.PPI['thresholdRatio'] ;
+        let threshold_idx = (1 + parseInt($("#hist-threshold").val())) * Window.PPI['thresholdRatio'] ;
+        let max_threshold_window = (1 + parseInt($("#threshold-window").val())) * Window.PPI['thresholdRatio'] ;
 
-        threshold_idx = Math.max(threshold_idx, 1.2) ;
+        threshold_idx = Math.max(threshold_idx, 1) ;
+
         main.append("line")
             .attr("name", "box_optimal_left")
             .attr("class", "zero")
