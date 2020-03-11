@@ -1517,11 +1517,8 @@ namespace ttk {
                     }
                 }
 
-                // check if persistence threshold is reached
-                const dataType persistence = elderScalar>scalars[v]
-                    ? elderScalar-scalars[v]
-                    : scalars[v]-elderScalar;
-                currentPropagation->persistent = persistence>persistenceThreshold ? 1 : 0;
+                // force that a propagation that reaches the global minimum is always persistent
+                currentPropagation->persistent = 1;
 
                 // if thread reached the global minimum finish propagation
                 currentPropagation->terminated = 1;
@@ -2287,7 +2284,7 @@ namespace ttk {
                     Propagation<idType>* propagation = &propagations[p];
 
                     // if the propagation is persistent or a is the child of a persistent branch skip
-                    if(propagation->persistent==1 || !propagation->parentBranch || propagation->parentBranch->persistent==0)
+                    if(propagation->persistent==1 || (propagation->parentBranch && propagation->parentBranch->persistent==0))
                         continue;
 
                     propagation->setParentRecursive(propagation);
