@@ -1023,6 +1023,8 @@ namespace ttk {
                 const bool& useRegionBasedIterations
             ) const {
 
+                return 0;
+
                 // pointer used to compare against representative
                 auto* currentPropagation = &propagation;
 
@@ -1514,6 +1516,12 @@ namespace ttk {
                         return 1;
                     }
                 }
+
+                // check if persistence threshold is reached
+                const dataType persistence = elderScalar>scalars[v]
+                    ? elderScalar-scalars[v]
+                    : scalars[v]-elderScalar;
+                currentPropagation->persistent = persistence>persistenceThreshold ? 1 : 0;
 
                 // if thread reached the global minimum finish propagation
                 currentPropagation->terminated = 1;
@@ -2279,7 +2287,7 @@ namespace ttk {
                     Propagation<idType>* propagation = &propagations[p];
 
                     // if the propagation is persistent or a is the child of a persistent branch skip
-                    if(propagation->persistent==1 || (propagation->parentBranch && propagation->parentBranch->persistent==0))
+                    if(propagation->persistent==1 || !propagation->parentBranch || propagation->parentBranch->persistent==0)
                         continue;
 
                     propagation->setParentRecursive(propagation);
@@ -2525,7 +2533,6 @@ namespace ttk {
                 idType propagationIndex = 0;
                 idType nActivePropagations = nPropagations;
                 idType nFirstPhasePropagations = nPropagations;
-
 
                 // compute propagations
                 #pragma omp parallel num_threads(this->threadNumber_)
