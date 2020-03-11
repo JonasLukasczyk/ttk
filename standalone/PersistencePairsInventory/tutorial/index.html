@@ -63,13 +63,13 @@
             <h2 class="pb-3">APPI</h2>
          </div>
          <div class="col-8">
-            <div class="text-justify p-2">
-               WebSocketIO Host:
-               <input id="msg-host" type="text" style="width: 108px;" value="10.218.107.40">
-               Port:
-               <input id="msg" type="text" value="9286" style="width: 50px;">
-               Port for render:
-               <input id="msg-render" type="text" value="9289" style="width: 50px;">
+            <div class="text-justify p-2" style="display: flex;align-items: center;">
+               <span style="padding-right:4px;">WebSocketIO Host:</span>
+               <input id="msg-host" type="text" style="width: 108px;" value="10.218.107.40"> <code>|</code>
+               <span style="padding-right:4px;">Port: </span>
+               <input id="msg" type="text" value="9286" style="width: 50px;"><code>|</code>
+               <span style="padding-right:4px;">Port for render:</span>
+               <input id="msg-render" type="text" value="9289" style="width: 50px;"> <code>|</code>
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
                &nbsp; -<code> OR </code>- &nbsp; 
                <button id="load_test" onclick="LoadTest();" class="btn btn-secondary btn-sm">Test dataset</button>
@@ -128,14 +128,18 @@
                   <li>Min Threshold:&nbsp;
                      <select id="hist-threshold" data-value='0' title="*">
                         <option> - </option>
-                     </select>
+                     </select> <code>|</code>
                      Max Threshold: <select id="threshold-window" data-value='1' title="*">
                         <option> - </option>
                      </select>
                   </li>
                    <li>
-                     <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image>
-                     <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image>
+                     <div style="display: flex;align-items: center;">
+                        <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image><code>|</code>
+                        <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image><code element-show="mdm">|</code>
+                        <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"><code element-show="mdm">|</code>
+                        <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09">
+                     </div>
                   </li>
                   <li element-show="sdm" style="display:none;">Time:&nbsp;
                      <select id="hist-time">
@@ -148,15 +152,13 @@
                            data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
                      Notification: <span id="histogram-notification-placeholder-default">...</span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
                   </li>
-                     
-                  <input element-show="mdm" type="range" class="histogram_slider" id="range_input" value="1" min="1" max="10" step="0.09">
-                  <img element-show="mdm" id="histogram_zoom_back" class="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
+                  
                </ul>
 
                <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
                   <h3 style="padding-bottom: 10px;">&nbsp; ... </h3>
                </div>
-               <div element-show="mdm" id="slider-range" style="margin-left: 50px;">
+               <div element-show="mdm" id="slider-range" style="margin-left: 50px;margin-right: 20px;">
                     <div id="custom-handle0" style="text-align: -webkit-center;" class="ui-slider-handle"></div>
                     <div id="custom-handle1" style="text-align: -webkit-center;" class="ui-slider-handle"></div>
                </div>

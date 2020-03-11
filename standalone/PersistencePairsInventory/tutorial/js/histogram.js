@@ -32,8 +32,9 @@ function drawHistogram(iComponent, socket) {
         if ( Window.PPI['boxplot-timestamp-range-mode']['enable'] ) {
             var left = Window.PPI['boxplot-timestamp-range-mode']['start'] ;
             var right = Window.PPI['boxplot-timestamp-range-mode']['end'] ;
-            var idx_first = x(left)
-            var idx_sec = x(right + 1) ;
+            var gap = x(1) - x(0) ;
+            var idx_first = gap * left ;
+            var idx_sec = gap * (right + 1) ;
             
             g_main.append("rect")
                 .attr("class", "mdm-rect-box-cover")

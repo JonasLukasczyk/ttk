@@ -11,6 +11,10 @@ html {
     user-select: none;
 }
 
+li {
+    height: 28px;
+}
+
 #RendererContainer {
     position: relative;
 }
@@ -170,18 +174,6 @@ html {
     position: absolute; 
     top: -54px;
     right: -8px;
-}
-
-.histogram_slider {
-    position: absolute; 
-    top: 158px;
-    right: 25px;
-}
-
-.histogram_zoom_back {
-    position: absolute; 
-    top: 138px;
-    right: 26px;
 }
 
 .histogram_viz_boundary {

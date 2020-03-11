@@ -9,9 +9,10 @@ function drawSDMHistogram(iComponent, socket) {
         $(".sdm-rect-cover").remove() ;
         // cover the shadow
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
-        let max_threshold_window = parseInt($("#threshold-window").val())
-        var idx_first = x(threshold_idx)
-        var idx_sec = x(max_threshold_window + 1) ;
+        let max_threshold_window = parseInt($("#threshold-window").val()) ;
+        var gap = x(1) - x(0) ;
+        var idx_first = gap * threshold_idx
+        var idx_sec = gap * (max_threshold_window + 1) ;
         
         svg.append("rect")
             .attr("class", "sdm-rect-cover")
