@@ -66,6 +66,36 @@ function drawBoxplotCurve(numberofcomponents, data) {
         y_domain: [0, 0],
     }
 
+    function coverShadow() {
+        $("[name=box_optimal_left]").remove() ;
+        $("[name=box_optimal_right]").remove() ;
+        // cover the shadow
+        let threshold_idx = parseInt($("#hist-threshold").val()) * Window.PPI['thresholdRatio'] ;
+        let max_threshold_window = parseInt($("#threshold-window").val()) * Window.PPI['thresholdRatio'] ;
+
+        threshold_idx = Math.max(threshold_idx, 1.2) ;
+        main.append("line")
+            .attr("name", "box_optimal_left")
+            .attr("class", "zero")
+            .attr("x1", xScale(threshold_idx))
+            .attr("y1", 0)
+            .attr("x2", xScale(threshold_idx))
+            .attr("y2", height)
+            .style("stroke", "green")
+            .style("stroke-width", 2);
+
+        main.append("line")
+            .attr("name", "box_optimal_right")
+            .attr("class", "zero")
+            .attr("x1", xScale(max_threshold_window))
+            .attr("y1", 0)
+            .attr("x2", xScale(max_threshold_window))
+            .attr("y2", height)
+            .style("stroke", "green")
+            .style("stroke-width", 2);
+    }
+
+
     var format_data = formatInput(numberofcomponents, data);
 
     let csvContent = "data:text/csv;charset=utf-8," +
@@ -216,16 +246,20 @@ function drawBoxplotCurve(numberofcomponents, data) {
         }
         zoom();
         
-        // $("#hidden-optimal-threshold").click();
+        $("#hidden-optimal-threshold").click();
         $("#hidden-notification_xxyy").click();
     }
+
+    $("#hidden-optimal-threshold").unbind().click(function() {
+        coverShadow() ;
+    })
 
     $("#hidden-zoom-back").unbind().click(function () {
         xScale.domain(Window.box_plot_config.x_domain);
         yScale.domain(Window.box_plot_config.y_domain);
         zoom();
 
-        // $("#hidden-optimal-threshold").click();
+        $("#hidden-optimal-threshold").click();
         $("#hidden-notification_xxyy").click();
     });
 
@@ -267,7 +301,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         idleTimeout = null;
     }
 
-    $("#hidden-brush-mode").unbind().unbind().click(function () {
+    $("#hidden-brush-mode").unbind().click(function () {
         if ($("#brush_mode").attr("mode") == "brush") {
             $(".brush").remove();
             $("#brush_mode").attr("mode", "view");
@@ -316,7 +350,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("d", function (d) {
                 return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d.values);
             });
-
     }
 
     function dragged() {
@@ -506,7 +539,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
     }
 
     function drawLine() {
-
         // color palette
         var res = sumstat.map(function (d) {
             return d.key
@@ -560,6 +592,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d.values);
             })
     }
+    $("#hidden-optimal-threshold").click();
 }
 
 $("#boxplot-checkbox-lines").unbind().click(function () {

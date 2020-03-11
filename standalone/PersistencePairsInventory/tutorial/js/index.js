@@ -330,6 +330,7 @@ $("#hist-threshold").change(function () {
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
+    $("#hidden-optimal-threshold").click();
     $(this).focus() ;
 });
 
@@ -355,6 +356,7 @@ $("#threshold-window").change(function() {
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
+    $("#hidden-optimal-threshold").click();
     $(this).focus() ;
 }) ;
 
