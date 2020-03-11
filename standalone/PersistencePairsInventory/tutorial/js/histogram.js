@@ -24,8 +24,33 @@ function drawHistogram(iComponent, socket) {
                 $(this).css("opacity", 0.1) ;
             }
         })
-       
     }
+
+    function drawCoverBox() {
+        $(".mdm-rect-box-cover").remove() ;
+        // cover the shadow
+        if ( Window.PPI['boxplot-timestamp-range-mode']['enable'] ) {
+            var left = Window.PPI['boxplot-timestamp-range-mode']['start'] ;
+            var right = Window.PPI['boxplot-timestamp-range-mode']['end'] ;
+            var idx_first = x(left)
+            var idx_sec = x(right + 1) ;
+            
+            g_main.append("rect")
+                .attr("class", "mdm-rect-box-cover")
+                .attr("x", idx_first)
+                .attr("y", 0)
+                .attr("height", height)
+                .attr("width", idx_sec - idx_first)
+                .style("fill", "none")
+                .style("stroke-width", 1)
+                .style("stroke", "rgb(0,0,0)")
+                .attr("transform", "translate(0, 0)");
+            }
+    }
+
+    $("#hidden-mdm-add-window").unbind().click(function() {
+        drawCoverBox() ;
+    }) ;
 
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
@@ -139,14 +164,13 @@ function drawHistogram(iComponent, socket) {
             return d3.select("#tooltip").style("visibility", "hidden");
         })
         .on("mousedown", function (d, i) {
-            console.log(d3.event) ;
-            // d3.event.stopPropagation();
-            if (event.ctrlKey) {  // click & ctrl then selected column to SDM
+            if (event.ctrlKey) {  
                 Window.PPI['selected-time-id'] = d[0] ;
                 coverShadow(d[0]) ;
+                // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire
+                d3.event.stopPropagation();  // prevent zoom & drag consuming mouseup event while ctrl is pressed
             }
         })
-        // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire 
         .on("mouseup", function (d, i) {
             if (event.ctrlKey) {
                 triggerCtrlV() ;
@@ -154,7 +178,7 @@ function drawHistogram(iComponent, socket) {
         })
         .on("click", function (d, i) {
             Window.PPI['selected-bin-id'] = $(this).attr("id")
-            d3.selectAll("[name=bin]").style("stroke-width", 0.2).attr("bin-selected", "off");
+            d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (Window.PPI['histogram-height'] - 1) + fieldData['ScalarBounds'].Values[0]) ;
@@ -184,15 +208,40 @@ function drawHistogram(iComponent, socket) {
         d3.select(this).classed("dragging", true);
     }
 
-    // FLAG, get the ideas from this article, http://bl.ocks.org/jgbos/9752277
     function dragged(d) {
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
         var x = trans[0] ;
         var y = trans[1] ;
         x += d3.event.dx;
         y += d3.event.dy;
-
+        // bins of histogram
         d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + d3.select("#range_input").property("value") + ")" );
+        
+        var yTrans = transFormApply($(".axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
+        var yX = yTrans[0] ;
+        var yY = yTrans[1] ;
+        yX += d3.event.dx ;
+        yY += d3.event.dy ;    
+        var v = transFormApply($(".axis--hist--y").attr("transform"), 0, yY, d3.select("#range_input").property("value")) ;    
+        d3.select(".axis--hist--y").attr("transform", v);
+
+        var xTrans = transFormApply($(".axis--hist--x").attr("transform"), undefined, undefined, undefined, true) ;
+        var xX = xTrans[0] ;
+        var xY = xTrans[1] ;
+        xX += d3.event.dx ;
+        xY += d3.event.dy ;    
+        var v = transFormApply($(".axis--hist--x").attr("transform"), xX, undefined, d3.select("#range_input").property("value")) ;    
+        d3.select(".axis--hist--x").attr("transform", v);
+
+        if ( $(".mdm-rect-box-cover").length > 0) {
+            var coverTrans = transFormApply($(".mdm-rect-box-cover").attr("transform"), undefined, undefined, undefined, true) ;
+            var coverX = coverTrans[0] ;
+            var coverY = coverTrans[1] ;
+            coverX += d3.event.dx;
+            coverY += d3.event.dy;
+            // bins of histogram
+            d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + d3.select("#range_input").property("value") + ")" );
+        }
     }
 
     function dragended(d) {
@@ -267,27 +316,14 @@ function drawHistogram(iComponent, socket) {
             currentTransform = d3.event.transform;
         }
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+        d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
-        // d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
-        // d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
+        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+
         slider.property("value", currentTransform.k);
-
-        // $(".axis--hist--x g").each(function() {
-        //     $(this).attr("transform", transFormApply($(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
-        // }) ;
-
-        // $(".axis--hist--x path").each(function() {
-        //     $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
-        // }) ;
-
-        // $(".axis--hist--y g").each(function() {
-        //     $(this).attr("transform", transFormApply($(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
-        // }) ;
-
-        // $(".axis--hist--y path").each(function() {
-        //     $(this).attr("transform", "scale(" + 1 / currentTransform.k+")") ;
-        // }) ;
     }
+
     $("#histogram_zoom_back").click() ;
 }
 

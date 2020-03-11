@@ -29,7 +29,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     Window.box_plot_config = {
         min_max_color: "#abdda4",
         q1_q3_color: "#3288bd",
-        background_color: "#f8f9fa",
+        background_color: "white",
         containerWidth: 561,
         containerHeight: 334,
         margin: {
@@ -347,43 +347,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
         ret['q3'] = [idx, q3, "group_q3"];
         ret['min'] = [idx, min, "group_min"];
 
-        // Show the main vertical line
-        // main
-        //     .append("line")
-        //     .attr("name", "box_box")
-        //     .attr("x1", center)
-        //     .attr("x2", center)
-        //     .attr("y1", yScale(min))
-        //     .attr("y2", yScale(max))
-        //     .attr("stroke", "black")
-
-        // // Show the box
-        // main
-        //     .append("rect")
-        //     .attr("name", "box_box")
-        //     .attr("x", center - width / 2)
-        //     .attr("y", yScale(q3))
-        //     .attr("height", (yScale(q1) - yScale(q3)))
-        //     .attr("width", width)
-        //     .attr("stroke", "black")
-        //     .style("fill", "#69b3a2")
-
-        // // show median, min and max horizontal lines
-        // main
-        //     .selectAll("toto")
-        //     .data([min, median, max])
-        //     .enter()
-        //     .append("line")
-        //     .attr("name", "box_box")
-        //     .attr("x1", center - width / 2)
-        //     .attr("x2", center + width / 2)
-        //     .attr("y1", function (d) {
-        //         return (yScale(d))
-        //     })
-        //     .attr("y2", function (d) {
-        //         return (yScale(d))
-        //     })
-        //     .attr("stroke", "black");
         return ret;
     }
 

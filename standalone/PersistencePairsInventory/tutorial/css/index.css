@@ -4,6 +4,13 @@
     stroke-width: 2px;
 }
 
+html {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 #RendererContainer {
     position: relative;
 }
@@ -162,18 +169,18 @@
 .histogram_legend_boundary {
     position: absolute; 
     top: -54px;
-    right: 160px;
+    right: -8px;
 }
 
 .histogram_slider {
     position: absolute; 
-    top: 124px;
+    top: 158px;
     right: 25px;
 }
 
 .histogram_zoom_back {
     position: absolute; 
-    top: 100px;
+    top: 138px;
     right: 26px;
 }
 

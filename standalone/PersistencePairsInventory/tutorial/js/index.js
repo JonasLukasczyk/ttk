@@ -43,7 +43,7 @@ Window.PPI = {
 		"enable": false,
 		"start": 2,
 		"end": 12, // inclusive
-	}
+	},
 } ;
 
 let ttk, ttk_render;
@@ -132,6 +132,7 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] - 1,
 		values: [0, Window.PPI['histogram-width'] - 1],
 		slide: function( event, ui ) {
+			$("#histogram_zoom_back").click() ;
 			$("#custom-handle0").text(ui.values[0]) ;
 			$("#custom-handle1").text(ui.values[1]) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
@@ -139,6 +140,8 @@ function objectCallback(msg) {
 			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.values[1] ;
 			resetBoxplot() ;
     		drawBoxPlot() ;
+    		// Add the box window over histogram's bins
+    		$("#hidden-mdm-add-window").click() ;
 		},
 		create: function() {
 			$("#custom-handle0").text(0) ;
