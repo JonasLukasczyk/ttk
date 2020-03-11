@@ -189,7 +189,8 @@ function removeNiceByKicks(id, keep=-1, ratio=0) {
                 } else {
                     if (ratio > 0) {
                         var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-                        tc.text(Number.parseFloat(ratio * parseInt(tc.text())).toFixed(1)) ;
+                       // tc.text(Number.parseFloat(ratio * parseInt(tc.text())).toFixed(1)) ;
+                       tc.text(Number.parseInt(ratio * parseInt(tc.text()))) ;
                     }
                 }
             }

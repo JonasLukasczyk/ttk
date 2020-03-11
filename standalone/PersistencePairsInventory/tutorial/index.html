@@ -137,16 +137,24 @@
                      <div style="display: flex;align-items: center;">
                         <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image><code>|</code>
                         <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image><code element-show="mdm">|</code>
-                        <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"><code element-show="mdm">|</code>
-                        <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09">
+                        <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code>
+                        <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
                      </div>
+                  </li>
+                  <li element-show="mdm" >
+                     Time picker: <span id="histogram-time-picker-default">...</span> <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;"></label> &nbsp;
+                     <div id="slider-range">
+                       <div id="custom-handle0" class="ui-slider-handle"></div>
+                       <div id="custom-handle1" class="ui-slider-handle"></div>
+                     </div> &nbsp;
+                     <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label>
                   </li>
                   <li element-show="sdm" style="display:none;">Time:&nbsp;
                      <select id="hist-time">
                         <option> - </option>
                      </select>
                    </li>
-                  <li element-show="mdm">
+                  <li>
                      <div id="histogram-notification"
                            data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
                            data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
@@ -154,16 +162,15 @@
                   </li>
                   
                </ul>
-
-               <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
-                  <h3 style="padding-bottom: 10px;">&nbsp; ... </h3>
+               <div style="position: relative;">
+                  <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
+                     <h3 style="padding-bottom: 10px;">&nbsp; ... </h3>
+                  </div>
+                  <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.2" data-x_1="0.8"></div>
                </div>
-               <div element-show="mdm" id="slider-range" style="margin-left: 50px;margin-right: 20px;">
-                    <div id="custom-handle0" style="text-align: -webkit-center;" class="ui-slider-handle"></div>
-                    <div id="custom-handle1" style="text-align: -webkit-center;" class="ui-slider-handle"></div>
-               </div>
+               
                <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
-               <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.1" data-x_1="0.9"></div>
+               
             </div>
          </div>
       </div>

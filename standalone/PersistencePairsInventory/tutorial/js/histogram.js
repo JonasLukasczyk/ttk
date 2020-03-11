@@ -12,6 +12,10 @@ d3.select("body")
 // socket: webSocketIO object
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket) {
+    if ( ! Window.PPI['image-object'] ) {
+        alert("please load data at first") ;
+        return ;
+    }
     console.log("invoke draw histogram functionaility") ;
     
     function coverShadow(time_idx) {
@@ -75,11 +79,14 @@ function drawHistogram(iComponent, socket) {
     let myGroups = getArray( Window.PPI['histogram-width']);
     let myVars = getArray( Window.PPI['histogram-height']);
 
-    let containerWidth = 1201;
-    let containerHeight = containerWidth * Window.PPI['histogram-height'] / Window.PPI['histogram-width'];
-    if (containerHeight > 724) {
-        containerHeight = 724;
+    var containerWidth = 1201 ;
+    var containerHeight = 724 ;
+    if ( containerWidth / Window.PPI['histogram-width'] < containerHeight / Window.PPI['histogram-height'] ) {
+        containerHeight = Window.PPI['histogram-height'] * containerWidth / Window.PPI['histogram-width'] ;
+    } else {
+        containerWidth = Window.PPI['histogram-width'] * containerHeight / Window.PPI['histogram-height'] ;
     }
+
     let margin = {
         top: 2,
         right: 0,
@@ -107,6 +114,7 @@ function drawHistogram(iComponent, socket) {
     svg.append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
+        .style("font-size", "12px")
         .call(d3.axisBottom(x)) ;
 
     let y = d3.scaleBand()
@@ -116,6 +124,7 @@ function drawHistogram(iComponent, socket) {
     svg.append("g")
         .attr('class', 'axis--hist--y')
         .attr("transform", "translate(0,0)")
+        .style("font-size", "12px")
         .call(d3.axisLeft(y));
 
     svg.append('defs')
@@ -296,6 +305,14 @@ function drawHistogram(iComponent, socket) {
     removeNiceByKicks(".axis--hist--x g") ;
     removeNiceByKicks(".axis--hist--y g") ;
 
+    d3.selectAll(".axis--hist--y path").each(function() {
+        d3.select(this).remove() ;
+    }) ;
+
+    d3.selectAll(".axis--hist--x path").each(function() {
+        d3.select(this).remove() ;
+    }) ;
+
     function zoomed() { }
 
     function zoomstart() { } 
@@ -322,10 +339,19 @@ function drawHistogram(iComponent, socket) {
         d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
         d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
 
+        d3.selectAll(".axis--hist--y g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        }) ;
+
+        d3.selectAll(".axis--hist--x g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        }) ;
+
         slider.property("value", currentTransform.k);
     }
 
     $("#histogram_zoom_back").click() ;
+    $("#histogram-notification-placeholder-0").html("") ;
 }
 
 // draw a curve for histogram of each bins when hovering it

@@ -4,6 +4,8 @@
     stroke-width: 2px;
 }
 
+#slider-range { display : inline-block; width : 10em; }
+
 html {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -171,9 +173,11 @@ li {
 }
 
 .histogram_legend_boundary {
-    position: absolute; 
-    top: -54px;
-    right: -8px;
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    background: white;
+    border: thin dotted gray;
 }
 
 .histogram_viz_boundary {

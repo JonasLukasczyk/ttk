@@ -26,6 +26,10 @@ function formatInput(numberofcomponents, data) {
 }
 
 function drawBoxplotCurve(numberofcomponents, data) {
+    if ( ! Window.PPI['image-object'] ) {
+        alert("please load data at first") ;
+        return ;
+    }
     Window.box_plot_config = {
         min_max_color: "#abdda4",
         q1_q3_color: "#3288bd",
@@ -123,11 +127,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
     g.append("g")
         .attr('class', 'axis--x')
+        .style("font-size", "12px")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
 
     g.append("g")
         .attr('class', 'axis--y')
+        .style("font-size", "12px")
         .call(yAxis);
 
     g.append('defs')

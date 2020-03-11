@@ -80,7 +80,7 @@ function resetHist() {
 
     $('#threshold-window').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
-    	if ( i == 1 ) {
+    	if ( i == Math.floor(Window.PPI['numberOfThreshold-histogram'] * 0.1) ) {
         	$('#threshold-window').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     	} else {
 	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
@@ -129,12 +129,13 @@ function objectCallback(msg) {
 	$( "#slider-range" ).unbind().slider({
 		range: true,
 		min: 0,
+		orientation: "horizontal",
 		max: Window.PPI['histogram-width'] - 1,
 		values: [0, Window.PPI['histogram-width'] - 1],
 		slide: function( event, ui ) {
 			$("#histogram_zoom_back").click() ;
-			$("#custom-handle0").text(ui.values[0]) ;
-			$("#custom-handle1").text(ui.values[1]) ;
+			$("#picker_left").text(ui.values[0]) ;
+			$("#picker_right").text(ui.values[1]) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
 			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.values[0] ;
 			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.values[1] ;
@@ -144,8 +145,9 @@ function objectCallback(msg) {
     		$("#hidden-mdm-add-window").click() ;
 		},
 		create: function() {
-			$("#custom-handle0").text(0) ;
-			$("#custom-handle1").text(Window.PPI['histogram-width'] - 1) ;
+			$("#picker_left").text(0) ;
+			$("#picker_right").text(Window.PPI['histogram-width'] - 1) ;
+			$("#histogram-time-picker-default").html("") ;
 		}
 	});
 }
@@ -201,12 +203,12 @@ function triggerCtrlV() {
 		Window.PPI['histogram-mode'] = "single" ;
 		$("[element-show='mdm']").css("display", "none") ;
 		$("[element-show='sdm']").css("display", "") ;
-		drawSDMHistogram(Window.PPI['selected-time-id'], Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+		drawSDMHistogram(Window.PPI['selected-time-id'], Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 	} else {
 		Window.PPI['histogram-mode'] = "multi" ;
 		$("[element-show='mdm']").css("display", "") ;
 		$("[element-show='sdm']").css("display", "none") ;
-		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject()) ;
+		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 	}
 }
 
@@ -312,26 +314,22 @@ $(document).keydown(function (e) {
 $("#hist-threshold").change(function () {
     v0 = parseInt($($("#hist-threshold option:selected")[0]).val()) ;
     v1 = parseInt($($("#threshold-window option:selected")[0]).val()) ;
-    // if ( v0 > v1 ) {
-    //     alert('threshold-window must be larger than hist-threshold') ;
-    //     $(this).val($(this).attr("data-value")) ;
-    //     return false;
-    // }
     $("#threshold-window").attr("data-value", v0 + v1 - parseInt($(this).attr("data-value"))) ;
     $("#threshold-window").val(v0 + v1 - parseInt($(this).attr("data-value"))) ;
     $(this).attr("data-value", v0) ;
     $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
     	if (Window.PPI['histogram-mode'] == "multi") {
-	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	} else {
-	        drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	        drawSDMHistogram(0, Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
     });
     $('#histogram-view-container').plainOverlay('hidden');
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
+    $(this).focus() ;
 });
 
 $("#threshold-window").change(function() {
@@ -347,15 +345,16 @@ $("#threshold-window").change(function() {
 
     $("#hist-threshold option:selected").each(function () {
         if (Window.PPI['histogram-mode'] == "multi") {
-	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	} else {
-	        drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	        drawSDMHistogram(0, Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
     });
     $('#histogram-view-container').plainOverlay('hidden');
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
+    $(this).focus() ;
 }) ;
 
 $("#hist-rescale").unbind().click(function() {
@@ -364,9 +363,9 @@ $("#hist-rescale").unbind().click(function() {
     Window.PPI['persistence_pairs_range']['custom_upper'] = tmp[1] ;
     Window.PPI['persistence_pairs_range']['custom_lower'] = tmp[0] ;
     if (Window.PPI['histogram-mode'] == "multi") {
-	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     } else {
-	    drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	    drawSDMHistogram(0, Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     }
 
 }) ;
@@ -380,9 +379,9 @@ $("#histRescaleCustom").unbind().click(function() {
     Window.PPI['persistence_pairs_range']['custom_lower'] = parseFloat($("#histRescaleCustomLower").val()) ;
     Window.PPI['persistence_pairs_range']['custom_upper'] = parseFloat($("#histRescaleCustomUpper").val());
     if (Window.PPI['histogram-mode'] == "multi") {
-	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     } else {
-	    drawSDMHistogram(0, Window.PPI['DEV']? null: ttk.getSocketObject()); 
+	    drawSDMHistogram(0, Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     }
     // re-draw the histogram
     $("#histRescaleCustom-close").click() ;

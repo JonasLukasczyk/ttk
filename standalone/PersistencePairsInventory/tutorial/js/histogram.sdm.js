@@ -1,6 +1,10 @@
 // iComponent: for the time index
 
 function drawSDMHistogram(iComponent, socket) {
+    if ( ! Window.PPI['image-object'] ) {
+        alert("please load data at first") ;
+        return ;
+    }
     console.log("invoke draw SDMhistogram functionaility") ;
     $("#hist-time").val(iComponent) ;
     iComponent = parseInt(iComponent) ;
@@ -108,14 +112,21 @@ function drawSDMHistogram(iComponent, socket) {
     let myGroups = getArray( Window.PPI['sdm-histogram-width'] );
     let myVars = getArray( Window.PPI['histogram-height'] );
 
-    let containerWidth = 1201;
-    let maxWidth = 24 ;
-    if ( maxWidth * Window.PPI['sdm-histogram-width'] <= containerWidth ) {
-        containerWidth = maxWidth * Window.PPI['sdm-histogram-width'] ;
-    }
-    let containerHeight = containerWidth * Window.PPI['histogram-height'] / Window.PPI['sdm-histogram-width'];
-    if (containerHeight > 724) {
-        containerHeight = 724;
+    // let containerWidth = 1201;
+    // let maxWidth = 24 ;
+    // if ( maxWidth * Window.PPI['sdm-histogram-width'] <= containerWidth ) {
+    //     containerWidth = maxWidth * Window.PPI['sdm-histogram-width'] ;
+    // }
+    // let containerHeight = containerWidth * Window.PPI['histogram-height'] / Window.PPI['sdm-histogram-width'];
+    // if (containerHeight > 724) {
+    //     containerHeight = 724;
+    // }
+    var containerWidth = 1201 ;
+    var containerHeight = 724 ;
+    if ( containerWidth / Window.PPI['histogram-width'] < containerHeight / Window.PPI['histogram-height'] ) {
+        containerHeight = Window.PPI['histogram-height'] * containerWidth / Window.PPI['histogram-width'] ;
+    } else {
+        containerWidth = Window.PPI['histogram-width'] * containerHeight / Window.PPI['histogram-height'] ;
     }
 
     let margin = {
@@ -144,6 +155,7 @@ function drawSDMHistogram(iComponent, socket) {
     svg.append("g")
         .attr('class', 'sdm-axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
+        .style("font-size", "12px")
         .call(d3.axisBottom(x).ticks(2, "s"));
 
     let y = d3.scaleBand()
@@ -152,6 +164,7 @@ function drawSDMHistogram(iComponent, socket) {
 
     svg.append("g")
         .attr('class', 'sdm-axis--hist--y')
+        .style("font-size", "12px")
         .call(d3.axisLeft(y).ticks(2, "s"));
 
     let lower = getFloatValue("#histogram_viz_legend", "data-x_0"),
@@ -236,10 +249,11 @@ function drawSDMHistogram(iComponent, socket) {
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
+    $("#histogram-notification-placeholder-0").html("") ;
 }
 
 $("#hist-time").change(function () {
     $("#hist-time option:selected").each(function () {
-        drawSDMHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: ttk.getSocketObject()); 
+        drawSDMHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     });
 });
