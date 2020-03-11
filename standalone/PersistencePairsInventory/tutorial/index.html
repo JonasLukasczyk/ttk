@@ -58,7 +58,7 @@
 
 <div >
    <div class="container-fluid" style="margin-top:10px;">
-      <div class="row" style="border-bottom: thin dotted gray;margin-right: 0px;margin-left: 0px;">
+      <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);margin-right: 0px;margin-left: 0px;">
          <div class="col-4">
             <h2 class="pb-3">APPI</h2>
          </div>
@@ -81,7 +81,7 @@
    </div> 
    <div class="container-fluid">
       <div class="row">
-         <div class="col-4" style="padding-right:0px;border-right: thin dotted gray;margin-top: 10px;">
+         <div class="col-4" style="padding-right:0px;border-right: 1px solid rgba(0,0,0,.1);margin-top: 10px;">
             <div class="text-justify p-2" style="height: 100%;">
                <h4>Boxplot View </h4>
                <ul>
@@ -93,7 +93,10 @@
                      <div class="custom-switch inline">
                         <input type="checkbox" class="custom-control-input" id="customSwitches--y">
                         <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y">y-axis</label>
-                     </div>
+                     </div> <code>|</code>
+                     <span id="notification_xxyy" class="p-1 bg-success text-white" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span> <code>|</code>
+                     <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
+                     
                   </li>
                   <li>
                      <input type="checkbox" id="boxplot-checkbox-lines">
@@ -103,68 +106,76 @@
                      line layer <code>|</code>
                      <input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">
                      polygon layer<code>|</code>
-                     <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a>
-                  </li>
-                  <li>
-                     <span id="notification_xxyy" class="p-1 bg-success text-white" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span>
-                     <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
-                     <image id="box_zoom_back" style="width:20px;cursor: pointer;float:right;" src="./images/zoom_back.png"></image>
+                     <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a> <code>|</code>
+                     <image id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"></image>
                   </li>
                   
                </ul>
-               <div id="box_dataviz" style="width: 100%;border: thin dotted gray;padding-bottom: 5px;">
+               <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
                   <h3>&nbsp; ... </h3>
                </div>
                <hr>
                <h4>Topology Simplification </h4>
-               <div id='RendererContainer' style="border: thin dotted gray;padding-top: 20px;"></div>
+               <div id='RendererContainer' style="border: 1px solid rgba(0,0,0,.1);padding-top: 20px;"></div>
 
             </div>
          </div>
          <div class="col-8">
             <div class="text-justify p-2" style="height: 100%;" id="histogram-view-container">
                <h4>Histogram View</h4>
-               <ul>
-                  <li>Min Threshold:&nbsp;
-                     <select id="hist-threshold" data-value='0' title="*">
-                        <option> - </option>
-                     </select> <code>|</code>
-                     Max Threshold: <select id="threshold-window" data-value='1' title="*">
-                        <option> - </option>
-                     </select>
-                  </li>
-                   <li>
-                     <div style="display: flex;align-items: center;">
-                        <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image><code>|</code>
-                        <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image><code element-show="mdm">|</code>
-                        <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code>
-                        <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
 
-                        <code element-show="sdm" style="display:none;">|</code> <input  element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code>
-                        <img  element-show="sdm"  id="sdm-histogram_zoom_back" style="width:20px;cursor: pointer;display:none;" src="./images/zoom_back.png">
+                <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
+                 <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
+                     <div class="col-4">
+                        <ul>
+                           <li>Min Threshold:&nbsp;
+                              <select id="hist-threshold" data-value='0' title="*">
+                                 <option> - </option>
+                              </select> <code>|</code>
+                              Max Threshold: <select id="threshold-window" data-value='1' title="*">
+                                 <option> - </option>
+                              </select>
+                           </li>
+
+                           <li>
+                              <div style="display: flex;align-items: center;">
+                                 <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image><code>|</code>
+                                 <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image><code element-show="mdm">|</code>
+                                 <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code>
+                                 <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
+
+                                 <code element-show="sdm" style="display:none;">|</code> <input  element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code>
+                                 <img  element-show="sdm"  id="sdm-histogram_zoom_back" style="width:20px;cursor: pointer;display:none;" src="./images/zoom_back.png">
+                              </div>
+                           </li>
+                        </ul>
                      </div>
-                  </li>
-                  <li element-show="mdm" >
-                     Time picker: <span id="histogram-time-picker-default">...</span> <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;"></label> &nbsp;
-                     <div id="slider-range">
-                       <div id="custom-handle0" class="ui-slider-handle"></div>
-                       <div id="custom-handle1" class="ui-slider-handle"></div>
-                     </div> &nbsp;
-                     <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label>
-                  </li>
-                  <li element-show="sdm" style="display:none;">Time:&nbsp;
-                     <select id="hist-time">
-                        <option> - </option>
-                     </select>
-                   </li>
-                  <li>
-                     <div id="histogram-notification"
-                           data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
-                           data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
-                     Notification: <span id="histogram-notification-placeholder-default">...</span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
-                  </li>
-                  
-               </ul>
+                     <div class="col-8">
+                        <ul>
+                           <li element-show="mdm" >
+                              Time picker: <span id="histogram-time-picker-default">...</span> <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;"></label> &nbsp;
+                              <div id="slider-range">
+                                <div id="custom-handle0" class="ui-slider-handle"></div>
+                                <div id="custom-handle1" class="ui-slider-handle"></div>
+                              </div> &nbsp;
+                              <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label>
+                           </li>
+                           <li element-show="sdm" style="display:none;">Time:&nbsp;
+                              <select id="hist-time">
+                                 <option> - </option>
+                              </select>
+                            </li>
+                           <li>
+                              <div id="histogram-notification"
+                                    data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
+                                    data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
+                              Notification: <span id="histogram-notification-placeholder-default">...</span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                           </li>
+                        </ul>
+                     </div>
+                  </div>
+               </div>
+
                <div style="position: relative;">
                   <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
                      <h3 style="padding-bottom: 10px;">&nbsp; ... </h3>

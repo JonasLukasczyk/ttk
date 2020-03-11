@@ -175,7 +175,7 @@ li {
 
 .histogram_legend_boundary {
     position: absolute;
-    top: -168px;  /* -168px; 2px; */
+    top: 12px;  /* -168px; 2px; */
     right: 1px;
     background: white;
     border: thin dotted gray;
@@ -183,9 +183,10 @@ li {
 
 .histogram_viz_boundary {
     width: 100%;
-    border: thin dotted gray;
     padding-top: 10px;
     padding-bottom: 5px;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 .tooltipsHist {

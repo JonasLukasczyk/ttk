@@ -110,8 +110,6 @@ function objectCallback(msg) {
 	Window.PPI['sdm-histogram-width'] = Window.PPI['numberOfThreshold-histogram'] ;
 	// it should be a integer otherwise error may occur
 	Window.PPI['thresholdRatio'] = Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'] ;
-    resetBoxplot() ;
-    drawBoxPlot() ;
     resetHist() ;
 
     var mCount = 20 ;
@@ -120,6 +118,8 @@ function objectCallback(msg) {
     } else {
     	Window.PPI['histogram-mode'] = "single" ; // show the multi-view at first
     }
+    resetBoxplot() ;
+    drawBoxPlot() ;
 	
 	triggerCtrlV() ;
 

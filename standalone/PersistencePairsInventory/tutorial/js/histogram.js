@@ -256,6 +256,8 @@ function drawHistogram(iComponent, socket) {
             // bins of histogram
             d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + d3.select("#range_input").property("value") + ")" );
         }
+
+         $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
     }
 
     function dragended(d) {
@@ -352,6 +354,7 @@ function drawHistogram(iComponent, socket) {
         }) ;
 
         slider.property("value", currentTransform.k);
+         $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
     }
 
     $("#histogram_zoom_back").click() ;
