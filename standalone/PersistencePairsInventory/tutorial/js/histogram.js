@@ -30,15 +30,6 @@ function drawHistogram(iComponent, socket) {
         $("[mdm-bin-time-idx=" + time_idx + "]").each(function() {
             $(this).detach().appendTo("#hist-clip-highlight") ;
         }) ;
-
-        // $("[id^=hist-bin-]").each(function(e) { 
-        //     var id = parseInt($(this).attr("id").replace("hist-bin-", ""))
-        //     if ( id % Window.PPI['histogram-width'] === time_idx ) {
-        //         $(this).css("opacity", 1) ;
-        //     } else {
-        //         $(this).css("opacity", 0.1) ;
-        //     }
-        // })
     }
 
     function drawCoverBox() {

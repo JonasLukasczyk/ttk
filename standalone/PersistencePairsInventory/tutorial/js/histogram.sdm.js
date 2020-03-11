@@ -10,7 +10,7 @@ function drawSDMHistogram(iComponent, socket) {
     iComponent = parseInt(iComponent) ;
 
     function coverShadow() {
-        $(".sdm-rect-cover").remove() ;
+        $(".sdm-rect-box-cover").remove() ;
         // cover the shadow
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val()) ;
@@ -18,8 +18,8 @@ function drawSDMHistogram(iComponent, socket) {
         var idx_first = gap * threshold_idx
         var idx_sec = gap * (max_threshold_window + 1) ;
         
-        svg.append("rect")
-            .attr("class", "sdm-rect-cover")
+        g_main.append("rect")
+            .attr("class", "sdm-rect-box-cover")
             .attr("x", idx_first)
             .attr("y", 0)
             .attr("height", height)
@@ -29,6 +29,10 @@ function drawSDMHistogram(iComponent, socket) {
             .style("stroke", "rgb(0,0,0)")
             .attr("transform", "translate(0, 0)");
     }
+
+    $("#hidden-sdm-add-window").unbind().click(function() {
+        coverShadow() ;
+    }) ;
 
     function drawVerticalColumn() {
         // Add extra column
@@ -136,6 +140,7 @@ function drawSDMHistogram(iComponent, socket) {
 
     var svg = container
                 .append("g")
+                .attr("id", "sdm-hist-id-g")
                 .attr("transform",
                     "translate("+margin.left+", "+margin.top+")")
                 .attr('overflow', 'hidden');
@@ -162,7 +167,21 @@ function drawSDMHistogram(iComponent, socket) {
     let lower = getFloatValue("#histogram_viz_legend", "data-x_0"),
         upper = getFloatValue("#histogram_viz_legend", "data-x_1") ;
 
-    svg.selectAll()
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'sdm-hist-clip')
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', 0)
+        .attr('width', width)
+        .attr('height', height);
+
+    // scale region
+    var g_main = svg.append("g").attr('clip-path', 'url(#sdm-hist-clip)');
+
+    var main = g_main.append("g") ;
+
+    main.selectAll()
         .data(vData)
         .enter()
         .append("rect")
@@ -182,6 +201,75 @@ function drawSDMHistogram(iComponent, socket) {
         })
         .append("title")
         .text(function(d) { return "PPI: " + d[2] });
+
+    var drag = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
+
+    function dragstarted(d) {
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed("dragging", true);
+    }
+
+    function dragged(d) {
+        var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
+        var x = trans[0] ;
+        var y = trans[1] ;
+        x += d3.event.dx;
+        y += d3.event.dy;
+        // bins of histogram
+        d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + d3.select("#sdm-range_input").property("value") + ")" );
+        
+        var yTrans = transFormApply($(".sdm-axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
+        var yX = yTrans[0] ;
+        var yY = yTrans[1] ;
+        yX += d3.event.dx ;
+        yY += d3.event.dy ;    
+        var v = transFormApply($(".sdm-axis--hist--y").attr("transform"), 0, yY, d3.select("#sdm-range_input").property("value")) ;    
+        d3.select(".sdm-axis--hist--y").attr("transform", v);
+
+        var xTrans = transFormApply($(".sdm-axis--hist--x").attr("transform"), undefined, undefined, undefined, true) ;
+        var xX = xTrans[0] ;
+        var xY = xTrans[1] ;
+        xX += d3.event.dx ;
+        xY += d3.event.dy ;    
+        var v = transFormApply($(".sdm-axis--hist--x").attr("transform"), xX, undefined, d3.select("#sdm-range_input").property("value")) ;    
+        d3.select(".sdm-axis--hist--x").attr("transform", v);
+
+        if ( $(".sdm-rect-box-cover").length > 0) {
+            var coverTrans = transFormApply($(".sdm-rect-box-cover").attr("transform"), undefined, undefined, undefined, true) ;
+            var coverX = coverTrans[0] ;
+            var coverY = coverTrans[1] ;
+            coverX += d3.event.dx;
+            coverY += d3.event.dy;
+            // bins of histogram
+            d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + d3.select("#sdm-range_input").property("value") + ")" );
+        }
+    }
+
+    function dragended(d) {
+        d3.select(this).classed("dragging", false);
+    }
+
+    var zoom = d3.zoom()
+                 .scaleExtent([1, 10])
+                 .on("zoom", zoomed)
+                 .on("start", zoomstart)
+                 .on("end", zoomend) ;
+
+    var slider = d3.select("#sdm-range_input")
+        .datum({})
+        .attr("value", zoom.scaleExtent()[0])
+        .attr("min", zoom.scaleExtent()[0])
+        .attr("max", zoom.scaleExtent()[1])
+        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+        .on("input", slided);
+
+    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
+        main.call(drag).call(zoom);
+    }
+    setTimeout(callFunc, 0) ;
 
     // Add y-axis title
     svg.append("text")
@@ -208,14 +296,58 @@ function drawSDMHistogram(iComponent, socket) {
     removeNiceByKicks(".sdm-axis--hist--x g", undefined, ratio=Window.PPI['thresholdRatio']) ;
     removeNiceByKicks(".sdm-axis--hist--y g", undefined, ratio=Window.PPI['thresholdRatio']) ;
 
+    d3.selectAll(".sdm-axis--hist--y path").each(function() {
+        d3.select(this).remove() ;
+    }) ;
+
+    d3.selectAll(".sdm-axis--hist--x path").each(function() {
+        d3.select(this).remove() ;
+    }) ;
+
+    function zoomed() { }
+
+    function zoomstart() { } 
+
+    function slided(d) {
+        zoom.scaleTo(svg, d3.select(this).property("value"));
+    }
+
+    $("#sdm-histogram_zoom_back").unbind().click(function() {
+        zoomend("zoom_back") ;
+    }) ;
+
+    function zoomend(d) {
+        var currentTransform ;
+        if (d === "zoom_back") {
+            currentTransform = {"x":0, "y":0, "k":1}
+            d3.select("#sdm-hist-id-g").attr("transform", "translate(" + [margin.left, margin.top] + ")") ;
+        } else {
+            currentTransform = d3.event.transform;
+        }
+        main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+        d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+
+        d3.select(".sdm-axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
+        d3.select(".sdm-axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+
+        d3.selectAll(".sdm-axis--hist--y g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        }) ;
+
+        d3.selectAll(".sdm-axis--hist--x g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        }) ;
+
+        slider.property("value", currentTransform.k);
+    }
+
     coverShadow() ;
     drawVerticalColumn() ;
 
-    // FLAG, handle the edge case
     $("#hidden-sdm-move-prev").unbind().click(function() {
         $('#hist-threshold option:selected').prev().prop('selected', true) ;
         $('#threshold-window option:selected').prev().prop('selected', true) ;
-
+        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
@@ -223,24 +355,26 @@ function drawSDMHistogram(iComponent, socket) {
     $("#hidden-sdm-move-next").unbind().click(function() {
         $('#hist-threshold option:selected').next().prop('selected', true) ;
         $('#threshold-window option:selected').next().prop('selected', true) ;
-
+        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
 
     $("#hidden-sdm-move-right-prev").unbind().click(function() {
         $('#threshold-window option:selected').prev().prop('selected', true) ;
-
+        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
 
     $("#hidden-sdm-move-right-next").unbind().click(function() {
         $('#threshold-window option:selected').next().prop('selected', true) ;
-
+        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
+
+    $("#sdm-histogram_zoom_back").click() ;
     $("#histogram-notification-placeholder-0").html("") ;
 }
 

@@ -38,7 +38,7 @@ Window.PPI = {
 	// {min_persistence_pairs}_{left_threshold}_{right_threshold}_{max_persistence_pairs}
 	"histogram_frame_data": { },
 	// the mode: hide/show the hover in the histogram
-	"X-mode": 0,
+	"X-mode": 1,
 	"boxplot-timestamp-range-mode": {
 		"enable": false,
 		"start": 2,
@@ -150,6 +150,7 @@ function objectCallback(msg) {
 			$("#histogram-time-picker-default").html("") ;
 		}
 	});
+	
 }
 
 function Connect() {
