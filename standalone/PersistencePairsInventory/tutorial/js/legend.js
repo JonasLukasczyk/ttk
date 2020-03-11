@@ -19,10 +19,10 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         width_partition = 20,
         height_partition = 10;
 
-    let containerWidth = 301;
-    let containerHeight = 191;
+    let containerWidth = 281;
+    let containerHeight = 161;
     let margin = {
-        top: 60,
+        top: 40,
         right: 60,
         bottom: 20,
         left: 40

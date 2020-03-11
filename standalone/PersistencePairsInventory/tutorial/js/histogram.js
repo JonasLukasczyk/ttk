@@ -19,15 +19,26 @@ function drawHistogram(iComponent, socket) {
     console.log("invoke draw histogram functionaility") ;
     
     function coverShadow(time_idx) {
+        // cover shadow in a new method
         time_idx = parseInt(time_idx) ;
-        $("[id^=hist-bin-]").each(function(e) { 
-            var id = parseInt($(this).attr("id").replace("hist-bin-", ""))
-            if ( id % Window.PPI['histogram-width'] === time_idx ) {
-                $(this).css("opacity", 1) ;
-            } else {
-                $(this).css("opacity", 0.1) ;
-            }
-        })
+        $("#hist-clip-highlight g").each(function() {
+            $(this).detach().appendTo("#hist-clip-opacity"); 
+        }) ;
+
+        $("#hist-clip-opacity").css("opacity", 0.1) ;
+
+        $("[mdm-bin-time-idx=" + time_idx + "]").each(function() {
+            $(this).detach().appendTo("#hist-clip-highlight") ;
+        }) ;
+
+        // $("[id^=hist-bin-]").each(function(e) { 
+        //     var id = parseInt($(this).attr("id").replace("hist-bin-", ""))
+        //     if ( id % Window.PPI['histogram-width'] === time_idx ) {
+        //         $(this).css("opacity", 1) ;
+        //     } else {
+        //         $(this).css("opacity", 0.1) ;
+        //     }
+        // })
     }
 
     function drawCoverBox() {
@@ -80,7 +91,7 @@ function drawHistogram(iComponent, socket) {
     let myVars = getArray( Window.PPI['histogram-height']);
 
     var containerWidth = 1201 ;
-    var containerHeight = 724 ;
+    var containerHeight = 791 ;
     if ( containerWidth / Window.PPI['histogram-width'] < containerHeight / Window.PPI['histogram-height'] ) {
         containerHeight = Window.PPI['histogram-height'] * containerWidth / Window.PPI['histogram-width'] ;
     } else {
@@ -140,13 +151,15 @@ function drawHistogram(iComponent, socket) {
     var t000 = performance.now() ;
     var g_main = svg.append("g").attr('clip-path', 'url(#hist-clip)');
 
-    var main = g_main.append("g") ;
+    var main = g_main.append("g").attr("id", "hist-clip-opacity") ;
+    g_main.append("g").attr("id", "hist-clip-highlight") ;
 
     main.selectAll()
         .data(vData)
         .enter()
         .append("rect")
         .attr("name", "bin")
+        .attr("mdm-bin-time-idx", function(d, i) { return parseInt(d[0]) ; })
         .attr("id", function(d, i) { return "hist-bin-" + i ; })
         .attr("x", function (d) {
             return x(d[0]);
