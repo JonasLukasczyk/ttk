@@ -219,20 +219,21 @@ function drawHistogram(iComponent, socket) {
     }
 
     function dragged(d) {
+        var scale = scaleConvert(d3.select("#range_input").property("value"))
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
         var x = trans[0] ;
         var y = trans[1] ;
         x += d3.event.dx;
         y += d3.event.dy;
         // bins of histogram
-        d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + d3.select("#range_input").property("value") + ")" );
+        d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
         
         var yTrans = transFormApply($(".axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
         var yX = yTrans[0] ;
         var yY = yTrans[1] ;
         yX += d3.event.dx ;
         yY += d3.event.dy ;    
-        var v = transFormApply($(".axis--hist--y").attr("transform"), 0, yY, d3.select("#range_input").property("value")) ;    
+        var v = transFormApply($(".axis--hist--y").attr("transform"), 0, yY, scale) ;    
         d3.select(".axis--hist--y").attr("transform", v);
 
         var xTrans = transFormApply($(".axis--hist--x").attr("transform"), undefined, undefined, undefined, true) ;
@@ -240,7 +241,7 @@ function drawHistogram(iComponent, socket) {
         var xY = xTrans[1] ;
         xX += d3.event.dx ;
         xY += d3.event.dy ;    
-        var v = transFormApply($(".axis--hist--x").attr("transform"), xX, undefined, d3.select("#range_input").property("value")) ;    
+        var v = transFormApply($(".axis--hist--x").attr("transform"), xX, undefined, scale) ;    
         d3.select(".axis--hist--x").attr("transform", v);
 
         if ( $(".mdm-rect-box-cover").length > 0) {
@@ -250,7 +251,7 @@ function drawHistogram(iComponent, socket) {
             coverX += d3.event.dx;
             coverY += d3.event.dy;
             // bins of histogram
-            d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + d3.select("#range_input").property("value") + ")" );
+            d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + scale + ")" );
         }
 
          $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
@@ -261,17 +262,17 @@ function drawHistogram(iComponent, socket) {
     }
     
     var zoom = d3.zoom()
-                 .scaleExtent([1, 10])
+                 .scaleExtent([0.1, 10])
                  .on("zoom", zoomed)
                  .on("start", zoomstart)
                  .on("end", zoomend) ;
 
     var slider = d3.select("#range_input")
         .datum({})
-        .attr("value", zoom.scaleExtent()[0])
-        .attr("min", zoom.scaleExtent()[0])
-        .attr("max", zoom.scaleExtent()[1])
-        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+        .attr("value", 10)
+        .attr("min", 1)
+        .attr("max", 20)
+        .attr("step", 0.1)
         .on("input", slided);
 
     function callFunc() { // most time-consuming part, avg time is 1.5 seconds
@@ -320,7 +321,7 @@ function drawHistogram(iComponent, socket) {
     function zoomstart() { } 
 
     function slided(d) {
-        zoom.scaleTo(svg, d3.select(this).property("value"));
+        zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
     }
 
     $("#histogram_zoom_back").unbind().click(function() {
@@ -335,6 +336,7 @@ function drawHistogram(iComponent, socket) {
         } else {
             currentTransform = d3.event.transform;
         }
+        console.log(currentTransform) ;
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
         d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
@@ -349,8 +351,8 @@ function drawHistogram(iComponent, socket) {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
         }) ;
 
-        slider.property("value", currentTransform.k);
-         $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
+        slider.property("value", scaleReverse(currentTransform.k));
+        $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
     }
 
     $("#histogram_zoom_back").click() ;

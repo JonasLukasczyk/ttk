@@ -9,6 +9,34 @@ function trim(v, lower, higher) {
     return Math.max(Math.min(v, higher), lower)
 }
 
+// 1 - 20 => (0.1 - 1) and (1 - 10)
+function scaleConvert(u) {
+    if ( u < 1 || u > 20 ) {
+        alert("error of the range: " + u) ; // should not happen
+    }
+    if ( u < 10 ) {
+        return u / 10 ;
+    } else if ( u > 10 ) {
+        return u - 10 ;
+    } else {
+        return 1 ;
+    }
+}
+
+// 1 - 20 <= (0.1 - 1) and (1 - 10)
+function scaleReverse(v) {
+    if ( v < 0.1 || v > 10 ) {
+        alert("error of the range: " + v) ;
+    }
+    if ( v < 1 ) {
+        return v * 10 ;
+    } else if ( v > 1 ) {
+        return v + 10 ;
+    } else {
+        return 10 ;
+    }
+}
+
 function getHistogramFrameData(min_persistence_pairs, left_threshold, right_threshold, max_persistence_pairs, nComponents) {
     var iComponent = left_threshold ;
     var max_threshold_window = right_threshold ;

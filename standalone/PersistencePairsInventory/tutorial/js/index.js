@@ -52,7 +52,7 @@ let RENDERER = new vtkRenderer('RendererContainer', 581, 321);
 // reset the content of boxplot
 function resetBoxplot() {
 	d3.select("#box_dataviz *").remove() ;
-    $("#customSwitches--x").prop('checked', false);
+    // $("#customSwitches--x").prop('checked', false);
     $("#customSwitches--y").prop('checked', true);
     $("#boxplot-checkbox-lines").prop("checked", false);
     $("#boxplot-select-lines").html("<option>lines</option>");
@@ -75,7 +75,11 @@ function resetHist() {
 	// fill in the multi-view
     $('#hist-threshold').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
-        $('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+    	if ( i == Math.min(1, Math.floor(Window.PPI['numberOfThreshold-histogram'] * 0.1)) ) {
+        	$('#hist-threshold').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+    	} else {
+        	$('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+    	}
     }
 
     $('#threshold-window').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
@@ -315,9 +319,16 @@ $(document).keydown(function (e) {
 $("#hist-threshold").change(function () {
     v0 = parseInt($($("#hist-threshold option:selected")[0]).val()) ;
     v1 = parseInt($($("#threshold-window option:selected")[0]).val()) ;
-    $("#threshold-window").attr("data-value", v0 + v1 - parseInt($(this).attr("data-value"))) ;
-    $("#threshold-window").val(v0 + v1 - parseInt($(this).attr("data-value"))) ;
-    $(this).attr("data-value", v0) ;
+
+    if ( v0 > v1 ) {
+    	var tmp = v0 + v1 - parseInt($(this).attr("data-value")) ;
+    	tmp = Math.min(Window.PPI['numberOfThreshold-histogram'] - 1, tmp) ;
+    	$("#threshold-window").attr("data-value", tmp) ;
+	    $("#threshold-window").val(tmp) ;
+    }
+
+    $(this).attr("data-value", v0)
+    
     $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
     	if (Window.PPI['histogram-mode'] == "multi") {

@@ -9,14 +9,14 @@ function formatInput(numberofcomponents, data) {
         group_idx = 0,
         com_idx = 0;
     for (let i = 0; i < data.length; i++) {
-        com_idx += 1;
         if ( Window.PPI['boxplot-timestamp-range-mode']['enable'] ) {
             if ( group_idx >= Window.PPI['boxplot-timestamp-range-mode']['start'] && group_idx <= Window.PPI['boxplot-timestamp-range-mode']['end']) {
                 format_data.push([com_idx, data[i], "group" + group_idx]) 
             }
         } else {
-            format_data.push([com_idx, data[i], "group" + group_idx]) // index: start from 1
+            format_data.push([com_idx, data[i], "group" + group_idx])
         }
+        com_idx += 1;
         if (com_idx == numberofcomponents) {
             com_idx = 0;
             group_idx += 1;
@@ -70,32 +70,45 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $("[name=box_optimal_left]").remove() ;
         $("[name=box_optimal_right]").remove() ;
         // cover the shadow
-        let threshold_idx = (1 + parseInt($("#hist-threshold").val())) * Window.PPI['thresholdRatio'] ;
-        let max_threshold_window = (1 + parseInt($("#threshold-window").val())) * Window.PPI['thresholdRatio'] ;
+        let threshold_idx = parseInt($("#hist-threshold").val()) * Window.PPI['thresholdRatio'] ;
+        let max_threshold_window = parseInt($("#threshold-window").val()) * Window.PPI['thresholdRatio'] ;
 
-        threshold_idx = Math.max(threshold_idx, 1) ;
-
-        main.append("line")
+        g.append("line")
             .attr("name", "box_optimal_left")
             .attr("class", "zero")
             .attr("x1", xScale(threshold_idx))
             .attr("y1", 0)
             .attr("x2", xScale(threshold_idx))
             .attr("y2", height)
-            .style("stroke", "green")
-            .style("stroke-width", 2);
+            .style("stroke", "gray")
+            .style("stroke-dasharray", ("5, 5"))
+            .style("stroke-width", 1);
 
-        main.append("line")
+        g.append("circle")
+            .attr("name", "box_optimal_left")
+            .attr("r", 5)
+            .attr("fill", "gray")
+            .attr("cx", function(d) { return xScale(threshold_idx) })
+            .attr("cy", function(d) { return height; });
+
+        g.append("line")
             .attr("name", "box_optimal_right")
             .attr("class", "zero")
             .attr("x1", xScale(max_threshold_window))
             .attr("y1", 0)
             .attr("x2", xScale(max_threshold_window))
             .attr("y2", height)
-            .style("stroke", "green")
-            .style("stroke-width", 2);
-    }
+            .style("stroke", "red")
+            .style("stroke-dasharray", ("5, 5"))
+            .style("stroke-width", 1);
 
+        g.append("circle")
+            .attr("name", "box_optimal_right")
+            .attr("fill", "red")
+            .attr("r", 5)
+            .attr("cx", function(d) { return xScale(max_threshold_window) })
+            .attr("cy", function(d) { return height; });
+    }
 
     var format_data = formatInput(numberofcomponents, data);
 
@@ -129,7 +142,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .entries(format_data);
 
     // Add X axis
-    Window.box_plot_config.x_domain = [1, d3.max(format_data, function (d) {
+    Window.box_plot_config.x_domain = [0, d3.max(format_data, function (d) {
         return d[0];
     })];
     var xScale = d3.scaleLinear()
@@ -141,6 +154,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     Window.box_plot_config.y_domain = [1, d3.max(format_data, function (d) {
         return d[1];
     })];
+
     var yScale = d3.scaleLog()
         .clamp(true)
         .domain(Window.box_plot_config.y_domain)
@@ -262,23 +276,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         $("#hidden-optimal-threshold").click();
         $("#hidden-notification_xxyy").click();
-    });
-
-    $("#customSwitches--x").unbind().click(function () {
-        if ($("#customSwitches--x").is(':checked')) {
-            xScale = d3.scaleLog()
-                .clamp(true)
-                .domain(Window.box_plot_config.x_domain)
-                .range([0, width]);
-
-        } else {
-            xScale = d3.scaleLinear()
-                .domain(Window.box_plot_config.x_domain)
-                .range([0, width]);
-        }
-
-        xAxis = d3.axisBottom(xScale).ticks(20).tickFormat(d3.format("20"));
-        zoom();
     });
 
     $("#customSwitches--y").unbind().click(function () {
