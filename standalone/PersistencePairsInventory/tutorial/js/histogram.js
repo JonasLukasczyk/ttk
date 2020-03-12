@@ -81,13 +81,9 @@ function drawHistogram(iComponent, socket) {
     let myGroups = getArray( Window.PPI['histogram-width']);
     let myVars = getArray( Window.PPI['histogram-height']);
 
-    var containerWidth = 1201 ;
-    var containerHeight = 791 ;
-    if ( containerWidth / Window.PPI['histogram-width'] < containerHeight / Window.PPI['histogram-height'] ) {
-        containerHeight = Window.PPI['histogram-height'] * containerWidth / Window.PPI['histogram-width'] ;
-    } else {
-        containerWidth = Window.PPI['histogram-width'] * containerHeight / Window.PPI['histogram-height'] ;
-    }
+    var containerHeight = 841 ;
+    var hBase = containerHeight / Window.PPI['histogram-height'] ;
+    var containerWidth = hBase * Window.PPI['histogram-width'] + 50;
 
     let margin = {
         top: 2,
