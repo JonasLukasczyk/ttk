@@ -118,13 +118,15 @@ function drawSDMHistogram(iComponent, socket) {
 
     var containerHeight = 841 ;
     var hBase = containerHeight / Window.PPI['histogram-height'] ;
+    hBase = Math.min(60, hBase) ;
+    containerHeight = hBase * Window.PPI['histogram-height'] ;
     var containerWidth = hBase * Window.PPI['sdm-histogram-width'] + hBase + 50;
 
     let margin = {
         top: 2,
         right: 0,
         bottom: 40,
-        left: hBase + 50
+        left: hBase + 60
     } ;
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
@@ -144,7 +146,19 @@ function drawSDMHistogram(iComponent, socket) {
         .range([0, width])
         .domain(myGroups) ;
 
-    svg.append("g")
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'sdm-hist-clip-x')
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', height)
+        .attr('width', width)
+        .attr('height', margin.bottom);
+
+    var xg = svg.append("g")
+        .attr('clip-path', 'url(#sdm-hist-clip-x)')
+
+    xg.append("g")
         .attr('class', 'sdm-axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
         .style("font-size", "12px")
@@ -154,7 +168,19 @@ function drawSDMHistogram(iComponent, socket) {
         .range([height, 0])
         .domain(myVars) ;
 
-    svg.append("g")
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'sdm-hist-clip-y')
+        .append('rect')
+        .attr('x', -20)
+        .attr('y', 0)
+        .attr('width', margin.left)
+        .attr('height', height);
+
+    var yg = svg.append("g")
+        .attr('clip-path', 'url(#sdm-hist-clip-y)')
+
+    yg.append("g")
         .attr('class', 'sdm-axis--hist--y')
         .style("font-size", "12px")
         .call(d3.axisLeft(y).ticks(2, "s"));

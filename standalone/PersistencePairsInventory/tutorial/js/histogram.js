@@ -16,6 +16,8 @@ function drawHistogram(iComponent, socket) {
         alert("please load data at first") ;
         return ;
     }
+
+    var tx = 0, ty = 0, scale = 0 ;
     console.log("invoke draw histogram functionaility") ;
     
     function coverShadow(time_idx) {
@@ -83,6 +85,8 @@ function drawHistogram(iComponent, socket) {
 
     var containerHeight = 841 ;
     var hBase = containerHeight / Window.PPI['histogram-height'] ;
+    hBase = Math.min(60, hBase) ;
+    containerHeight = hBase * Window.PPI['histogram-height'] ;
     var containerWidth = hBase * Window.PPI['histogram-width'] + 50;
 
     let margin = {
@@ -109,7 +113,19 @@ function drawHistogram(iComponent, socket) {
         .range([0, width])
         .domain(myGroups) ;
 
-    svg.append("g")
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'hist-clip-x')
+        .append('rect')
+        .attr('x', 0)
+        .attr('y', height)
+        .attr('width', width)
+        .attr('height', margin.bottom);
+
+    var xg = svg.append("g")
+        .attr('clip-path', 'url(#hist-clip-x)')
+
+    xg.append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + height + ")")
         .style("font-size", "12px")
@@ -119,7 +135,19 @@ function drawHistogram(iComponent, socket) {
         .range([height, 0])
         .domain(myVars) ;
 
-    svg.append("g")
+    svg.append('defs')
+        .append('clipPath')
+        .attr('id', 'hist-clip-y')
+        .append('rect')
+        .attr('x', -20)
+        .attr('y', 0)
+        .attr('width', margin.left)
+        .attr('height', height);
+
+    var yg = svg.append("g")
+        .attr('clip-path', 'url(#hist-clip-y)')
+
+    yg.append("g")
         .attr('class', 'axis--hist--y')
         .attr("transform", "translate(0,0)")
         .style("font-size", "12px")
@@ -212,10 +240,9 @@ function drawHistogram(iComponent, socket) {
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended);
-
     
     var zoom = d3.zoom()
-                 .scaleExtent([0.1, 10])
+                 .scaleExtent([1, 10])
                  .on("zoom", zoomed)
                  .on("start", zoomstart)
                  .on("end", zoomend) ;
