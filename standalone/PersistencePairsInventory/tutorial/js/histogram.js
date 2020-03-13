@@ -213,6 +213,102 @@ function drawHistogram(iComponent, socket) {
             .on("drag", dragged)
             .on("end", dragended);
 
+    
+    var zoom = d3.zoom()
+                 .scaleExtent([0.1, 10])
+                 .on("zoom", zoomed)
+                 .on("start", zoomstart)
+                 .on("end", zoomend) ;
+
+    var slider = d3.select("#range_input")
+        .datum({})
+        .attr("value", 10)
+        .attr("min", 1)
+        .attr("max", 20)
+        .attr("step", 0.1)
+        .on("input", slided);
+
+    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
+        main.call(drag).call(zoom);
+    }
+    setTimeout(callFunc, 0) ;
+    
+    var t111 = performance.now() ;
+    console.log("the cost of time for rendering bins of histogram: " + (t111 - t000) + " milliseconds");
+
+    // Add y-axis title
+    svg.append("text")
+        .attr("class", "hist-yaxis-title")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - 42 )
+        .attr("x", 0 - (height / 2))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Scalar") ;
+
+    // Add x-axis title
+    svg.append("text")
+        .attr("class", "hist-xaxis-title")
+        .attr("y", (height + 24) )
+        .attr("x", (width / 2.5 + 110))
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Time"); 
+
+    // reset x-axis, y-axis
+    removeNiceByKicks(".axis--hist--x g") ;
+    removeNiceByKicks(".axis--hist--y g") ;
+
+    d3.selectAll(".axis--hist--y path").each(function() {
+        d3.select(this).remove() ;
+    }) ;
+
+    d3.selectAll(".axis--hist--x path").each(function() {
+        d3.select(this).remove() ;
+    }) ;
+
+    function zoomed() {
+    }
+
+    function zoomstart() { } 
+
+    function slided(d) {
+        zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
+    }
+
+    $("#histogram_zoom_back").unbind().click(function() {
+        zoomend("zoom_back") ;
+    }) ;
+
+    function zoomend(d) {
+        var currentTransform ;
+        if (d === "zoom_back") {
+            currentTransform = {"x":0, "y":0, "k":1}
+            d3.select("#hist-id-g").attr("transform", "translate(" + [margin.left, margin.top] + ")") ;
+        } else {
+            currentTransform = d3.event.transform;
+        }
+        main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+
+        d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+
+        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
+        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+
+        d3.selectAll(".axis--hist--y g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        }) ;
+
+        d3.selectAll(".axis--hist--x g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
+        }) ;
+
+        slider.property("value", scaleReverse(currentTransform.k));
+        $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
+    }
+
     function dragstarted(d) {
         d3.event.sourceEvent.stopPropagation();
         d3.select(this).classed("dragging", true);
@@ -259,100 +355,6 @@ function drawHistogram(iComponent, socket) {
 
     function dragended(d) {
         d3.select(this).classed("dragging", false);
-    }
-    
-    var zoom = d3.zoom()
-                 .scaleExtent([0.1, 10])
-                 .on("zoom", zoomed)
-                 .on("start", zoomstart)
-                 .on("end", zoomend) ;
-
-    var slider = d3.select("#range_input")
-        .datum({})
-        .attr("value", 10)
-        .attr("min", 1)
-        .attr("max", 20)
-        .attr("step", 0.1)
-        .on("input", slided);
-
-    function callFunc() { // most time-consuming part, avg time is 1.5 seconds
-        main.call(drag).call(zoom);
-    }
-    setTimeout(callFunc, 0) ;
-    
-    var t111 = performance.now() ;
-    console.log("the cost of time for rendering bins of histogram: " + (t111 - t000) + " milliseconds");
-
-    // Add y-axis title
-    svg.append("text")
-        .attr("class", "hist-yaxis-title")
-        .attr("transform", "rotate(-90)")
-        .attr("y", 0 - 42 )
-        .attr("x", 0 - (height / 2))
-        .attr("z-index", 100)
-        .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .text("Scalar") ;
-
-    // // Add x-axis title
-    svg.append("text")
-        .attr("class", "hist-xaxis-title")
-        .attr("y", (height + 24) )
-        .attr("x", (width / 2.5 + 110))
-        .attr("z-index", 100)
-        .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .text("Time"); 
-
-    // reset x-axis, y-axis
-    removeNiceByKicks(".axis--hist--x g") ;
-    removeNiceByKicks(".axis--hist--y g") ;
-
-    d3.selectAll(".axis--hist--y path").each(function() {
-        d3.select(this).remove() ;
-    }) ;
-
-    d3.selectAll(".axis--hist--x path").each(function() {
-        d3.select(this).remove() ;
-    }) ;
-
-    function zoomed() { }
-
-    function zoomstart() { } 
-
-    function slided(d) {
-        zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
-    }
-
-    $("#histogram_zoom_back").unbind().click(function() {
-        zoomend("zoom_back") ;
-    }) ;
-
-    function zoomend(d) {
-        var currentTransform ;
-        if (d === "zoom_back") {
-            currentTransform = {"x":0, "y":0, "k":1}
-            d3.select("#hist-id-g").attr("transform", "translate(" + [margin.left, margin.top] + ")") ;
-        } else {
-            currentTransform = d3.event.transform;
-        }
-        console.log(currentTransform) ;
-        main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
-        d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
-
-        d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
-        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
-
-        d3.selectAll(".axis--hist--y g").each(function() {
-            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
-        }) ;
-
-        d3.selectAll(".axis--hist--x g").each(function() {
-            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
-        }) ;
-
-        slider.property("value", scaleReverse(currentTransform.k));
-        $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
     }
 
     $("#histogram_zoom_back").click() ;

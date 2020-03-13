@@ -104,15 +104,15 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .attr("id", "top-legend-rect-cover")
         .attr("y", 0)
         .attr("width", width)
-        .attr("height", 0.6 * lHeight)
+        .attr("height", 0.4 * lHeight)
         .attr("fill", "white") ;
 
     // Add a Line
     lineSvg.append('line')
         .attr("x1", 0)
-        .attr("y1", 0.6 * lHeight)
+        .attr("y1", 0.4 * lHeight)
         .attr("x2", width)
-        .attr("y2", 0.6 * lHeight)
+        .attr("y2", 0.4 * lHeight)
         .attr("class", "inactive-d3-item-line2")
         .style("cursor", "pointer")
         .call(dragTop) ;
@@ -187,15 +187,15 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .attr("id", "right-legend-rect-cover")
         .attr("y", 0)
         .attr("width", height)
-        .attr("height", 0.6 * rHeight)
+        .attr("height", 0.4 * rHeight)
         .attr("fill", "white") ;
 
     // Add a Line
     lineSvgRight.append('line')
         .attr("x1", 0)
-        .attr("y1", 0.6 * rHeight)
+        .attr("y1", 0.4 * rHeight)
         .attr("x2", height)
-        .attr("y2", 0.6 * rHeight)
+        .attr("y2", 0.4 * rHeight)
         .attr("class", "inactive-d3-item-line2")
         .style("cursor", "pointer")
         .call(dragRight) ;
