@@ -1,10 +1,11 @@
 // iComponent: for the time index
 
-function drawSDMHistogram(iComponent, socket) {
+function drawSDMHistogram(socket) {
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
         return ;
     }
+    iComponent = Window.PPI['selected-time-id'] ;  // selected time stamp
     console.log("invoke draw SDMhistogram functionaility") ;
     $("#hist-time").val(iComponent) ;
     iComponent = parseInt(iComponent) ;
@@ -37,7 +38,7 @@ function drawSDMHistogram(iComponent, socket) {
     function drawVerticalColumn() {
         // Add extra column
         // extract information
-        d3.select(".sdm-vertical-bin").remove() ;
+        d3.select(".sdm-vertical-column-g").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val())
         relData = []
@@ -57,6 +58,7 @@ function drawSDMHistogram(iComponent, socket) {
 
         var sdm_svg = container
                         .append("g")
+                        .attr("class", "sdm-vertical-column-g")
                         .attr("transform",
                             "translate("+10+", "+margin.top+")")
                         .attr('overflow', 'hidden');
@@ -386,12 +388,20 @@ function drawSDMHistogram(iComponent, socket) {
     coverShadow() ;
     drawVerticalColumn() ;
 
+    $("#hidden-sdm-draw-vertical-column-lonely").unbind().click(function() {
+        drawVerticalColumn() ;
+    })
+
     $("#hidden-sdm-move-prev").unbind().click(function() {
         $('#hist-threshold option:selected').prev().prop('selected', true) ;
         $('#threshold-window option:selected').prev().prop('selected', true) ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
+
+    $("#hidden-sdm-draw-legend-lonely").unbind().click(function() {
+        drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
+    })
 
     $("#hidden-sdm-move-next").unbind().click(function() {
         $('#hist-threshold option:selected').next().prop('selected', true) ;
@@ -418,6 +428,7 @@ function drawSDMHistogram(iComponent, socket) {
 
 $("#hist-time").change(function () {
     $("#hist-time option:selected").each(function () {
-        drawSDMHistogram(parseInt($(this).text()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+        Window.PPI['selected-time-id'] = parseInt($(this).text()) ; 
+        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     });
 });

@@ -338,8 +338,6 @@ function drawHistogram(iComponent, socket) {
             newTy = cy - (cy - preTmp[1]) * curTmp.k / preTmp[2];
             currentTransform = {"x":newTx, "y":newTy, "k":curTmp.k}
         }
-        console.log(currentTransform) ;
-
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
         d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");

@@ -363,6 +363,12 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         }
 
         $("#histogram_viz_legend").attr("data-x_0", values[0]).attr("data-x_1", values[1]) ;
-        $("#hist-threshold").change() ;
+
+        if (Window.PPI['histogram-mode'] == "multi") {
+            $("#hist-threshold").change() ;
+        } else {
+            $("#hidden-sdm-draw-vertical-column-lonely").click() ;
+            $("#hidden-sdm-draw-legend-lonely").click() ;
+        }
     }
 }
