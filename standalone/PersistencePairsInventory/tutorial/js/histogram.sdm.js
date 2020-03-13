@@ -27,7 +27,7 @@ function drawSDMHistogram(iComponent, socket) {
             .style("fill", "none")
             .style("stroke-width", 1)
             .style("stroke", "rgb(0,0,0)")
-            .attr("transform", "translate(0, 0)");
+            .attr("transform", transFormApply(d3.select("#sdm-hist-clip-g").attr("transform")));
     }
 
     $("#hidden-sdm-add-window").unbind().click(function() {
@@ -37,6 +37,7 @@ function drawSDMHistogram(iComponent, socket) {
     function drawVerticalColumn() {
         // Add extra column
         // extract information
+        d3.select(".sdm-vertical-bin").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val())
         relData = []
@@ -87,6 +88,9 @@ function drawSDMHistogram(iComponent, socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
     let threshold_idx = parseInt($("#hist-threshold").val()) ;
+
+    var cx = 0,
+        cy = 0 ;
 
     let vData = [];
     tmp = getRangeOfPPI();
@@ -197,10 +201,20 @@ function drawSDMHistogram(iComponent, socket) {
         .attr('width', width)
         .attr('height', height);
 
-    // scale region
-    var g_main = svg.append("g").attr('clip-path', 'url(#sdm-hist-clip)');
+    var parentSvg = svg.append("svg") ;
+    parentSvg.on("mouseover", function () {
+        var tmp = d3.mouse(this) ;
+        cx = tmp[0] ;
+        cy = tmp[1] ;
+    } )
+    .on("mousemove", function() {
+        var tmp = d3.mouse(this) ;
+        cx = tmp[0] ;
+        cy = tmp[1] ;
+    });
+    var g_main = parentSvg.append("g").attr('clip-path', 'url(#sdm-hist-clip)');
 
-    var main = g_main.append("g") ;
+    var main = g_main.append("g").attr("id", "sdm-hist-clip-g") ;
 
     main.selectAll()
         .data(vData)
@@ -234,20 +248,22 @@ function drawSDMHistogram(iComponent, socket) {
     }
 
     function dragged(d) {
+        var scale = scaleConvert(d3.select("#sdm-range_input").property("value"))
+
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
         var x = trans[0] ;
         var y = trans[1] ;
         x += d3.event.dx;
         y += d3.event.dy;
         // bins of histogram
-        d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + d3.select("#sdm-range_input").property("value") + ")" );
+        d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
         
         var yTrans = transFormApply($(".sdm-axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
         var yX = yTrans[0] ;
         var yY = yTrans[1] ;
         yX += d3.event.dx ;
         yY += d3.event.dy ;    
-        var v = transFormApply($(".sdm-axis--hist--y").attr("transform"), 0, yY, d3.select("#sdm-range_input").property("value")) ;    
+        var v = transFormApply($(".sdm-axis--hist--y").attr("transform"), 0, yY, scale) ;    
         d3.select(".sdm-axis--hist--y").attr("transform", v);
 
         var xTrans = transFormApply($(".sdm-axis--hist--x").attr("transform"), undefined, undefined, undefined, true) ;
@@ -255,7 +271,7 @@ function drawSDMHistogram(iComponent, socket) {
         var xY = xTrans[1] ;
         xX += d3.event.dx ;
         xY += d3.event.dy ;    
-        var v = transFormApply($(".sdm-axis--hist--x").attr("transform"), xX, undefined, d3.select("#sdm-range_input").property("value")) ;    
+        var v = transFormApply($(".sdm-axis--hist--x").attr("transform"), xX, undefined, scale) ;    
         d3.select(".sdm-axis--hist--x").attr("transform", v);
 
         if ( $(".sdm-rect-box-cover").length > 0) {
@@ -265,7 +281,7 @@ function drawSDMHistogram(iComponent, socket) {
             coverX += d3.event.dx;
             coverY += d3.event.dy;
             // bins of histogram
-            d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + d3.select("#sdm-range_input").property("value") + ")" );
+            d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + coverX + "," + coverY + ") scale(" + scale + ")" );
         }
     }
 
@@ -274,17 +290,17 @@ function drawSDMHistogram(iComponent, socket) {
     }
 
     var zoom = d3.zoom()
-                 .scaleExtent([1, 10])
+                 .scaleExtent([0.1, 10])
                  .on("zoom", zoomed)
                  .on("start", zoomstart)
                  .on("end", zoomend) ;
 
     var slider = d3.select("#sdm-range_input")
         .datum({})
-        .attr("value", zoom.scaleExtent()[0])
-        .attr("min", zoom.scaleExtent()[0])
-        .attr("max", zoom.scaleExtent()[1])
-        .attr("step", (zoom.scaleExtent()[1] - zoom.scaleExtent()[0]) / 100)
+        .attr("value", 10)
+        .attr("min", 1)
+        .attr("max", 20)
+        .attr("step", 0.1)
         .on("input", slided);
 
     function callFunc() { // most time-consuming part, avg time is 1.5 seconds
@@ -330,7 +346,7 @@ function drawSDMHistogram(iComponent, socket) {
     function zoomstart() { } 
 
     function slided(d) {
-        zoom.scaleTo(svg, d3.select(this).property("value"));
+        zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
     }
 
     $("#sdm-histogram_zoom_back").unbind().click(function() {
@@ -339,12 +355,17 @@ function drawSDMHistogram(iComponent, socket) {
 
     function zoomend(d) {
         var currentTransform ;
+        console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
             currentTransform = {"x":0, "y":0, "k":1}
-            d3.select("#sdm-hist-id-g").attr("transform", "translate(" + [margin.left, margin.top] + ")") ;
         } else {
-            currentTransform = d3.event.transform;
+            var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
+            var curTmp = d3.event.transform ;
+            newTx = cx - (cx - preTmp[0]) * curTmp.k / preTmp[2];
+            newTy = cy - (cy - preTmp[1]) * curTmp.k / preTmp[2];
+            currentTransform = {"x":newTx, "y":newTy, "k":curTmp.k}
         }
+
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
         d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
@@ -359,7 +380,7 @@ function drawSDMHistogram(iComponent, socket) {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
         }) ;
 
-        slider.property("value", currentTransform.k);
+        slider.property("value", scaleReverse(currentTransform.k));
     }
 
     coverShadow() ;
@@ -368,7 +389,6 @@ function drawSDMHistogram(iComponent, socket) {
     $("#hidden-sdm-move-prev").unbind().click(function() {
         $('#hist-threshold option:selected').prev().prop('selected', true) ;
         $('#threshold-window option:selected').prev().prop('selected', true) ;
-        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
@@ -376,21 +396,18 @@ function drawSDMHistogram(iComponent, socket) {
     $("#hidden-sdm-move-next").unbind().click(function() {
         $('#hist-threshold option:selected').next().prop('selected', true) ;
         $('#threshold-window option:selected').next().prop('selected', true) ;
-        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
 
     $("#hidden-sdm-move-right-prev").unbind().click(function() {
         $('#threshold-window option:selected').prev().prop('selected', true) ;
-        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;
 
     $("#hidden-sdm-move-right-next").unbind().click(function() {
         $('#threshold-window option:selected').next().prop('selected', true) ;
-        $("#sdm-histogram_zoom_back").click() ;
         coverShadow() ;
         drawVerticalColumn() ;
     }) ;

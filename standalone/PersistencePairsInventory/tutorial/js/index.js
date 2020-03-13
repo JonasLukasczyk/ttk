@@ -137,7 +137,6 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] - 1,
 		values: [0, Window.PPI['histogram-width'] - 1],
 		slide: function( event, ui ) {
-			$("#histogram_zoom_back").click() ;
 			$("#picker_left").text(ui.values[0]) ;
 			$("#picker_right").text(ui.values[1]) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;

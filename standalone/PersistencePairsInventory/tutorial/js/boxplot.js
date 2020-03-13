@@ -73,7 +73,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         let threshold_idx = parseInt($("#hist-threshold").val()) * Window.PPI['thresholdRatio'] ;
         let max_threshold_window = parseInt($("#threshold-window").val()) * Window.PPI['thresholdRatio'] ;
 
-        g.append("line")
+        if ( xScale(threshold_idx) >= 0 ) {
+            g.append("line")
             .attr("name", "box_optimal_left")
             .attr("class", "zero")
             .attr("x1", xScale(threshold_idx))
@@ -84,14 +85,16 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .style("stroke-dasharray", ("5, 5"))
             .style("stroke-width", 1);
 
-        g.append("circle")
-            .attr("name", "box_optimal_left")
-            .attr("r", 5)
-            .attr("fill", "gray")
-            .attr("cx", function(d) { return xScale(threshold_idx) })
-            .attr("cy", function(d) { return height; });
+            g.append("circle")
+                .attr("name", "box_optimal_left")
+                .attr("r", 5)
+                .attr("fill", "gray")
+                .attr("cx", function(d) { return xScale(threshold_idx) })
+                .attr("cy", function(d) { return height; });
+        }
 
-        g.append("line")
+        if ( xScale(max_threshold_window) >= 0 ) {
+            g.append("line")
             .attr("name", "box_optimal_right")
             .attr("class", "zero")
             .attr("x1", xScale(max_threshold_window))
@@ -102,12 +105,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .style("stroke-dasharray", ("5, 5"))
             .style("stroke-width", 1);
 
-        g.append("circle")
-            .attr("name", "box_optimal_right")
-            .attr("fill", "red")
-            .attr("r", 5)
-            .attr("cx", function(d) { return xScale(max_threshold_window) })
-            .attr("cy", function(d) { return height; });
+            g.append("circle")
+                .attr("name", "box_optimal_right")
+                .attr("fill", "red")
+                .attr("r", 5)
+                .attr("cx", function(d) { return xScale(max_threshold_window) })
+                .attr("cy", function(d) { return height; });
+        }
     }
 
     var format_data = formatInput(numberofcomponents, data);

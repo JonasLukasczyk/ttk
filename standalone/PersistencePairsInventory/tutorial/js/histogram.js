@@ -53,7 +53,7 @@ function drawHistogram(iComponent, socket) {
                 .style("fill", "none")
                 .style("stroke-width", 1)
                 .style("stroke", "rgb(0,0,0)")
-                .attr("transform", "translate(0, 0)");
+                .attr("transform", transFormApply(d3.select("#hist-clip-opacity").attr("transform")));
             }
     }
 
@@ -64,6 +64,9 @@ function drawHistogram(iComponent, socket) {
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
+
+    var cx = 0,
+        cy = 0 ;
 
     var tmp = getRangeOfPPI()
     min_persistence_pairs = tmp[0] ; 
@@ -164,7 +167,18 @@ function drawHistogram(iComponent, socket) {
 
     // scale region
     var t000 = performance.now() ;
-    var g_main = svg.append("g").attr('clip-path', 'url(#hist-clip)');
+    var parentSvg = svg.append("svg") ;
+    parentSvg.on("mouseover", function () {
+        var tmp = d3.mouse(this) ;
+        cx = tmp[0] ;
+        cy = tmp[1] ;
+    } )
+    .on("mousemove", function() {
+        var tmp = d3.mouse(this) ;
+        cx = tmp[0] ;
+        cy = tmp[1] ;
+    });
+    var g_main = parentSvg.append("g").attr('clip-path', 'url(#hist-clip)');
 
     var main = g_main.append("g").attr("id", "hist-clip-opacity") ;
     g_main.append("g").attr("id", "hist-clip-highlight") ;
@@ -187,6 +201,8 @@ function drawHistogram(iComponent, socket) {
         .attr("class", function(d) {
             return customColor(d[5], d[2], undefined, undefined, undefined, true);
         }).on("mouseover", function (d, i) {
+            tx = d3.event.pageX ;
+            ty = d3.event.pageY ;
             if (!event.ctrlKey) {
                 if (Window.PPI["X-mode"] === 0) {
                     d3.select("#tooltipSvg").selectAll("*").remove();
@@ -242,7 +258,7 @@ function drawHistogram(iComponent, socket) {
             .on("end", dragended);
     
     var zoom = d3.zoom()
-                 .scaleExtent([1, 10])
+                 .scaleExtent([0.1, 10])
                  .on("zoom", zoomed)
                  .on("start", zoomstart)
                  .on("end", zoomend) ;
@@ -311,12 +327,19 @@ function drawHistogram(iComponent, socket) {
 
     function zoomend(d) {
         var currentTransform ;
+        console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
             currentTransform = {"x":0, "y":0, "k":1}
-            d3.select("#hist-id-g").attr("transform", "translate(" + [margin.left, margin.top] + ")") ;
         } else {
-            currentTransform = d3.event.transform;
+            // https://gist.github.com/KarolAltamirano/b54c263184be0516a59d6baf7f053f3e
+            var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
+            var curTmp = d3.event.transform ;
+            newTx = cx - (cx - preTmp[0]) * curTmp.k / preTmp[2];
+            newTy = cy - (cy - preTmp[1]) * curTmp.k / preTmp[2];
+            currentTransform = {"x":newTx, "y":newTy, "k":curTmp.k}
         }
+        console.log(currentTransform) ;
+
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
         d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");

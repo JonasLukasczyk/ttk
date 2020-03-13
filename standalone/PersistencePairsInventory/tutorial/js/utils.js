@@ -79,6 +79,9 @@ function getLegendData(vData) {
 
 
 function transFormApply(u, x=-1000000, y=-1000000, k=-1000000, val=false) {
+    if ( !u ) {
+        return "" ;
+    }
     var xx, yy, kk ;
     if ( u.indexOf("translate") === -1 ) {
         xx = -1000000 ;
