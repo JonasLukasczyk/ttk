@@ -116,7 +116,7 @@ function objectCallback(msg) {
 	Window.PPI['thresholdRatio'] = Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'] ;
     resetHist() ;
 
-    var mCount = 20 ;
+    var mCount = 1 ;
     if (Window.PPI['histogram-width'] <= mCount) {
     	Window.PPI['histogram-mode'] = "multi" ;  // show the single-view at first
     } else {
