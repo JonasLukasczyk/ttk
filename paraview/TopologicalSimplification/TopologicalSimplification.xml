@@ -268,6 +268,21 @@ offset field for flat plateau disambiguation).
          <Documentation>
          </Documentation>
       </IntVectorProperty>
+      <IntVectorProperty
+         name="EnforceAuthorizedExtrema"
+         command="SetEnforceAuthorizedExtrema"
+         label="Enforce Authorized Extrema"
+         number_of_elements="1"
+         default_values="0">
+         <BooleanDomain name="bool"/>
+         <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+            mode="visibility"
+            property="UseTPTS"
+            value="1" />
+         </Hints>
+         <Documentation>TODO</Documentation>
+      </IntVectorProperty>
 
       <IntVectorProperty
         name="UseDeallocation"
@@ -285,7 +300,7 @@ offset field for flat plateau disambiguation).
           <Documentation>
           </Documentation>
         </IntVectorProperty>
-      
+
       <IntVectorProperty
          name="UseAllCores"
          command="SetUseAllCores"
@@ -361,12 +376,13 @@ offset field for flat plateau disambiguation).
       </PropertyGroup>
 
       <PropertyGroup panel_widget="Line" label="Output options">
-	<Property name="OutputOffsetScalarFieldName"/>
-	<Property name="AddPerturbation"/>
-	<Property name="UseTPTS"/>
-	<Property name="UseRegionBasedIterations"/>
-	<Property name="UseInterleaving"/>
-  <Property name="UseDeallocation"/>
+        <Property name="OutputOffsetScalarFieldName"/>
+        <Property name="AddPerturbation"/>
+        <Property name="UseTPTS"/>
+        <Property name="UseRegionBasedIterations"/>
+        <Property name="UseInterleaving"/>
+        <Property name="EnforceAuthorizedExtrema"/>
+        <Property name="UseDeallocation"/>
       </PropertyGroup>
 
       <Hints>

@@ -24,7 +24,6 @@ namespace ttk {
     signed char terminated{0};
     signed char simplified{0};
     signed char persistent{0};
-    signed char TEMP{0};
     mutable idType nIterations{0};
 
     std::vector<idType> saddles;

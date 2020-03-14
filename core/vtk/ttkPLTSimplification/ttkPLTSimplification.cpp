@@ -1,4 +1,4 @@
-#include <ttkDisambiguate.h>
+#include <ttkPLTSimplification.h>
 
 #include <vtkDataObject.h> // For port info
 #include <vtkObjectFactory.h> // for new macro
@@ -13,16 +13,16 @@
 
 #include <ttkMacros.h>
 
-vtkStandardNewMacro(ttkDisambiguate);
+vtkStandardNewMacro(ttkPLTSimplification);
 
-ttkDisambiguate::ttkDisambiguate(){
+ttkPLTSimplification::ttkPLTSimplification(){
     this->SetNumberOfInputPorts(1);
     this->SetNumberOfOutputPorts(1);
 }
 
-ttkDisambiguate::~ttkDisambiguate(){}
+ttkPLTSimplification::~ttkPLTSimplification(){}
 
-int ttkDisambiguate::FillInputPortInformation(int port, vtkInformation* info) {
+int ttkPLTSimplification::FillInputPortInformation(int port, vtkInformation* info) {
     if (port==0)
         info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
     else
@@ -30,7 +30,7 @@ int ttkDisambiguate::FillInputPortInformation(int port, vtkInformation* info) {
     return 1;
 }
 
-int ttkDisambiguate::FillOutputPortInformation(int port, vtkInformation* info) {
+int ttkPLTSimplification::FillOutputPortInformation(int port, vtkInformation* info) {
     if (port==0)
         info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
     else
@@ -38,7 +38,7 @@ int ttkDisambiguate::FillOutputPortInformation(int port, vtkInformation* info) {
     return 1;
 }
 
-int ttkDisambiguate::RequestData(
+int ttkPLTSimplification::RequestData(
     vtkInformation* request,
     vtkInformationVector** inputVector,
     vtkInformationVector* outputVector

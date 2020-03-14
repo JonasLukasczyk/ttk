@@ -85,6 +85,9 @@ public:
 
   vtkSetMacro(debugLevel_, int);
 
+  bool EnforceAuthorizedExtrema{false};
+  vtkSetMacro(EnforceAuthorizedExtrema, bool);
+  vtkGetMacro(EnforceAuthorizedExtrema, bool);
   bool UseRegionBasedIterations{false};
   vtkSetMacro(UseRegionBasedIterations, bool);
   vtkGetMacro(UseRegionBasedIterations, bool);
@@ -132,7 +135,7 @@ public:
 
   vtkSetMacro(UseTPTS, bool);
   vtkGetMacro(UseTPTS, bool);
-  
+
   vtkSetMacro(UseDeallocation, bool);
   vtkGetMacro(UseDeallocation, bool);
 

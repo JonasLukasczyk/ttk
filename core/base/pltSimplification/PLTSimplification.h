@@ -1,5 +1,5 @@
 /// \ingroup base
-/// \class ttk::Disambiguate
+/// \class ttk::PLTSimplification
 /// \author Jonas Lukasczyk <jl@jluk.de>
 /// \date 1.09.2019
 ///
@@ -11,36 +11,31 @@
 #include <Debug.h>
 #include <Triangulation.h>
 #include <Propagation.h>
-#include <ParallelMergeSort.h>
 
-#include <limits>
-#include <queue>
-#include <unordered_set>
-#include <set>
-#include <unordered_map>
-
-#include <sys/time.h>
+// #include <limits>
+// #include <queue>
+// #include <set>
+// #include <sys/time.h>
 
 #if(defined(__GNUC__) && !defined(__clang__))
 #include <parallel/algorithm>
 #endif
 
+// for numerical perturbation
 #include <boost/math/special_functions/next.hpp>
 
 typedef ttk::SimplexId ttkInt;
 
-// int TODO_IDTYPE_PARAM = 0;
-
 namespace ttk {
 
-    class Disambiguate : virtual public Debug {
+    class PLTSimplification : virtual public Debug {
 
         public:
 
-            Disambiguate(){
-                this->setDebugMsgPrefix("Disambiguate"); // inherited from Debug: prefix will be printed at the beginning of every msg
+            PLTSimplification(){
+                this->setDebugMsgPrefix("PLTS"); // inherited from Debug: prefix will be printed at the beginning of every msg
             };
-            ~Disambiguate(){};
+            ~PLTSimplification(){};
 
             int PreconditionTriangulation(
                 ttk::Triangulation* triangulation
@@ -239,6 +234,37 @@ namespace ttk {
                     "Applying numerical perturbation",
                     1,timer.getElapsedTime(),this->threadNumber_
                 );
+
+                return 1;
+            }
+
+            template<typename idType>
+            int flattenOffsets(
+                idType* outputOffsets,
+
+                const std::vector<Propagation<idType>*>& masterPropagations,
+                const idType* inputOffsets,
+                const idType& nVertices
+            ) const {
+                ttk::Timer timer;
+                this->printMsg("Flattening offsets",0,0,this->threadNumber_,debug::LineMode::REPLACE);
+
+                const idType nMasterPropagations = masterPropagations.size();
+
+                // use region mask as temporary array
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                for(idType v=0; v<nVertices; v++)
+                    outputOffsets[v] = inputOffsets[v];
+
+                // flatten regions to offset of last encountered saddles
+                #pragma omp parallel for num_threads(this->threadNumber_)
+                for(idType p=0; p<nMasterPropagations; p++){
+                    const auto* propagation = masterPropagations[p];
+                    for(const auto& v : propagation->region)
+                        outputOffsets[v] = inputOffsets[propagation->lastEncounteredCriticalPoint];
+                }
+
+                this->printMsg("Flattening offsets",1,timer.getElapsedTime(),this->threadNumber_);
 
                 return 1;
             }
@@ -997,6 +1023,8 @@ namespace ttk {
                 const bool& useRegionBasedIterations
             ) const {
 
+                return 0;
+
                 // pointer used to compare against representative
                 auto* currentPropagation = &propagation;
 
@@ -1489,6 +1517,9 @@ namespace ttk {
                     }
                 }
 
+                // force that a propagation that reaches the global minimum is always persistent
+                currentPropagation->persistent = 1;
+
                 // if thread reached the global minimum finish propagation
                 currentPropagation->terminated = 1;
                 currentPropagation->lastEncounteredCriticalPoint = v;
@@ -1681,8 +1712,10 @@ namespace ttk {
 
                 idType nSaddles = 0;
                 idType nTrunkVertices = 0;
-                std::vector<Propagation<idType>*> saddlePropagations(32,nullptr);
-                if(currentPropagation!=nullptr){
+                if(currentPropagation!=nullptr && currentPropagation->persistent==0){
+
+                    std::vector<Propagation<idType>*> saddlePropagations(32,nullptr);
+
                     // continue propagation in sorted order
                     for(; trunkIndex>=0; trunkIndex--){
                         const idType& v = sortedIndices[trunkIndex];
@@ -1835,14 +1868,12 @@ namespace ttk {
                         propagationMask[v] = currentPropagation;
                         currentPropagation->regionSize++;
 
-                        if(currentPropagation->persistent==0){
-                            const dataType persistence = elderScalar>scalars[v]
-                                ? elderScalar-scalars[v]
-                                : scalars[v]-elderScalar;
-                            if(persistence>persistenceThreshold){
-                                currentPropagation->persistent = 1;
-                                break;
-                            }
+                        const dataType persistence = elderScalar>scalars[v]
+                            ? elderScalar-scalars[v]
+                            : scalars[v]-elderScalar;
+                        if(persistence>persistenceThreshold){
+                            currentPropagation->persistent = 1;
+                            break;
                         }
                     }
 
@@ -2562,10 +2593,28 @@ namespace ttk {
                 }
                 if(!status) return 0;
 
-                this->printMsg(
-                    "Computing persistent propagations ("+std::to_string(nPropagations)+")",
-                    1, timer.getElapsedTime(), this->threadNumber_
-                );
+
+
+                idType regionSizes = 0;
+                if(this->debugLevel_>3){
+                    double t = timer.getElapsedTime();
+                    idType nVertices = triangulation->getNumberOfVertices();
+                    #pragma omp parallel for num_threads(this->threadNumber_) reduction(+:regionSizes)
+                    for(idType v=0; v<nVertices; v++)
+                        if(propagationMask[v]!=nullptr) regionSizes ++;
+
+                    std::stringstream vFraction;
+                    vFraction << std::fixed << std::setprecision(2) << ((float)regionSizes/(float)nVertices);
+                    this->printMsg(
+                        "Computing persistent propagations ("+std::to_string(nPropagations)+"|"+vFraction.str()+")",
+                        1, t, this->threadNumber_
+                    );
+                } else
+                    this->printMsg(
+                        "Computing persistent propagations ("+std::to_string(nPropagations)+")",
+                        1, timer.getElapsedTime(), this->threadNumber_
+                    );
+
 
                 return 1;
             }
@@ -3058,29 +3107,22 @@ namespace ttk {
                     nRemovedMaxima = masterPropagations.size();
                 }
 
-                // use region mask as temporary array
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++)
-                    regionMask[v] = inputOffsets[v];
+                // flatten offsets
+                status = this->flattenOffsets<idType>(
+                    outputOffsets,
 
-                // flatten regions to offset of last encountered saddles
-                // and force that saddles are last in the local offset order
-                #pragma omp parallel for schedule(static,4) num_threads(this->threadNumber_)
-                for(idType p=0; p<nRemovedMaxima; p++){
-                    const auto* propagation = masterPropagations[p];
-                    for(const auto& v : propagation->region)
-                        regionMask[v] = inputOffsets[propagation->lastEncounteredCriticalPoint];
-
-                    // enforce that each saddle has the largest local offset
-                    localOffsets[propagation->lastEncounteredCriticalPoint]=0;
-                }
+                    masterPropagations,
+                    inputOffsets,
+                    nVertices
+                );
+                if(!status) return 0;
 
                 // compute global offsets
                 status = this->computeGlobalOffsets<idType,idType>(
                     outputOffsets,
                     sortedIndices,
 
-                    regionMask,
+                    outputOffsets,
                     localOffsets,
                     nVertices
                 );
@@ -3206,40 +3248,22 @@ namespace ttk {
                 );
                 if(!status) return 0;
 
-                // // flatten offsets
-                // status = this->flattenOffsets<idType>(
-                //     regionMask,
-                //     localOffsets,
+                // flatten offsets
+                status = this->flattenOffsets<idType>(
+                    outputOffsets,
 
-                //     masterPropagations,
-
-                // );
-                // if(!status) return 0;
-
-
-                // use region mask as temporary array
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++)
-                    regionMask[v] = inputOffsets[v];
-
-                // flatten regions to offset of last encountered saddles
-                // and force that saddles are last in the local offset order
-                #pragma omp parallel for schedule(static,4) num_threads(this->threadNumber_)
-                for(idType p=0; p<nMasterPropagations; p++){
-                    const auto* propagation = masterPropagations[p];
-                    for(const auto& v : propagation->region)
-                        regionMask[v] = inputOffsets[propagation->lastEncounteredCriticalPoint];
-
-                    // enforce that each saddle has the largest local offset
-                    localOffsets[propagation->lastEncounteredCriticalPoint]=0;
-                }
+                    masterPropagations,
+                    inputOffsets,
+                    nVertices
+                );
+                if(!status) return 0;
 
                 // compute global offsets
                 status = this->computeGlobalOffsets<idType,idType>(
                     outputOffsets,
                     sortedIndices,
 
-                    regionMask,
+                    outputOffsets,
                     localOffsets,
                     nVertices
                 );
@@ -3308,29 +3332,22 @@ namespace ttk {
                 );
                 if(!status) return 0;
 
-                // use region mask as temporary array
-                #pragma omp parallel for num_threads(this->threadNumber_)
-                for(idType v=0; v<nVertices; v++)
-                    regionMask[v] = inputOffsets[v];
+                // flatten offsets
+                status = this->flattenOffsets<idType>(
+                    outputOffsets,
 
-                // flatten regions to offset of last encountered saddles
-                // and force that saddles are last in the local offset order
-                #pragma omp parallel for schedule(static,4) num_threads(this->threadNumber_)
-                for(idType p=0; p<nMasterPropagations; p++){
-                    const auto* propagation = masterPropagations[p];
-                    for(const auto& v : propagation->region)
-                        regionMask[v] = inputOffsets[propagation->lastEncounteredCriticalPoint];
-
-                    // enforce that each saddle has the largest local offset
-                    localOffsets[propagation->lastEncounteredCriticalPoint]=0;
-                }
+                    masterPropagations,
+                    inputOffsets,
+                    nVertices
+                );
+                if(!status) return 0;
 
                 // compute global offsets
                 status = this->computeGlobalOffsets<idType,idType>(
                     outputOffsets,
                     sortedIndices,
 
-                    regionMask,
+                    outputOffsets,
                     localOffsets,
                     nVertices
                 );
@@ -3631,7 +3648,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("-------- [Removing unauthorized minima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing unauthorized minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3676,7 +3693,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("-------- [Removing unauthorized maxima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing unauthorized maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
@@ -3872,7 +3889,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("-------- [Removing non-persistent minima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing non-persistent minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -3917,7 +3934,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("-------- [Removing non-persistent maxima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing non-persistent maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(
@@ -4220,7 +4237,7 @@ namespace ttk {
 
                     // Minima
                     {
-                        this->printMsg("-------- [Removing minima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing minima]", ttk::debug::Separator::L2);
 
                         // invert offsets to first remove minima (now maxima)
                         status = this->invertField<idType>(
@@ -4262,7 +4279,7 @@ namespace ttk {
 
                     // Maxima
                     {
-                        this->printMsg("-------- [Removing maxima]", ttk::debug::Separator::L2);
+                        this->printMsg("----------- [Removing maxima]", ttk::debug::Separator::L2);
 
                         // invert offsets again to now remove maxima
                         status = this->invertField<idType>(

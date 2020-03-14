@@ -1,6 +1,6 @@
 #include <ttkTopologicalSimplification.h>
 
-#include <Disambiguate.h>
+#include <PLTSimplification.h>
 
 using namespace std;
 using namespace ttk;
@@ -200,9 +200,9 @@ int ttkTopologicalSimplification::dispatch(
         ret = topologicalSimplification_.execute<dataType, vtkIdType>();
       }
   } else {
-      auto tpts = ttk::Disambiguate();
-      tpts.setThreadNumber( this->threadNumber_ );
-      tpts.setDebugLevel( this->debugLevel_ );
+      auto plts = ttk::PLTSimplification();
+      plts.setThreadNumber( this->threadNumber_ );
+      plts.setDebugLevel( this->debugLevel_ );
 
       if(outputOffsetArray->GetDataType()!=inputCriticalPointIdArray->GetDataType()){
           this->printErr("Id type missmatch");
@@ -215,21 +215,22 @@ int ttkTopologicalSimplification::dispatch(
 
       if(outputOffsetArray->GetDataType() == VTK_INT) {
         Timer t;
-        status = tpts.simplify(
+        status = plts.removeUnauthorizedExtrema(
           (dataType*) outputScalarArray->GetVoidPointer(0),
           (int*) outputOffsetArray->GetVoidPointer(0),
 
           this->triangulation_,
           (dataType*) inputScalarArray->GetVoidPointer(0),
-          (int*) inputOffsets_->GetVoidPointer(0),
+        //   (int*) inputOffsets_->GetVoidPointer(0),
           (int*) inputCriticalPointIdArray->GetVoidPointer(0),
           (int) inputCriticalPointIdArray->GetNumberOfTuples(),
           this->UseRegionBasedIterations,
           this->UseInterleaving,
+          this->EnforceAuthorizedExtrema,
           this->AddPerturbation,
           this->UseDeallocation
         );
-        printMsg("Global completion", 1, t.getElapsedTime(), 
+        printMsg("Global completion", 1, t.getElapsedTime(),
                  this->threadNumber_);
       } else {
           this->printErr("Unsupported IdType");

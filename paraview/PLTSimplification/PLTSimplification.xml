@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ServerManagerConfiguration>
     <ProxyGroup name="filters">
-        <SourceProxy name="Disambiguate" class="ttkDisambiguate" label="TTK Disambiguate">
+        <SourceProxy name="PLTSimplification" class="ttkPLTSimplification" label="TTK PLTSimplification">
            <Documentation long_help="TODO" short_help="TODO">
                TODO
            </Documentation>
@@ -54,8 +54,8 @@
             <PropertyGroup panel_widget="Line" label="Output Options">
                 <Property name="PersistenceThreshold" />
                 <Property name="UseRegionBasedIterations" />
-                <Property name="UseDeallocation" />
                 <Property name="AddPerturbation" />
+                <Property name="UseDeallocation" />
                 <Property name="EscapeInterval" />
             </PropertyGroup>
 

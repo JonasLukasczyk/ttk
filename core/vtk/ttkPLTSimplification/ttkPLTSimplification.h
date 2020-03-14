@@ -1,11 +1,11 @@
 /// \ingroup vtk
-/// \class ttkDisambiguate
+/// \class ttkpltSimplification
 /// \author Jonas Lukasczyk <jl@jluk.de>
 /// \date 01.09.2019.
 ///
-/// \brief TTK VTK-filter that wraps the ttk::Disambiguate module.
+/// \brief TTK VTK-filter that wraps the ttk::pltSimplification module.
 ///
-/// This VTK filter uses the ttk::Disambiguate module to compute the bounding box of a vtkDataSet, which is returned as a vtkUnstructuredGrid.
+/// This VTK filter uses the ttk::pltSimplification module to compute the bounding box of a vtkDataSet, which is returned as a vtkUnstructuredGrid.
 ///
 /// \param Input vtkDataSet whose bounding box will be computed.
 /// \param Output vtkUnstructuredGrid that corresponds to bounding box of the input.
@@ -16,23 +16,23 @@
 /// See the related ParaView example state files for usage examples within a
 /// VTK pipeline.
 ///
-/// \sa ttk::Disambiguate
+/// \sa ttk::pltSimplification
 /// \sa ttkAlgorithm
 
 #pragma once
 
 // VTK Module
-#include <ttkDisambiguateModule.h>
+#include <ttkPLTSimplificationModule.h>
 
 // VTK Includes
 #include <ttkAlgorithm.h>
 
 // TTK Base Includes
-#include <Disambiguate.h>
+#include <PLTSimplification.h>
 
-class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
+class TTKPLTSIMPLIFICATION_EXPORT ttkPLTSimplification
     : public ttkAlgorithm    // we inherit from the generic ttkAlgorithm class
-    , public ttk::Disambiguate // and we inherit from the base class
+    , public ttk::PLTSimplification // and we inherit from the base class
 {
     private:
         bool AddPerturbation{false};
@@ -57,12 +57,12 @@ class TTKDISAMBIGUATE_EXPORT ttkDisambiguate
         vtkGetMacro(EscapeInterval,int);
         vtkSetMacro(EscapeInterval,int);
 
-        static ttkDisambiguate *New();
-        vtkTypeMacro(ttkDisambiguate, ttkAlgorithm);
+        static ttkPLTSimplification *New();
+        vtkTypeMacro(ttkPLTSimplification, ttkAlgorithm);
 
     protected:
-        ttkDisambiguate();
-        ~ttkDisambiguate() override;
+        ttkPLTSimplification();
+        ~ttkPLTSimplification() override;
 
         int FillInputPortInformation(int port, vtkInformation* info) override;
         int FillOutputPortInformation(int port, vtkInformation* info) override;
