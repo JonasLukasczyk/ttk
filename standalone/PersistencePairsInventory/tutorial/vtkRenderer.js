@@ -204,6 +204,7 @@ class vtkRenderer{
     }
 
     setScene(vtkJson){
+        console.log("vtkRender received the data") ;
         for(let i=this.sceneFP.children.length-1; i>=0; i--)
             this.sceneFP.remove(this.sceneFP.children[i]);
 

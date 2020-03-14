@@ -26,6 +26,8 @@ function formatInput(numberofcomponents, data) {
 }
 
 function drawBoxplotCurve(numberofcomponents, data) {
+    $("#box_dataviz").html("")
+
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
         return ;
@@ -242,7 +244,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 items.push(data[i + j * numberofcomponents]);
             }
         }
-        var ret = drawBoxPlot(i + 1, items);
+        var ret = drawBoxPlot(i, items);
         points['max'].push(ret['max']);
         points['q1'].push(ret['q1']);
         points['median'].push(ret['median']);

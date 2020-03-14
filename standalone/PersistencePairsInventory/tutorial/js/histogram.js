@@ -236,7 +236,7 @@ function drawHistogram(iComponent, socket) {
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (Window.PPI['histogram-height'] - 1) + fieldData['ScalarBounds'].Values[0]) ;
-            var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
+            var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
             var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
