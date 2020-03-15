@@ -273,8 +273,10 @@ function drawSDMHistogram(socket) {
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
         var x = trans[0] ;
         var y = trans[1] ;
+        console.log("drag in the histogram: x is " + x + ", y is " + y ) ;
         x += d3.event.dx;
         y += d3.event.dy;
+        console.log("drag in the histogram: dx is " + d3.event.dx + ", dy is " + d3.event.dy ) ;
         // bins of histogram
         d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
 
