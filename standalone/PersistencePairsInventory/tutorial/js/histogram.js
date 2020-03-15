@@ -105,12 +105,19 @@ function drawHistogram(iComponent, socket) {
         bottom: 40,
         left: 50
     } ;
+    var fixedContainerWidth = 1251,
+        fixedContainerHeight = 841 ;
+    
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
+
+    var fixedWidth = fixedContainerWidth - margin.left - margin.right,
+        fixedHeight = fixedContainerHeight - margin.top - margin.bottom;
+
     let container = d3.select("#histogram_viz")
         .append("svg")
-        .attr("width", containerWidth)
-        .attr("height", containerHeight) ;
+        .attr("width", Math.max(containerWidth, fixedContainerWidth))
+        .attr("height", Math.max(containerHeight, fixedContainerHeight)) ;
 
     var svg = container
                 .append("g")
@@ -128,8 +135,8 @@ function drawHistogram(iComponent, socket) {
         .attr('id', 'hist-clip-x')
         .append('rect')
         .attr('x', 0)
-        .attr('y', height)
-        .attr('width', width)
+        .attr('y', fixedHeight)
+        .attr('width', fixedWidth)
         .attr('height', margin.bottom);
 
     var xg = svg.append("g")
@@ -137,7 +144,7 @@ function drawHistogram(iComponent, socket) {
 
     xg.append("g")
         .attr('class', 'axis--hist--x')
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", "translate(0," + fixedHeight + ")")
         .style("font-size", "12px")
         .call(d3.axisBottom(x)) ;
 
@@ -149,10 +156,10 @@ function drawHistogram(iComponent, socket) {
         .append('clipPath')
         .attr('id', 'hist-clip-y')
         .append('rect')
-        .attr('x', -20)
+        .attr('x', -30)
         .attr('y', 0)
         .attr('width', margin.left)
-        .attr('height', height);
+        .attr('height', fixedHeight);
 
     var yg = svg.append("g")
         .attr('clip-path', 'url(#hist-clip-y)')
@@ -169,8 +176,8 @@ function drawHistogram(iComponent, socket) {
         .append('rect')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('width', width)
-        .attr('height', height);
+        .attr('width', fixedWidth)
+        .attr('height', fixedHeight);
 
     // scale region
     var t000 = performance.now() ;
@@ -291,7 +298,7 @@ function drawHistogram(iComponent, socket) {
         .attr("class", "hist-yaxis-title")
         .attr("transform", "rotate(-90)")
         .attr("y", 0 - 42 )
-        .attr("x", 0 - (height / 2))
+        .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
@@ -300,8 +307,8 @@ function drawHistogram(iComponent, socket) {
     // Add x-axis title
     svg.append("text")
         .attr("class", "hist-xaxis-title")
-        .attr("y", (height + 24) )
-        .attr("x", (width / 2.5 + 110))
+        .attr("y", (fixedHeight + 24) )
+        .attr("x", (fixedWidth / 2.5 + 110))
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
@@ -336,7 +343,7 @@ function drawHistogram(iComponent, socket) {
         var currentTransform ;
         console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
-            currentTransform = {"x":0, "y":0, "k":1}
+            currentTransform = {"x":0, "y":fixedHeight - height, "k":1}
         } else {
             // https://gist.github.com/KarolAltamirano/b54c263184be0516a59d6baf7f053f3e
             var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
@@ -350,7 +357,7 @@ function drawHistogram(iComponent, socket) {
         d3.select(".mdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
         d3.select(".axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
-        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        d3.select(".axis--hist--x").attr("transform", "translate("+currentTransform.x+","+fixedHeight+") scale("+currentTransform.k+")");
 
         d3.selectAll(".axis--hist--y g").each(function() {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;

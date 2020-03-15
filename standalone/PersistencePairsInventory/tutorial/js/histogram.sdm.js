@@ -61,12 +61,12 @@ function drawSDMHistogram(socket) {
         var sdm_svg = container
                         .append("svg")
                         .attr("width", 100)
-                        .attr("height", height)
+                        .attr("height", Math.max(height, fixedHeight))
 
         var sdm_g = sdm_svg.append("g")
                         .attr("class", "sdm-vertical-column-g")
                         .attr("transform",
-                            "translate("+10+", "+margin.top+")")
+                            "translate("+10+", "+ margin.top +")")
                         .attr('overflow', 'hidden');
 
         sdm_g.selectAll()
@@ -79,7 +79,7 @@ function drawSDMHistogram(socket) {
                 return xAPPI("0");
             })
             .attr("y", function (d) {
-                return yAPPI(d[0])
+                return yAPPI(d[0]) ;
             })
             .attr("width", xAPPI.bandwidth())
             .attr("ori-width", xAPPI.bandwidth())
@@ -140,6 +140,9 @@ function drawSDMHistogram(socket) {
     let myGroups = getArray( Window.PPI['sdm-histogram-width'] );
     let myVars = getArray( Window.PPI['histogram-height'] );
 
+    var fixedContainerWidth = 1251,
+        fixedContainerHeight = 841 ;
+
     var containerHeight = 841 ;
     var hBase = containerHeight / Window.PPI['histogram-height'] ;
     hBase = Math.min(60, hBase) ;
@@ -150,14 +153,18 @@ function drawSDMHistogram(socket) {
         top: 2,
         right: 0,
         bottom: 40,
-        left: hBase + 60
+        left: hBase + 70
     } ;
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
+
+    var fixedWidth = fixedContainerWidth - margin.left - margin.right,
+        fixedHeight = fixedContainerHeight - margin.top - margin.bottom;
+
     let container = d3.select("#sdm-histogram_viz")
         .append("svg")
-        .attr("width", containerWidth)
-        .attr("height", containerHeight) ;
+        .attr("width", Math.max(containerWidth, fixedContainerWidth))
+        .attr("height", Math.max(containerHeight, fixedContainerHeight)) ;
 
     var svg = container
                 .append("g")
@@ -175,8 +182,8 @@ function drawSDMHistogram(socket) {
         .attr('id', 'sdm-hist-clip-x')
         .append('rect')
         .attr('x', 0)
-        .attr('y', height)
-        .attr('width', width)
+        .attr('y', fixedHeight)
+        .attr('width', fixedWidth)
         .attr('height', margin.bottom);
 
     var xg = svg.append("g")
@@ -184,7 +191,7 @@ function drawSDMHistogram(socket) {
 
     xg.append("g")
         .attr('class', 'sdm-axis--hist--x')
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", "translate(0," + fixedHeight + ")")
         .style("font-size", "12px")
         .call(d3.axisBottom(x).ticks(2, "s"));
 
@@ -196,10 +203,10 @@ function drawSDMHistogram(socket) {
         .append('clipPath')
         .attr('id', 'sdm-hist-clip-y')
         .append('rect')
-        .attr('x', -20)
+        .attr('x', -30)
         .attr('y', 0)
         .attr('width', margin.left)
-        .attr('height', height);
+        .attr('height', fixedHeight);
 
     var yg = svg.append("g")
         .attr('clip-path', 'url(#sdm-hist-clip-y)')
@@ -218,8 +225,8 @@ function drawSDMHistogram(socket) {
         .append('rect')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('width', width)
-        .attr('height', height);
+        .attr('width', fixedWidth)
+        .attr('height', fixedHeight);
 
     var parentSvg = svg.append("svg") ;
     parentSvg.on("mouseover", function () {
@@ -340,7 +347,7 @@ function drawSDMHistogram(socket) {
         .attr("class", "sdm-hist-yaxis-title")
         .attr("transform", "rotate(-90)")
         .attr("y", 0 - 42 )
-        .attr("x", 0 - (height / 2))
+        .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
@@ -349,8 +356,8 @@ function drawSDMHistogram(socket) {
     // dd x-axis title
     svg.append("text")
         .attr("class", "sdm-hist-xaxis-title")
-        .attr("y", (height + 24) )
-        .attr("x", (width / 2.5 + 110))
+        .attr("y", fixedHeight + 24)
+        .attr("x", fixedWidth / 2.5 + 110)
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
@@ -384,7 +391,7 @@ function drawSDMHistogram(socket) {
         var currentTransform ;
         console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
-            currentTransform = {"x":0, "y":0, "k":1}
+            currentTransform = {"x":0, "y":fixedHeight - height, "k":1}
         } else {
             var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
             var curTmp = d3.event.transform ;
@@ -403,7 +410,7 @@ function drawSDMHistogram(socket) {
         d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
         d3.select(".sdm-axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
-        d3.select(".sdm-axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        d3.select(".sdm-axis--hist--x").attr("transform", "translate("+currentTransform.x+","+fixedHeight+") scale("+currentTransform.k+")");
 
         d3.selectAll(".sdm-axis--hist--y g").each(function() {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
