@@ -59,13 +59,17 @@ function drawSDMHistogram(socket) {
             .domain(myVars) ;
 
         var sdm_svg = container
-                        .append("g")
+                        .append("svg")
+                        .attr("width", 100)
+                        .attr("height", height)
+
+        var sdm_g = sdm_svg.append("g")
                         .attr("class", "sdm-vertical-column-g")
                         .attr("transform",
                             "translate("+10+", "+margin.top+")")
                         .attr('overflow', 'hidden');
-        
-        sdm_svg.selectAll()
+
+        sdm_g.selectAll()
             .data(relData)
             .enter()
             .append("rect")

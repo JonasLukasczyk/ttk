@@ -136,7 +136,38 @@ function objectCallback(msg) {
 		orientation: "horizontal",
 		max: Window.PPI['histogram-width'] - 1,
 		values: [0, Window.PPI['histogram-width'] - 1],
+		stop: function( event, ui ) {
+			console.log("stop", ui) ;
+			$(this).attr("stop-0", ui.values[0]) ;
+			$(this).attr("stop-1", ui.values[1]) ;
+			if ( $(this).attr("stop-0") === $(this).attr("stop-1") ) {
+				if ( $(this).attr("start-v-0") === $(this).attr("start-v-1") ) {  // automatically change
+					if ( $(this).attr("start-0") === $(this).attr("stop-0") ) {
+						var tmpMax = $(this).slider('option', 'max') ;
+						$(this).slider( "option", "values", [Math.min(tmpMax, parseInt($(this).attr("stop-0")) + 1), Math.min(tmpMax, parseInt($(this).attr("stop-0")) + 1)]) ;
+					} else {
+						var tmp = Math.max(0, parseInt($(this).attr("stop-0")) - 1) ;
+						$(this).slider( "option", "values", [tmp, tmp]) ;
+					}
+				}
+			}
+		},
+		start: function( event, ui ) {
+			if ( isNaN(ui.values[0]) && isNaN(ui.values[1])) {
+				$(this).attr("start-v-0", "1") ;
+				$(this).attr("start-v-1", "1") ;
+				return ;
+			}
+			if ( ui.values[0] !== ui.values[1]) {
+				$(this).attr("start-0", ui.values[0]) ;
+				$(this).attr("start-1", ui.values[1]) ;
+			} else {
+				$(this).attr("start-v-0", ui.values[0]) ;
+				$(this).attr("start-v-1", ui.values[1]) ;
+			}
+		},
 		slide: function( event, ui ) {
+			console.log("slide", ui.values) ;
 			$("#picker_left").text(ui.values[0]) ;
 			$("#picker_right").text(ui.values[1]) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
