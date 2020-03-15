@@ -38,6 +38,8 @@ function drawSDMHistogram(socket) {
     function drawVerticalColumn() {
         // Add extra column
         // extract information
+        // FLAG, re-draw vertical column
+        var sdm_vertical_column_g_transform = $("#sdm-vertical-column-g").attr("transform") || "translate(0,0) scale(1)";
         d3.select(".sdm-vertical-column-g").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val())
@@ -82,6 +84,8 @@ function drawSDMHistogram(socket) {
             })
             .append("title")
             .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] });
+        
+        $("#sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
     }
 
     $("#hist-time").val(iComponent) ;
@@ -117,7 +121,14 @@ function drawSDMHistogram(socket) {
     let dist_data = getLegendData(getHistogramFrameData(min_persistence_pairs, threshold_idx, max_threshold_window, max_persistence_pairs, nComponents)) ;
     drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
 
-    // draw histogram
+    // FLAG, draw histogram, remove all previous data
+    var sdm_hist_clip_g_transform = $("#sdm-hist-clip-g").attr("transform") ;
+    var sdm_rect_box_cover_transform = $(".sdm-rect-box-cover").attr("transform");
+    var sdm_axis_hist_y = $(".sdm-axis--hist--y").attr("transform");
+    var sdm_axis_hist_x = $(".sdm-axis--hist--x").attr("transform");
+    var sdm_axis_hist_y_g = $(".sdm-axis--hist--y g").length > 0? $($(".sdm-axis--hist--y g")[0]).attr("transform"): undefined ;
+    var sdm_axis_hist_x_g = $(".sdm-axis--hist--x g").length > 0? $($(".sdm-axis--hist--x g")[0]).attr("transform"): undefined ;
+
     d3.select("#sdm-histogram_viz *").remove() ;
     let myGroups = getArray( Window.PPI['sdm-histogram-width'] );
     let myVars = getArray( Window.PPI['histogram-height'] );
@@ -424,6 +435,35 @@ function drawSDMHistogram(socket) {
 
     $("#sdm-histogram_zoom_back").click() ;
     $("#histogram-notification-placeholder-0").html("") ;
+
+    // replay previous settings
+    if (sdm_hist_clip_g_transform) {
+        $("#sdm-hist-clip-g").attr("transform", sdm_hist_clip_g_transform) ;
+    }
+    if (sdm_rect_box_cover_transform) {
+        $(".sdm-rect-box-cover").attr("transform", sdm_rect_box_cover_transform);
+    }
+    if (sdm_axis_hist_y) {
+        $(".sdm-axis--hist--y").attr("transform", sdm_axis_hist_y) ;
+        
+    }
+    if (sdm_axis_hist_x) {
+        $(".sdm-axis--hist--x").attr("transform", sdm_axis_hist_x) ;
+    }
+
+    if (sdm_axis_hist_y_g) {
+        var y_g_trans = transFormApply(sdm_axis_hist_y_g, undefined, undefined, undefined, true) ;
+        d3.selectAll(".sdm-axis--hist--y g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, y_g_trans[2])) ;
+        }) ;
+    }
+
+    if (sdm_axis_hist_x_g) {
+        var x_g_trans = transFormApply(sdm_axis_hist_x_g, undefined, undefined, undefined, true) ;
+        d3.selectAll(".sdm-axis--hist--x g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, x_g_trans[2])) ;
+        }) ;
+    }
 }
 
 $("#hist-time").change(function () {

@@ -81,7 +81,14 @@ function drawHistogram(iComponent, socket) {
     var t11 = performance.now() ;
     console.log("the cost of time for rendering legend: " + (t11 - t00) + " milliseconds");
 
-    // draw histogram
+    // FLAG, draw histogram, remove all previous data
+    var hist_clip_highlight_transform = $("#hist-clip-highlight").attr("transform") ;
+    var mdm_rect_box_cover_transform = $(".mdm-rect-box-cover").attr("transform");
+    var axis_hist_y = $(".axis--hist--y").attr("transform");
+    var axis_hist_x = $(".axis--hist--x").attr("transform");
+    var axis_hist_y_g = $(".axis--hist--y g").length > 0? $($(".axis--hist--y g")[0]).attr("transform"): undefined ;
+    var axis_hist_x_g = $(".axis--hist--x g").length > 0? $($(".axis--hist--x g")[0]).attr("transform"): undefined ;
+
     d3.select("#histogram_viz *").remove() ;
     let myGroups = getArray( Window.PPI['histogram-width']);
     let myVars = getArray( Window.PPI['histogram-height']);
@@ -236,7 +243,7 @@ function drawHistogram(iComponent, socket) {
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (Window.PPI['histogram-height'] - 1) + fieldData['ScalarBounds'].Values[0]) ;
-            var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
+            var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
             var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
@@ -407,6 +414,36 @@ function drawHistogram(iComponent, socket) {
 
     $("#histogram_zoom_back").click() ;
     $("#histogram-notification-placeholder-0").html("") ;
+
+    // replay previous settings
+    if (hist_clip_highlight_transform) {
+        $("#hist-clip-highlight").attr("transform", hist_clip_highlight_transform) ;
+        $("#hist-clip-opacity").attr("transform", hist_clip_highlight_transform) ;
+    }
+    if (mdm_rect_box_cover_transform) {
+        $(".mdm-rect-box-cover").attr("transform", mdm_rect_box_cover_transform);
+    }
+    if (axis_hist_y) {
+        $(".axis--hist--y").attr("transform", axis_hist_y) ;
+        
+    }
+    if (axis_hist_x) {
+        $(".axis--hist--x").attr("transform", axis_hist_x) ;
+    }
+
+    if (axis_hist_y_g) {
+        var y_g_trans = transFormApply(axis_hist_y_g, undefined, undefined, undefined, true) ;
+        d3.selectAll(".axis--hist--y g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, y_g_trans[2])) ;
+        }) ;
+    }
+
+    if (axis_hist_x_g) {
+        var x_g_trans = transFormApply(axis_hist_x_g, undefined, undefined, undefined, true) ;
+        d3.selectAll(".axis--hist--x g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, x_g_trans[2])) ;
+        }) ;
+    }
 }
 
 // draw a curve for histogram of each bins when hovering it

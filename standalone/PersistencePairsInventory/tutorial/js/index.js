@@ -47,7 +47,7 @@ Window.PPI = {
 } ;
 
 let ttk, ttk_render;
-let RENDERER = new vtkRenderer('RendererContainer', 581, 321);
+let RENDERER = new vtkRenderer('RendererContainer', 581, 421);
 
 // reset the content of boxplot
 function resetBoxplot() {
@@ -207,7 +207,7 @@ function triggerCtrlV() {
 		Window.PPI['histogram-mode'] = "single" ;
 		$("[element-show='mdm']").css("display", "none") ;
 		$("[element-show='sdm']").css("display", "") ;
-		drawSDMHistogram(Window.PPI['selected-time-id'], Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
+		drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 	} else {
 		Window.PPI['histogram-mode'] = "multi" ;
 		$("[element-show='mdm']").css("display", "") ;
@@ -333,7 +333,7 @@ $("#hist-threshold").change(function () {
     	if (Window.PPI['histogram-mode'] == "multi") {
 	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	} else {
-	        drawSDMHistogram(0, Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
     });
     $('#histogram-view-container').plainOverlay('hidden');
