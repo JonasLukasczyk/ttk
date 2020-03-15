@@ -444,6 +444,8 @@ function drawHistogram(iComponent, socket) {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, x_g_trans[2])) ;
         }) ;
     }
+
+    $("#hidden-mdm-add-window").click() ;
 }
 
 // draw a curve for histogram of each bins when hovering it
