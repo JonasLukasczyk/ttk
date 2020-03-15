@@ -39,7 +39,7 @@ function drawSDMHistogram(socket) {
         // Add extra column
         // extract information
         // FLAG, re-draw vertical column
-        var sdm_vertical_column_g_transform = $("#sdm-vertical-column-g").attr("transform") || "translate(0,0) scale(1)";
+        var sdm_vertical_column_g_transform = $(".sdm-vertical-column-g").attr("transform");
         d3.select(".sdm-vertical-column-g").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val())
@@ -78,6 +78,7 @@ function drawSDMHistogram(socket) {
                 return yAPPI(d[0])
             })
             .attr("width", xAPPI.bandwidth())
+            .attr("ori-width", xAPPI.bandwidth())
             .attr("height", yAPPI.bandwidth())
             .style("fill", function (d) {
                 return customColor(d[1], d[2]) ;
@@ -85,7 +86,9 @@ function drawSDMHistogram(socket) {
             .append("title")
             .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] });
         
-        $("#sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
+        if ( sdm_vertical_column_g_transform ) {
+            $(".sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
+        }
     }
 
     $("#hist-time").val(iComponent) ;
@@ -270,7 +273,12 @@ function drawSDMHistogram(socket) {
         y += d3.event.dy;
         // bins of histogram
         d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
-        
+
+        $(".sdm-vertical-column-g").attr("transform", transFormApply($(".sdm-vertical-column-g").attr("transform"), undefined, y, scale)) ;
+        $(".sdm-vertical-column-g rect").each(function() {
+            $(this).attr("width", parseFloat($(this).attr("ori-width")) / scale) ;
+        }) ;
+         
         var yTrans = transFormApply($(".sdm-axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
         var yX = yTrans[0] ;
         var yY = yTrans[1] ;
@@ -380,6 +388,12 @@ function drawSDMHistogram(socket) {
         }
 
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+
+        $(".sdm-vertical-column-g").attr("transform", transFormApply($(".sdm-vertical-column-g").attr("transform"), undefined, currentTransform.y, currentTransform.k)) ;
+        $(".sdm-vertical-column-g rect").each(function() {
+            $(this).attr("width", parseFloat($(this).attr("ori-width")) / currentTransform.k) ;
+        }) ;
+
         d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
         d3.select(".sdm-axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
@@ -439,6 +453,11 @@ function drawSDMHistogram(socket) {
     // replay previous settings
     if (sdm_hist_clip_g_transform) {
         $("#sdm-hist-clip-g").attr("transform", sdm_hist_clip_g_transform) ;
+        var clip_g = transFormApply(sdm_hist_clip_g_transform, undefined, undefined, undefined, true) ;
+        $(".sdm-vertical-column-g").attr("transform", transFormApply($(".sdm-vertical-column-g").attr("transform"), undefined, clip_g[1], clip_g[2])) ;
+        $(".sdm-vertical-column-g rect").each(function() {
+            $(this).attr("width", parseFloat($(this).attr("ori-width")) / clip_g[2]) ;
+        }) ;
     }
     if (sdm_rect_box_cover_transform) {
         $(".sdm-rect-box-cover").attr("transform", sdm_rect_box_cover_transform);
