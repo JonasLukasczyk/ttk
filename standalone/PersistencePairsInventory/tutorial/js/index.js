@@ -168,6 +168,7 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
 		slide: function(event, ui) {
+			$("#legend-custom-handle-top").html("<span style='font-size:10px;'>"+ui.value+"</span>") ;
 			$("#hidden-legend-redraw-top").click() ;
 		},
 	}) ;
@@ -178,10 +179,11 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
 		slide: function(event, ui) {
+			$("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+ui.value+"</span>") ;
 			$("#hidden-legend-redraw-right").click() ;
 		},
 	}) ;
-	
+
     resetHist() ;
 
     var mCount = 1 ;
