@@ -5,6 +5,7 @@
 }
 
 #slider-range { display : inline-block; width : 10em; }
+#slider-range-single { display : inline-block; width : 10em; }
 
 html {
     -webkit-user-select: none;

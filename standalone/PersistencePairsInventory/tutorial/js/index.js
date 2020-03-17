@@ -43,6 +43,7 @@ Window.PPI = {
 		"enable": false,
 		"start": 2,
 		"end": 12, // inclusive
+		"time-picker-mode": "multi", // or "single"
 	},
 } ;
 
@@ -128,6 +129,25 @@ function objectCallback(msg) {
 	triggerCtrlV() ;
 
     $('body').plainOverlay('hide');
+
+    $( "#slider-range-single" ).unbind().slider({
+      range: "min",
+      value: 0,
+      min: 0,
+      step: 1,
+      max: Window.PPI['histogram-width'] - 1,
+      slide: function( event, ui ) {
+			$("#picker_left").text(ui.value) ;
+			$("#picker_right").text(ui.value) ;
+			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
+			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.value ;
+			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.value ;
+			resetBoxplot() ;
+    		drawBoxPlot() ;
+    		// Add the box window over histogram's bins
+    		$("#hidden-mdm-add-window").click() ;
+      }
+    });
 
     // https://jqueryui.com/slider/#range
 	$( "#slider-range" ).unbind().slider({
@@ -257,15 +277,31 @@ $(document).keydown(function (e) {
 	}
 
 	switch (e.key) {
-		case "v":
+		case "v":  // toggle between MDM and SDM view
 			triggerCtrlV() ;
 			break ;
 
-		case "x":
+		case "x":  // toggle hover in the MDM view
 			Window.PPI["X-mode"] = 1 - Window.PPI["X-mode"] ;
 			break ;
 
-		case "b":
+		case "m": // toogle the time picker mode
+			if ( Window.PPI['boxplot-timestamp-range-mode']['start'] === Window.PPI['boxplot-timestamp-range-mode']['end'] ) {
+				if ( Window.PPI['boxplot-timestamp-range-mode']["time-picker-mode"] === "multi" ) {
+					Window.PPI['boxplot-timestamp-range-mode']["time-picker-mode"] = "single" ;
+					$("#slider-range").css("display", "none") ;
+					$("#slider-range-single").css("display", "") ;
+					$("#slider-range-single").slider("value", parseInt(Window.PPI['boxplot-timestamp-range-mode']['start']))
+				} else {
+					Window.PPI['boxplot-timestamp-range-mode']["time-picker-mode"] = "multi" ;
+					$("#slider-range").css("display", "") ;
+					$("#slider-range-single").css("display", "none") ;
+					$( "#slider-range" ).slider("option", "values", [ parseInt(Window.PPI['boxplot-timestamp-range-mode']['start']),  parseInt(Window.PPI['boxplot-timestamp-range-mode']['end'])])
+				}
+			}
+			break ;
+
+		case "b": // toggle selection in the boxplot
 			$("#hidden-brush-mode").click();
 			break;
 
