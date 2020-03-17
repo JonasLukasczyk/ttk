@@ -11,7 +11,8 @@ d3.select("body")
 // iComponent: for the threshold index
 // socket: webSocketIO object
 // returned: used for retrieving data purely
-function drawHistogram(iComponent, socket) {
+function drawHistogram(iComponent, socket, tag=0) {
+    // tag: default 0, 1 => use current medium for top and right bar
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
         return ;
@@ -77,7 +78,7 @@ function drawHistogram(iComponent, socket) {
     let dist_data = getLegendData(vData) ;
 
     var t00 = performance.now() ;
-    drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
+    drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs, tag === 1 ? 1: 0) ;
     var t11 = performance.now() ;
     console.log("the cost of time for rendering legend: " + (t11 - t00) + " milliseconds");
 
@@ -341,9 +342,8 @@ function drawHistogram(iComponent, socket) {
 
     function zoomend(d) {
         var currentTransform ;
-        console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
-            currentTransform = {"x":0, "y":fixedHeight - height, "k":1}
+            currentTransform = {"x":0, "y": (fixedHeight - height) / 2, "k":1}
         } else {
             // https://gist.github.com/KarolAltamirano/b54c263184be0516a59d6baf7f053f3e
             var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;

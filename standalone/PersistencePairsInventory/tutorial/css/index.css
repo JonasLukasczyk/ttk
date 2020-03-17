@@ -6,6 +6,16 @@
 
 #slider-range { display : inline-block; width : 10em; }
 #slider-range-single { display : inline-block; width : 10em; }
+#legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 12px;  /* -168px; 2px; */ right: 1px;}
+#legend-custom-handle-top { height: 0.8em; }
+
+#legend-slider-right {     display: inline-block;
+    width: 4px;
+    height: 158px;
+    position: absolute;
+    top: 14px;
+    right: 1px;}
+#legend-custom-handle-right { height: 0.8em; }
 
 html {
     -webkit-user-select: none;

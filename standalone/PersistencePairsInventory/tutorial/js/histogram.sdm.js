@@ -391,7 +391,7 @@ function drawSDMHistogram(socket) {
         var currentTransform ;
         console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
-            currentTransform = {"x":0, "y":fixedHeight - height, "k":1}
+            currentTransform = {"x":0, "y":(fixedHeight - height) / 2, "k":1}
         } else {
             var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
             var curTmp = d3.event.transform ;

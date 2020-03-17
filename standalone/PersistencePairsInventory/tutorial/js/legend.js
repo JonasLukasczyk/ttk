@@ -1,4 +1,5 @@
-function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
+function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
+    // tag: default 0, 1 => use current medium for top and right bar
     function removeLastEqual(bins) {
         if ( bins.length > 0 ) {
             let lastEle = bins.slice(-1)[0] ;
@@ -13,17 +14,32 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         return bins ;
     }
 
+    function getMediumFromHistogramBins(bins) {
+        var values = [] ;
+
+        for ( var i = 0; i < bins.length; i ++ ) {
+            if ( bins[i].length > 0 ) {
+                values.push(bins[i].length) ;
+            }
+        }
+
+        values.sort(function(a, b) {return a - b ; }) ;
+        return values.length > 0? values[ Math.floor(values.length / 2) ]: 0 ;
+    }
+
+
     // reduced_data: [(reliability, # of bins), ...]
     let x_0 = getFloatValue("#histogram_viz_legend", "data-x_0"),
         x_1 = getFloatValue("#histogram_viz_legend", "data-x_1"),
         width_partition = 20,
         height_partition = 10;
+    var colorBar = "gray" ;
 
-    let containerWidth = 281;
+    let containerWidth = 241;
     let containerHeight = 161;
     let margin = {
         top: 40,
-        right: 60,
+        right: 40,
         bottom: 20,
         left: 40
     };
@@ -49,73 +65,84 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
     var lHeight = margin.top - 5 ;
     let bins = histogram(data);
     bins = removeLastEqual(bins) ;
+    originBins = bins.slice(0) ;
     let yLine = d3.scaleLinear().range([lHeight, 0]);
     // Y domain should be fixed
-    // yLine.domain([0, d3.max(bins, function(d) { return d.length; })]);   // d3.hist has to be called before the Y axis obviously
-    yLine.domain([0, Window.PPI['histogram-width'] * Window.PPI['histogram-height']]);   // d3.hist has to be called before the Y axis obviously
+    var mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ; 
+    if ( mediumTop === -1 ) {
+        mediumTop = getMediumFromHistogramBins(bins) ;
+    }
+    if ( tag === 1) {
+        Window.PPI['persistence_pairs_range']['medium_top'] = mediumTop ;
+    }
+    console.log("mediumTop in the legend is " + mediumTop) ;
+    yLine.domain([0, mediumTop]);   // d3.hist has to be called before the Y axis obviously
+    $("#legend-slider-top").slider("value", mediumTop) ;
     let lineSvg = container
         .append("g")
         .attr("transform",
             "translate(" + margin.left + ", 5)")
         .attr('overflow', 'hidden');
-    
-    let dragTop = d3.drag()
-        .on('start', topDragstarted)
-        .on('drag', topDragged)
-        .on('end', topDragended);
 
-    function topDragstarted() {
-        d3.select(this).attr('class', 'active-d3-item-line2');
-    }
+    // let dragTop = d3.drag()
+    //     .on('start', topDragstarted)
+    //     .on('drag', topDragged)
+    //     .on('end', topDragended);
 
-    function topDragged(d) {
-        d = yLine.invert(d3.event.y);
-        if ( d <= 1) {
-            return ;
-        }
-        if ( d3.event.y <= 1) {
-            return ;
-        }
-        d3.select(this)
-            .attr('y1', yLine(d))
-            .attr('y2', yLine(d)) ;
-        d3.select(this).attr("data-value", yLine(d)) ;
-    }
+    // function topDragstarted() {
+    //     d3.select(this).attr('class', 'active-d3-item-line2');
+    // }
 
-    function topDragended() {
-        d3.select(this).attr('class', 'inactive-d3-item-line2');
-        d3.select("#top-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
-    }
+    // function topDragged(d) {
+    //     d = yLine.invert(d3.event.y);
+    //     if ( d <= 1) {
+    //         return ;
+    //     }
+    //     if ( d3.event.y <= 1) {
+    //         return ;
+    //     }
+    //     d3.select(this)
+    //         .attr('y1', yLine(d))
+    //         .attr('y2', yLine(d)) ;
+    //     d3.select(this).attr("data-value", yLine(d)) ;
+    // }
+
+    // function topDragended() {
+    //     d3.select(this).attr('class', 'inactive-d3-item-line2');
+    //     d3.select("#top-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
+    // }
 
     lineSvg.append("g")
         .selectAll("rect")
         .data(bins)
         .enter()
         .append("rect")
-        .attr("transform", function(d) { return "translate(" + xLine(d.x0) + "," + yLine(d.length) + ")"; })
+        .attr("transform", function(d) { return "translate(" + xLine(d.x0) + "," + yLine(Math.min(d.length, mediumTop)) + ")"; })
         .attr("width", function(d) {
             return xLine(d.x1) - xLine(d.x0);
         })
-        .attr("height", function(d) { return lHeight - yLine(d.length); })
-        .style("fill", "black") ;
+        .attr("height", function(d) { return lHeight - yLine(Math.min(d.length, mediumTop)); })
+        .style("fill", colorBar)
+        .append("title")
+        .text(function(d) { return "# is "+ d.length + ", range is (" + d.x0 + ", " + d.x1 +")"  });
 
-    lineSvg.append('rect')
-        .attr("x", 0)
-        .attr("id", "top-legend-rect-cover")
-        .attr("y", 0)
-        .attr("width", width)
-        .attr("height", 0.4 * lHeight)
-        .attr("fill", "white") ;
+    // lineSvg.append('rect')
+    //     .attr("x", 0)
+    //     .attr("id", "top-legend-rect-cover")
+    //     .attr("y", 0)
+    //     .attr("width", width)
+    //     .attr("height", 0.4 * lHeight)
+    //     .attr("fill", "white") ;
 
-    // Add a Line
-    lineSvg.append('line')
-        .attr("x1", 0)
-        .attr("y1", 0.4 * lHeight)
-        .attr("x2", width)
-        .attr("y2", 0.4 * lHeight)
-        .attr("class", "inactive-d3-item-line2")
-        .style("cursor", "pointer")
-        .call(dragTop) ;
+    // // Add a Line
+    // lineSvg.append('line')
+    //     .attr("x1", 0)
+    //     .attr("y1", 0.4 * lHeight)
+    //     .attr("x2", width)
+    //     .attr("y2", 0.4 * lHeight)
+    //     .attr("class", "inactive-d3-item-line2")
+    //     .style("cursor", "pointer")
+    //     .call(dragTop) ;
 
     // ============================= draw the right bar chart
     let xLineRight = d3.scaleLinear().range([0, height]).domain([min_persistence_pairs, max_persistence_pairs]);
@@ -128,7 +155,16 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
     let binsRight = histogramRight(data);
     binsRight = removeLastEqual(binsRight) ;
     let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
-    yLineRight.domain([0,  Window.PPI['histogram-width'] * Window.PPI['histogram-height']]);   // d3.hist has to be called before the Y axis obviously
+    originBinsRight = binsRight.slice(0) ;
+    var mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ; 
+    if ( mediumRight === -1 ) {
+        mediumRight = getMediumFromHistogramBins(binsRight) ;
+    }
+    if ( tag === 1) {
+        Window.PPI['persistence_pairs_range']['medium_right'] = mediumRight ;
+    }
+    console.log("mediumRight in the legend is " + mediumRight) ;
+    yLineRight.domain([0,  mediumRight]);   // d3.hist has to be called before the Y axis obviously
     rHeight = margin.right - 5 ;
     let lineSvgRight = container
         .append("g")
@@ -136,34 +172,34 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
             "translate(" + (margin.left + width + margin.right - 5) + ", "+ margin.top+") rotate(90)")
         .attr('overflow', 'hidden');
 
-    let dragRight = d3.drag()
-        .on('start', rightDragstarted)
-        .on('drag', rightDragged)
-        .on('end', rightDragended);
+    // let dragRight = d3.drag()
+    //     .on('start', rightDragstarted)
+    //     .on('drag', rightDragged)
+    //     .on('end', rightDragended);
 
-    function rightDragstarted() {
-        d3.select(this).attr('class', 'active-d3-item-line2');
-    }
+    // function rightDragstarted() {
+    //     d3.select(this).attr('class', 'active-d3-item-line2');
+    // }
 
-    function rightDragged(d) {
-        d = yLineRight.invert(d3.event.y);
-        if ( d <= 1) {
-            return ;
-        }
+    // function rightDragged(d) {
+    //     d = yLineRight.invert(d3.event.y);
+    //     if ( d <= 1) {
+    //         return ;
+    //     }
 
-        if ( d3.event.y <= 1) {
-            return ;
-        }
-        d3.select(this)
-            .attr('y1', yLineRight(d))
-            .attr('y2', yLineRight(d)) ;
-        d3.select(this).attr("data-value", yLineRight(d)) ;
-    }
+    //     if ( d3.event.y <= 1) {
+    //         return ;
+    //     }
+    //     d3.select(this)
+    //         .attr('y1', yLineRight(d))
+    //         .attr('y2', yLineRight(d)) ;
+    //     d3.select(this).attr("data-value", yLineRight(d)) ;
+    // }
 
-    function rightDragended() {
-        d3.select(this).attr('class', 'inactive-d3-item-line2');
-        d3.select("#right-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
-    }
+    // function rightDragended() {
+    //     d3.select(this).attr('class', 'inactive-d3-item-line2');
+    //     d3.select("#right-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
+    // }
     
     binsRight = binsRight.reverse()
     var x2 = min_persistence_pairs ;
@@ -175,30 +211,32 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
         .data(binsRight)
         .enter()
         .append("rect")
-        .attr("transform", function(d) { return "translate(" + xLineRight(d.x2) + "," + yLineRight(d.length) + ")"; })
+        .attr("transform", function(d) { return "translate(" + xLineRight(d.x2) + "," + yLineRight(Math.min(mediumRight, d.length)) + ")"; })
         .attr("width", function(d) {
             return xLineRight(d.x1) - xLineRight(d.x0);
         })
-        .attr("height", function(d) { return margin.right - 5 - yLineRight(d.length); })
-        .style("fill", "black") ;
+        .attr("height", function(d) { return margin.right - 5 - yLineRight(Math.min(mediumRight, d.length)); })
+        .style("fill", colorBar)
+        .append("title")
+        .text(function(d) { return "# is "+ d.length + ", range is (" + d.x0 + ", " + d.x1 +")"  });
 
-    lineSvgRight.append('rect')
-        .attr("x", 0)
-        .attr("id", "right-legend-rect-cover")
-        .attr("y", 0)
-        .attr("width", height)
-        .attr("height", 0.4 * rHeight)
-        .attr("fill", "white") ;
+    // lineSvgRight.append('rect')
+    //     .attr("x", 0)
+    //     .attr("id", "right-legend-rect-cover")
+    //     .attr("y", 0)
+    //     .attr("width", height)
+    //     .attr("height", 0.4 * rHeight)
+    //     .attr("fill", "white") ;
 
-    // Add a Line
-    lineSvgRight.append('line')
-        .attr("x1", 0)
-        .attr("y1", 0.4 * rHeight)
-        .attr("x2", height)
-        .attr("y2", 0.4 * rHeight)
-        .attr("class", "inactive-d3-item-line2")
-        .style("cursor", "pointer")
-        .call(dragRight) ;
+    // // Add a Line
+    // lineSvgRight.append('line')
+    //     .attr("x1", 0)
+    //     .attr("y1", 0.4 * rHeight)
+    //     .attr("x2", height)
+    //     .attr("y2", 0.4 * rHeight)
+    //     .attr("class", "inactive-d3-item-line2")
+    //     .style("cursor", "pointer")
+    //     .call(dragRight) ;
     // ===================================================================================================================
 
     // updated notification
@@ -371,4 +409,20 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs) {
             $("#hidden-sdm-draw-legend-lonely").click() ;
         }
     }
+
+    function reScaleTop() {
+        console.log("rescale top: " + $("#legend-slider-top").slider("value")) ;
+    } 
+
+    function reScaleRight() {
+        console.log("rescale right: " + $("#legend-slider-right").slider("value")) ;
+    }
+
+    $("#hidden-legend-redraw-top").unbind().click(function() {
+        reScaleTop() ;
+    }) ;
+
+     $("#hidden-legend-redraw-right").unbind().click(function() {
+        reScaleRight() ;
+    }) ;
 }

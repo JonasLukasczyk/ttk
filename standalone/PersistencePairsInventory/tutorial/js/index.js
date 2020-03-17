@@ -30,7 +30,9 @@ Window.PPI = {
         "is_custom": false,
         "custom_upper": -1, 
 		"custom_lower": -1, 
-		// "threshold index" => [minPPI, maxPPI] 
+		// "threshold index" => [minPPI, maxPPI],
+		"medium_top": -1,
+		"medium_right": -1,
     },  
 	"histogram-mode": "multi", // multi or single
 	"thresholdRatio": 1,
@@ -115,22 +117,8 @@ function objectCallback(msg) {
 	Window.PPI['sdm-histogram-width'] = Window.PPI['numberOfThreshold-histogram'] ;
 	// it should be a integer otherwise error may occur
 	Window.PPI['thresholdRatio'] = Window.PPI['numberOfThreshold-boxplot'] / Window.PPI['numberOfThreshold-histogram'] ;
-    resetHist() ;
 
-    var mCount = 1 ;
-    if (Window.PPI['histogram-width'] <= mCount) {
-    	Window.PPI['histogram-mode'] = "multi" ;  // show the single-view at first
-    } else {
-    	Window.PPI['histogram-mode'] = "single" ; // show the multi-view at first
-    }
-    resetBoxplot() ;
-    drawBoxPlot() ;
-	
-	triggerCtrlV() ;
-
-    $('body').plainOverlay('hide');
-
-    $( "#slider-range-single" ).unbind().slider({
+	$( "#slider-range-single" ).unbind().slider({
       range: "min",
       value: 0,
       min: 0,
@@ -157,7 +145,6 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] - 1,
 		values: [0, Window.PPI['histogram-width'] - 1],
 		slide: function( event, ui ) {
-			console.log("slide", ui.values) ;
 			$("#picker_left").text(ui.values[0]) ;
 			$("#picker_right").text(ui.values[1]) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
@@ -174,6 +161,42 @@ function objectCallback(msg) {
 			$("#histogram-time-picker-default").html("") ;
 		}
 	});
+
+	$("#legend-slider-top").unbind().slider({
+		min: 0,
+		orientation: "horizontal",
+		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
+		value: 0,
+		slide: function(event, ui) {
+			$("#hidden-legend-redraw-top").click() ;
+		},
+	}) ;
+
+	$("#legend-slider-right").unbind().slider({
+		min: 0,
+		orientation: "vertical",
+		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
+		value: 0,
+		slide: function(event, ui) {
+			$("#hidden-legend-redraw-right").click() ;
+		},
+	}) ;
+	
+    resetHist() ;
+
+    var mCount = 1 ;
+    if (Window.PPI['histogram-width'] <= mCount) {
+    	Window.PPI['histogram-mode'] = "multi" ;  // show the single-view at first
+    } else {
+    	Window.PPI['histogram-mode'] = "single" ; // show the multi-view at first
+    }
+    resetBoxplot() ;
+    drawBoxPlot() ;
+	
+	triggerCtrlV() ;
+
+    $('body').plainOverlay('hide');
+    
 }
 
 function Connect() {
@@ -409,10 +432,12 @@ $("#threshold-window").change(function() {
 $("#hist-rescale").unbind().click(function() {
     tmp = getRangeOfPPIByThreshold() ;
     Window.PPI['persistence_pairs_range']['is_custom'] = true ;
+    // setup domain of # of bins
     Window.PPI['persistence_pairs_range']['custom_upper'] = tmp[1] ;
     Window.PPI['persistence_pairs_range']['custom_lower'] = tmp[0] ;
+
     if (Window.PPI['histogram-mode'] == "multi") {
-	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null), tag=1); 
     } else {
 	    drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     }
@@ -428,7 +453,7 @@ $("#histRescaleCustom").unbind().click(function() {
     Window.PPI['persistence_pairs_range']['custom_lower'] = parseFloat($("#histRescaleCustomLower").val()) ;
     Window.PPI['persistence_pairs_range']['custom_upper'] = parseFloat($("#histRescaleCustomUpper").val());
     if (Window.PPI['histogram-mode'] == "multi") {
-	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null), tag=1); 
     } else {
 	    drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     }
