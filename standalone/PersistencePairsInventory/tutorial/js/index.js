@@ -168,9 +168,9 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
 		slide: function(event, ui) {
-			$("#legend-custom-handle-top").html("<span style='font-size:10px;'>"+ui.value+"</span>") ;
+			$("#legend-custom-handle-top").html("<span style='font-size:10px;'>"+ui.value+"</span>").attr("value", ui.value) ;
 			$("#hidden-legend-redraw-top").click() ;
-		},
+		}
 	}) ;
 
 	$("#legend-slider-right").unbind().slider({
@@ -179,7 +179,7 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
 		slide: function(event, ui) {
-			$("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+ui.value+"</span>") ;
+			$("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+ui.value+"</span>").attr("value", ui.value) ;
 			$("#hidden-legend-redraw-right").click() ;
 		},
 	}) ;

@@ -68,14 +68,12 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         var lHeight = margin.top - 5 ;
         let bins = histogram(data);
         bins = removeLastEqual(bins) ;
-        originBins = bins.slice(0) ;
         let yLine = d3.scaleLinear().range([lHeight, 0]);
         // Y domain should be fixed
         var mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ; 
         if ( tag === 1) {
             Window.PPI['persistence_pairs_range']['medium_top'] = getMediumFromHistogramBins(bins) ;
             mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ;
-            tag = 0 ;
         }
         if ( mediumTop === -1 ) {
             mediumTop = getMediumFromHistogramBins(bins) ;
@@ -165,7 +163,6 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         let binsRight = histogramRight(data);
         binsRight = removeLastEqual(binsRight) ;
         let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
-        originBinsRight = binsRight.slice(0) ;
         var mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ; 
         if ( tag === 1) {
             Window.PPI['persistence_pairs_range']['medium_right'] = getMediumFromHistogramBins(binsRight) ;
@@ -428,12 +425,12 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
     }
 
     $("#hidden-legend-redraw-top").unbind().click(function() {
-        Window.PPI['persistence_pairs_range']['medium_top'] = parseInt($("#legend-slider-top").slider("value")) ;
+        Window.PPI['persistence_pairs_range']['medium_top'] = parseInt($("#legend-custom-handle-top").attr("value")) ;
         drawLegendTop() ;
     }) ;
 
      $("#hidden-legend-redraw-right").unbind().click(function() {
-        Window.PPI['persistence_pairs_range']['medium_right'] = parseInt($("#legend-slider-right").slider("value")) ;
+        Window.PPI['persistence_pairs_range']['medium_right'] = parseInt($("#legend-custom-handle-right").attr("value")) ;
         drawLegendRight() ;
 
     }) ;
