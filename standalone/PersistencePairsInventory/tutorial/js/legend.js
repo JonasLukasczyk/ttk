@@ -72,12 +72,15 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         let yLine = d3.scaleLinear().range([lHeight, 0]);
         // Y domain should be fixed
         var mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ; 
+        if ( tag === 1) {
+            Window.PPI['persistence_pairs_range']['medium_top'] = getMediumFromHistogramBins(bins) ;
+            mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ;
+            tag = 0 ;
+        }
         if ( mediumTop === -1 ) {
             mediumTop = getMediumFromHistogramBins(bins) ;
         }
-        if ( tag === 1) {
-            Window.PPI['persistence_pairs_range']['medium_top'] = mediumTop ;
-        }
+        
         yLine.domain([0, mediumTop]);   // d3.hist has to be called before the Y axis obviously
         $("#legend-slider-top").slider("value", mediumTop) ;
         $("#legend-custom-handle-top").html("<span style='font-size:10px;'>"+mediumTop+"</span>") ;
@@ -164,11 +167,13 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
         originBinsRight = binsRight.slice(0) ;
         var mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ; 
+        if ( tag === 1) {
+            Window.PPI['persistence_pairs_range']['medium_right'] = getMediumFromHistogramBins(binsRight) ;
+            mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ;
+            tag = 0 ;
+        }
         if ( mediumRight === -1 ) {
             mediumRight = getMediumFromHistogramBins(binsRight) ;
-        }
-        if ( tag === 1) {
-            Window.PPI['persistence_pairs_range']['medium_right'] = mediumRight ;
         }
         $("#legend-slider-right").slider("value", mediumRight) ;
         $("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+mediumRight+"</span>") ;
