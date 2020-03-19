@@ -33,9 +33,10 @@ function drawBoxplotCurve(numberofcomponents, data) {
         return ;
     }
     Window.box_plot_config = {
-        min_max_color: "#abdda4",
-        q1_q3_color: "#3288bd",
+        min_max_color: "#ef8a62",
+        q1_q3_color: "#fddbc7",
         background_color: "white",
+        median_line_color: "black",
         containerWidth: 561,
         containerHeight: 321,
         margin: {
@@ -439,7 +440,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("name", "box_polygon_line")
             .datum(points['median'])
             .attr("fill", "none")
-            .attr("stroke", "red")
+            .attr("stroke", Window.box_plot_config.median_line_color)
             .attr("stroke-width", 1)
             .attr("d", function (d) {
                 return Window.box_plot_config.line(xScale, yScale)(d);
