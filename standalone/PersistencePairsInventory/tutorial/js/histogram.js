@@ -343,7 +343,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     function zoomend(d) {
         var currentTransform ;
         if (d === "zoom_back") {
-            currentTransform = {"x":0, "y": (fixedHeight - height) / 2, "k":1}
+            currentTransform = {"x":0, "y": (fixedHeight - height), "k":1}
         } else {
             // https://gist.github.com/KarolAltamirano/b54c263184be0516a59d6baf7f053f3e
             var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
