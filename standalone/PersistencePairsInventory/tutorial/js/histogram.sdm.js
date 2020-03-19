@@ -471,6 +471,7 @@ function drawSDMHistogram(socket) {
         $(".sdm-vertical-column-g rect").each(function() {
             $(this).attr("width", parseFloat($(this).attr("ori-width")) / clip_g[2]) ;
         }) ;
+        slider.property("value", scaleReverse(clip_g[2]));
     }
     if (sdm_rect_box_cover_transform) {
         $(".sdm-rect-box-cover").attr("transform", sdm_rect_box_cover_transform);

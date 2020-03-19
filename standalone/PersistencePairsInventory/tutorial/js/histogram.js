@@ -426,6 +426,8 @@ function drawHistogram(iComponent, socket, tag=0) {
     if (hist_clip_highlight_transform) {
         $("#hist-clip-highlight").attr("transform", hist_clip_highlight_transform) ;
         $("#hist-clip-opacity").attr("transform", hist_clip_highlight_transform) ;
+        var y_g_trans = transFormApply(hist_clip_highlight_transform, undefined, undefined, undefined, true) ;
+        slider.property("value", scaleReverse(y_g_trans[2]));
     }
     if (mdm_rect_box_cover_transform) {
         $(".mdm-rect-box-cover").attr("transform", mdm_rect_box_cover_transform);
