@@ -1,6 +1,7 @@
 // iComponent: for the time index
 
 function drawSDMHistogram(socket) {
+    $("#sdm-histogram_viz").loading({theme: 'light'});
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
         return ;
@@ -497,6 +498,8 @@ function drawSDMHistogram(socket) {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, x_g_trans[2])) ;
         }) ;
     }
+
+    $("#sdm-histogram_viz").loading("stop");
 }
 
 $("#hist-time").change(function () {

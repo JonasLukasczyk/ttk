@@ -12,6 +12,7 @@ d3.select("body")
 // socket: webSocketIO object
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket, tag=0) {
+    $("#histogram_viz").loading({theme: 'light'});
     // tag: default 0, 1 => use current medium for top and right bar
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
@@ -246,6 +247,7 @@ function drawHistogram(iComponent, socket, tag=0) {
             }
         })
         .on("click", function (d, i) {
+            $("#RendererContainer").loading({theme: "light"}) ;
             Window.PPI['selected-bin-id'] = $(this).attr("id")
             d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
@@ -455,6 +457,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     }
 
     $("#hidden-mdm-add-window").click() ;
+    $("#histogram_viz").loading("stop");
 }
 
 // draw a curve for histogram of each bins when hovering it

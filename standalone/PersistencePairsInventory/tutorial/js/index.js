@@ -194,15 +194,12 @@ function objectCallback(msg) {
     }
     resetBoxplot() ;
     drawBoxPlot() ;
-	
 	triggerCtrlV() ;
-
-    $('body').plainOverlay('hide');
-    
+	$('body').loading('stop');
 }
 
 function Connect() {
-	$('body').plainOverlay("show");
+	$('body').loading({theme: 'light'});
 	if (ttk && ttk.getSocketObject().readyState !== 3) {
 		alert("please try it again after closing current connection");
 		return;
@@ -224,7 +221,6 @@ function Connect() {
 			btn.attr("disabled", false);
 		},
 		function (msg) { // do what you want for on_message
-			console.log("browser receives a msg:", msg);
 			btn.html('Connect');
 			$("#load_test").attr("disabled", true);
 		},
@@ -389,7 +385,6 @@ $("#hist-threshold").change(function () {
 
     $(this).attr("data-value", v0)
     
-    $('#histogram-view-container').plainOverlay("show");
     $("#hist-threshold option:selected").each(function () {
     	if (Window.PPI['histogram-mode'] == "multi") {
 	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
@@ -397,12 +392,13 @@ $("#hist-threshold").change(function () {
 	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
     });
-    $('#histogram-view-container').plainOverlay('hidden');
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
     $("#hidden-optimal-threshold").click();
-    $(this).focus() ;
+	$(this).focus() ;
+	
+	$("#histogram_viz").loading("stop");
 });
 
 $("#threshold-window").change(function() {
@@ -414,7 +410,6 @@ $("#threshold-window").change(function() {
         return false;
     }
     $(this).attr("data-value", v1) ;
-    $('#histogram-view-container').plainOverlay("show");
 
     $("#hist-threshold option:selected").each(function () {
         if (Window.PPI['histogram-mode'] == "multi") {
@@ -423,12 +418,11 @@ $("#threshold-window").change(function() {
 	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
     });
-    $('#histogram-view-container').plainOverlay('hidden');
     if (Window.PPI['selected-bin-id']) {
         d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
     }
     $("#hidden-optimal-threshold").click();
-    $(this).focus() ;
+	$(this).focus() ;
 }) ;
 
 $("#hist-rescale").unbind().click(function() {

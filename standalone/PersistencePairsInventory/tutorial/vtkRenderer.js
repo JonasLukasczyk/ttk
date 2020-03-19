@@ -254,5 +254,7 @@ class vtkRenderer{
 
         this.renderer.setRenderTarget(null);
         this.renderer.render( this.sceneFXAA, this.cameraPP);
+
+        $("#RendererContainer").loading("stop") ;
     }
 }
