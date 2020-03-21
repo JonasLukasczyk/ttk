@@ -97,7 +97,7 @@ function resetHist() {
 	// fill in the single-view
 	$("#hist-time").html("");
     for (let i = 0; i < Window.PPI['histogram-width']; i++) {
-        $('#hist-time').append('<option class="histogram-selector" value=' + i + '>' + i + '</option>');
+        $('#hist-time').append('<option class="histogram-selector" value=' + i + '>' + getTimeByIndex(i) + '</option>');
     }
 }
 
@@ -125,8 +125,8 @@ function objectCallback(msg) {
       step: 1,
       max: Window.PPI['histogram-width'] - 1,
       slide: function( event, ui ) {
-			$("#picker_left").text(ui.value) ;
-			$("#picker_right").text(ui.value) ;
+			$("#picker_left").text(getTimeByIndex(ui.value)) ;
+			$("#picker_right").text(getTimeByIndex(ui.value)) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
 			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.value ;
 			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.value ;
@@ -145,8 +145,8 @@ function objectCallback(msg) {
 		max: Window.PPI['histogram-width'] - 1,
 		values: [0, Window.PPI['histogram-width'] - 1],
 		slide: function( event, ui ) {
-			$("#picker_left").text(ui.values[0]) ;
-			$("#picker_right").text(ui.values[1]) ;
+			$("#picker_left").text(getTimeByIndex(ui.values[0])) ;
+			$("#picker_right").text(getTimeByIndex(ui.values[1])) ;
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
 			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.values[0] ;
 			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.values[1] ;
@@ -156,8 +156,8 @@ function objectCallback(msg) {
     		$("#hidden-mdm-add-window").click() ;
 		},
 		create: function() {
-			$("#picker_left").text(0) ;
-			$("#picker_right").text(Window.PPI['histogram-width'] - 1) ;
+			$("#picker_left").text(getTimeByIndex(0)) ;
+			$("#picker_right").text(getTimeByIndex(Window.PPI['histogram-width'] - 1)) ;
 			$("#histogram-time-picker-default").html("") ;
 		}
 	});

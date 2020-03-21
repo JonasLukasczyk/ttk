@@ -154,7 +154,7 @@ function drawSDMHistogram(socket) {
         top: 2,
         right: 0,
         bottom: 40,
-        left: hBase + 70
+        left: hBase + 90
     } ;
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
@@ -204,7 +204,7 @@ function drawSDMHistogram(socket) {
         .append('clipPath')
         .attr('id', 'sdm-hist-clip-y')
         .append('rect')
-        .attr('x', -30)
+        .attr('x', -50)
         .attr('y', 0)
         .attr('width', margin.left)
         .attr('height', fixedHeight);
@@ -281,7 +281,6 @@ function drawSDMHistogram(socket) {
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
         var x = trans[0] ;
         var y = trans[1] ;
-        console.log("drag in the histogram: x is " + x + ", y is " + y ) ;
         x += d3.event.dx;
         y += d3.event.dy;
         console.log("drag in the histogram: dx is " + d3.event.dx + ", dy is " + d3.event.dy ) ;
@@ -347,7 +346,7 @@ function drawSDMHistogram(socket) {
     svg.append("text")
         .attr("class", "sdm-hist-yaxis-title")
         .attr("transform", "rotate(-90)")
-        .attr("y", 0 - 42 )
+        .attr("y", 0 - 62 )
         .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
@@ -365,8 +364,9 @@ function drawSDMHistogram(socket) {
         .text("Threshold");
 
     // reset x-axis, y-axis, TRICKY
-    removeNiceByKicks(".sdm-axis--hist--x g", undefined, ratio=Window.PPI['thresholdRatio']) ;
-    removeNiceByKicks(".sdm-axis--hist--y g", undefined, ratio=Window.PPI['thresholdRatio']) ;
+    removeNiceByKicks(".sdm-axis--hist--x g", keep=-1, ratio=Window.PPI['thresholdRatio']) ;
+    replaceTicks(".sdm-axis--hist--y g", getScalarArray()) ;
+    removeNiceByKicks(".sdm-axis--hist--y g") ;
 
     d3.selectAll(".sdm-axis--hist--y path").each(function() {
         d3.select(this).remove() ;
@@ -504,7 +504,7 @@ function drawSDMHistogram(socket) {
 
 $("#hist-time").change(function () {
     $("#hist-time option:selected").each(function () {
-        Window.PPI['selected-time-id'] = parseInt($(this).text()) ; 
+        Window.PPI['selected-time-id'] = parseInt($(this).val()) ; 
         drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     });
 });

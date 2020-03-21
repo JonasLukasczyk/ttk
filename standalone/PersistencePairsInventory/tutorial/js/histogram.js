@@ -105,7 +105,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         top: 2,
         right: 0,
         bottom: 40,
-        left: 50
+        left: 70
     } ;
     var fixedContainerWidth = 1251,
         fixedContainerHeight = 841 ;
@@ -158,7 +158,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         .append('clipPath')
         .attr('id', 'hist-clip-y')
         .append('rect')
-        .attr('x', -30)
+        .attr('x', -50)
         .attr('y', 0)
         .attr('width', margin.left)
         .attr('height', fixedHeight);
@@ -252,7 +252,7 @@ function drawHistogram(iComponent, socket, tag=0) {
             d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
-            var actual_scalar = ((fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) * parseInt(d[1]) / (Window.PPI['histogram-height'] - 1) + fieldData['ScalarBounds'].Values[0]) ;
+            var actual_scalar = getScalarArray(parseInt(d[1]));
             var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
             var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
@@ -300,7 +300,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     svg.append("text")
         .attr("class", "hist-yaxis-title")
         .attr("transform", "rotate(-90)")
-        .attr("y", 0 - 42 )
+        .attr("y", 0 - 62 )
         .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
@@ -318,7 +318,9 @@ function drawHistogram(iComponent, socket, tag=0) {
         .text("Time"); 
 
     // reset x-axis, y-axis
+    replaceTicks(".axis--hist--x g", getTimeArray()) ;
     removeNiceByKicks(".axis--hist--x g") ;
+    replaceTicks(".axis--hist--y g", getScalarArray()) ;
     removeNiceByKicks(".axis--hist--y g") ;
 
     d3.selectAll(".axis--hist--y path").each(function() {
