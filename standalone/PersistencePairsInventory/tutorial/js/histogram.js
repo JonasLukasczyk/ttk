@@ -12,6 +12,27 @@ d3.select("body")
 // socket: webSocketIO object
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket, tag=0) {
+
+    function getHistogramKey(iComponent) {
+        var tmp = getRangeOfPPI()
+        min_persistence_pairs = tmp[0] ; 
+        max_persistence_pairs = tmp[1] ;
+        // key: iComponent + left-right relibility + min-max threshold + min-max range of the bins
+        return iComponent + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") + 
+                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +  
+                    min_persistence_pairs + "-" + max_persistence_pairs ;
+
+    }
+
+    // whatever we need to do
+    $("#hist-clip-opacity").css("opacity", 1) ;
+
+    var key = getHistogramKey(iComponent) ;
+    if ( key === Window.PPI['redraw-MDM-key'] ) {
+        return ;
+    }
+    Window.PPI['redraw-MDM-key'] = key ;
+
     $("#histogram_viz").loading({theme: 'light'});
     // tag: default 0, 1 => use current medium for top and right bar
     if ( ! Window.PPI['image-object'] ) {
@@ -25,7 +46,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     function coverShadow(time_idx) {
         // cover shadow in a new method
         time_idx = parseInt(time_idx) ;
-        $("#hist-clip-highlight g").each(function() {
+        $("#hist-clip-highlight rect").each(function() {
             $(this).detach().appendTo("#hist-clip-opacity"); 
         }) ;
 
@@ -459,6 +480,9 @@ function drawHistogram(iComponent, socket, tag=0) {
     }
 
     $("#hidden-mdm-add-window").click() ;
+    if (Window.PPI['selected-bin-id']) {
+        d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+    }
     $("#histogram_viz").loading("stop");
 }
 
@@ -518,7 +542,7 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .style("font-family", "sans-serif")
-        .text("reliability: " + reliability.toFixed(2) + ", range PPI: (" + lower + ", "+ upper+ ")" + ", PPI: " + pp);
+        .text("reliability: " + reliability.toFixed(2) + ", PPI: " + pp);
 
     svg.append("g")
         .attr("transform", "translate(28, 136)")

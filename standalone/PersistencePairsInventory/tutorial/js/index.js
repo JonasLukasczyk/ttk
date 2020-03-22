@@ -47,6 +47,8 @@ Window.PPI = {
 		"end": 12, // inclusive
 		"time-picker-mode": "multi", // or "single"
 	},
+	"redraw-MDM-key": "",
+	"redraw-SDM-key": "",
 } ;
 
 let ttk, ttk_render;
@@ -232,7 +234,7 @@ function Connect() {
 
 	ttk_render = new ttkWebSocketIO(PORT_RENDER, function () {
 		console.log("on_open for render");
-	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), false);
+	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), true);
 }
 
 function LoadTest() {

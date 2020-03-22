@@ -1,6 +1,23 @@
 // iComponent: for the time index
 
 function drawSDMHistogram(socket) {
+
+    function getSDMHistogramKey() {
+        var tmp = getRangeOfPPI()
+        min_persistence_pairs = tmp[0] ; 
+        max_persistence_pairs = tmp[1] ;
+        // key: iComponent + left-right relibility + min-max threshold + min-max range of the bins
+        return Window.PPI['selected-time-id'] + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") + 
+                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +  
+                    min_persistence_pairs + "-" + max_persistence_pairs ;
+    }
+
+    var key = getSDMHistogramKey() ;
+    if ( key === Window.PPI['redraw-SDM-key'] ) {
+        return ;
+    }
+    Window.PPI['redraw-SDM-key'] = key ;
+
     $("#sdm-histogram_viz").loading({theme: 'light'});
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
@@ -283,7 +300,6 @@ function drawSDMHistogram(socket) {
         var y = trans[1] ;
         x += d3.event.dx;
         y += d3.event.dy;
-        console.log("drag in the histogram: dx is " + d3.event.dx + ", dy is " + d3.event.dy ) ;
         // bins of histogram
         d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
 
