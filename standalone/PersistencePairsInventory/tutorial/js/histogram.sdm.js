@@ -58,7 +58,7 @@ function drawSDMHistogram(socket) {
         // extract information
         // FLAG, re-draw vertical column
         var sdm_vertical_column_g_transform = $(".sdm-vertical-column-g").attr("transform");
-        d3.select(".sdm-vertical-column-g").remove() ;
+        d3.select("#sdm-vertical-column-g-id").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val())
         relData = []
@@ -78,6 +78,7 @@ function drawSDMHistogram(socket) {
 
         var sdm_svg = container
                         .append("svg")
+                        .attr("id", "sdm-vertical-column-g-id")
                         .attr("width", 100)
                         .attr("height", Math.max(height, fixedHeight))
 
@@ -99,7 +100,7 @@ function drawSDMHistogram(socket) {
             .attr("y", function (d) {
                 return yAPPI(d[0]) ;
             })
-            .attr("width", xAPPI.bandwidth())
+            .attr("width", xAPPI.bandwidth() / scaleConvert(d3.select("#sdm-range_input").property("value")))
             .attr("ori-width", xAPPI.bandwidth())
             .attr("height", yAPPI.bandwidth())
             .style("fill", function (d) {
