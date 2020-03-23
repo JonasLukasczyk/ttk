@@ -214,7 +214,7 @@ int ttkTopologicalSimplification::dispatch(
       this->triangulation_->preconditionBoundaryVertices();
 
       if(outputOffsetArray->GetDataType() == VTK_INT) {
-        Timer t;
+        //Timer t;
         status = plts.removeUnauthorizedExtrema(
           (dataType*) outputScalarArray->GetVoidPointer(0),
           (int*) outputOffsetArray->GetVoidPointer(0),
@@ -230,8 +230,8 @@ int ttkTopologicalSimplification::dispatch(
           this->AddPerturbation,
           this->UseDeallocation
         );
-        printMsg("Global completion", 1, t.getElapsedTime(),
-                 this->threadNumber_);
+        //printMsg("Global completion", 1, t.getElapsedTime(),
+        //         this->threadNumber_);
       } else {
           this->printErr("Unsupported IdType");
           return 1;
