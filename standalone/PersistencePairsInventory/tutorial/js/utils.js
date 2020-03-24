@@ -9,6 +9,53 @@ function trim(v, lower, higher) {
     return Math.max(Math.min(v, higher), lower)
 }
 
+function getTimeByIndex(i) {
+    var v = i ;
+	if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("Time") ) {
+		v = Window.PPI['image-object']['FieldData']["Time"].Values[i] ;
+    }
+    return v ;
+}
+
+function getScalarArray(id=-1) {
+    // if id > -1, get the certain value by id; 
+    // if id == -1, get the array
+
+    if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("ScalarBounds")) {
+        var fieldData = Window.PPI['image-object']['FieldData'] ;
+        var gap = (fieldData['ScalarBounds'].Values[1] - fieldData['ScalarBounds'].Values[0]) / (Window.PPI['histogram-height'] - 1)
+        if ( id > -1) {
+            return gap * id + fieldData['ScalarBounds'].Values[0] ;
+        } else {
+            var ans = [] ;
+            for (var i = 0; i < Window.PPI['histogram-height']; i ++) {
+                var tmp = gap * i + fieldData['ScalarBounds'].Values[0] ;
+                ans.push(tmp.toFixed(1)) ;
+            }
+            return ans ;
+        }
+    } else {
+        if ( id > -1 ) {
+            return id ;
+        } else {
+            alert("no Scalar Bounds") ;
+        }
+    }
+}
+
+function getTimeArray() {
+    var v = undefined ;
+	if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("Time") ) {
+        v = Window.PPI['image-object']['FieldData']["Time"].Values;
+        ans = []
+        for (var i = 0; i < v.length; i ++) {
+            ans.push(v[i]) ;
+        }
+        return ans ;
+    }
+    return v ;
+}
+
 // 1 - 20 => (0.1 - 1) and (1 - 10)
 function scaleConvert(u) {
     if ( u < 1 || u > 20 ) {
@@ -191,38 +238,47 @@ function getArray(n, ratio=1) {
     return ans;
 }
 
+function replaceTicks(id, replace) {
+    var gs = $(id) ;
+    for ( var i = 0; i < gs.length; i++ ) {
+        var tc = $(gs[i].getElementsByTagName("text")[0]) ;
+        var tc_i = parseInt(tc.text()) ;
+        tc_i = replace? replace[tc_i]: tc_i ;
+        tc.text(tc_i) ;
+    }
+}
+
 function removeNiceByKicks(id, keep=-1, ratio=0) {
     var gs = $(id) ;
+    // if keep == 0, remove all the elements
     if (keep === 0) {
         gs.remove() ;
         return ;
     } 
+
     var size = 0 ;
     var i = 0 ;
-    if (keep > 0) {
-        size = Math.floor(gs.length / keep) ;
+
+    // multiply the ratio
+    if ( ratio > 0 ) {
+        for (var i = 0; i < gs.length; i++ ) {
+            var tc = $(gs[i].getElementsByTagName("text")[0]) ;
+            var tc_i = parseInt(tc.text()) ;
+            tc.text(Number.parseInt(ratio * tc_i)) ;
+        }
+    }
+
+    // sampling
+    if (gs.length >= 40) {
+        size = Math.floor(gs.length / 20) ;
         for (i = 0; i < gs.length; i ++) {
-            if (i % size !== 0 && i !== gs.length - 1) {
+            if (i % size !== 0 && gs.length - 1 !== i) {
                 gs[i].remove() ;
             } else {
                 if (ratio > 0) {
                     var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-                    tc.text(Number.parseFloat(ratio * parseInt(tc.text())).toFixed(1)) ;
-                }
-            }
-        }
-    } else {
-        if (gs.length >= 40) {
-            size = Math.floor(gs.length / 20) ;
-            for (i = 0; i < gs.length; i ++) {
-                if (i % size !== 0 && gs.length - 1 !== i) {
-                    gs[i].remove() ;
-                } else {
-                    if (ratio > 0) {
-                        var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-                       // tc.text(Number.parseFloat(ratio * parseInt(tc.text())).toFixed(1)) ;
-                       tc.text(Number.parseInt(ratio * parseInt(tc.text()))) ;
-                    }
+                    var tc_i = parseInt(tc.text()) ;
+                    tc.text(Number.parseInt(ratio * tc_i)) ;
                 }
             }
         }

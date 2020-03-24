@@ -26,16 +26,19 @@ function formatInput(numberofcomponents, data) {
 }
 
 function drawBoxplotCurve(numberofcomponents, data) {
+    $("#box_dataviz").html("")
+
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
         return ;
     }
     Window.box_plot_config = {
-        min_max_color: "#abdda4",
-        q1_q3_color: "#3288bd",
+        min_max_color: "#ef8a62",
+        q1_q3_color: "#fddbc7",
         background_color: "white",
+        median_line_color: "black",
         containerWidth: 561,
-        containerHeight: 421,
+        containerHeight: 321,
         margin: {
             top: 10,
             right: 10,
@@ -242,7 +245,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 items.push(data[i + j * numberofcomponents]);
             }
         }
-        var ret = drawBoxPlot(i + 1, items);
+        var ret = drawBoxPlot(i, items);
         points['max'].push(ret['max']);
         points['q1'].push(ret['q1']);
         points['median'].push(ret['median']);
@@ -437,7 +440,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("name", "box_polygon_line")
             .datum(points['median'])
             .attr("fill", "none")
-            .attr("stroke", "red")
+            .attr("stroke", Window.box_plot_config.median_line_color)
             .attr("stroke-width", 1)
             .attr("d", function (d) {
                 return Window.box_plot_config.line(xScale, yScale)(d);

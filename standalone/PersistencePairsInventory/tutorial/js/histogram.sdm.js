@@ -1,6 +1,24 @@
 // iComponent: for the time index
 
 function drawSDMHistogram(socket) {
+
+    function getSDMHistogramKey() {
+        var tmp = getRangeOfPPI()
+        min_persistence_pairs = tmp[0] ; 
+        max_persistence_pairs = tmp[1] ;
+        // key: iComponent + left-right relibility + min-max threshold + min-max range of the bins
+        return Window.PPI['selected-time-id'] + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") + 
+                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +  
+                    min_persistence_pairs + "-" + max_persistence_pairs ;
+    }
+
+    var key = getSDMHistogramKey() ;
+    if ( key === Window.PPI['redraw-SDM-key'] ) {
+        return ;
+    }
+    Window.PPI['redraw-SDM-key'] = key ;
+
+    $("#sdm-histogram_viz").loading({theme: 'light'});
     if ( ! Window.PPI['image-object'] ) {
         alert("please load data at first") ;
         return ;
@@ -38,7 +56,9 @@ function drawSDMHistogram(socket) {
     function drawVerticalColumn() {
         // Add extra column
         // extract information
-        d3.select(".sdm-vertical-column-g").remove() ;
+        // FLAG, re-draw vertical column
+        var sdm_vertical_column_g_transform = $(".sdm-vertical-column-g").attr("transform");
+        d3.select("#sdm-vertical-column-g-id").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
         let max_threshold_window = parseInt($("#threshold-window").val())
         relData = []
@@ -57,13 +77,18 @@ function drawSDMHistogram(socket) {
             .domain(myVars) ;
 
         var sdm_svg = container
-                        .append("g")
+                        .append("svg")
+                        .attr("id", "sdm-vertical-column-g-id")
+                        .attr("width", 100)
+                        .attr("height", Math.max(height, fixedHeight))
+
+        var sdm_g = sdm_svg.append("g")
                         .attr("class", "sdm-vertical-column-g")
                         .attr("transform",
-                            "translate("+10+", "+margin.top+")")
+                            "translate("+10+", "+ margin.top +")")
                         .attr('overflow', 'hidden');
-        
-        sdm_svg.selectAll()
+
+        sdm_g.selectAll()
             .data(relData)
             .enter()
             .append("rect")
@@ -73,15 +98,20 @@ function drawSDMHistogram(socket) {
                 return xAPPI("0");
             })
             .attr("y", function (d) {
-                return yAPPI(d[0])
+                return yAPPI(d[0]) ;
             })
-            .attr("width", xAPPI.bandwidth())
+            .attr("width", xAPPI.bandwidth() / scaleConvert(d3.select("#sdm-range_input").property("value")))
+            .attr("ori-width", xAPPI.bandwidth())
             .attr("height", yAPPI.bandwidth())
             .style("fill", function (d) {
                 return customColor(d[1], d[2]) ;
             })
             .append("title")
             .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] });
+        
+        if ( sdm_vertical_column_g_transform ) {
+            $(".sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
+        }
     }
 
     $("#hist-time").val(iComponent) ;
@@ -117,10 +147,20 @@ function drawSDMHistogram(socket) {
     let dist_data = getLegendData(getHistogramFrameData(min_persistence_pairs, threshold_idx, max_threshold_window, max_persistence_pairs, nComponents)) ;
     drawLegend(dist_data, min_persistence_pairs, max_persistence_pairs) ;
 
-    // draw histogram
+    // FLAG, draw histogram, remove all previous data
+    var sdm_hist_clip_g_transform = $("#sdm-hist-clip-g").attr("transform") ;
+    var sdm_rect_box_cover_transform = $(".sdm-rect-box-cover").attr("transform");
+    var sdm_axis_hist_y = $(".sdm-axis--hist--y").attr("transform");
+    var sdm_axis_hist_x = $(".sdm-axis--hist--x").attr("transform");
+    var sdm_axis_hist_y_g = $(".sdm-axis--hist--y g").length > 0? $($(".sdm-axis--hist--y g")[0]).attr("transform"): undefined ;
+    var sdm_axis_hist_x_g = $(".sdm-axis--hist--x g").length > 0? $($(".sdm-axis--hist--x g")[0]).attr("transform"): undefined ;
+
     d3.select("#sdm-histogram_viz *").remove() ;
     let myGroups = getArray( Window.PPI['sdm-histogram-width'] );
     let myVars = getArray( Window.PPI['histogram-height'] );
+
+    var fixedContainerWidth = 1251,
+        fixedContainerHeight = 841 ;
 
     var containerHeight = 841 ;
     var hBase = containerHeight / Window.PPI['histogram-height'] ;
@@ -132,14 +172,18 @@ function drawSDMHistogram(socket) {
         top: 2,
         right: 0,
         bottom: 40,
-        left: hBase + 60
+        left: hBase + 90
     } ;
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
+
+    var fixedWidth = fixedContainerWidth - margin.left - margin.right,
+        fixedHeight = fixedContainerHeight - margin.top - margin.bottom;
+
     let container = d3.select("#sdm-histogram_viz")
         .append("svg")
-        .attr("width", containerWidth)
-        .attr("height", containerHeight) ;
+        .attr("width", Math.max(containerWidth, fixedContainerWidth))
+        .attr("height", Math.max(containerHeight, fixedContainerHeight)) ;
 
     var svg = container
                 .append("g")
@@ -157,8 +201,8 @@ function drawSDMHistogram(socket) {
         .attr('id', 'sdm-hist-clip-x')
         .append('rect')
         .attr('x', 0)
-        .attr('y', height)
-        .attr('width', width)
+        .attr('y', fixedHeight)
+        .attr('width', fixedWidth)
         .attr('height', margin.bottom);
 
     var xg = svg.append("g")
@@ -166,7 +210,7 @@ function drawSDMHistogram(socket) {
 
     xg.append("g")
         .attr('class', 'sdm-axis--hist--x')
-        .attr("transform", "translate(0," + height + ")")
+        .attr("transform", "translate(0," + fixedHeight + ")")
         .style("font-size", "12px")
         .call(d3.axisBottom(x).ticks(2, "s"));
 
@@ -178,10 +222,10 @@ function drawSDMHistogram(socket) {
         .append('clipPath')
         .attr('id', 'sdm-hist-clip-y')
         .append('rect')
-        .attr('x', -20)
+        .attr('x', -50)
         .attr('y', 0)
         .attr('width', margin.left)
-        .attr('height', height);
+        .attr('height', fixedHeight);
 
     var yg = svg.append("g")
         .attr('clip-path', 'url(#sdm-hist-clip-y)')
@@ -200,8 +244,8 @@ function drawSDMHistogram(socket) {
         .append('rect')
         .attr('x', 0)
         .attr('y', 0)
-        .attr('width', width)
-        .attr('height', height);
+        .attr('width', fixedWidth)
+        .attr('height', fixedHeight);
 
     var parentSvg = svg.append("svg") ;
     parentSvg.on("mouseover", function () {
@@ -259,7 +303,12 @@ function drawSDMHistogram(socket) {
         y += d3.event.dy;
         // bins of histogram
         d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
-        
+
+        $(".sdm-vertical-column-g").attr("transform", transFormApply($(".sdm-vertical-column-g").attr("transform"), undefined, y, scale)) ;
+        $(".sdm-vertical-column-g rect").each(function() {
+            $(this).attr("width", parseFloat($(this).attr("ori-width")) / scale) ;
+        }) ;
+         
         var yTrans = transFormApply($(".sdm-axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
         var yX = yTrans[0] ;
         var yY = yTrans[1] ;
@@ -314,8 +363,8 @@ function drawSDMHistogram(socket) {
     svg.append("text")
         .attr("class", "sdm-hist-yaxis-title")
         .attr("transform", "rotate(-90)")
-        .attr("y", 0 - 42 )
-        .attr("x", 0 - (height / 2))
+        .attr("y", 0 - 62 )
+        .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
@@ -324,16 +373,17 @@ function drawSDMHistogram(socket) {
     // dd x-axis title
     svg.append("text")
         .attr("class", "sdm-hist-xaxis-title")
-        .attr("y", (height + 24) )
-        .attr("x", (width / 2.5 + 110))
+        .attr("y", fixedHeight + 24)
+        .attr("x", fixedWidth / 2.5 + 110)
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .text("Threshold");
 
     // reset x-axis, y-axis, TRICKY
-    removeNiceByKicks(".sdm-axis--hist--x g", undefined, ratio=Window.PPI['thresholdRatio']) ;
-    removeNiceByKicks(".sdm-axis--hist--y g", undefined, ratio=Window.PPI['thresholdRatio']) ;
+    removeNiceByKicks(".sdm-axis--hist--x g", keep=-1, ratio=Window.PPI['thresholdRatio']) ;
+    replaceTicks(".sdm-axis--hist--y g", getScalarArray()) ;
+    removeNiceByKicks(".sdm-axis--hist--y g") ;
 
     d3.selectAll(".sdm-axis--hist--y path").each(function() {
         d3.select(this).remove() ;
@@ -359,7 +409,7 @@ function drawSDMHistogram(socket) {
         var currentTransform ;
         console.log("mouse position: " + cx + ", " + cy) ;
         if (d === "zoom_back") {
-            currentTransform = {"x":0, "y":0, "k":1}
+            currentTransform = {"x":0, "y":(fixedHeight - height), "k":1}
         } else {
             var preTmp = transFormApply(d3.select(this).attr("transform"), undefined, undefined, undefined, true) ;
             var curTmp = d3.event.transform ;
@@ -369,10 +419,16 @@ function drawSDMHistogram(socket) {
         }
 
         main.attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
+
+        $(".sdm-vertical-column-g").attr("transform", transFormApply($(".sdm-vertical-column-g").attr("transform"), undefined, currentTransform.y, currentTransform.k)) ;
+        $(".sdm-vertical-column-g rect").each(function() {
+            $(this).attr("width", parseFloat($(this).attr("ori-width")) / currentTransform.k) ;
+        }) ;
+
         d3.select(".sdm-rect-box-cover").attr("transform", "translate(" + currentTransform.x+"," +currentTransform.y+ ") scale(" + currentTransform.k + ")");
 
         d3.select(".sdm-axis--hist--y").attr("transform", "translate(0,"+currentTransform.y+") scale("+currentTransform.k+")");
-        d3.select(".sdm-axis--hist--x").attr("transform", "translate("+currentTransform.x+","+height+") scale("+currentTransform.k+")");
+        d3.select(".sdm-axis--hist--x").attr("transform", "translate("+currentTransform.x+","+fixedHeight+") scale("+currentTransform.k+")");
 
         d3.selectAll(".sdm-axis--hist--y g").each(function() {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, 1 / currentTransform.k)) ;
@@ -424,11 +480,48 @@ function drawSDMHistogram(socket) {
 
     $("#sdm-histogram_zoom_back").click() ;
     $("#histogram-notification-placeholder-0").html("") ;
+
+    // replay previous settings
+    if (sdm_hist_clip_g_transform) {
+        $("#sdm-hist-clip-g").attr("transform", sdm_hist_clip_g_transform) ;
+        var clip_g = transFormApply(sdm_hist_clip_g_transform, undefined, undefined, undefined, true) ;
+        $(".sdm-vertical-column-g").attr("transform", transFormApply($(".sdm-vertical-column-g").attr("transform"), undefined, clip_g[1], clip_g[2])) ;
+        $(".sdm-vertical-column-g rect").each(function() {
+            $(this).attr("width", parseFloat($(this).attr("ori-width")) / clip_g[2]) ;
+        }) ;
+        slider.property("value", scaleReverse(clip_g[2]));
+    }
+    if (sdm_rect_box_cover_transform) {
+        $(".sdm-rect-box-cover").attr("transform", sdm_rect_box_cover_transform);
+    }
+    if (sdm_axis_hist_y) {
+        $(".sdm-axis--hist--y").attr("transform", sdm_axis_hist_y) ;
+        
+    }
+    if (sdm_axis_hist_x) {
+        $(".sdm-axis--hist--x").attr("transform", sdm_axis_hist_x) ;
+    }
+
+    if (sdm_axis_hist_y_g) {
+        var y_g_trans = transFormApply(sdm_axis_hist_y_g, undefined, undefined, undefined, true) ;
+        d3.selectAll(".sdm-axis--hist--y g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, y_g_trans[2])) ;
+        }) ;
+    }
+
+    if (sdm_axis_hist_x_g) {
+        var x_g_trans = transFormApply(sdm_axis_hist_x_g, undefined, undefined, undefined, true) ;
+        d3.selectAll(".sdm-axis--hist--x g").each(function() {
+            d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, x_g_trans[2])) ;
+        }) ;
+    }
+
+    $("#sdm-histogram_viz").loading("stop");
 }
 
 $("#hist-time").change(function () {
     $("#hist-time option:selected").each(function () {
-        Window.PPI['selected-time-id'] = parseInt($(this).text()) ; 
+        Window.PPI['selected-time-id'] = parseInt($(this).val()) ; 
         drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     });
 });

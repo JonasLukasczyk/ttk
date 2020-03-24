@@ -6,6 +6,7 @@
    
    <script type="text/javascript" src="./js/jquery.min.js"></script>
    <script type="text/javascript" src="./js/bootstrap.min.js"></script>
+   <script src="./js/jquery.loading.min.js"></script>
    <script type="text/javascript" src="./js/testdataset.js"></script>
    <script src="./js/d3.v4.js"></script>
    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
@@ -137,10 +138,13 @@
                               <div style="display: flex;align-items: center;">
                                  <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image><code>|</code>
                                  <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image><code element-show="mdm">|</code>
-                                 <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code>
-                                 <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
+                                 
+                                 <div style="display:none"><input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code></div>
+                                 
+                                 <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"><code element-show="sdm" style="display:none;">|</code> 
 
-                                 <code element-show="sdm" style="display:none;">|</code> <input  element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code>
+                                 <div style="display:none"><input  element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code></div>
+                                 
                                  <img  element-show="sdm"  id="sdm-histogram_zoom_back" style="width:20px;cursor: pointer;display:none;" src="./images/zoom_back.png">
                               </div>
                            </li>
@@ -153,8 +157,13 @@
                               <div id="slider-range">
                                 <div id="custom-handle0" class="ui-slider-handle"></div>
                                 <div id="custom-handle1" class="ui-slider-handle"></div>
-                              </div> &nbsp;
-                              <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label>
+                              </div> 
+
+                              <div id="slider-range-single" style="display: none;">
+                                <div id="custom-handle0-single" class="ui-slider-handle"></div>
+                              </div> 
+
+                              &nbsp; <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label> 
                            </li>
                            <li element-show="sdm" style="display:none;">Time:&nbsp;
                               <select id="hist-time">
@@ -177,6 +186,10 @@
                      <h3 style="padding-bottom: 10px;">&nbsp; ... </h3>
                   </div>
                   <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.2" data-x_1="0.8"></div>
+
+                  <div id="legend-slider-top"><div id="legend-custom-handle-top" class="ui-slider-handle"></div></div>
+                  <div id="legend-slider-right"><div id="legend-custom-handle-right" class="ui-slider-handle"></div></div>
+
                </div>
                
                <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
@@ -186,7 +199,6 @@
       </div>
    </div>
 </div>
-<script type="text/javascript" src="./js/jquery.plainoverlay.min.js"></script>
 <script type="text/javascript" src="./js/utils.js"></script>
 <script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
 <script type="text/javascript" src="./js/legend.js"></script>
@@ -219,5 +231,9 @@
 <image id="hidden-sdm-draw-vertical-column-lonely" class="nospace" src="./images/zoom_back.png"></image>
 <!-- re-draw the legend in the sdm lonely -->
 <image id="hidden-sdm-draw-legend-lonely" class="nospace" src="./images/zoom_back.png"></image>
+<!-- reset domain of top in the legend -->
+<image id="hidden-legend-redraw-top" class="nospace" src="./images/zoom_back.png"></image>
+<!-- reset domain of right in the legend -->
+<image id="hidden-legend-redraw-right" class="nospace" src="./images/zoom_back.png"></image>
 </body>
 </html>

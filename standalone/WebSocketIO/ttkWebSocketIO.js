@@ -44,7 +44,7 @@ function on_message_intercept(uuid, msg) {
         try {
             let data = JSON.parse(msg.data) ;
             if (data.hasOwnProperty("key")) {  // header
-                if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                if ( Window.ttkWebSocket[uuid].hasOwnProperty("debugMode") &&  Window.ttkWebSocket[uuid]["debugMode"] === true) {
                     console.log("[DEBUG] received header: ", data) ;
                 }
                 let keys = data['key'].split(":") ;
@@ -60,7 +60,7 @@ function on_message_intercept(uuid, msg) {
                 socket.send( ttkWebSocketIO.combine_code(OBJECT_ACK_OBJECT)) ;
             } else {
                 if (typeof Window.ttkWebSocket[uuid].header === "object" && Window.ttkWebSocket[uuid].header) {
-                    if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                    if ( Window.ttkWebSocket[uuid].hasOwnProperty("debugMode") &&  Window.ttkWebSocket[uuid]["debugMode"] === true) {
                         console.log("[DEBUG] received data") ;
                     }
                     let tt = parseInt(Window.ttkWebSocket[uuid].header['dataType']);
@@ -114,12 +114,12 @@ function on_message_intercept(uuid, msg) {
                         v =  new Float64Array(dt, 0, msg.data.size/8);
                         break ;
                     default:
-                        if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                        if ( Window.ttkWebSocket[uuid].hasOwnProperty("debugMode") &&  Window.ttkWebSocket[uuid]["debugMode"] === true) {
                             console.log("[DEBUG] received unknown dataType data: " + keys.join(" -> ")) ;
                         }
                         break ;
                 }
-                if ( Window.ttkWebSocket.hasOwnProperty("debugMode") &&  Window.ttkWebSocket["debugMode"] === true) {
+                if ( Window.ttkWebSocket[uuid].hasOwnProperty("debugMode") &&  Window.ttkWebSocket[uuid]["debugMode"] === true) {
                     console.log("[DEBUG] received data: ", v) ;
                 }
                 if (keys.length === 1) {
@@ -173,13 +173,13 @@ class ttkWebSocketIO {
             return on_message(msg) ;
         };
 
-        if ( debugMode === true ) {
-            Window.ttkWebSocket["debugMode"] = true ;
-        }
         Window.ttkWebSocket[uuid] = {};
         Window.ttkWebSocket[uuid].socket = socket ;
         Window.ttkWebSocket[uuid].uuid = uuid ;
         Window.ttkWebSocket[uuid].objectCallback = objectCallback ;
+        if ( debugMode === true ) {
+            Window.ttkWebSocket[uuid]["debugMode"] = true ;
+        }
     }
 
     static parse_code(data) {
