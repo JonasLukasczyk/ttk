@@ -5,9 +5,10 @@
 #include <vtkMultiBlockDataSet.h>
 #include <vtkTable.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkPointData.h>
+#include <vtkCellData.h>
 #include <vtkFieldData.h>
 #include <vtkDoubleArray.h>
-// #include <vtkStreamingDemandDrivenPipeline.h>
 #include <vtkCompositeDataPipeline.h>
 #include <vtkInformationVector.h>
 
@@ -60,7 +61,7 @@ int ttkForEach::RequestData(
     auto input = vtkDataObject::GetData( inputVector[0] );
 
     // Determine Mode
-    std::string modeStrings[3] = {"B","R","F"};
+    std::string modeStrings[5] = {"B","R","G","V","A"};
 
     // Iteration info
     auto iterationInformation = vtkSmartPointer<vtkDoubleArray>::New();
@@ -82,6 +83,7 @@ int ttkForEach::RequestData(
         }
     }
 
+    // Get Iteration Bounds
     if(mode==0){
         if(!input->IsA("vtkMultiBlockDataSet")){
             this->printErr("Block iteration requires 'vtkMultiBlockDataSet' input.");
@@ -94,13 +96,29 @@ int ttkForEach::RequestData(
             return 0;
         }
         iterationInformation->SetValue(1, ((vtkTable*) input)->GetNumberOfRows()-1);
-    } else if(mode==2) {
+    } else if(mode==3) {
         auto inputArray = this->GetInputArrayToProcess(0, inputVector);
         if(!inputArray){
             this->printErr("Unable to retrieve input array.");
             return 0;
         }
         iterationInformation->SetValue(1, inputArray->GetNumberOfTuples()-1);
+    } else if(mode==4){
+        auto inputAsDS = vtkDataSet::SafeDownCast( input );
+        if(!inputAsDS){
+            this->printErr("Array iteration requires vtkDataSet input.");
+            return 0;
+        }
+
+        iterationInformation->SetValue(
+            1,
+            (this->GetArrayAttributeType()==0
+                ? inputAsDS->GetPointData()->GetNumberOfArrays()
+                : this->GetArrayAttributeType()==1
+                    ? inputAsDS->GetCellData()->GetNumberOfArrays()
+                    : inputAsDS->GetFieldData()->GetNumberOfArrays()
+            )-1
+        );
     } else {
         this->printErr("Unsupported mode");
         return 0;
@@ -113,6 +131,7 @@ int ttkForEach::RequestData(
 
     this->SetExpressionString( std::to_string((int)iterationIndex) );
     this->SetExtractUniqueValues( false );
+    this->SetOutputArrayName("IterationArray");
 
     if(!ttkExtract::RequestData(request, inputVector, outputVector))
         return 0;

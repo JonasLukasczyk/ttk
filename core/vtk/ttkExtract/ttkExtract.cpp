@@ -874,6 +874,84 @@ int ttkExtract::ExtractArrayValues(
     return 1;
 }
 
+int ttkExtract::ExtractArray(
+    vtkDataObject* output,
+    vtkDataObject* input,
+    const std::vector<double>& indices
+) {
+
+    ttk::Timer t;
+    std::string indicesString;
+    doubleVectorToString(indicesString, indices);
+    this->printMsg(
+        "Extracting array with idx ["+indicesString+"] from "
+            + std::string(
+                this->ArrayAttributeType==0
+                    ? "point"
+                    : this->ArrayAttributeType==1
+                        ? "cell"
+                        : "field"
+            )
+            + " data",
+        0,0,
+        ttk::debug::LineMode::REPLACE
+    );
+
+    output->ShallowCopy(input);
+
+    auto outputAsDS = vtkDataSet::SafeDownCast( output );
+    if(!outputAsDS){
+        this->printErr("Array extraction requires vtkDataSet input.");
+        return 0;
+    }
+
+    vtkFieldData* inputAttribute =
+        this->ArrayAttributeType==0
+            ? outputAsDS->GetPointData()
+            : this->ArrayAttributeType==1
+                ? outputAsDS->GetCellData()
+                : outputAsDS->GetFieldData();
+
+    if(!indices.size()==1){
+        this->printErr("Array extraction can only extract exactly one array.");
+        return 0;
+    }
+
+    if(indices[0]<0 || indices[0]>=inputAttribute->GetNumberOfArrays()){
+        this->printErr("Index out of bounds.");
+        return 0;
+    }
+
+    auto inputArray = inputAttribute->GetArray( indices[0] );
+    auto copy = vtkSmartPointer<vtkDataArray>::Take( inputArray->NewInstance() );
+    copy->ShallowCopy(inputArray);
+    copy->SetName(this->OutputArrayName.data());
+
+    auto outputAttribute = vtkSmartPointer<vtkFieldData>::New();
+    outputAttribute->AddArray( copy );
+
+    this->ArrayAttributeType==0
+        ? outputAsDS->GetPointData()->ShallowCopy( outputAttribute )
+        : this->ArrayAttributeType==1
+            ? outputAsDS->GetCellData()->ShallowCopy( outputAttribute )
+            : outputAsDS->GetFieldData()->ShallowCopy( outputAttribute );
+
+    this->printMsg(
+        "Extracting array with indices ["+indicesString+"] from "
+            + std::string(
+                this->ArrayAttributeType==0
+                    ? "point"
+                    : this->ArrayAttributeType==1
+                        ? "cell"
+                        : "field"
+            )
+            + " data",
+        1, t.getElapsedTime()
+    );
+
+    return 1;
+}
+
 // =============================================================================
 // RequestData
 // =============================================================================
@@ -919,7 +997,7 @@ int ttkExtract::RequestData(
     auto inputAsMB = vtkSmartPointer<vtkMultiBlockDataSet>::New();
     auto outputAsMB = vtkSmartPointer<vtkMultiBlockDataSet>::New();
     size_t nBlocks;
-    if((mode==2 || mode==3) && input->IsA("vtkMultiBlockDataSet") ){
+    if(mode>1 && input->IsA("vtkMultiBlockDataSet") ){
 
         inputAsMB->ShallowCopy(input);
         nBlocks = inputAsMB->GetNumberOfBlocks();
@@ -949,6 +1027,10 @@ int ttkExtract::RequestData(
     } else if(mode==3){
         for(size_t b=0; b<nBlocks; b++)
             if(!this->ExtractGeometry( outputAsMB->GetBlock(b), inputAsMB->GetBlock(b), values ))
+                return 0;
+    } else if(mode==4){
+        for(size_t b=0; b<nBlocks; b++)
+            if(!this->ExtractArray( outputAsMB->GetBlock(b), inputAsMB->GetBlock(b), values ))
                 return 0;
     }
 

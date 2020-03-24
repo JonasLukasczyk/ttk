@@ -24,6 +24,8 @@ class TTKEXTRACT_EXPORT ttkExtract : public ttkAlgorithm {
         std::string ExpressionString{""};
         int ValidationMode{0};
         int CellMode{0};
+        int ArrayAttributeType{0};
+        std::string OutputArrayName{"Data"};
         double ImageBounds[6]{0,0,0,0,0,0};
 
     public:
@@ -44,6 +46,12 @@ class TTKEXTRACT_EXPORT ttkExtract : public ttkAlgorithm {
 
         vtkSetMacro(CellMode, int);
         vtkGetMacro(CellMode, int);
+
+        vtkSetMacro(ArrayAttributeType, int);
+        vtkGetMacro(ArrayAttributeType, int);
+
+        vtkSetMacro(OutputArrayName, std::string);
+        vtkGetMacro(OutputArrayName, std::string);
 
         vtkSetVector6Macro(ImageBounds, double);
         vtkGetVector6Macro(ImageBounds, double);
@@ -69,6 +77,12 @@ class TTKEXTRACT_EXPORT ttkExtract : public ttkAlgorithm {
         );
 
         int ExtractArrayValues(
+            vtkDataObject* output,
+            vtkDataObject* input,
+            const std::vector<double>& indices
+        );
+
+        int ExtractArray(
             vtkDataObject* output,
             vtkDataObject* input,
             const std::vector<double>& indices

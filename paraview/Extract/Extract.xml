@@ -22,8 +22,9 @@ This filter uses a list of values to extract either blocks of a 'vtkMultiBlockDa
                 <EnumerationDomain name="enum">
                     <Entry value="0" text="Blocks"/>
                     <Entry value="1" text="Rows"/>
-                    <Entry value="2" text="Array Values"/>
-                    <Entry value="3" text="Geometry"/>
+                    <Entry value="2" text="Geometry"/>
+                    <Entry value="3" text="Array Values"/>
+                    <Entry value="4" text="Arrays"/>
                 </EnumerationDomain>
                 <Documentation>TODO.</Documentation>
             </IntVectorProperty>
@@ -34,7 +35,8 @@ This filter uses a list of values to extract either blocks of a 'vtkMultiBlockDa
                         <Expression type="or">
                             <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="0"/>
                             <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="1"/>
-                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="3"/>
+                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="2"/>
+                            <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="4"/>
                             <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractUniqueValues" value="0"/>
                         </Expression>
                     </PropertyWidgetDecorator>
@@ -91,7 +93,7 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 <BooleanDomain name="bool" />
                 <Documentation>TODO</Documentation>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="2" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="3" />
                 </Hints>
             </IntVectorProperty>
 
@@ -122,7 +124,7 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                     <Entry value="4" text="&gt; "/>
                 </EnumerationDomain>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="3" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="2" />
                 </Hints>
                 <Documentation>Determines how vertex values are compared agains each value of the expression.</Documentation>
             </IntVectorProperty>
@@ -134,12 +136,31 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                     <Entry value="2" text="Sub"/>
                 </EnumerationDomain>
                 <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="3" />
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="2" />
                 </Hints>
                 <Documentation>Determines if a complete cell is extracted if "All" or "Any" of its vertices fulfill the criterion. If mode is set to "Sub", cells are reduced to the vertices that fulfill the criterion (e.g., to an edge of a triangle/tetrahedron).</Documentation>
             </IntVectorProperty>
 
+            <IntVectorProperty name="ArrayAttributeType" label="Attribute" command="SetArrayAttributeType" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="0" text="Point Data"/>
+                    <Entry value="1" text="Cell Data"/>
+                    <Entry value="2" text="Field Data"/>
+                </EnumerationDomain>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="4"/>
+                </Hints>
+                <Documentation>
+                    Specifies to extract point, cell, or field data arrays.
+                </Documentation>
+            </IntVectorProperty>
 
+            <StringVectorProperty name="OutputArrayName" label="Output Array Name" command="SetOutputArrayName" number_of_elements="1" default_values="Data">
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="ExtractionMode" value="4"/>
+                </Hints>
+                <Documentation>.</Documentation>
+            </StringVectorProperty>
 
 
             <PropertyGroup panel_widget="Line" label="Input Options">
@@ -151,6 +172,7 @@ vtkMultiBlockDataSet: If only one block is extracted and it is of type 'vtkMulti
                 <Property name="ExtractUniqueValues" />
                 <Property name="ValidationMode" />
                 <Property name="CellMode" />
+                <Property name="ArrayAttributeType" />
             </PropertyGroup>
 
             ${DEBUG_WIDGETS}
