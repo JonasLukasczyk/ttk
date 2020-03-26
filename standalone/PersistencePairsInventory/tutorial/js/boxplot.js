@@ -32,6 +32,16 @@ function drawBoxplotCurve(numberofcomponents, data) {
         alert("please load data at first") ;
         return ;
     }
+
+    var persistence_values = {
+        xScale: Window.box_plot_config? Window.box_plot_config['xScale'].domain(): undefined,
+        yScale: Window.box_plot_config ? Window.box_plot_config['yScale'].domain(): undefined, 
+        switch_y_checked: $("#customSwitches--y").is(':checked'),
+        boxplot_checkbox_checked: $("#boxplot-checkbox-lines").prop("checked"),
+        boxplot_input_val: $("#boxplot-select-lines").val(),
+        boxplot_polygon_checked: $("#boxplot-checkbox-polygon").prop("checked"),
+    }
+
     Window.box_plot_config = {
         min_max_color: "#ef8a62",
         q1_q3_color: "#fddbc7",
@@ -65,8 +75,10 @@ function drawBoxplotCurve(numberofcomponents, data) {
                     return y_func(d[1]);
                 })
         },
-        x_domain: [0, 0],
-        y_domain: [0, 0],
+        x_domain: undefined,
+        y_domain: undefined,
+        xScale: undefined,
+        yScale: undefined,
     }
 
     function coverShadow() {
@@ -76,13 +88,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
         let threshold_idx = parseInt($("#hist-threshold").val()) * Window.PPI['thresholdRatio'] ;
         let max_threshold_window = parseInt($("#threshold-window").val()) * Window.PPI['thresholdRatio'] ;
 
-        if ( xScale(threshold_idx) >= 0 ) {
+        if ( Window.box_plot_config['xScale'](threshold_idx) >= 0 ) {
             g.append("line")
             .attr("name", "box_optimal_left")
             .attr("class", "zero")
-            .attr("x1", xScale(threshold_idx))
+            .attr("x1", Window.box_plot_config['xScale'](threshold_idx))
             .attr("y1", 0)
-            .attr("x2", xScale(threshold_idx))
+            .attr("x2", Window.box_plot_config['xScale'](threshold_idx))
             .attr("y2", height)
             .style("stroke", "gray")
             .style("stroke-dasharray", ("5, 5"))
@@ -92,17 +104,17 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 .attr("name", "box_optimal_left")
                 .attr("r", 5)
                 .attr("fill", "gray")
-                .attr("cx", function(d) { return xScale(threshold_idx) })
+                .attr("cx", function(d) { return Window.box_plot_config['xScale'](threshold_idx) })
                 .attr("cy", function(d) { return height; });
         }
 
-        if ( xScale(max_threshold_window) >= 0 ) {
+        if ( Window.box_plot_config['xScale'](max_threshold_window) >= 0 ) {
             g.append("line")
             .attr("name", "box_optimal_right")
             .attr("class", "zero")
-            .attr("x1", xScale(max_threshold_window))
+            .attr("x1", Window.box_plot_config['xScale'](max_threshold_window))
             .attr("y1", 0)
-            .attr("x2", xScale(max_threshold_window))
+            .attr("x2", Window.box_plot_config['xScale'](max_threshold_window))
             .attr("y2", height)
             .style("stroke", "red")
             .style("stroke-dasharray", ("5, 5"))
@@ -112,7 +124,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 .attr("name", "box_optimal_right")
                 .attr("fill", "red")
                 .attr("r", 5)
-                .attr("cx", function(d) { return xScale(max_threshold_window) })
+                .attr("cx", function(d) { return Window.box_plot_config['xScale'](max_threshold_window) })
                 .attr("cy", function(d) { return height; });
         }
     }
@@ -152,9 +164,17 @@ function drawBoxplotCurve(numberofcomponents, data) {
     Window.box_plot_config.x_domain = [0, d3.max(format_data, function (d) {
         return d[0];
     })];
-    var xScale = d3.scaleLinear()
+
+    if ( persistence_values['xScale'] !== undefined ) {
+        
+        Window.box_plot_config['xScale'] = d3.scaleLinear()
+        .domain(persistence_values['xScale']) 
+        .range([0, width]);
+    } else {
+        Window.box_plot_config['xScale'] = d3.scaleLinear()
         .domain(Window.box_plot_config.x_domain)
         .range([0, width]);
+    }
 
     // Add Y axis
     // https://stackoverflow.com/questions/11322651/how-to-avoid-log-zero-in-graph-using-d3-js
@@ -162,14 +182,34 @@ function drawBoxplotCurve(numberofcomponents, data) {
         return d[1];
     })];
 
-    var yScale = d3.scaleLog()
-        .clamp(true)
-        .domain(Window.box_plot_config.y_domain)
-        .range([height, 0]);
+    if ( persistence_values['yScale'] !== undefined ) {
+        if ( persistence_values['switch_y_checked'] ) {
+            Window.box_plot_config['yScale'] = d3.scaleLog()
+            .clamp(true)
+            .domain(persistence_values['yScale'])
+            .range([height, 0]);
+        } else {
+            Window.box_plot_config['yScale'] = d3.scaleLinear()
+            .domain(persistence_values['yScale'])
+            .range([height, 0]);
+        }
+        
+    } else {
+        if ( persistence_values['switch_y_checked'] ) {
+            Window.box_plot_config['yScale'] = d3.scaleLog()
+            .clamp(true)
+            .domain(Window.box_plot_config.y_domain)
+            .range([height, 0]);
+        } else {
+            Window.box_plot_config['yScale'] = d3.scaleLinear()
+            .domain(persistence_values['yScale'])
+            .range([height, 0]);
+        }
+    }
 
     // https://github.com/d3/d3-format
-    var xAxis = d3.axisBottom(xScale).ticks(20).tickFormat(d3.format("20")),
-        yAxis = d3.axisLeft(yScale).tickFormat(d3.format("20"));
+    var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(20).tickFormat(d3.format("20")),
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(d3.format("20"));
 
     var brush = d3.brush().on("end", brushended),
         idleTimeout,
@@ -261,8 +301,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         var s = d3.event.selection;
         if (!s) {
         } else {
-            xScale.domain([s[0][0] * ratio, s[1][0]].map(xScale.invert, xScale));
-            yScale.domain([s[1][1], s[0][1] * ratio].map(yScale.invert, yScale));
+            Window.box_plot_config['xScale'].domain([s[0][0] * ratio, s[1][0]].map(Window.box_plot_config['xScale'].invert, Window.box_plot_config['xScale']));
+            Window.box_plot_config['yScale'].domain([s[1][1], s[0][1] * ratio].map(Window.box_plot_config['yScale'].invert, Window.box_plot_config['yScale']));
 
             svg.select(".brush").call(brush.move, null);
         }
@@ -277,8 +317,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
     })
 
     $("#hidden-zoom-back").unbind().click(function () {
-        xScale.domain(Window.box_plot_config.x_domain);
-        yScale.domain(Window.box_plot_config.y_domain);
+        Window.box_plot_config['xScale'].domain(Window.box_plot_config.x_domain);
+        Window.box_plot_config['yScale'].domain(Window.box_plot_config.y_domain);
         zoom();
 
         $("#hidden-optimal-threshold").click();
@@ -287,18 +327,18 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
     $("#customSwitches--y").unbind().click(function () {
         if ($("#customSwitches--y").is(':checked')) {
-            yScale = d3.scaleLog()
+            Window.box_plot_config['yScale'] = d3.scaleLog()
                 .clamp(true)
                 .domain(Window.box_plot_config.y_domain)
                 .range([height, 0]);
 
         } else {
-            yScale = d3.scaleLinear()
+            Window.box_plot_config['yScale'] = d3.scaleLinear()
                 .domain(Window.box_plot_config.y_domain)
                 .range([height, 0]);
         }
 
-        yAxis = d3.axisLeft(yScale).tickFormat(d3.format("20"));
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(d3.format("20"));
         zoom();
     });
 
@@ -321,14 +361,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
     });
 
     $("#hidden-notification_xxyy").unbind().click(function () {
-        $("#notification_xxyy").text(yScale.domain()[0].toFixed(1) + "-" + yScale.domain()[1].toFixed(1) +
-            ", " + xScale.domain()[0].toFixed(1) + "-" + xScale.domain()[1].toFixed(1));
+        $("#notification_xxyy").text(Window.box_plot_config['yScale'].domain()[0].toFixed(1) + "-" + Window.box_plot_config['yScale'].domain()[1].toFixed(1) +
+            ", " + Window.box_plot_config['xScale'].domain()[0].toFixed(1) + "-" + Window.box_plot_config['xScale'].domain()[1].toFixed(1));
     });
 
     $("#hidden-notification_xxyy-zoom").unbind().click(function () {
         var x = $("#x-y-range-change").val().replace(" ", "");
-        yScale.domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]);
-        xScale.domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]);
+        Window.box_plot_config['yScale'].domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]);
+        Window.box_plot_config['xScale'].domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]);
 
         zoom();
 
@@ -343,17 +383,17 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         g.selectAll("[name=box_polygon]").transition(t)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d);
             });
 
         g.selectAll("[name=box_polygon_line]").transition(t)
             .attr("d", function (d) {
-                return Window.box_plot_config.line(xScale, yScale)(d);
+                return Window.box_plot_config.line(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'])(d);
             });
 
         g.selectAll("[name=box_line]").transition(t)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d.values);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
             });
     }
 
@@ -382,7 +422,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         var max = d3.max(data_sorted)
 
         // a few features for the box
-        var center = xScale(idx) + 1
+        var center = Window.box_plot_config['xScale'](idx) + 1
         var width = 8
 
         ret['max'] = [idx, max, "group_max"];
@@ -403,7 +443,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("stroke", "none")
             .attr("stroke-width", 1.5)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d);
             })
 
         main.append("path")
@@ -413,7 +453,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("stroke", "none")
             .attr("stroke-width", 1.5)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d);
             })
 
         main.append("path")
@@ -423,7 +463,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("stroke", "none")
             .attr("stroke-width", 1.5)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d);
             })
 
         main.append("path")
@@ -433,7 +473,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("stroke", "none")
             .attr("stroke-width", 1.5)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d);
             })
 
         main.append("path")
@@ -443,7 +483,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("stroke", Window.box_plot_config.median_line_color)
             .attr("stroke-width", 1)
             .attr("d", function (d) {
-                return Window.box_plot_config.line(xScale, yScale)(d);
+                return Window.box_plot_config.line(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'])(d);
             })
 
         var lineStroke = "2px"
@@ -513,19 +553,19 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
                 d3.selectAll(".mouse-per-line")
                     .attr("transform", function (d, i) {
-                        var xIdx = xScale.invert(mouse[0]) // use 'invert' to get date corresponding to distance from mouse position relative to svg
+                        var xIdx = Window.box_plot_config['xScale'].invert(mouse[0]) // use 'invert' to get date corresponding to distance from mouse position relative to svg
                         var idx = bisect(d.values, xIdx);
                         d3.select(".mouse-line")
                             .attr("d", function () {
-                                var data = "M" + xScale(d.values[idx][0]) + "," + (height);
-                                data += " " + xScale(d.values[idx][0]) + "," + 0;
+                                var data = "M" + Window.box_plot_config['xScale'](d.values[idx][0]) + "," + (height);
+                                data += " " + Window.box_plot_config['xScale'](d.values[idx][0]) + "," + 0;
                                 return data;
                             });
-                        return "translate(" + xScale(d.values[idx][0]) + "," + yScale(d.values[idx][1]) + ")";
+                        return "translate(" + Window.box_plot_config['xScale'](d.values[idx][0]) + "," + Window.box_plot_config['yScale'](d.values[idx][1]) + ")";
                     });
 
                 $("#tooltipBoxplot").html("");
-                var xIdx = xScale.invert(mouse[0]);
+                var xIdx = Window.box_plot_config['xScale'].invert(mouse[0]);
                 var idx = -1;
                 res_nested.forEach(function (d) {
                     if (idx === -1) {
@@ -541,6 +581,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
                 return d3.select("#tooltipBoxplot").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
             })
+
+        if ( ! persistence_values['boxplot_polygon_checked']) {
+            $("[name^='box_polygon']").attr("visibility", "hidden");
+            Window.PPI['boxplot-element-visibility']['box_polygon'] = false;
+        }
     }
 
     function drawLine() {
@@ -551,7 +596,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         $("#boxplot-select-lines").html("<option value='all'>all</option>");
         for (var i = 0; i < res.length; i++) {
-            $('#boxplot-select-lines').append('<option value=' + res[i] + '>' + res[i] + '</option>');
+            if ( persistence_values['boxplot_input_val'] === res[i]) {
+                $('#boxplot-select-lines').append('<option selected value=' + res[i] + '>' + res[i] + '</option>');
+            } else {
+                $('#boxplot-select-lines').append('<option value=' + res[i] + '>' + res[i] + '</option>');
+            }
         }
 
         $("#boxplot-select-lines").change(function () {
@@ -594,10 +643,18 @@ function drawBoxplotCurve(numberofcomponents, data) {
             })
             .attr("stroke-width", 1.5)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(xScale, yScale, yScale(0))(d.values);
+                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
             })
+        
+        if ( ! persistence_values['boxplot_checkbox_checked'] ) {
+            $("[name='box_line']").attr("visibility", "hidden");
+            Window.PPI['boxplot-element-visibility']['box_line'] = false;
+        }
+        $('#boxplot-select-lines').change() ;
     }
     $("#hidden-optimal-threshold").click();
+
+    console.log(persistence_values) ;
 }
 
 $("#boxplot-checkbox-lines").unbind().click(function () {

@@ -73,7 +73,6 @@ function drawBoxPlot() {
     				 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
     $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
     $("[name='box_line']").attr("visibility", "hidden");
-    //$("[name='box_box']").attr("visibility", "hidden");    
 }
 
 function resetHist() {
@@ -152,9 +151,11 @@ function objectCallback(msg) {
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
 			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.values[0] ;
 			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.values[1] ;
-			resetBoxplot() ;
-    		drawBoxPlot() ;
-    		// Add the box window over histogram's bins
+			
+			drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents, 
+    				 		 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
+			
+			// Add the box window over histogram's bins
     		$("#hidden-mdm-add-window").click() ;
 		},
 		create: function() {
@@ -165,7 +166,7 @@ function objectCallback(msg) {
 	});
 
 	$("#legend-slider-top").unbind().slider({
-		min: 0,
+		min: 1,
 		orientation: "horizontal",
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
@@ -176,7 +177,7 @@ function objectCallback(msg) {
 	}) ;
 
 	$("#legend-slider-right").unbind().slider({
-		min: 0,
+		min: 1,
 		orientation: "vertical",
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
