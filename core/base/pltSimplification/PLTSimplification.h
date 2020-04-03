@@ -26,6 +26,17 @@
 
 typedef ttk::SimplexId ttkInt;
 
+std::string toFixed(const float& number, const int precision = 2){
+    std::stringstream vFraction;
+    vFraction << std::fixed << std::setprecision(precision) << number;
+    return vFraction.str();
+};
+
+template<typename idType>
+std::string toFixed(const idType& number0, const idType& number1, const int precision = 2){
+    return toFixed( ((float)number0)/((float)number1), precision );
+};
+
 namespace ttk {
 
     class PLTSimplification : virtual public Debug {
@@ -542,7 +553,7 @@ namespace ttk {
                         regionMask[extremumIndex] = extremumIndex;
 
                         if(propagationMask[extremumIndex]->find()!=propagation){
-                            this->printErr("WHAT");
+                            this->printErr("Unexpected Configuration");
                         }
                     }
 
@@ -606,10 +617,38 @@ namespace ttk {
                 }
                 if(!status) return 0;
 
-                this->printMsg(
-                    "Computing regions ("+std::to_string(nPropagations)+")",
-                    1, timer.getElapsedTime(), this->threadNumber_
-                );
+
+                if(this->debugLevel_<4){
+                    this->printMsg(
+                        "Computing regions ("+std::to_string(nPropagations)+")",
+                        1, timer.getElapsedTime(), this->threadNumber_
+                    );
+                } else {
+
+                    idType min = propagations[0]->regionSize;
+                    idType max = min;
+                    idType avg = 0;
+
+                    for(idType p=0; p<nPropagations; p++){
+                        const auto propagation = propagations[p];
+                        if(min>propagation->regionSize)
+                            min=propagation->regionSize;
+                        if(max<propagation->regionSize)
+                            max=propagation->regionSize;
+                        avg += propagation->regionSize;
+                    }
+
+                    avg /= nPropagations;
+
+                    this->printMsg(
+                        "Computing regions ("+std::to_string(nPropagations)
+                            + "|" + toFixed(min,nVertices)
+                            + "|" + toFixed(avg,nVertices)
+                            + "|" + toFixed(max,nVertices)
+                        +")",
+                        1, timer.getElapsedTime(), this->threadNumber_
+                    );
+                }
 
                 return 1;
             }
@@ -2932,26 +2971,26 @@ namespace ttk {
                 const ttk::Triangulation* triangulation,
                 const idType* regionMask,
                 const idType* inputOffsets,
-                const std::vector<Propagation<idType>*>& masterPropagations,
+                const std::vector<Propagation<idType>*>& propagations,
                 const bool& useRegionBasedIterations
             ) const {
-
                 ttk::Timer timer;
+
+                const idType nPropagations = propagations.size();
                 this->printMsg(
-                    "Computing local order of regions",
+                    "Computing local order of regions ("+std::to_string(nPropagations)+")",
                     0, 0, this->threadNumber_,
                     debug::LineMode::REPLACE
                 );
 
-                const idType nMasterPropagations=masterPropagations.size();
                 int status = 1;
                 #pragma omp parallel for schedule(dynamic) num_threads(this->threadNumber_)
-                for(idType p=0; p<nMasterPropagations; p++){
+                for(idType p=0; p<nPropagations; p++){
                     int localStatus = this->computeLocalOffsetsOfRegion<idType>(
                         localOffsets,
                         distanceField,
 
-                        masterPropagations[p],
+                        propagations[p],
                         triangulation,
                         regionMask,
                         inputOffsets,
@@ -2963,9 +3002,35 @@ namespace ttk {
                 if(!status)
                     return 0;
 
-                this->printMsg( "Computing local order of regions ("+std::to_string(nMasterPropagations)+")",
-                    1, timer.getElapsedTime(), this->threadNumber_
-                );
+                if(this->debugLevel_<4){
+                    this->printMsg( "Computing local order of regions ("+std::to_string(nPropagations)+")",
+                        1, timer.getElapsedTime(), this->threadNumber_
+                    );
+                } else {
+                    idType min = propagations[0]->nIterations;
+                    idType max = min;
+                    idType avg = 0;
+
+                    for(idType p=0; p<nPropagations; p++){
+                        const auto propagation = propagations[p];
+                        if(min>propagation->nIterations)
+                            min=propagation->nIterations;
+                        if(max<propagation->nIterations)
+                            max=propagation->nIterations;
+                        avg += propagation->nIterations;
+                    }
+
+                    avg /= nPropagations;
+
+                    this->printMsg(
+                        "Computing local order of regions ("+std::to_string(nPropagations)
+                            + "|" + std::to_string(min)
+                            + "|" + std::to_string(avg)
+                            + "|" + std::to_string(max)
+                        +")",
+                        1, timer.getElapsedTime(), this->threadNumber_
+                    );
+                }
 
                 return 1;
             }
