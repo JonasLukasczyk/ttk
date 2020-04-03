@@ -40,7 +40,7 @@ class TTKPERSISTENCEPAIRINVENTORY_EXPORT ttkPersistencePairInventory
         int NumberOfScalarValues{2};
         bool UseBinning{false};
         int NumberOfPersistenceThresholds{1};
-        int PersistenceDelta{1};
+        double PersistenceDelta{1};
 
     public:
         vtkSetMacro(UseEntireScalarRange, bool);
