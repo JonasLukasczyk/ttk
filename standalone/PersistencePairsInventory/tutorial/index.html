@@ -87,9 +87,9 @@
                <h4>Boxplot View </h4>
                <ul>
                   <li>
-                     <div class="custom-switch inline">
-                        <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y"></label>
+                     <div class="custom-control custom-switch inline">
                         <input type="checkbox" class="custom-control-input" title="apply logarithmic" id="customSwitches--y">
+                        <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y"></label>
                      </div> <code>|</code>
                      <span id="notification_xxyy" class="p-1 bg-success text-white" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span> <code>|</code>
                      <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
@@ -98,7 +98,7 @@
                   <li>
                      <input type="checkbox" id="boxplot-checkbox-lines">
                      <select id="boxplot-select-lines">
-                        <option>lines</option>
+                        <option value="all">all</option>
                      </select>
                      line layer <code>|</code>
                      <input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">

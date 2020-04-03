@@ -274,7 +274,11 @@ function drawHistogram(iComponent, socket, tag=0) {
             $(this).parent()[0].append($(this)[0]) ;
             d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
             var actual_scalar = getScalarArray(parseInt(d[1]));
-            var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
+            if (fieldData.hasOwnProperty("Time") ) {
+                var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
+            } else {
+                var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
+            }
             var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
