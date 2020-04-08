@@ -279,9 +279,12 @@ function drawHistogram(iComponent, socket, tag=0) {
             } else {
                 var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
             }
+            var actual_threshold = $("#hist-threshold :selected").text()
+            var idx_threshold = $("#hist-threshold :selected").val()
             var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
+                '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
                 '"PPI": [' + d[2] + '] }}';
 
             $("#histogram-notification-placeholder-default").html("") ;
