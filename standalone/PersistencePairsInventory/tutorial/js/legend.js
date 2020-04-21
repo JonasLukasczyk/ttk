@@ -70,7 +70,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         bins = removeLastEqual(bins) ;
         let yLine = d3.scaleLinear().range([lHeight, 0]);
         // Y domain should be fixed
-        var mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ; 
+        var mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ;
         if ( tag === 1) {
             Window.PPI['persistence_pairs_range']['medium_top'] = getMediumFromHistogramBins(bins) ;
             mediumTop = Window.PPI['persistence_pairs_range']['medium_top'] ;
@@ -78,7 +78,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         if ( mediumTop === -1 ) {
             mediumTop = getMediumFromHistogramBins(bins) ;
         }
-        
+
         yLine.domain([0, mediumTop]);   // d3.hist has to be called before the Y axis obviously
         $("#legend-slider-top").slider("value", mediumTop) ;
         $("#legend-custom-handle-top").html("<span style='font-size:10px;'>"+mediumTop+"</span>") ;
@@ -150,7 +150,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         //     .call(dragTop) ;
     }
     drawLegendTop() ;
-    
+
     // ============================= draw the right bar chart
     let xLineRight = d3.scaleLinear().range([0, height]).domain([min_persistence_pairs, max_persistence_pairs]);
     function drawLegendRight() {
@@ -163,7 +163,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         let binsRight = histogramRight(data);
         binsRight = removeLastEqual(binsRight) ;
         let yLineRight = d3.scaleLinear().range([margin.right - 5, 0]);
-        var mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ; 
+        var mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ;
         if ( tag === 1) {
             Window.PPI['persistence_pairs_range']['medium_right'] = getMediumFromHistogramBins(binsRight) ;
             mediumRight = Window.PPI['persistence_pairs_range']['medium_right'] ;
@@ -211,7 +211,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         //     d3.select(this).attr('class', 'inactive-d3-item-line2');
         //     d3.select("#right-legend-rect-cover").attr("height", parseFloat(d3.select(this).attr("data-value"))) ;
         // }
-        
+
         binsRight = binsRight.reverse()
         var x2 = min_persistence_pairs ;
         for (var i = 0; i < binsRight.length; i ++) {
@@ -250,7 +250,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         //     .call(dragRight) ;
     }
     drawLegendRight() ;
-    
+
     // ===================================================================================================================
 
     // updated notification
@@ -336,7 +336,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .style("font-size", "small")
-        .text("# of bins") ;
+        .text("#Bins") ;
 
     svg.append("text")
         .attr("y", height - 10)

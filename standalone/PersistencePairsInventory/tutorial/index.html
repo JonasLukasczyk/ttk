@@ -3,7 +3,7 @@
 <head>
    <meta charset="UTF-8">
    <title>APPI</title>
-   
+
    <script type="text/javascript" src="./js/jquery.min.js"></script>
    <script type="text/javascript" src="./js/bootstrap.min.js"></script>
    <script src="./js/jquery.loading.min.js"></script>
@@ -61,30 +61,30 @@
    <div class="container-fluid" style="margin-top:10px;">
       <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);margin-right: 0px;margin-left: 0px;">
          <div class="col-4">
-            <h2 class="pb-3">APPI</h2>
+            <h2 class="pb-3"></h2>
          </div>
          <div class="col-8">
             <div class="text-justify p-2" style="display: flex;align-items: center;">
-               <span style="padding-right:4px;">WebSocketIO Host:</span>
+               <span style="padding-right:4px;">Host:</span>
                <input id="msg-host" type="text" style="width: 108px;" value="10.218.107.40"> <code>|</code>
-               <span style="padding-right:4px;">Port: </span>
+               <span style="padding-right:4px;">Data Port: </span>
                <input id="msg" type="text" value="9286" style="width: 50px;"><code>|</code>
-               <span style="padding-right:4px;">Port for render:</span>
+               <span style="padding-right:4px;">Render Port:</span>
                <input id="msg-render" type="text" value="9289" style="width: 50px;"> <code>|</code>
                <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
-               &nbsp; -<code> OR </code>- &nbsp; 
+               &nbsp; -<code> OR </code>- &nbsp;
                <button id="load_test" onclick="LoadTest();" class="btn btn-secondary btn-sm">Test dataset</button>
                <br>
             </div>
          </div>
-      </div> 
+      </div>
 
-   </div> 
+   </div>
    <div class="container-fluid">
       <div class="row">
          <div class="col-4" style="padding-right:0px;border-right: 1px solid rgba(0,0,0,.1);margin-top: 10px;">
             <div class="text-justify p-2" style="height: 100%;">
-               <h4>Boxplot View </h4>
+               <h4>Functional Boxpot of Persistence Curves</h4>
                <ul>
                   <li>
                      <div class="custom-control custom-switch inline">
@@ -93,7 +93,7 @@
                      </div> <code>|</code>
                      <span id="notification_xxyy" class="p-1 bg-success text-white" title="x-y domain" style="font-size:12px;cursor:pointer;" data-toggle="modal" data-target="#boxplotRange" >0-0, 0-0</span> <code>|</code>
                      <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
-                     
+
                   </li>
                   <li>
                      <input type="checkbox" id="boxplot-checkbox-lines">
@@ -104,22 +104,22 @@
                      <input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">
                      polygon layer<code>|</code>
                      <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a> <code>|</code>
-                     <image id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"></image>
+                     <img id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
                   </li>
-                  
+
                </ul>
                <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
                   <h3>&nbsp; ... </h3>
                </div>
                <hr>
-               <h4>Topology Simplification </h4>
+               <h4>Render View</h4>
                <div id='RendererContainer' style="border: 1px solid rgba(0,0,0,.1);padding-top: 20px;"></div>
 
             </div>
          </div>
          <div class="col-8">
             <div class="text-justify p-2" style="height: 100%;" id="histogram-view-container">
-               <h4>Histogram View</h4>
+               <h4>Aggregated Persistence Pair Inventory (APPI)</h4>
 
                 <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
                  <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
@@ -136,15 +136,15 @@
 
                            <li>
                               <div style="display: flex;align-items: center;">
-                                 <image id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"></image><code>|</code>
-                                 <image id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"></image><code element-show="mdm">|</code>
-                                 
+                                 <img id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"><code>|</code>
+                                 <img id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"><code element-show="mdm">|</code>
+
                                  <div style="display:none"><input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code></div>
-                                 
-                                 <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"><code element-show="sdm" style="display:none;">|</code> 
+
+                                 <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"><code element-show="sdm" style="display:none;">|</code>
 
                                  <div style="display:none"><input  element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code></div>
-                                 
+
                                  <img  element-show="sdm"  id="sdm-histogram_zoom_back" style="width:20px;cursor: pointer;display:none;" src="./images/zoom_back.png">
                               </div>
                            </li>
@@ -157,13 +157,13 @@
                               <div id="slider-range">
                                 <div id="custom-handle0" class="ui-slider-handle"></div>
                                 <div id="custom-handle1" class="ui-slider-handle"></div>
-                              </div> 
+                              </div>
 
                               <div id="slider-range-single" style="display: none;">
                                 <div id="custom-handle0-single" class="ui-slider-handle"></div>
-                              </div> 
+                              </div>
 
-                              &nbsp; <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label> 
+                              &nbsp; <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label>
                            </li>
                            <li element-show="sdm" style="display:none;">Time:&nbsp;
                               <select id="hist-time">
@@ -175,6 +175,7 @@
                                     data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
                                     data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
                               Notification: <span id="histogram-notification-placeholder-default">...</span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                              </div>
                            </li>
                         </ul>
                      </div>
@@ -191,9 +192,9 @@
                   <div id="legend-slider-right"><div id="legend-custom-handle-right" class="ui-slider-handle"></div></div>
 
                </div>
-               
+
                <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
-               
+
             </div>
          </div>
       </div>
@@ -213,27 +214,27 @@
 <script src="./js/index.js"></script>
 
 <!-- for purpose -->
-<image id="hidden-zoom-back" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-brush-mode" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-zoom-back" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-brush-mode" class="nospace" src="./images/zoom_back.png">
 
 <!-- automatically fill-in the xxyy input value -->
-<image id="hidden-notification_xxyy" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-notification_xxyy" class="nospace" src="./images/zoom_back.png">
 <!-- implement clicking event -->
-<image id="hidden-notification_xxyy-zoom" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-sdm-move-next" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-optimal-threshold" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-sdm-move-prev" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-sdm-move-right-next" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-sdm-move-right-prev" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-mdm-add-window" class="nospace" src="./images/zoom_back.png"></image>
-<image id="hidden-sdm-add-window" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-notification_xxyy-zoom" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-next" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-optimal-threshold" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-prev" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-right-next" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-right-prev" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-mdm-add-window" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-add-window" class="nospace" src="./images/zoom_back.png">
 <!-- re-draw the vertical column lonely -->
-<image id="hidden-sdm-draw-vertical-column-lonely" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-sdm-draw-vertical-column-lonely" class="nospace" src="./images/zoom_back.png">
 <!-- re-draw the legend in the sdm lonely -->
-<image id="hidden-sdm-draw-legend-lonely" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-sdm-draw-legend-lonely" class="nospace" src="./images/zoom_back.png">
 <!-- reset domain of top in the legend -->
-<image id="hidden-legend-redraw-top" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-legend-redraw-top" class="nospace" src="./images/zoom_back.png">
 <!-- reset domain of right in the legend -->
-<image id="hidden-legend-redraw-right" class="nospace" src="./images/zoom_back.png"></image>
+<img id="hidden-legend-redraw-right" class="nospace" src="./images/zoom_back.png">
 </body>
 </html>
