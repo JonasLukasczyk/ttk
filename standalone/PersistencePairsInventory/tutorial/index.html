@@ -13,6 +13,22 @@
    <link rel="stylesheet" href="./css/bootstrap.min.css">
    <link rel="stylesheet" href="./css/index.css">
    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+   <style>
+      table, td, th {  
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+      
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 4px;
+      }
+      
+      th, td {
+        padding-left: 4px;
+      }
+      </style>
 </head>
 
 <body>
@@ -59,23 +75,37 @@
 
 <div >
    <div class="container-fluid" style="margin-top:10px;">
-      <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);margin-right: 0px;margin-left: 0px;">
+      <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
          <div class="col-4">
-            <h2 class="pb-3"></h2>
-         </div>
-         <div class="col-8">
             <div class="text-justify p-2" style="display: flex;align-items: center;">
                <span style="padding-right:4px;">Host:</span>
-               <input id="msg-host" type="text" style="width: 108px;" value="10.218.107.40"> <code>|</code>
+               <input id="msg-host" type="text" style="width: 96px;font-size: 14px;" value="10.218.107.40"> <code>|</code>
                <span style="padding-right:4px;">Data Port: </span>
-               <input id="msg" type="text" value="9286" style="width: 50px;"><code>|</code>
+               <input id="msg" type="text" value="9286" style="width: 38px;font-size: 14px;"><code>|</code>
                <span style="padding-right:4px;">Render Port:</span>
-               <input id="msg-render" type="text" value="9289" style="width: 50px;"> <code>|</code>
-               <button id="connect" onclick="Connect();" class="btn btn-primary btn-sm">Connect</button>
+               <input id="msg-render" type="text" value="9289" style="width: 38px;font-size: 14px;"> <code>|</code>
+               <button id="connect" onclick="Connect();" style="font-size: 12px;" class="btn btn-primary btn-sm">Connect</button>
                &nbsp; -<code> OR </code>- &nbsp;
-               <button id="load_test" onclick="LoadTest();" class="btn btn-secondary btn-sm">Test dataset</button>
+               <button id="load_test" onclick="LoadTest();" style="font-size: 12px;" class="btn btn-secondary btn-sm">Test dataset</button>
                <br>
             </div>
+         </div>
+         
+         <div class="col-8" style="padding-left: 0px">
+            <table>
+               <tr>
+                 <td colspan="3"><kbd>ctrl v</kbd> Toggle between the APPI and PPI mode</td>
+                 <td colspan="3" title="in the APPI or PPI view"><kbd>ctrl ← or → or ↑ or ↓</kbd> Move the selected bin to ← or → or ↑ or ↓</td>
+                 <td colspan="3" title="in FBPC view"><kbd>ctrl b</kbd> Toggle between the view and brush mode</td>
+               </tr>
+               <tr>
+                  <td colspan="3" title="in the PPI view"><kbd>Shirt ctrl ← or →</kbd> shrink or expand the threshold window</td>
+                  <td colspan="3"  title="in the PPI view"><kbd>Shirt ← or →</kbd> Move the threshold window to the left or right</td>
+                  <td colspan="3"  title="in the APPI view"><kbd>ctrl x</kbd> Show or hide the tooltip</td>
+               </tr>
+             </table>
+             
+
          </div>
       </div>
 
@@ -84,7 +114,7 @@
       <div class="row">
          <div class="col-4" style="padding-right:0px;border-right: 1px solid rgba(0,0,0,.1);margin-top: 10px;">
             <div class="text-justify p-2" style="height: 100%;">
-               <h4>Functional Boxpot of Persistence Curves</h4>
+               <h4>Functional Boxplot of Persistence Curves</h4>
                <ul>
                   <li>
                      <div class="custom-control custom-switch inline">
@@ -119,7 +149,8 @@
          </div>
          <div class="col-8">
             <div class="text-justify p-2" style="height: 100%;" id="histogram-view-container">
-               <h4>Aggregated Persistence Pair Inventory (APPI)</h4>
+               <h4 element-show="mdm">Aggregated Persistence Pair Inventory (APPI)</h4>
+               <h4 element-show="sdm" style="display:none;">Persistence Pair Inventory (PPI)</h4>
 
                 <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
                  <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">

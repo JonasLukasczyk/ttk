@@ -208,14 +208,17 @@ function drawBoxplotCurve(numberofcomponents, data) {
     }
 
     // https://github.com/d3/d3-format
-    var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(20).tickFormat(d3.format("20")),
-        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(d3.format("20"));
+    var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(20).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); }),
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); });
 
     var brush = d3.brush().on("end", brushended),
         idleTimeout,
         idleDelay = 350;
 
-    var drag = d3.drag().on('drag', dragged);
+    var drag = d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended);
 
     g.append("g")
         .attr('class', 'axis--x')
@@ -226,6 +229,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     g.append("g")
         .attr('class', 'axis--y')
         .style("font-size", "12px")
+        .attr("transform", "translate(-1,0)")
         .call(yAxis);
 
     g.append('defs')
@@ -265,6 +269,37 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .attr('clip-path', 'url(#clip)')
         .attr("transform", "scale(1)")
 
+    svg.call(drag)
+
+    function dragstarted(d) {
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed("dragging", true);
+        // without hover
+        d3.select(".mouse-line").style("opacity", "0");
+        d3.selectAll(".mouse-per-line circle").style("opacity", "0");
+        d3.selectAll(".mouse-per-line text").style("opacity", "0");
+        d3.select("#tooltipBoxplot").style("visibility", "hidden");
+    }
+
+    function dragged(d) {
+        dx = Window.box_plot_config['xScale'].invert(d3.event.dx) - Window.box_plot_config['xScale'].domain()[0];
+        //dy = Window.box_plot_config['yScale'].invert(d3.event.dy) - Window.box_plot_config['yScale'].domain()[1];
+
+        Window.box_plot_config['xScale'].domain([Window.box_plot_config['xScale'].domain()[0] - dx, Window.box_plot_config['xScale'].domain()[1] - dx]) ;
+        //Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
+        zoom(tx=0);
+        
+        $("#hidden-optimal-threshold").click();
+        $("#hidden-notification_xxyy").click();
+    }
+
+    function dragended(d) {
+        d3.select(this).classed("dragging", false);
+        d3.select(".mouse-line").style("opacity", "1");
+        d3.selectAll(".mouse-per-line circle").style("opacity", "1");
+        d3.select("#tooltipBoxplot").style("visibility", "visible")
+    }
+
     var points = {
         "max": [],
         "q1": [],
@@ -301,9 +336,17 @@ function drawBoxplotCurve(numberofcomponents, data) {
         var s = d3.event.selection;
         if (!s) {
         } else {
-            Window.box_plot_config['xScale'].domain([s[0][0] * ratio, s[1][0]].map(Window.box_plot_config['xScale'].invert, Window.box_plot_config['xScale']));
-            Window.box_plot_config['yScale'].domain([s[1][1], s[0][1] * ratio].map(Window.box_plot_config['yScale'].invert, Window.box_plot_config['yScale']));
+            // processing the s
+            sx = [[s[0][0], s[0][1]], [s[1][0], s[1][1]]]
+            sx[0][0] = Math.min(Math.max(0, s[0][0] - Window.box_plot_config.margin.left), Window.box_plot_config['xScale'].range()[1])
+            sx[1][0] = Math.min(Math.max(0, s[1][0] - Window.box_plot_config.margin.left), Window.box_plot_config['xScale'].range()[1])
 
+            sx[0][1] = Math.min(Math.max(0, s[0][1] - Window.box_plot_config.margin.top), Window.box_plot_config['yScale'].range()[0])
+            sx[1][1] = Math.min(Math.max(0, s[1][1] - Window.box_plot_config.margin.top), Window.box_plot_config['yScale'].range()[0])
+
+            Window.box_plot_config['xScale'].domain([sx[0][0], sx[1][0]].map(Window.box_plot_config['xScale'].invert));
+            Window.box_plot_config['yScale'].domain([sx[1][1], sx[0][1]].map(Window.box_plot_config['yScale'].invert));
+            
             svg.select(".brush").call(brush.move, null);
         }
         zoom();
@@ -338,7 +381,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 .range([height, 0]);
         }
 
-        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(d3.format("20"));
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); });
         zoom();
     });
 
@@ -355,6 +398,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             svg.append("g")
                 .attr("class", "brush")
                 .call(brush);
+                
             $("#brush_mode").attr("mode", "brush");
             $("#brush_mode").text("brush mode");
         }
@@ -376,8 +420,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $("#boxplotRangeLabel-close").click();
     });
 
-    function zoom() {
-        var t = svg.transition().duration(750);
+    function zoom(tx=750) {
+        var t = svg.transition().duration(tx);
         svg.select(".axis--x").transition(t).call(xAxis);
         svg.select(".axis--y").transition(t).call(yAxis);
 
@@ -397,12 +441,12 @@ function drawBoxplotCurve(numberofcomponents, data) {
             });
     }
 
-    function dragged() {
-        d3.selectAll('.line')
-            .attr('transform', `translate(${d3.event.x}, ${d3.event.y})`);
-        svg.select(".axis--x").call(xAxis);
-        svg.select(".axis--y").call(yAxis);
-    }
+    // function dragged() {
+    //     d3.selectAll('.line')
+    //         .attr('transform', `translate(${d3.event.x}, ${d3.event.y})`);
+    //     svg.select(".axis--x").call(xAxis);
+    //     svg.select(".axis--y").call(yAxis);
+    // }
 
     function drawBoxPlot(idx, data) {
         // Compute summary statistics used for the box:

@@ -2,7 +2,8 @@
 Window.PPI = {
     "DEV": false,
     // the id of the bin selected in the histogram view
-    "selected-bin-id": "",
+	"selected-bin-id": "",
+	"selected-bin-id-sdm": "",
     // it MUST be only one value
     "APPIAttrName": "",
     // color range
@@ -176,13 +177,15 @@ function objectCallback(msg) {
 		}
 	}) ;
 
+	// reverse the min and max
 	$("#legend-slider-right").unbind().slider({
 		min: 1,
 		orientation: "vertical",
 		max: Window.PPI['histogram-width'] * Window.PPI['histogram-height'],
 		value: 0,
 		slide: function(event, ui) {
-			$("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+ui.value+"</span>").attr("value", ui.value) ;
+			var v = Window.PPI['histogram-width'] * Window.PPI['histogram-height'] + 1 - ui.value ;
+			$("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+v+"</span>").attr("value", v) ;
 			$("#hidden-legend-redraw-right").click() ;
 		},
 	}) ;
@@ -228,7 +231,7 @@ function Connect() {
 			$("#load_test").attr("disabled", true);
 		},
 		function () {
-			console.log("on_clbinose");
+			console.log("on_close");
 		},
 		objectCallback,
 		ip = $("#msg-host").val(), false);
@@ -252,11 +255,17 @@ function triggerCtrlV() {
 		$("[element-show='mdm']").css("display", "none") ;
 		$("[element-show='sdm']").css("display", "") ;
 		drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
+		if (Window.PPI['selected-bin-id-sdm']) {
+			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+		}
 	} else {
 		Window.PPI['histogram-mode'] = "multi" ;
 		$("[element-show='mdm']").css("display", "") ;
 		$("[element-show='sdm']").css("display", "none") ;
 		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
+		if (Window.PPI['selected-bin-id']) {
+			d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+		}
 	}
 }
 
@@ -284,6 +293,29 @@ $(document).keydown(function (e) {
 		return ;
 	}
 
+	// shift + event 
+	if ( e.shiftKey) {
+		switch(e.key) {
+			case "ArrowRight":
+				// single view
+				if (Window.PPI['histogram-mode'] == "multi") {
+					
+				} else {
+					$("#hidden-sdm-move-next").click() ;
+				}
+				break;
+			case "ArrowLeft":
+				// single view
+				if (Window.PPI['histogram-mode'] == "multi") {
+					
+				} else {
+					$("#hidden-sdm-move-prev").click() ;
+				}
+				break;
+		}
+		return ;
+	}
+
 	// control + event
 	if (!e.ctrlKey) {
 		return ;
@@ -298,6 +330,16 @@ $(document).keydown(function (e) {
 		var j = Math.floor(g_idx / Window.PPI['histogram-width']);
 		var i = g_idx % Window.PPI['histogram-width'];
 		selected = true;
+	}
+
+	// for sdm
+	var selected_sdm = false;
+	var g_idx_sdm = 0;
+	if ($("[bin-selected-sdm=on]").length > 0) {
+		g_idx_sdm = parseInt($("[bin-selected-sdm=on]").attr("id").replace("sdm-hist-bin-", ""));
+		var j_sdm = Math.floor(g_idx_sdm / Window.PPI['sdm-histogram-width']);
+		var i_sdm = g_idx_sdm % Window.PPI['sdm-histogram-width'];
+		selected_sdm = true;
 	}
 
 	switch (e.key) {
@@ -339,7 +381,11 @@ $(document).keydown(function (e) {
 					}
 				}
 			} else {
-				$("#hidden-sdm-move-next").click() ;
+				if (selected_sdm) {
+					if (i_sdm + 1 <= Window.PPI['sdm-histogram-width'] - 1) {
+						d3.select("#sdm-hist-bin-" + (g_idx_sdm + 1)).dispatch("click");
+					}
+				}
 			}
 			break;
 
@@ -353,24 +399,46 @@ $(document).keydown(function (e) {
 					}
 				}
 			} else {
-				$("#hidden-sdm-move-prev").click() ;
+				if (selected_sdm) {
+					if (i_sdm - 1 >= 0) {
+						d3.select("#sdm-hist-bin-" + (g_idx_sdm - 1)).dispatch("click");
+					}
+				}
 			}
 			break;
 
 		case "ArrowUp":
-			if (selected) {
-				if (j + 1 <= Window.PPI['histogram-height'] - 1) {
-					d3.select("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])).dispatch("click");
+			if (Window.PPI['histogram-mode'] == "multi") {
+				if (selected) {
+					if (j + 1 <= Window.PPI['histogram-height'] - 1) {
+						d3.select("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])).dispatch("click");
+					}
+				}
+			} else {
+				if (selected_sdm) {
+					if (j_sdm + 1 <= Window.PPI['histogram-height'] - 1) {
+						d3.select("#sdm-hist-bin-" + (g_idx_sdm + Window.PPI['sdm-histogram-width'])).dispatch("click");
+					}
 				}
 			}
+			
 			break;
 
 		case "ArrowDown":
-			if (selected) {
-				if (j - 1 >= 0) {
-					d3.select("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])).dispatch("click");
+			if (Window.PPI['histogram-mode'] == "multi") {
+				if (selected) {
+					if (j - 1 >= 0) {
+						d3.select("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])).dispatch("click");
+					}
+				}
+			} else {
+				if (selected_sdm) {
+					if (j_sdm - 1 >= 0) {
+						d3.select("#sdm-hist-bin-" + (g_idx_sdm - Window.PPI['sdm-histogram-width'])).dispatch("click");
+					}
 				}
 			}
+			
 			break;
 	}
 });
@@ -394,10 +462,17 @@ $("#hist-threshold").change(function () {
     	} else {
 	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
-    });
-    if (Window.PPI['selected-bin-id']) {
-        d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-    }
+	});
+	if ( Window.PPI['histogram-mode'] == "multi" ) {
+		if (Window.PPI['selected-bin-id']) {
+			d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+		}
+	} else {
+		if (Window.PPI['selected-bin-id-sdm']) {
+			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+		}
+	}
+    
     $("#hidden-optimal-threshold").click();
 	$(this).focus() ;
 	
@@ -421,9 +496,15 @@ $("#threshold-window").change(function() {
 	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
     	}
     });
-    if (Window.PPI['selected-bin-id']) {
-        d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-    }
+    if ( Window.PPI['histogram-mode'] == "multi" ) {
+		if (Window.PPI['selected-bin-id']) {
+			d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+		}
+	} else {
+		if (Window.PPI['selected-bin-id-sdm']) {
+			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+		}
+	}
     $("#hidden-optimal-threshold").click();
 	$(this).focus() ;
 }) ;

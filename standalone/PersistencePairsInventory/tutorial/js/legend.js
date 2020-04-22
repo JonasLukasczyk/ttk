@@ -172,8 +172,9 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         if ( mediumRight === -1 ) {
             mediumRight = getMediumFromHistogramBins(binsRight) ;
         }
-        $("#legend-slider-right").slider("value", mediumRight) ;
-        $("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+mediumRight+"</span>") ;
+        var v =  Window.PPI['histogram-width'] * Window.PPI['histogram-height'] + 1 - mediumRight ;
+        $("#legend-slider-right").slider("value", v) ;
+        $("#legend-custom-handle-right").html("<span style='font-size:10px;'>"+mediumRight+"</span>").attr("value", mediumRight) ;
         yLineRight.domain([0,  mediumRight]);   // d3.hist has to be called before the Y axis obviously
         rHeight = margin.right - 5 ;
         let lineSvgRight = container

@@ -168,7 +168,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     xg.append("g")
         .attr('class', 'axis--hist--x')
         .attr("transform", "translate(0," + fixedHeight + ")")
-        .style("font-size", "12px")
+        .style("font-size", "16px")
         .call(d3.axisBottom(x)) ;
 
     let y = d3.scaleBand()
@@ -190,7 +190,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     yg.append("g")
         .attr('class', 'axis--hist--y')
         .attr("transform", "translate(0,0)")
-        .style("font-size", "12px")
+        .style("font-size", "16px")
         .call(d3.axisLeft(y));
 
     svg.append('defs')
@@ -332,6 +332,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
+        .style("font-size", "16px")
         .style("text-anchor", "middle")
         .text("Scalar") ;
 
@@ -342,6 +343,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         .attr("x", (fixedWidth / 2.5 + 110))
         .attr("z-index", 100)
         .attr("dy", "1em")
+        .style("font-size", "16px")
         .style("text-anchor", "middle")
         .text("Time"); 
 

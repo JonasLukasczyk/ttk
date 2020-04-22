@@ -107,8 +107,8 @@ function drawSDMHistogram(socket) {
                 return customColor(d[1], d[2]) ;
             })
             .append("title")
-            .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] });
-        
+            .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] }) ;
+            
         if ( sdm_vertical_column_g_transform ) {
             $(".sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
         }
@@ -211,7 +211,7 @@ function drawSDMHistogram(socket) {
     xg.append("g")
         .attr('class', 'sdm-axis--hist--x')
         .attr("transform", "translate(0," + fixedHeight + ")")
-        .style("font-size", "12px")
+        .style("font-size", "16px")
         .call(d3.axisBottom(x).ticks(2, "s"));
 
     let y = d3.scaleBand()
@@ -232,7 +232,7 @@ function drawSDMHistogram(socket) {
 
     yg.append("g")
         .attr('class', 'sdm-axis--hist--y')
-        .style("font-size", "12px")
+        .style("font-size", "16px")
         .call(d3.axisLeft(y).ticks(2, "s"));
 
     let lower = getFloatValue("#histogram_viz_legend", "data-x_0"),
@@ -279,6 +279,28 @@ function drawSDMHistogram(socket) {
         .attr("height", y.bandwidth())
         .style("fill", function (d) {
             return customColor((lower + upper) / 2, d[2], undefined, undefined, true);
+        })
+        
+        .on("click", function (d, i) {
+            $("#RendererContainer").loading({theme: "light"}) ;
+            Window.PPI['selected-bin-id-sdm'] = $(this).attr("id")
+            d3.selectAll(".sdm-bin").style("stroke-width", 0.1).attr("bin-selected-sdm", "off");
+            $(this).parent()[0].append($(this)[0]) ;
+            d3.select(this).style("stroke-width", 2).attr("bin-selected-sdm", "on");
+            var actual_scalar = getScalarArray(parseInt(d[1]));
+            var actual_time = $("#hist-time :selected").text()
+            var idx_time = $("#hist-time :selected").val()
+            var actual_threshold = parseInt(d[0]) * Window.PPI['thresholdRatio'] ;
+            var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
+                '{"idx_time": [' + idx_time + '], "actual_time": [' + actual_time + '], ' +
+                '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
+                '"idx_threshold": [' + d[0] + '], "actual_threshold": [' + actual_threshold + '],' +
+                '"PPI": [' + d[2] + '] }}';
+            console.log(backMsg) ;
+            if (!Window.PPI['DEV']) {
+                Window.socket = socket ;
+                socket.send(backMsg) ;
+            }
         })
         .append("title")
         .text(function(d) { return "PPI: " + d[2] });
@@ -514,6 +536,10 @@ function drawSDMHistogram(socket) {
         d3.selectAll(".sdm-axis--hist--x g").each(function() {
             d3.select(this).attr("transform", transFormApply(d3.select(this).attr("transform"), undefined, undefined, x_g_trans[2])) ;
         }) ;
+    }
+
+    if (Window.PPI['selected-bin-id-sdm']) {
+        d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
     }
 
     $("#sdm-histogram_viz").loading("stop");

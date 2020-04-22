@@ -184,6 +184,9 @@ class vtkRenderer{
         }
 
         this.scaleScene();
+
+        // hidden "Open Controls" in Render View
+        $('#RendererContainer .dg.main').hide() ;
     }
 
     resetCamera(){
