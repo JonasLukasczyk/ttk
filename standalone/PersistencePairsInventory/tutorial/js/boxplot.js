@@ -283,10 +283,15 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
     function dragged(d) {
         dx = Window.box_plot_config['xScale'].invert(d3.event.dx) - Window.box_plot_config['xScale'].domain()[0];
-        //dy = Window.box_plot_config['yScale'].invert(d3.event.dy) - Window.box_plot_config['yScale'].domain()[1];
+        if ($("#customSwitches--y").is(':checked')) {
+            dy = 0 ;  // logarithmic
+        } else {
+            dy = Window.box_plot_config['yScale'].invert(d3.event.dy) - Window.box_plot_config['yScale'].domain()[1];
+        }
 
         Window.box_plot_config['xScale'].domain([Window.box_plot_config['xScale'].domain()[0] - dx, Window.box_plot_config['xScale'].domain()[1] - dx]) ;
-        //Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
+        Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
+        
         zoom(tx=0);
         
         $("#hidden-optimal-threshold").click();
@@ -617,7 +622,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                     }
                     value = d.key.replace("group_", "") + ": <code>" + d.values[idx][1] + "</code>"
                     if ($("#tooltipBoxplot").html() == "") {
-                        $("#tooltipBoxplot").html("<strong>Threshold: </strong> <code>" + (idx + 1) + "</code><br>- " + value);
+                        $("#tooltipBoxplot").html("<strong>Threshold: </strong> <code>" + idx + "</code><br>- " + value);
                     } else {
                         $("#tooltipBoxplot").html($("#tooltipBoxplot").html() + "<br>- " + value);
                     }

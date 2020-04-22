@@ -43,6 +43,13 @@ kbd {
     position: absolute;
     top: 14px;
     right: 1px;}
+
+hr {
+    /* margin-top: 1rem; */
+    /* margin-bottom: 1rem; */
+    border: 0;
+    border-top: 1px solid rgba(0,0,0,.1);
+}
 #legend-custom-handle-right { 
     height: 0.8em; 
     margin-left: -9px;
@@ -238,7 +245,7 @@ li {
     background: white;
     opacity: 0.8 ;
     color: white ;
-    border-radius: 5px ;
+    border-radius: 2px ;
     position: absolute ;
     z-index: 10 ;
     visibility: hidden
@@ -246,13 +253,14 @@ li {
 
 .tooltipsBoxplot {
     background: black;
-    opacity: 0.6 ;
+    opacity: 0.8 ;
     color: white ;
-    border-radius: 5px ;
-    padding: 10px;
+    border-radius: 2px ;
+    padding: 4px;
     position: absolute ;
     z-index: 10 ;
-    visibility: hidden
+    visibility: hidden ;
+    font-size: 14px;
 }
 
 .axis path,
