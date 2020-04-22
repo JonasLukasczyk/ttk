@@ -290,8 +290,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
             dy = Window.box_plot_config['yScale'].invert(d3.event.dy) - Window.box_plot_config['yScale'].domain()[1];
         }
 
-        Window.box_plot_config['xScale'].domain([Window.box_plot_config['xScale'].domain()[0] - dx, Window.box_plot_config['xScale'].domain()[1] - dx]) ;
-        Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
+        if ( Window.box_plot_config['xScale'].domain()[0] - dx >= 0 - 0.1) {
+            Window.box_plot_config['xScale'].domain([Window.box_plot_config['xScale'].domain()[0] - dx, Window.box_plot_config['xScale'].domain()[1] - dx]) ;
+        } 
+        
+        if ( Window.box_plot_config['yScale'].domain()[0] - dy >= 1 - 0.1 ) {
+            Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
+        }
         
         zoom(tx=0);
         
