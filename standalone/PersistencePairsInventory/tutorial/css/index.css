@@ -20,6 +20,12 @@ kbd {
     box-shadow: inset 0 -1px 0 #d1d5da;
 }
 
+.ul-menu {
+    list-style: none;
+    padding-left: 0;
+    font-size: 14px;
+}
+
 #slider-range { display : inline-block; width : 10em; }
 #slider-range-single { display : inline-block; width : 10em; }
 #legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 12px;  /* -168px; 2px; */ right: 1px;}
