@@ -208,8 +208,9 @@ function drawBoxplotCurve(numberofcomponents, data) {
     }
 
     // https://github.com/d3/d3-format
-    var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(20).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); }),
-        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); });
+    var ticks_xAxis = 10;
+    var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(ticks_xAxis).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); }),
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return  d == 5 || d == 7 || d == 9? "": (parseInt(d) == d? d: d.toFixed(1)); });
 
     var brush = d3.brush().on("end", brushended),
         idleTimeout,
@@ -222,13 +223,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
     g.append("g")
         .attr('class', 'axis--x')
-        .style("font-size", "12px")
+        .style("font-size", "16px")
         .attr("transform", "translate(0," + height + ")")
         .call(xAxis);
 
     g.append("g")
         .attr('class', 'axis--y')
-        .style("font-size", "12px")
+        .style("font-size", "16px")
         .attr("transform", "translate(-1,0)")
         .call(yAxis);
 
@@ -302,7 +303,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         d3.select(this).classed("dragging", false);
         d3.select(".mouse-line").style("opacity", "1");
         d3.selectAll(".mouse-per-line circle").style("opacity", "1");
-        d3.select("#tooltipBoxplot").style("visibility", "visible")
+        d3.select("#tooltipBoxplot").style("visibility", "visible") ;
     }
 
     var points = {
@@ -423,6 +424,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         $("#hidden-notification_xxyy").click();
         $("#boxplotRangeLabel-close").click();
+
     });
 
     function zoom(tx=750) {
@@ -702,7 +704,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $('#boxplot-select-lines').change() ;
     }
     $("#hidden-optimal-threshold").click();
-
+    
+    // removeYAxisForBoxplot(".axis--y g") ;
     console.log(persistence_values) ;
 }
 

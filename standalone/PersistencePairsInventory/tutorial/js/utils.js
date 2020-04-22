@@ -248,6 +248,30 @@ function replaceTicks(id, replace) {
     }
 }
 
+
+function removeYAxisForBoxplot(id) {
+    var gs = $(id) ;
+    ac = []
+    for (i = 0; i < gs.length; i ++) {
+        var tc = $(gs[i].getElementsByTagName("text")[0]) ;
+        var tc_i = parseInt(tc.text()) ;
+        if ( tc_i <= 10 && tc_i >= 1) {
+            ac.push(tc_i)
+        }
+    }
+
+    if ( ac.length === 10 ) {
+        for (i = 0; i < gs.length; i ++) {
+            var tc = $(gs[i].getElementsByTagName("text")[0]) ;
+            var tc_i = parseInt(tc.text()) ;
+            if ( tc_i === 5 || tc_i === 7 || tc_i === 9 ) {
+                gs[i].remove() ;
+            }
+        }
+    }
+}
+
+
 function removeNiceByKicks(id, keep=-1, ratio=0) {
     var gs = $(id) ;
     // if keep == 0, remove all the elements
