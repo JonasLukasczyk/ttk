@@ -453,13 +453,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
             });
     }
 
-    // function dragged() {
-    //     d3.selectAll('.line')
-    //         .attr('transform', `translate(${d3.event.x}, ${d3.event.y})`);
-    //     svg.select(".axis--x").call(xAxis);
-    //     svg.select(".axis--y").call(yAxis);
-    // }
-
     function drawBoxPlot(idx, data) {
         // Compute summary statistics used for the box:
         var data_sorted = data.sort(d3.ascending)
