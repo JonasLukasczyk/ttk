@@ -248,7 +248,10 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .attr("transform",
             "translate(" + (width / 2.5 + 10) + " ," + (height + 40) + ")")
         .style("text-anchor", "middle")
-        .text("Threshold");
+        .text("Threshold")
+        .on("click", function(e) {
+            
+        });
 
     // Add y-axis title
     g.append("text")
