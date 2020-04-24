@@ -7,10 +7,14 @@ Window.PPI = {
     // it MUST be only one value
     "APPIAttrName": "",
     // color range
-    "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
+    // "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"], 
+    // "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
+	// "color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],  // red => blue
+	// "color-blue": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],
+	"color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"], 
     "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
-	"color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
-	"color-blue": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],
+	"color-red": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],  // red => blue
+	"color-blue": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
 	// the number of elements for the width in the histogram
 	"histogram-width": 0,
 	// the number of elements for the height in the histogram
