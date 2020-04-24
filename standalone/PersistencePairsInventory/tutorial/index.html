@@ -32,17 +32,19 @@
 </head>
 
 <body>
-<div class="modal fade" id="boxplotRange" tabindex="-1" role="dialog" aria-labelledby="boxplotRangeLabel" aria-hidden="true">
+<div class="modal fade" id="boxplotRange" data-source="x" tabindex="-1" role="dialog" aria-labelledby="boxplotRangeLabel" aria-hidden="true">
    <div class="modal-dialog" role="document">
       <div class="modal-content">
          <div class="modal-header">
-            <h5 class="modal-title" id="boxplotRangeLabel">change the range of x-axis, y-axis </h5>
+            <h5 class="modal-title" id="boxplotRangeLabel">change the range </h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                <span aria-hidden="true">&times;</span>
             </button>
          </div>
          <div class="modal-body">
-            <input type="input" placeholder="1-60, 1-100" id="x-y-range-change" value="">
+            <!-- <input type="input" placeholder="1-60, 1-100" id="x-y-range-change" value=""> -->
+            <input type="input" placeholder="1" id="x-y-range-left" value="">
+            <input type="input" placeholder="100" id="x-y-range-right" value="">
          </div>
          <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal" id="boxplotRangeLabel-close">Close</button>
@@ -123,12 +125,13 @@
                         <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y"></label>
                      </div> <code>|</code>
                      
-                     <span id="notification_xxyy" class="p-1 bg-success text-white" title="x-y domain" 
+                     <div style="display:none;">
+                     <span id="notification_xxyy"  class="p-1 bg-success text-white" title="x-y domain" 
                                  style="font-size:12px;cursor:pointer;" 
                                  data-toggle="modal" 
-                                 data-target="#boxplotRange">0-0, 0-0</span> <code>|</code>
+                                 data-target="#boxplotRange">0-0, 0-0</span> <code>|</code></div>
                      
-                     <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
+                     <span style="display:none;" id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
                      
                      <input type="checkbox" id="boxplot-checkbox-lines">
                      <select id="boxplot-select-lines">

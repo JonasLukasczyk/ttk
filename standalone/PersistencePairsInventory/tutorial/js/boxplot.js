@@ -250,7 +250,9 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .style("text-anchor", "middle")
         .text("Threshold")
         .on("click", function(e) {
-            
+            $("#boxplotRange").attr("data-source", "x") ;
+            $("#boxplotRangeLabel").text("the range of X axis") ;
+            $("#notification_xxyy").click() ;
         });
 
     // Add y-axis title
@@ -263,6 +265,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .text("Number of Persistence Pairs")
+        .on("click", function(e) { 
+            $("#boxplotRange").attr("data-source", "y") ;
+            $("#boxplotRangeLabel").text("the range of Y axis") ;
+            $("#notification_xxyy").click() ;
+        }) ;
 
     // scale region
     var main = g.append("g")
@@ -271,9 +278,9 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .attr("height", height)
         .attr('class', 'main')
         .attr('clip-path', 'url(#clip)')
-        .attr("transform", "scale(1)")
+        .attr("transform", "scale(1)") ;
 
-    svg.call(drag)
+    svg.call(drag) ;
 
     function dragstarted(d) {
         d3.event.sourceEvent.stopPropagation();
@@ -424,9 +431,15 @@ function drawBoxplotCurve(numberofcomponents, data) {
     });
 
     $("#hidden-notification_xxyy-zoom").unbind().click(function () {
-        var x = $("#x-y-range-change").val().replace(" ", "");
-        Window.box_plot_config['yScale'].domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]);
-        Window.box_plot_config['xScale'].domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]);
+        // var x = $("#x-y-range-change").val().replace(" ", "");
+        // Window.box_plot_config['yScale'].domain([x.split(",")[0].split("-")[0], x.split(",")[0].split("-")[1]]);
+        // Window.box_plot_config['xScale'].domain([x.split(",")[1].split("-")[0], x.split(",")[1].split("-")[1]]);
+
+        if ( $("#boxplotRange").attr("data-source") === 'x') {
+            Window.box_plot_config['xScale'].domain([$("#x-y-range-left").val(), $("#x-y-range-right").val()]);
+        } else {
+            Window.box_plot_config['yScale'].domain([$("#x-y-range-left").val(), $("#x-y-range-right").val()]);
+        }
 
         zoom();
 
@@ -540,7 +553,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         var lineStroke = "2px"
 
-        var mouseG = g.append("g")
+        var mouseG = main.append("g")
             .attr("class", "mouse-over-effects");
 
         mouseG.append("path") // create vertical line to follow mouse
@@ -590,11 +603,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 return d3.select("#tooltipBoxplot").style("visibility", "hidden");
             })
             .on('mouseover', function () { // on mouse in show line, circles and text
-                d3.select(".mouse-line")
-                    .style("opacity", "1");
-                d3.selectAll(".mouse-per-line circle")
-                    .style("opacity", "1");
-
+                d3.select(".mouse-line").style("opacity", "1");
+                d3.selectAll(".mouse-per-line circle").style("opacity", "1");
                 return d3.select("#tooltipBoxplot").style("visibility", "visible");
             })
             .on('mousemove', function () { // update tooltip content, line, circles and text when mouse moves
@@ -739,13 +749,25 @@ $("#brush_mode").unbind().click(function() {
 }) ;
 
 $('#boxplotRange').on('show.bs.modal', function (event) {
-    $("#x-y-range-change").val($("#notification_xxyy").text());
+    // $("#x-y-range-change").val($("#notification_xxyy").text());
+    if ( $("#boxplotRange").attr("data-source") === 'x') {
+        $("#x-y-range-left").val(Window.box_plot_config['xScale'].domain()[0]) ;
+        $("#x-y-range-right").val(Window.box_plot_config['xScale'].domain()[1]) ;
+    } else {
+        $("#x-y-range-left").val(Window.box_plot_config['yScale'].domain()[0]) ;
+        $("#x-y-range-right").val(Window.box_plot_config['yScale'].domain()[1]) ;
+    }
 });
 
 $("#save-xy-axis").unbind().click(function () {
-    var x = $("#x-y-range-change").val().replace(" ", "");
-    if (x.split(",").length !== 2 && x.split(",")[0].split("-").length != 2 && x.split(",")[1].split("-").length != 2) {
-        alert("Format must be yMin-yMax, xMin-yMax");
+    // var x = $("#x-y-range-change").val().replace(" ", "");
+    // if (x.split(",").length !== 2 && x.split(",")[0].split("-").length != 2 && x.split(",")[1].split("-").length != 2) {
+    //     alert("Format must be yMin-yMax, xMin-yMax");
+    // } else {
+    //     $("#hidden-notification_xxyy-zoom").click();
+    // }
+    if ( parseInt($("#x-y-range-left").val()) > parseInt($("#x-y-range-right").val()) ) {
+        alert("Please double click min and max value");
     } else {
         $("#hidden-notification_xxyy-zoom").click();
     }
