@@ -253,6 +253,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
             $("#boxplotRange").attr("data-source", "x") ;
             $("#boxplotRangeLabel").text("the range of X axis") ;
             $("#notification_xxyy").click() ;
+
+            d3.select(".mouse-line")
+                    .style("opacity", "0");
+                d3.selectAll(".mouse-per-line circle")
+                    .style("opacity", "0");
+                d3.selectAll(".mouse-per-line text")
+                    .style("opacity", "0");
+                return d3.select("#tooltipBoxplot").style("visibility", "hidden");
         });
 
     // Add y-axis title
@@ -269,6 +277,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
             $("#boxplotRange").attr("data-source", "y") ;
             $("#boxplotRangeLabel").text("the range of Y axis") ;
             $("#notification_xxyy").click() ;
+
+            d3.select(".mouse-line")
+                    .style("opacity", "0");
+                d3.selectAll(".mouse-per-line circle")
+                    .style("opacity", "0");
+                d3.selectAll(".mouse-per-line text")
+                    .style("opacity", "0");
+                return d3.select("#tooltipBoxplot").style("visibility", "hidden");
         }) ;
 
     // scale region
@@ -629,18 +645,19 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 $("#tooltipBoxplot").html("");
                 var xIdx = Window.box_plot_config['xScale'].invert(mouse[0]);
                 var idx = -1;
+                var hhtml = "" ;
                 res_nested.forEach(function (d) {
                     if (idx === -1) {
                         idx = bisect(d.values, xIdx);
                     }
                     value = d.key.replace("group_", "") + ": <code>" + d.values[idx][1] + "</code>"
-                    if ($("#tooltipBoxplot").html() == "") {
-                        $("#tooltipBoxplot").html("<strong>Threshold: </strong> <code>" + idx + "</code><br>- " + value);
+                    if ( hhtml === "") {
+                        hhtml = "<strong>Threshold: </strong> <code>" + idx + "</code><br>- " + value ;
                     } else {
-                        $("#tooltipBoxplot").html($("#tooltipBoxplot").html() + "<br>- " + value);
+                        hhtml += "<br>- " + value ;
                     }
                 })
-
+                $("#tooltipBoxplot").html(hhtml) ;
                 return d3.select("#tooltipBoxplot").style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
             })
 
