@@ -365,7 +365,8 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         .attr("dy", "1em")
         .style("text-anchor", "middle")
         .style("font-size", "small")
-        .text("Reliability");
+        // .text("Reliability");
+        .text("Similiarity") ;
 
     // Add two vertical line for reliability
     lines = [

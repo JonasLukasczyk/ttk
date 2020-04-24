@@ -28,7 +28,7 @@ kbd {
 
 #slider-range { display : inline-block; width : 10em; }
 #slider-range-single { display : inline-block; width : 10em; }
-#legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 12px;  /* -168px; 2px; */ right: 1px;}
+#legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 3px;  /* -168px; 2px; */ right: 1px;}
 #legend-custom-handle-top { 
     height: 0.8em; 
     display: flex;
@@ -227,7 +227,7 @@ li {
 
 .histogram_legend_boundary {
     position: absolute;
-    top: 12px;  /* -168px; 2px; */
+    top: 3px;  /* -168px; 2px; */
     right: 1px;
     background: white;
     border: thin dotted gray;

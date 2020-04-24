@@ -56,7 +56,6 @@ function drawSDMHistogram(socket) {
     function drawVerticalColumn() {
         // Add extra column
         // extract information
-        // FLAG, re-draw vertical column
         var sdm_vertical_column_g_transform = $(".sdm-vertical-column-g").attr("transform");
         d3.select("#sdm-vertical-column-g-id").remove() ;
         let threshold_idx = parseInt($("#hist-threshold").val()) ;
@@ -64,7 +63,12 @@ function drawSDMHistogram(socket) {
         relData = []
         for (let i = 0; i < Window.PPI['histogram-height']; i++) {
             let items = data.slice((i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents, (i * Window.PPI['histogram-width'] + hist_time_idx) * nComponents + nComponents);
-            let cal = calculateReliability(items, threshold_idx, max_threshold_window, min_persistence_pairs) ;
+            // reliability version
+            // items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
+            // let cal = calculateReliability(items, threshold_idx, max_threshold_window, min_persistence_pairs) ;
+            
+            // similiarity version
+            let cal = calculateSimilarity(items, threshold_idx, max_threshold_window) ;
             relData.push([i, cal, items[threshold_idx]]);
         }
 

@@ -99,8 +99,14 @@ function getHistogramFrameData(min_persistence_pairs, left_threshold, right_thre
         for (let j = 0; j < Window.PPI['histogram-width']; j++) {
             let idx = (i * Window.PPI['histogram-width'] + j) * nComponents + iComponent;
             let items = data.slice((i * Window.PPI['histogram-width'] + j) * nComponents, (i * Window.PPI['histogram-width'] + j) * nComponents + nComponents);
-            items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
-            let cal = calculateReliability(items, iComponent, max_threshold_window, min_persistence_pairs) ;
+            
+            // reliability version
+            // items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
+            // let cal = calculateReliability(items, iComponent, max_threshold_window, min_persistence_pairs) ;
+
+            // similiarity version
+            let cal = calculateSimilarity(items, iComponent, max_threshold_window)
+
             // (x-axis, y-axis, PPI, tuples, idx in the entire data, reliability)
             vData.push([j + "", i + "", data[idx], items, idx, cal]);
         }
@@ -197,6 +203,20 @@ function getRangeOfPPI() {
     } else {
         return getRangeOfPPIByThreshold()
     }
+}
+
+function calculateSimilarity(items, iComponent, max_threshold_window, min_persistence_pairs) {
+    var sliceItems = items.slice(iComponent, max_threshold_window + 1), sum = 0;
+    
+    if (Math.max(...sliceItems) === 0 || sliceItems.length === 1) {
+        return 1 ;
+    }
+
+    for (var i = 0; i < sliceItems.length; i++) {
+        sum += sliceItems[i];
+    }
+
+    return sum / ( (sliceItems.length + 0.0) * (Math.max(...sliceItems)) )
 }
 
 // items: the # of bins over threshold, in the test dataset, it would be 50

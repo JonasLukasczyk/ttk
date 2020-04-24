@@ -501,11 +501,11 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
     let lower = tmp[0]
     let upper = tmp[1]
 
-    data = trim(data, lower, upper) ;
+    // data = trim(data, lower, upper) ;
     let svg = d3.select("#" + key);
     let x = d3.scaleLinear().range([0, 240]);
     let y = d3.scaleLinear().range([132, 0]);
-
+    console.log(data) ;
     let dl = d3.line()
         .x(function (d, i) {
             return x(i * Window.PPI['thresholdRatio']);
@@ -520,7 +520,8 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
     })).nice();
 
     // start from 0
-    y.domain([lower, upper]);
+    // y.domain([lower, upper]);
+    y.domain([0, Math.max(...data)]);
 
     svg.append("path")
         .attr("class", "line2")
@@ -551,7 +552,8 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
         .attr("text-anchor", "middle")
         .style("font-size", "12px")
         .style("font-family", "sans-serif")
-        .text("reliability: " + reliability.toFixed(2) + ", PPI: " + pp);
+        // .text("reliability: " + reliability.toFixed(2) + ", PPI: " + pp);
+        .text("similarity: " + reliability.toFixed(2) + ", PPI: " + pp);
 
     svg.append("g")
         .attr("transform", "translate(28, 136)")
