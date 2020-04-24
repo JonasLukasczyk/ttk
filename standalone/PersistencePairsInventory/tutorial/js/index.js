@@ -180,7 +180,7 @@ function objectCallback(msg) {
 		min: 0,
 		orientation: "horizontal",
 		max: Window.PPI['numberOfThreshold-histogram'] - 1,
-		values: [Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1), Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1)],
+		values: [0, Window.PPI['numberOfThreshold-histogram'] - 1],
 		slide: function( event, ui ) {
 			$("#threshold-picker_left").text(ui.values[0] * Window.PPI['thresholdRatio']) ;
 			$("#threshold-picker_right").text(ui.values[1] * Window.PPI['thresholdRatio']) ;
@@ -197,8 +197,8 @@ function objectCallback(msg) {
 			}
 		},
 		create: function() {
-			$("#threshold-picker_left").text(Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) * Window.PPI['thresholdRatio']) ;
-			$("#threshold-picker_right").text(Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) * Window.PPI['thresholdRatio']) ;
+			$("#threshold-picker_left").text(0) ;
+			$("#threshold-picker_right").text(Window.PPI['numberOfThreshold-histogram'] - 1 ) ;
 			$("#histogram-threshold-picker-default").html("") ;
 			Window.PPI['threshold-picker-left'] = Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ;
 			Window.PPI['threshold-picker-right'] = Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ;

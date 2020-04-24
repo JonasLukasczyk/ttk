@@ -17,6 +17,40 @@ function getTimeByIndex(i) {
     return v ;
 }
 
+function getTimeArray() {
+    var v = undefined ;
+	if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("Time") ) {
+        v = Window.PPI['image-object']['FieldData']["Time"].Values;
+        ans = []
+        for (var i = 0; i < v.length; i ++) {
+            ans.push(v[i]) ;
+        }
+        return ans ;
+    }
+    return v ;
+}
+
+function getThresholdByIndex(i) {
+    var v = i ;
+	if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("PersistenceThresholds") ) {
+		v = Window.PPI['image-object']['FieldData']["PersistenceThresholds"].Values[i] ;
+    }
+    return v ;
+}
+
+function getThresholdArray() {
+    var v = undefined ;
+	if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("PersistenceThresholds") ) {
+        v = Window.PPI['image-object']['FieldData']["PersistenceThresholds"].Values;
+        ans = []
+        for (var i = 0; i < v.length; i ++) {
+            ans.push(v[i]) ;
+        }
+        return ans ;
+    }
+    return v ;
+}
+
 function getScalarArray(id=-1) {
     // if id > -1, get the certain value by id; 
     // if id == -1, get the array
@@ -41,19 +75,6 @@ function getScalarArray(id=-1) {
             alert("no Scalar Bounds") ;
         }
     }
-}
-
-function getTimeArray() {
-    var v = undefined ;
-	if ( Window.PPI['image-object']['FieldData'].hasOwnProperty("Time") ) {
-        v = Window.PPI['image-object']['FieldData']["Time"].Values;
-        ans = []
-        for (var i = 0; i < v.length; i ++) {
-            ans.push(v[i]) ;
-        }
-        return ans ;
-    }
-    return v ;
 }
 
 // 1 - 20 => (0.1 - 1) and (1 - 10)
