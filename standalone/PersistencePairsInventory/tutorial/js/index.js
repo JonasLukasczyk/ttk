@@ -48,6 +48,8 @@ Window.PPI = {
 		"end": 12, // inclusive
 		"time-picker-mode": "multi", // or "single"
 	},
+	"threshold-picker-left": -1,
+	"threshold-picker-right": -1,
 	"redraw-MDM-key": "",
 	"redraw-SDM-key": "",
 } ;
@@ -89,7 +91,7 @@ function resetHist() {
 
     $('#threshold-window').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
-    	if ( i == Math.floor(Window.PPI['numberOfThreshold-histogram'] * 0.1) ) {
+    	if ( i == Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ) {
         	$('#threshold-window').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     	} else {
 	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
@@ -139,6 +141,7 @@ function objectCallback(msg) {
       }
     });
 
+	$("#slider-range").css("display", "") ;
     // https://jqueryui.com/slider/#range
 	$( "#slider-range" ).unbind().slider({
 		range: true,
@@ -163,6 +166,38 @@ function objectCallback(msg) {
 			$("#picker_left").text(getTimeByIndex(0)) ;
 			$("#picker_right").text(getTimeByIndex(Window.PPI['histogram-width'] - 1)) ;
 			$("#histogram-time-picker-default").html("") ;
+		}
+	});
+
+	$("#threshold-slider-range").css("display", "") ;
+	// threshold picker
+	$( "#threshold-slider-range" ).unbind().slider({
+		range: true,
+		min: 0,
+		orientation: "horizontal",
+		max: Window.PPI['numberOfThreshold-histogram'] - 1,
+		values: [Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1), Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1)],
+		slide: function( event, ui ) {
+			$("#threshold-picker_left").text(ui.values[0] * Window.PPI['thresholdRatio']) ;
+			$("#threshold-picker_right").text(ui.values[1] * Window.PPI['thresholdRatio']) ;
+		},
+		stop: function(event, ui) {
+			if (ui.values[0] !== Window.PPI['threshold-picker-left']) {
+				Window.PPI['threshold-picker-left'] = ui.values[0]; 
+				$("#hist-threshold").val(ui.values[0]).change() ;
+			}
+
+			if (ui.values[1] !== Window.PPI['threshold-picker-right']) {
+				Window.PPI['threshold-picker-right'] = ui.values[1]; 
+				$("#threshold-window").val(ui.values[1]).change() ;
+			}
+		},
+		create: function() {
+			$("#threshold-picker_left").text(Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) * Window.PPI['thresholdRatio']) ;
+			$("#threshold-picker_right").text(Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) * Window.PPI['thresholdRatio']) ;
+			$("#histogram-threshold-picker-default").html("") ;
+			Window.PPI['threshold-picker-left'] = Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ;
+			Window.PPI['threshold-picker-right'] = Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ;
 		}
 	});
 
@@ -250,6 +285,7 @@ function LoadTest() {
 }
 
 function triggerCtrlV() {
+	$("#histogram-notification-placeholder-0").html("") ;
 	if (Window.PPI['histogram-mode'] == "multi") {
 		Window.PPI['histogram-mode'] = "single" ;
 		$("[element-show='mdm']").css("display", "none") ;

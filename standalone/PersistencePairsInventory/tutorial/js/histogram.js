@@ -288,7 +288,7 @@ function drawHistogram(iComponent, socket, tag=0) {
                 '"PPI": [' + d[2] + '] }}';
 
             $("#histogram-notification-placeholder-default").html("") ;
-            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)) + ", &nbsp;") ;
+            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold) + ", ") ;
 
             console.log(backMsg) ;
             if (!Window.PPI['DEV']) {
@@ -454,7 +454,6 @@ function drawHistogram(iComponent, socket, tag=0) {
     }
 
     $("#histogram_zoom_back").click() ;
-    $("#histogram-notification-placeholder-0").html("") ;
 
     // replay previous settings
     if (hist_clip_highlight_transform) {
@@ -505,7 +504,6 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
     let svg = d3.select("#" + key);
     let x = d3.scaleLinear().range([0, 240]);
     let y = d3.scaleLinear().range([132, 0]);
-    console.log(data) ;
     let dl = d3.line()
         .x(function (d, i) {
             return x(i * Window.PPI['thresholdRatio']);

@@ -116,7 +116,7 @@
             <div class="text-justify p-2" style="height: 100%;">
                <h4>Functional Boxplot of Persistence Curves</h4>
 
-               <ul class="ul-menu">
+               <ul class="ul-menu" style="border-bottom: 1px solid rgba(0,0,0,.1);">
                   <li>
                      <div class="custom-control custom-switch inline">
                         <input type="checkbox" class="custom-control-input" title="apply logarithmic" id="customSwitches--y">
@@ -129,6 +129,7 @@
                                  data-target="#boxplotRange">0-0, 0-0</span> <code>|</code>
                      
                      <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
+                     
                      <input type="checkbox" id="boxplot-checkbox-lines">
                      <select id="boxplot-select-lines">
                         <option value="all">all</option>
@@ -141,10 +142,9 @@
                      <img id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
                   </li>
                </ul>
-               <hr>
 
                <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
-                  <h3>&nbsp; ... </h3>
+                  <h3>&nbsp; - <h3>
                </div>
                <hr>
                <h4>Render View</h4>
@@ -159,64 +159,74 @@
 
                 <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
                  <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
-                     <div class="col-4" style="padding-left: 0;">
+                     <div style="padding-left: 0;">
                         <ul class="ul-menu">
+                           <!-- display none -->
+                           <div style="display:none;">
                            <li>Min Threshold:&nbsp;
                               <select id="hist-threshold" data-value='0' title="*">
                                  <option> - </option>
                               </select> <code>|</code>
                               Max Threshold: <select id="threshold-window" data-value='1' title="*">
                                  <option> - </option>
-                              </select>
-                           </li>
-
-                           <li>
-                              <div style="display: flex;align-items: center;">
-                                 <!-- <div class="btn-group" role="group" aria-label="Basic example">
-                                    <button type="button" class="btn btn-light btn-sm" style="font-size:14px;"><img style="width:20px;cursor: pointer;" src="./images/resize_5.png"></button>
-                                    <button type="button" class="btn btn-light btn-sm" style="font-size:14px;"><img style="width:20px;cursor: pointer;" src="./images/resize_3.png"></button>
-                                    <button type="button" class="btn btn-light btn-sm" style="font-size:14px;"><img style="width:20px;cursor: pointer;" src="./images/zoom_back.png"></button>
-                                  </div> -->
-
-                                 <img id="hist-rescale" style="width:20px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"><code>|</code>
-                                 <img id="hist-rescale-custom" style="width:20px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"><code element-show="mdm">|</code>
-
-                                 <div style="display:none"><input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code></div>
-
-                                 <img element-show="mdm" id="histogram_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png"><code element-show="sdm" style="display:none;">|</code>
-
-                                 <div style="display:none"><input  element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code></div>
-
-                                 <img  element-show="sdm"  id="sdm-histogram_zoom_back" style="width:20px;cursor: pointer;display:none;" src="./images/zoom_back.png">
+                              </select> </div>
+                              
+                              Threshold:  
+                              <label id="threshold-picker_left" style="border:0; color:#f6931f; font-weight:bold;width:14px;">0</label>
+                              <span id="histogram-threshold-picker-default">
+                                 <div class="ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content default-slider-range">
+                                    <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                    <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                    <div class="ui-slider-range ui-corner-all ui-widget-header" style="left: 0%; width: 0%;"></div>
+                                 </div>
+                              </span>
+                              <div id="threshold-slider-range" style="display:none;">
+                                <div id="threshold-custom-handle0" class="ui-slider-handle"></div>
+                                <div id="threshold-custom-handle1" class="ui-slider-handle"></div>
                               </div>
-                           </li>
-                        </ul>
-                     </div>
-                     <div class="col-8">
-                        <ul class="ul-menu">
-                           <li element-show="mdm" >
-                              Time picker: <span id="histogram-time-picker-default">...</span> <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;"></label> &nbsp;
-                              <div id="slider-range">
-                                <div id="custom-handle0" class="ui-slider-handle"></div>
-                                <div id="custom-handle1" class="ui-slider-handle"></div>
-                              </div>
+                              <label id="threshold-picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 4px;">0</label> <code>|</code>
 
-                              <div id="slider-range-single" style="display: none;">
-                                <div id="custom-handle0-single" class="ui-slider-handle"></div>
+                              <img id="hist-rescale" style="width:16px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"><code>|</code>
+                              <img id="hist-rescale-custom" style="width:16px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"><code>|</code>
+                              <div style="display:none">
+                                 <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code>
                               </div>
+                              <div style="display:none">
+                                 <input element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code>
+                              </div>
+                              <img element-show="mdm" id="histogram_zoom_back" style="width:16px;cursor: pointer;" src="./images/zoom_back.png">
+                              <img element-show="sdm" id="sdm-histogram_zoom_back" style="width:16px;cursor: pointer; display:none;" src="./images/zoom_back.png"><code id="xxxxx">|</code>
 
-                              &nbsp; <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;"></label>
-                           </li>
-                           <li element-show="sdm" style="display:none;">Time:&nbsp;
-                              <select id="hist-time">
-                                 <option> - </option>
-                              </select>
-                            </li>
-                           <li>
+                              <span element-show="mdm" >
+                                 Time:  <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;width:14px;">0</label>
+                                 <span id="histogram-time-picker-default">
+                                    <div class="ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content default-slider-range">
+                                       <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                       <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                       <div class="ui-slider-range ui-corner-all ui-widget-header" style="left: 0%; width: 0%;"></div>
+                                    </div>
+                                 </span>
+
+                                 <div id="slider-range" style="display: none;">
+                                   <div id="custom-handle0" class="ui-slider-handle"></div>
+                                   <div id="custom-handle1" class="ui-slider-handle"></div>
+                                 </div>
+   
+                                 <div id="slider-range-single" style="display: none;">
+                                   <div id="custom-handle0-single" class="ui-slider-handle"></div>
+                                 </div>
+   
+                                 <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 4px;">0</label>
+                              </span>
+                              <span element-show="sdm" style="display:none;">Time:&nbsp;
+                                 <select id="hist-time">
+                                    <option> - </option>
+                                 </select>
+                              </span> <code>|</code>
                               <div id="histogram-notification"
-                                    data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>"
-                                    data-pattern-1="Left reliability: <code>{Left}</code>, Right reliability: <code>{Right}</code></span>">
-                              Notification: <span id="histogram-notification-placeholder-default">...</span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                                    data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>, Threshold: <code>{Threshold}</code>"
+                                    data-pattern-1="Left similarity: <code>{Left}</code>, Right similarity: <code>{Right}</code></span>">
+                              Notification: <span id="histogram-notification-placeholder-default"> - </span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
                               </div>
                            </li>
                         </ul>
@@ -226,7 +236,7 @@
 
                <div style="position: relative;">
                   <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
-                     <h3 style="padding-bottom: 10px;">&nbsp; ... </h3>
+                     <h3 style="padding-bottom: 10px;">&nbsp; - </h3>
                   </div>
                   <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.2" data-x_1="0.8"></div>
 

@@ -67,7 +67,7 @@ function drawSDMHistogram(socket) {
             // items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
             // let cal = calculateReliability(items, threshold_idx, max_threshold_window, min_persistence_pairs) ;
             
-            // similiarity version
+            // similarity version
             let cal = calculateSimilarity(items, threshold_idx, max_threshold_window) ;
             relData.push([i, cal, items[threshold_idx]]);
         }
@@ -111,7 +111,7 @@ function drawSDMHistogram(socket) {
                 return customColor(d[1], d[2]) ;
             })
             .append("title")
-            .text(function(d) { return "reliability: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] }) ;
+            .text(function(d) { return "similarity: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] }) ;
             
         if ( sdm_vertical_column_g_transform ) {
             $(".sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
@@ -124,7 +124,7 @@ function drawSDMHistogram(socket) {
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
     let threshold_idx = parseInt($("#hist-threshold").val()) ;
-
+    
     var cx = 0,
         cy = 0 ;
 
@@ -305,6 +305,9 @@ function drawSDMHistogram(socket) {
                 Window.socket = socket ;
                 socket.send(backMsg) ;
             }
+
+            $("#histogram-notification-placeholder-default").html("") ;
+            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time).replace("{Threshold}", actual_threshold) + ", ") ;
         })
         .append("title")
         .text(function(d) { return "PPI: " + d[2] });
@@ -505,7 +508,6 @@ function drawSDMHistogram(socket) {
     }) ;
 
     $("#sdm-histogram_zoom_back").click() ;
-    $("#histogram-notification-placeholder-0").html("") ;
 
     // replay previous settings
     if (sdm_hist_clip_g_transform) {

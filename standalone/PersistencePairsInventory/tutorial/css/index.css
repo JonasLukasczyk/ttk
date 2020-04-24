@@ -24,10 +24,15 @@ kbd {
     list-style: none;
     padding-left: 0;
     font-size: 14px;
+    margin-bottom: 0px;
 }
 
-#slider-range { display : inline-block; width : 10em; }
-#slider-range-single { display : inline-block; width : 10em; }
+#histogram-notification {display : inline-block; }
+#slider-range { display : inline-block; width : 8em; }
+#slider-range-single { display : inline-block; width : 8em; }
+#threshold-slider-range { display : inline-block; width : 8em; }
+.default-slider-range { display : inline-block; width : 8em; }
+
 #legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 3px;  /* -168px; 2px; */ right: 1px;}
 #legend-custom-handle-top { 
     height: 0.8em; 
@@ -41,7 +46,7 @@ kbd {
     width: 4px;
     height: 158px;
     position: absolute;
-    top: 14px;
+    top: 6px;
     right: 1px;}
 
 hr {
