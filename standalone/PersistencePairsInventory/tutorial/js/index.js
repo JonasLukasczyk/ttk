@@ -56,10 +56,11 @@ Window.PPI = {
 	"threshold-picker-right": -1,
 	"redraw-MDM-key": "",
 	"redraw-SDM-key": "",
+	"main-container-height": $("body").outerHeight() - $("#container-fluid-div").outerHeight() - $("#APPI-header-container").outerHeight() - 1.5 * $("#container-row").outerHeight(),
 } ;
 
 let ttk, ttk_render;
-let RENDERER = new vtkRenderer('RendererContainer', 581, 421);
+let RENDERER = new vtkRenderer('RendererContainer', $("#box_dataviz").outerWidth() - 10, 0.6 * (Window.PPI['main-container-height'] - $("#left-continer-middle").outerHeight()) - $("#container-row").outerHeight() );  // width, height
 
 // reset the content of boxplot
 function resetBoxplot() {

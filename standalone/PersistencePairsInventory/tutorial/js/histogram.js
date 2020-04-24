@@ -116,7 +116,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     let myGroups = getArray( Window.PPI['histogram-width']);
     let myVars = getArray( Window.PPI['histogram-height']);
 
-    var containerHeight = 841 ;
+    var containerHeight = Window.PPI['main-container-height'] ;
     var hBase = containerHeight / Window.PPI['histogram-height'] ;
     hBase = Math.min(60, hBase) ;
     containerHeight = hBase * Window.PPI['histogram-height'] ;
@@ -128,8 +128,10 @@ function drawHistogram(iComponent, socket, tag=0) {
         bottom: 40,
         left: 70
     } ;
-    var fixedContainerWidth = 1251,
-        fixedContainerHeight = 841 ;
+    // var fixedContainerWidth = 1251,
+    //     fixedContainerHeight = 841 ;
+    var fixedContainerWidth = $("#histogram_viz").outerWidth(),
+         fixedContainerHeight = Window.PPI['main-container-height']  ;
     
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;

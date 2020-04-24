@@ -1,3 +1,7 @@
+html, body {
+    height: 100%;
+    margin: 0 ;
+}
 .line2 {
     fill: none;
     stroke: #e00007;

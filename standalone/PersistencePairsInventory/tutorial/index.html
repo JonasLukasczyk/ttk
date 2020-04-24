@@ -75,8 +75,8 @@
    </div>
 </div>
 
-<div >
-   <div class="container-fluid" style="margin-top:10px;">
+<div>
+   <div id="container-fluid-div" class="container-fluid" style="margin-top:10px;">
       <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
          <div class="col-4">
             <div class="text-justify p-2" style="display: flex;align-items: center;">
@@ -106,8 +106,6 @@
                   <td colspan="3"  title="in the APPI view"><kbd>ctrl x</kbd> Show or hide the tooltip</td>
                </tr>
              </table>
-             
-
          </div>
       </div>
 
@@ -149,19 +147,21 @@
                <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
                   <h3>&nbsp; - <h3>
                </div>
+               <div id="left-continer-middle">
                <hr>
-               <h4>Render View</h4>
-               <div id='RendererContainer' style="border: 1px solid rgba(0,0,0,.1);padding-top: 20px;"></div>
+               <h4>Render View</h4></div>
+               <div id='RendererContainer' style="border: 1px solid rgba(0,0,0,.1);padding-top: 8px;"></div>
 
             </div>
          </div>
          <div class="col-8">
             <div class="text-justify p-2" style="height: 100%;" id="histogram-view-container">
-               <h4 element-show="mdm">Aggregated Persistence Pair Inventory (APPI)</h4>
-               <h4 element-show="sdm" style="display:none;">Persistence Pair Inventory (PPI)</h4>
+               <div id="APPI-header-container">
+                <h4 element-show="mdm">Aggregated Persistence Pair Inventory (APPI)</h4>
+                <h4 element-show="sdm" style="display:none;">Persistence Pair Inventory (PPI)</h4>
 
                 <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
-                 <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
+                 <div class="row" id="container-row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
                      <div style="padding-left: 0;">
                         <ul class="ul-menu">
                            <!-- display none -->
@@ -234,9 +234,10 @@
                            </li>
                         </ul>
                      </div>
-                  </div>
-               </div>
-
+                  </div> <!-- row -->
+               </div> <!-- container-fluid -->
+            </div> <!--APPI-header-container -->
+               
                <div style="position: relative;">
                   <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
                      <h3 style="padding-bottom: 10px;">&nbsp; - </h3>
@@ -247,11 +248,12 @@
                   <div id="legend-slider-right"><div id="legend-custom-handle-right" class="ui-slider-handle"></div></div>
 
                </div>
+               
 
                <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
 
-            </div>
-         </div>
+            </div> <!-- histogram-view-container -->
+         </div> <!-- col-8 -->
       </div>
    </div>
 </div>

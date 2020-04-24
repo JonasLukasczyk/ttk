@@ -47,8 +47,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
         q1_q3_color: "#fddbc7",
         background_color: "white",
         median_line_color: "black",
-        containerWidth: 561,
-        containerHeight: 321,
+        containerWidth: $("#box_dataviz").outerWidth(),  // 561
+        containerHeight: 0.4 * (Window.PPI['main-container-height'] - $("#left-continer-middle").outerHeight()) ,
         margin: {
             top: 10,
             right: 10,
