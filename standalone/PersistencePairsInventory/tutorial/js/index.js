@@ -74,7 +74,7 @@ function drawBoxPlot() {
 	// redraw the curve
     drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents, 
     				 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
-    $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
+    // $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
     $("[name='box_line']").attr("visibility", "hidden");
 }
 
@@ -306,7 +306,6 @@ function triggerCtrlV() {
 }
 
 $(document).keydown(function (e) {
-	// alt + event
 	if (e.ctrlKey && e.shiftKey) {
 		switch(e.key) {
 			case "ArrowRight":

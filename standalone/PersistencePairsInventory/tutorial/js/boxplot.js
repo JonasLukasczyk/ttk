@@ -327,7 +327,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         zoom(tx=0);
         
         $("#hidden-optimal-threshold").click();
-        $("#hidden-notification_xxyy").click();
+        // $("#hidden-notification_xxyy").click();
     }
 
     function dragended(d) {
@@ -389,7 +389,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         zoom();
         
         $("#hidden-optimal-threshold").click();
-        $("#hidden-notification_xxyy").click();
+        // $("#hidden-notification_xxyy").click();
     }
 
     $("#hidden-optimal-threshold").unbind().click(function() {
@@ -402,7 +402,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         zoom();
 
         $("#hidden-optimal-threshold").click();
-        $("#hidden-notification_xxyy").click();
+        // $("#hidden-notification_xxyy").click();
     });
 
     $("#customSwitches--y").unbind().click(function () {
@@ -418,7 +418,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 .range([height, 0]);
         }
 
-        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); });
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return  d == 5 || d == 7 || d == 9? "": (parseInt(d) == d? d: d.toFixed(1)); });
         zoom();
     });
 
@@ -441,10 +441,10 @@ function drawBoxplotCurve(numberofcomponents, data) {
         }
     });
 
-    $("#hidden-notification_xxyy").unbind().click(function () {
-        $("#notification_xxyy").text(Window.box_plot_config['yScale'].domain()[0].toFixed(1) + "-" + Window.box_plot_config['yScale'].domain()[1].toFixed(1) +
-            ", " + Window.box_plot_config['xScale'].domain()[0].toFixed(1) + "-" + Window.box_plot_config['xScale'].domain()[1].toFixed(1));
-    });
+    // $("#hidden-notification_xxyy").unbind().click(function () {
+    //     $("#notification_xxyy").text(Window.box_plot_config['yScale'].domain()[0].toFixed(1) + "-" + Window.box_plot_config['yScale'].domain()[1].toFixed(1) +
+    //         ", " + Window.box_plot_config['xScale'].domain()[0].toFixed(1) + "-" + Window.box_plot_config['xScale'].domain()[1].toFixed(1));
+    // });
 
     $("#hidden-notification_xxyy-zoom").unbind().click(function () {
         // var x = $("#x-y-range-change").val().replace(" ", "");
@@ -459,7 +459,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         zoom();
 
-        $("#hidden-notification_xxyy").click();
+        // $("#hidden-notification_xxyy").click();
         $("#boxplotRangeLabel-close").click();
 
     });
