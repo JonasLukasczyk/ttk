@@ -1,21 +1,9 @@
-/// \ingroup base
-/// \class ttk::PLTSimplification
-/// \author Jonas Lukasczyk <jl@jluk.de>
-/// \date 1.09.2019
-///
-/// TODO
-
 #pragma once
 
 // ttk common includes
 #include <Debug.h>
 #include <Triangulation.h>
 #include <Propagation.h>
-
-// #include <limits>
-// #include <queue>
-// #include <set>
-// #include <sys/time.h>
 
 #if(defined(__GNUC__) && !defined(__clang__))
 #include <parallel/algorithm>

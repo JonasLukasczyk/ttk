@@ -1,10 +1,3 @@
-/// \ingroup base
-/// \class ttk::Propagation
-/// \author Jonas Lukasczyk <jl@jluk.de>
-/// \date Feb 2020.
-///
-/// \brief TODO
-
 #pragma once
 
 #include <vector>
