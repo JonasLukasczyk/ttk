@@ -351,9 +351,10 @@ function drawHistogram(iComponent, socket, tag=0) {
 
     // reset x-axis, y-axis
     replaceTicks(".axis--hist--x g", getTimeArray()) ;
-    removeNiceByKicks(".axis--hist--x g") ;
+    removeTicksByDistance(".axis--hist--x g", 24) ;
     replaceTicks(".axis--hist--y g", getScalarArray()) ;
-    removeNiceByKicks(".axis--hist--y g") ;
+    removeTicksByDistance(".axis--hist--y g", 24) ;
+
 
     d3.selectAll(".axis--hist--y path").each(function() {
         d3.select(this).remove() ;

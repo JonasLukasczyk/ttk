@@ -413,9 +413,9 @@ function drawSDMHistogram(socket) {
 
     // reset x-axis, y-axis, TRICKY
     replaceTicks(".sdm-axis--hist--x g", getThresholdArray(), interval=Window.PPI['thresholdRatio']) ;
-    removeNiceByKicks(".sdm-axis--hist--x g", keep=-1) ;
+    removeTicksByDistance(".sdm-axis--hist--x g", 24) ;
     replaceTicks(".sdm-axis--hist--y g", getScalarArray()) ;
-    removeNiceByKicks(".sdm-axis--hist--y g") ;
+    removeTicksByDistance(".sdm-axis--hist--y g", 24) ;
 
     d3.selectAll(".sdm-axis--hist--y path").each(function() {
         d3.select(this).remove() ;

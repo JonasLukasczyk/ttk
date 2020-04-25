@@ -53,7 +53,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             top: 10,
             right: 10,
             bottom: 40,
-            left: 50
+            left: 54
         },
         line_area: function (x_func, y_func, y0) {
             return d3.area()
@@ -210,7 +210,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     // https://github.com/d3/d3-format
     var ticks_xAxis = 15;
     var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(ticks_xAxis).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); }),
-        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return  d == 5 || d == 7 || d == 9? "": (parseInt(d) == d? d: d.toFixed(1)); });
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return (parseInt(d) == d? d: d.toFixed(1)); });
 
     var brush = d3.brush().on("end", brushended),
         idleTimeout,
@@ -324,7 +324,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
         }
         
-        zoom(tx=0);
+        zoom();
         
         $("#hidden-optimal-threshold").click();
         // $("#hidden-notification_xxyy").click();
@@ -418,13 +418,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 .range([height, 0]);
         }
 
-        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return  d == 5 || d == 7 || d == 9? "": (parseInt(d) == d? d: d.toFixed(1)); });
+        yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return (parseInt(d) == d? d: d.toFixed(1)); });
         zoom();
+        removeTicksByDistance() ;
     });
 
-    function idled() {
-        idleTimeout = null;
-    }
+    // function idled() {
+    //     idleTimeout = null;
+    // }
 
     $("#hidden-brush-mode").unbind().click(function () {
         if ($("#brush_mode").attr("mode") == "brush") {
@@ -464,25 +465,29 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
     });
 
-    function zoom(tx=750) {
-        var t = svg.transition().duration(tx);
-        svg.select(".axis--x").transition(t).call(xAxis);
-        svg.select(".axis--y").transition(t).call(yAxis);
+    function zoom() {
+        // var t = svg.transition().duration(tx);
+        svg.select(".axis--x").call(xAxis);
+        svg.select(".axis--y").call(yAxis);
 
-        g.selectAll("[name=box_polygon]").transition(t)
+        g.selectAll("[name=box_polygon]") //.transition(t)
             .attr("d", function (d) {
                 return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d);
             });
 
-        g.selectAll("[name=box_polygon_line]").transition(t)
+        g.selectAll("[name=box_polygon_line]") // .transition(t)
             .attr("d", function (d) {
                 return Window.box_plot_config.line(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'])(d);
             });
 
-        g.selectAll("[name=box_line]").transition(t)
+        g.selectAll("[name=box_line]") // .transition(t)
             .attr("d", function (d) {
                 return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
             });
+
+        replaceTicks(".axis--x g", getThresholdArray()) ;
+        removeTicksByDistance(".axis--x g")
+        removeTicksByDistance(".axis--y g")
     }
 
     function drawBoxPlot(idx, data) {
@@ -733,9 +738,9 @@ function drawBoxplotCurve(numberofcomponents, data) {
     }
     $("#hidden-optimal-threshold").click();
     
-    // removeYAxisForBoxplot(".axis--y g") ;
     replaceTicks(".axis--x g", getThresholdArray()) ;
-    console.log(persistence_values) ;
+    removeTicksByDistance(".axis--x g")
+    removeTicksByDistance(".axis--y g")
 }
 
 $("#boxplot-checkbox-lines").unbind().click(function () {

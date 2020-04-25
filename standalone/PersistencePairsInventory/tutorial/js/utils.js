@@ -289,65 +289,23 @@ function replaceTicks(id, replace, interval=1) {
     }
 }
 
-
-function removeYAxisForBoxplot(id) {
+function removeTicksByDistance(id, fixedDistance=12) {
     var gs = $(id) ;
-    ac = []
-    for (i = 0; i < gs.length; i ++) {
-        var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-        var tc_i = parseInt(tc.text()) ;
-        if ( tc_i <= 10 && tc_i >= 1) {
-            ac.push(tc_i)
-        }
-    }
 
-    if ( ac.length === 10 ) {
-        for (i = 0; i < gs.length; i ++) {
-            var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-            var tc_i = parseInt(tc.text()) ;
-            if ( tc_i === 5 || tc_i === 7 || tc_i === 9 ) {
-                gs[i].remove() ;
-            }
+    preItems = transFormApply($(gs[0]).attr("transform"), undefined, undefined, undefined, true)
+    for (var i = 1; i < gs.length; i ++) {
+        items = transFormApply($(gs[i]).attr("transform"), undefined, undefined, undefined, true)
+        if ( Math.sqrt( Math.pow(items[0]-preItems[0], 2) + Math.pow(items[1]-preItems[1], 2) ) < fixedDistance) {
+            gs[i].remove() ;
+        } else {
+            preItems = items ;
         }
     }
 }
 
-
-function removeNiceByKicks(id, keep=-1, ratio=0) {
-    var gs = $(id) ;
-    // if keep == 0, remove all the elements
-    if (keep === 0) {
-        gs.remove() ;
-        return ;
-    } 
-
-    var size = 0 ;
-    var i = 0 ;
-
-    // multiply the ratio
-    if ( ratio > 0 ) {
-        for (var i = 0; i < gs.length; i++ ) {
-            var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-            var tc_i = parseInt(tc.text()) ;
-            tc.text(Number.parseInt(ratio * tc_i)) ;
-        }
-    }
-
-    // sampling
-    if (gs.length >= 40) {
-        size = Math.floor(gs.length / 20) ;
-        for (i = 0; i < gs.length; i ++) {
-            if (i % size !== 0 && gs.length - 1 !== i) {
-                gs[i].remove() ;
-            } else {
-                if (ratio > 0) {
-                    var tc = $(gs[i].getElementsByTagName("text")[0]) ;
-                    var tc_i = parseInt(tc.text()) ;
-                    tc.text(Number.parseInt(ratio * tc_i)) ;
-                }
-            }
-        }
-    }
+function removeAllTicks(id) {
+    var gs = $(id)
+    gs.remove() ;
 }
 
 function triggerEnterInput(selector) {

@@ -326,8 +326,9 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
                 return customColor(x_1 + (1 - x_1) / 2, undefined, undefined, Math.floor(i / 3));
             }
         });
-    removeNiceByKicks(".axis--legend--y", 0);
-    removeNiceByKicks(".axis--legend--x", 0);
+    
+    removeAllTicks(".axis--legend--y") ;
+    removeAllTicks(".axis--legend--x") ;
 
     svg.append("text")
         .attr("transform", "rotate(-90)")
