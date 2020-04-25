@@ -27,7 +27,7 @@ ttkArrayEditor::~ttkArrayEditor(){}
 
 int ttkArrayEditor::FillInputPortInformation(int port, vtkInformation* info){
     if(port==0 || port==1){
-        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
+        info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject");
         if(port==1)
             info->Set(vtkAlgorithm::INPUT_IS_OPTIONAL(), 1 );
     } else

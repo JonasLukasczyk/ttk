@@ -14,17 +14,17 @@
    <link rel="stylesheet" href="./css/index.css">
    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
    <style>
-      table, td, th {  
+      table, td, th {
         border: 1px solid #ddd;
         text-align: left;
       }
-      
+
       table {
         border-collapse: collapse;
         width: 100%;
         margin-bottom: 4px;
       }
-      
+
       th, td {
         padding-left: 4px;
       }
@@ -77,11 +77,12 @@
 
 <div>
    <div id="container-fluid-div" class="container-fluid" style="margin-top:10px;">
-      <div class="row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
+      <div class="row" style="border-bottom: 0.1em solid #ddd;">
          <div class="col-4">
             <div class="text-justify p-2" style="display: flex;align-items: center;">
                <span style="padding-right:4px;">Host:</span>
-               <input id="msg-host" type="text" style="width: 96px;font-size: 14px;" value="10.218.107.40"> <code>|</code>
+               <!--<input id="msg-host" type="text" style="width: 96px;font-size: 14px;" value="10.218.107.40"> <code>|</code>-->
+               <input id="msg-host" type="text" style="width: 96px;font-size: 14px;" value="localhost"> <code>|</code>
                <span style="padding-right:4px;">Data Port: </span>
                <input id="msg" type="text" value="9286" style="width: 38px;font-size: 14px;"><code>|</code>
                <span style="padding-right:4px;">Render Port:</span>
@@ -92,7 +93,7 @@
                <br>
             </div>
          </div>
-         
+
          <div class="col-8" style="padding-left: 0px;font-size: 12px;color: gray;">
             <table>
                <tr>
@@ -112,30 +113,30 @@
    </div>
    <div class="container-fluid">
       <div class="row">
-         <div class="col-4" style="padding-right:0px;border-right: 1px solid rgba(0,0,0,.1);">
+         <div class="col-4" style="padding-right:0px;border-right: 0.1em solid #ddd;">
             <div class="text-justify p-2" style="height: 100%;">
                <h4>Functional Boxplot of Persistence Curves</h4>
 
-               <ul class="ul-menu" style="border-bottom: 1px solid rgba(0,0,0,.1);">
+               <ul class="ul-menu" style="border-bottom: 0 solid #ddd;">
                   <li>
                      <div class="custom-control custom-switch inline">
                         <input type="checkbox" class="custom-control-input" title="apply logarithmic" id="customSwitches--y">
                         <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y"></label>
                      </div> <code>|</code>
-                     
+
                      <div style="display:none;">
-                     <span id="notification_xxyy"  class="p-1 bg-success text-white" title="x-y domain" 
-                                 style="font-size:12px;cursor:pointer;" 
-                                 data-toggle="modal" 
-                                 data-target="#boxplotRange">0-0, 0-0</span> <code>|</code></div>
-                     
-                     <span style="display:none;" id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
-                     
+                        <span id="notification_xxyy"  class="p-1 bg-success text-white" title="x-y domain"
+                                 style="font-size:12px;cursor:pointer;"
+                                 data-toggle="modal"
+                                 data-target="#boxplotRange">0-0, 0-0</span> <code>|</code>
+                        <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
+                     </div>
+
                      <input type="checkbox" id="boxplot-checkbox-lines">
                      <select id="boxplot-select-lines">
                         <option value="all">all</option>
                      </select><code>|</code>
-                     
+
                      <!-- not required functionality -->
                      <div style="display:none;" ><input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">polygon layer<code>|</code>
                      <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a> <code>|</code> </div>
@@ -145,12 +146,12 @@
                </ul>
 
                <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
-                  <h3>&nbsp; - <h3>
+                  <h3>&nbsp; - </h3>
                </div>
                <div id="left-continer-middle">
-               <hr>
+               <br>
                <h4>Render View</h4></div>
-               <div id='RendererContainer' style="border: 1px solid rgba(0,0,0,.1);padding-top: 8px;"></div>
+               <div id='RendererContainer' style="border: 0.1em solid #ddd;padding:0;"></div>
 
             </div>
          </div>
@@ -161,20 +162,35 @@
                 <h4 element-show="sdm" style="display:none;">Persistence Pair Inventory (PPI)</h4>
 
                 <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
-                 <div class="row" id="container-row" style="border-bottom: 1px solid rgba(0,0,0,.1);">
+                 <div class="row" id="container-row" style="border-bottom: 0 solid #ddd;">
                      <div style="padding-left: 0;">
                         <ul class="ul-menu">
                            <!-- display none -->
-                           <div style="display:none;">
-                           <li>Min Threshold:&nbsp;
-                              <select id="hist-threshold" data-value='0' title="*">
-                                 <option> - </option>
-                              </select> <code>|</code>
-                              Max Threshold: <select id="threshold-window" data-value='1' title="*">
-                                 <option> - </option>
-                              </select> </div>
-                              
-                              Threshold:  
+                           <li>
+                              <div style="display:none;">
+                                  Min Threshold:&nbsp;
+                                  <select id="hist-threshold" data-value='0' title="*">
+                                     <option> - </option>
+                                  </select> <code>|</code>
+                                  Max Threshold: <select id="threshold-window" data-value='1' title="*">
+                                     <option> - </option>
+                                  </select>
+                              </div>
+
+                              <img id="hist-rescale" style="width:16px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png">
+                              <img id="hist-rescale-custom" style="width:16px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel">
+                              <div style="display:none">
+                                 <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09">
+                                 &nbsp;&nbsp;|&nbsp;&nbsp;
+                              </div>
+                              <div style="display:none">
+                                 <input element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09">
+                                 &nbsp;&nbsp;|&nbsp;&nbsp;
+                              </div>
+                              <img element-show="mdm" id="histogram_zoom_back" style="width:16px;cursor: pointer;" src="./images/zoom_back.png">
+                              <img element-show="sdm" id="sdm-histogram_zoom_back" style="width:16px;cursor: pointer; display:none;" src="./images/zoom_back.png">&nbsp;&nbsp;|&nbsp;&nbsp;
+
+                              Threshold:
                               <label id="threshold-picker_left" style="border:0; color:#f6931f; font-weight:bold;width:24px;">0</label>
                               <span id="histogram-threshold-picker-default">
                                  <div class="ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content default-slider-range">
@@ -187,18 +203,9 @@
                                 <div id="threshold-custom-handle0" class="ui-slider-handle"></div>
                                 <div id="threshold-custom-handle1" class="ui-slider-handle"></div>
                               </div>
-                              <label id="threshold-picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 8px;">0</label> <code style="margin-left: 8px;">|</code>
+                              <label id="threshold-picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 8px;">0</label>
+                              &nbsp;&nbsp;|&nbsp;&nbsp;
 
-                              <img id="hist-rescale" style="width:16px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png"><code>|</code>
-                              <img id="hist-rescale-custom" style="width:16px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel"><code>|</code>
-                              <div style="display:none">
-                                 <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09"><code element-show="mdm">|</code>
-                              </div>
-                              <div style="display:none">
-                                 <input element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09"><code element-show="sdm" style="display:none;">|</code>
-                              </div>
-                              <img element-show="mdm" id="histogram_zoom_back" style="width:16px;cursor: pointer;" src="./images/zoom_back.png">
-                              <img element-show="sdm" id="sdm-histogram_zoom_back" style="width:16px;cursor: pointer; display:none;" src="./images/zoom_back.png"><code id="xxxxx">|</code>
 
                               <span element-show="mdm" >
                                  Time:  <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;width:24px;">0</label>
@@ -214,22 +221,22 @@
                                    <div id="custom-handle0" class="ui-slider-handle"></div>
                                    <div id="custom-handle1" class="ui-slider-handle"></div>
                                  </div>
-   
+
                                  <div id="slider-range-single" style="display: none;">
                                    <div id="custom-handle0-single" class="ui-slider-handle"></div>
                                  </div>
-   
+
                                  <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 8px;">0</label>
                               </span>
                               <span element-show="sdm" style="display:none;">Time:&nbsp;
                                  <select id="hist-time">
                                     <option> - </option>
                                  </select>
-                              </span> <code style="margin-left: 8px;">|</code>
+                              </span>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
                               <div id="histogram-notification"
-                                    data-pattern-0="Scalar: <code>{Scalar}</code>, Time: <code>{Time}</code>, Threshold: <code>{Threshold}</code>"
+                                    data-pattern-0="Scalar: <code>{Scalar}</code>&nbsp;&nbsp;|&nbsp;&nbsp;Time: <code>{Time}</code>&nbsp;&nbsp;|&nbsp;&nbsp;Threshold: <code>{Threshold}</code>"
                                     data-pattern-1="Left similarity: <code>{Left}</code>, Right similarity: <code>{Right}</code></span>">
-                              Selected bin: <span id="histogram-notification-placeholder-default"> - </span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                              <span id="histogram-notification-placeholder-default"> - </span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
                               </div>
                            </li>
                         </ul>
@@ -237,7 +244,7 @@
                   </div> <!-- row -->
                </div> <!-- container-fluid -->
             </div> <!--APPI-header-container -->
-               
+
                <div style="position: relative;">
                   <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
                      <h3 style="padding-bottom: 10px;">&nbsp; - </h3>
@@ -248,7 +255,7 @@
                   <div id="legend-slider-right"><div id="legend-custom-handle-right" class="ui-slider-handle"></div></div>
 
                </div>
-               
+
 
                <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
 
@@ -258,7 +265,7 @@
    </div>
 </div>
 <script type="text/javascript" src="./js/utils.js"></script>
-<script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
+<script type="text/javascript" src="./lib/ttkWebSocketIO.js"></script>
 <script type="text/javascript" src="./js/legend.js"></script>
 <script type="text/javascript" src="./js/boxplot.js"></script>
 <script type="text/javascript" src="./js/histogram.js"></script>

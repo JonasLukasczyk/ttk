@@ -95,8 +95,23 @@ class vtkRenderer{
         this.Scale = 64;
 
         // add dummy object for testing
+        {
+            const geometry = new THREE.CylinderBufferGeometry( 32, 32, 5, 80 );
+            // const geometry = new THREE.SphereBufferGeometry( 64, 10, 10 );
+            geometry.translate(32,52,32);
+            // const geometry = new THREE.CylinderBufferGeometry( 1, 1, 1 );
+
+            const nVertices = geometry.attributes.position.array.length;
+            const colors = new Uint8Array( nVertices*3 );
+            for(let i=0; i<nVertices*3; i++)
+                colors[i] = 150;
+            geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3, true ) );
+
+            const obj = new THREE.Mesh( geometry, this.objectMaterial );
+            this.sceneFP.add(obj);
+        }
+        // add dummy object for testing
         // {
-        //     const geometry = new THREE.SphereBufferGeometry( 1, 10, 10 );
         //     const obj = new THREE.Mesh( geometry, this.objectMaterial );
         //     this.sceneFP.add(obj);
         // }
@@ -187,19 +202,20 @@ class vtkRenderer{
 
         // hidden "Open Controls" in Render View
         $('#RendererContainer .dg.main').hide() ;
+        this.resetCamera();
     }
 
     resetCamera(){
         this.cameraFP.position.set(
-            1.2,
-            1.2,
-            1.2
+            1.5*1,
+            1.5*0.05,
+            0
         );
 
         this.controls.target.set(
-            0.5,
-            0.5,
-            0.5
+            0,
+            0.05,
+            0
         );
         this.controls.update();
 
@@ -208,7 +224,7 @@ class vtkRenderer{
 
     setScene(vtkJson){
         console.log("vtkRender received the data") ;
-        for(let i=this.sceneFP.children.length-1; i>=0; i--)
+        for(let i=this.sceneFP.children.length-1; i>=1; i--)
             this.sceneFP.remove(this.sceneFP.children[i]);
 
         if (! vtkJson.hasOwnProperty("PointCoords")) {
@@ -219,6 +235,9 @@ class vtkRenderer{
 
         var geometry = new THREE.BufferGeometry();
         geometry.setAttribute( 'position', new THREE.BufferAttribute( vtkJson.PointCoords.Values, 3 ) );
+        geometry.translate(-32,-32,-32);
+        geometry.rotateX(-Math.PI/2);
+        geometry.translate(32,32,32);
 
         const connectivityList = vtkJson.ConnectivityList.Values;
 
@@ -229,6 +248,45 @@ class vtkRenderer{
             indices[q++] = parseInt(connectivityList[i+3]);
         }
         geometry.setIndex( new THREE.BufferAttribute(indices,1) );
+
+
+        if(vtkJson.PointData.hasOwnProperty('RegionId')){
+            const regionIds = vtkJson.PointData.RegionId.Values;
+
+            const indices = new Uint32Array(connectivityList.length/4*3);
+
+            const colorMap = [
+                228,26,28,
+                55,126,184,
+                77,175,74,
+                152,78,163,
+                255,127,0,
+                255,255,51,
+                166,86,40,
+                247,129,191
+            ];
+            // const colorMap = [
+            //     166,206,227,
+            //     31,120,180,
+            //     178,223,138,
+            //     51,160,44,
+            //     251,154,153,
+            //     227,26,28,
+            //     253,191,111,
+            //     255,127,0
+            // ];
+
+            const nVertices = vtkJson.PointCoords.Values.length;
+            const colors = new Uint8Array( nVertices*3  );
+            for(let i=0,q=0; i<nVertices; i++){
+                let index = 3*(regionIds[i]%8);
+                colors[q++] = colorMap[index++];
+                colors[q++] = colorMap[index++];
+                colors[q++] = colorMap[index++];
+            }
+            geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3, true ) );
+        }
+
         {
             const mesh = new THREE.Mesh( geometry, this.objectMaterial );
             this.sceneFP.add(mesh);

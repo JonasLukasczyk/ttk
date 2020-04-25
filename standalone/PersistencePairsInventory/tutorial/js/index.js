@@ -7,11 +7,11 @@ Window.PPI = {
     // it MUST be only one value
     "APPIAttrName": "",
     // color range
-    // "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"], 
+    // "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
     // "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
 	// "color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
 	// "color-blue": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],
-	"color-green": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"], 
+	"color-green": ["#eff3ff", "#bdd7e7", "#6baed6", "#3182bd", "#08519c"],
     "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
 	"color-red": ["#fee5d9", "#fcae91", "#fb6a4a", "#de2d26", "#a50f15"],
 	"color-blue": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
@@ -33,12 +33,12 @@ Window.PPI = {
 	},
     "persistence_pairs_range": {
         "is_custom": false,
-        "custom_upper": -1, 
-		"custom_lower": -1, 
+        "custom_upper": -1,
+		"custom_lower": -1,
 		// "threshold index" => [minPPI, maxPPI],
 		"medium_top": -1,
 		"medium_right": -1,
-    },  
+    },
 	"histogram-mode": "multi", // multi or single
 	"thresholdRatio": 1,
 	"selected-time-id": 0,
@@ -60,7 +60,7 @@ Window.PPI = {
 } ;
 
 let ttk, ttk_render;
-let RENDERER = new vtkRenderer('RendererContainer', $("#box_dataviz").outerWidth() - 10, 0.6 * (Window.PPI['main-container-height'] - $("#left-continer-middle").outerHeight()) - $("#container-row").outerHeight() );  // width, height
+let RENDERER = new vtkRenderer('RendererContainer', $("#box_dataviz").outerWidth()-3, 0.6 * (Window.PPI['main-container-height'] - $("#left-continer-middle").outerHeight()) - $("#container-row").outerHeight() );  // width, height
 
 // reset the content of boxplot
 function resetBoxplot() {
@@ -77,7 +77,7 @@ function resetBoxplot() {
 
 function drawBoxPlot() {
 	// redraw the curve
-    drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents, 
+    drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents,
     				 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
     // $("#hidden-notification_xxyy").click();  // reset the range of x-axies and y-axies
     $("[name='box_line']").attr("visibility", "hidden");
@@ -115,7 +115,7 @@ function objectCallback(msg) {
     if (msg.VtkDataObjectType.Values[0] !== 2) {
         alert("MUST be ImageData") ;
     }
-    // initialize the global variable 
+    // initialize the global variable
     Window.PPI['image-object'] = msg ;
 	Window.PPI['histogram-width'] = msg.Extent.Values[1] + 1 ;
     Window.PPI['histogram-height'] = msg.Extent.Values[3] + 1 ;
@@ -160,10 +160,10 @@ function objectCallback(msg) {
 			Window.PPI['boxplot-timestamp-range-mode']['enable'] = true ;
 			Window.PPI['boxplot-timestamp-range-mode']['start'] = ui.values[0] ;
 			Window.PPI['boxplot-timestamp-range-mode']['end'] = ui.values[1] ;
-			
-			drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents, 
+
+			drawBoxplotCurve(Window.PPI['image-object'].FieldData.PersistenceCurves.NumberOfComponents,
     				 		 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
-			
+
 			// Add the box window over histogram's bins
     		$("#hidden-mdm-add-window").click() ;
 		},
@@ -188,12 +188,12 @@ function objectCallback(msg) {
 		},
 		stop: function(event, ui) {
 			if (ui.values[0] !== Window.PPI['threshold-picker-left']) {
-				Window.PPI['threshold-picker-left'] = ui.values[0]; 
+				Window.PPI['threshold-picker-left'] = ui.values[0];
 				$("#hist-threshold").val(ui.values[0]).change() ;
 			}
 
 			if (ui.values[1] !== Window.PPI['threshold-picker-right']) {
-				Window.PPI['threshold-picker-right'] = ui.values[1]; 
+				Window.PPI['threshold-picker-right'] = ui.values[1];
 				$("#threshold-window").val(ui.values[1]).change() ;
 			}
 		},
@@ -316,7 +316,7 @@ $(document).keydown(function (e) {
 			case "ArrowRight":
 				// single view
 				if (Window.PPI['histogram-mode'] == "multi") {
-					
+
 				} else {
 					$("#hidden-sdm-move-right-next").click() ;
 				}
@@ -324,7 +324,7 @@ $(document).keydown(function (e) {
 			case "ArrowLeft":
 				// single view
 				if (Window.PPI['histogram-mode'] == "multi") {
-					
+
 				} else {
 					$("#hidden-sdm-move-right-prev").click() ;
 				}
@@ -333,13 +333,13 @@ $(document).keydown(function (e) {
 		return ;
 	}
 
-	// shift + event 
+	// shift + event
 	if ( e.shiftKey) {
 		switch(e.key) {
 			case "ArrowRight":
 				// single view
 				if (Window.PPI['histogram-mode'] == "multi") {
-					
+
 				} else {
 					$("#hidden-sdm-move-next").click() ;
 				}
@@ -347,7 +347,7 @@ $(document).keydown(function (e) {
 			case "ArrowLeft":
 				// single view
 				if (Window.PPI['histogram-mode'] == "multi") {
-					
+
 				} else {
 					$("#hidden-sdm-move-prev").click() ;
 				}
@@ -461,7 +461,7 @@ $(document).keydown(function (e) {
 					}
 				}
 			}
-			
+
 			break;
 
 		case "ArrowDown":
@@ -478,7 +478,7 @@ $(document).keydown(function (e) {
 					}
 				}
 			}
-			
+
 			break;
 	}
 });
@@ -495,12 +495,12 @@ $("#hist-threshold").change(function () {
     }
 
     $(this).attr("data-value", v0)
-    
+
     $("#hist-threshold option:selected").each(function () {
     	if (Window.PPI['histogram-mode'] == "multi") {
-	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     	} else {
-	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     	}
 	});
 	if ( Window.PPI['histogram-mode'] == "multi" ) {
@@ -512,10 +512,10 @@ $("#hist-threshold").change(function () {
 			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
 		}
 	}
-    
+
     $("#hidden-optimal-threshold").click();
 	$(this).focus() ;
-	
+
 	$("#histogram_viz").loading("stop");
 });
 
@@ -531,9 +531,9 @@ $("#threshold-window").change(function() {
 
     $("#hist-threshold option:selected").each(function () {
         if (Window.PPI['histogram-mode'] == "multi") {
-	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	        drawHistogram(parseInt($(this).val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     	} else {
-	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     	}
     });
     if ( Window.PPI['histogram-mode'] == "multi" ) {
@@ -557,9 +557,9 @@ $("#hist-rescale").unbind().click(function() {
     Window.PPI['persistence_pairs_range']['custom_lower'] = tmp[0] ;
 
     if (Window.PPI['histogram-mode'] == "multi") {
-	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null), tag=1); 
+	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null), tag=1);
     } else {
-	    drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	    drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     }
 
 }) ;
@@ -573,9 +573,9 @@ $("#histRescaleCustom").unbind().click(function() {
     Window.PPI['persistence_pairs_range']['custom_lower'] = parseFloat($("#histRescaleCustomLower").val()) ;
     Window.PPI['persistence_pairs_range']['custom_upper'] = parseFloat($("#histRescaleCustomUpper").val());
     if (Window.PPI['histogram-mode'] == "multi") {
-	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null), tag=1); 
+	    drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null), tag=1);
     } else {
-	    drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+	    drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     }
     // re-draw the histogram
     $("#histRescaleCustom-close").click() ;

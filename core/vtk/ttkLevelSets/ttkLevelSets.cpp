@@ -70,6 +70,7 @@ int ttkLevelSets::RequestData(vtkInformation *request,
 
   auto cf = vtkSmartPointer<vtkContourFilter>::New();
   cf->SetInputData( inputDataSet );
+  cf->SetGenerateTriangles( true );
   cf->SetInputArrayToProcess( 0, 0,0,0, inputArray->GetName() );
   cf->SetValue(0,levels[0]);
   cf->Update();

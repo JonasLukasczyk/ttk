@@ -365,7 +365,7 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
                     p1++;
 
                 size_t offset = columnIndex*nPersistenceThresholds + b0*rowOffset;
-                for(size_t b=b0; b<b1; b++){
+                for(size_t b=b0; b<=b1; b++){
                     for(size_t p=0; p<p1; p++)
                         ppi[offset+p]++;
                     offset+=rowOffset;
@@ -396,4 +396,5 @@ int ttk::PersistencePairInventory::ComputeAPPI(
 
     //     }
     // }
+    return 0;
 }

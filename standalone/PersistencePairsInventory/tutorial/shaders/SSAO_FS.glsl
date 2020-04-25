@@ -124,7 +124,8 @@ void main() {
     // float dydz = dFdy(texture2D(tex, vPos.xy).a);
     vec3 n = normalize( vec3(dxdz, dydz, 1./uJLUKNormalFactor) );
     vec3 lightPos = vec3(0,0,1);
-    float lightInt = 1.5*dot(n,normalize(lightPos));
+    // float lightInt = 1.5*dot(n,normalize(lightPos));
+    float lightInt = 1.0*dot(n,normalize(lightPos));
 
     vec3 cAO = vec3( color * mix( vec3(ao), vec3(1.0), luminance * uJLUKLuminanceFactor ) );
     // vec3 cAO = vec3( color * mix( vec3(ao), vec3(1.0), luminance ) );

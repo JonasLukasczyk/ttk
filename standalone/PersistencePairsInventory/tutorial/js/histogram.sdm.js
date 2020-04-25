@@ -4,11 +4,11 @@ function drawSDMHistogram(socket) {
 
     function getSDMHistogramKey() {
         var tmp = getRangeOfPPI()
-        min_persistence_pairs = tmp[0] ; 
+        min_persistence_pairs = tmp[0] ;
         max_persistence_pairs = tmp[1] ;
         // key: iComponent + left-right relibility + min-max threshold + min-max range of the bins
-        return Window.PPI['selected-time-id'] + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") + 
-                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +  
+        return Window.PPI['selected-time-id'] + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") +
+                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +
                     min_persistence_pairs + "-" + max_persistence_pairs ;
     }
 
@@ -36,7 +36,7 @@ function drawSDMHistogram(socket) {
         var gap = x(1) - x(0) ;
         var idx_first = gap * threshold_idx
         var idx_sec = gap * (max_threshold_window + 1) ;
-        
+
         g_main.append("rect")
             .attr("class", "sdm-rect-box-cover")
             .attr("x", idx_first)
@@ -66,7 +66,7 @@ function drawSDMHistogram(socket) {
             // reliability version
             // items = trim(items, min_persistence_pairs, max_persistence_pairs) ;
             // let cal = calculateReliability(items, threshold_idx, max_threshold_window, min_persistence_pairs) ;
-            
+
             // similarity version
             let cal = calculateSimilarity(items, threshold_idx, max_threshold_window) ;
             relData.push([i, cal, items[threshold_idx]]);
@@ -84,7 +84,7 @@ function drawSDMHistogram(socket) {
                         .append("svg")
                         .attr("id", "sdm-vertical-column-g-id")
                         .attr("width", 100)
-                        .attr("height", Math.max(height, fixedHeight))
+                        .attr("height", Math.max(height, fixedHeight));
 
         var sdm_g = sdm_svg.append("g")
                         .attr("class", "sdm-vertical-column-g")
@@ -112,19 +112,19 @@ function drawSDMHistogram(socket) {
             })
             .append("title")
             .text(function(d) { return "similarity: "+ d[1].toFixed(2) + ", range PPI: (" + min_persistence_pairs + ", "+ max_persistence_pairs+ ")" + ", PPI: " + d[2] }) ;
-            
+
         if ( sdm_vertical_column_g_transform ) {
             $(".sdm-vertical-column-g").attr("transform", sdm_vertical_column_g_transform) ;
         }
     }
 
     $("#hist-time").val(iComponent) ;
-    
+
     let data = Window.PPI['image-object']['PointData'][Window.PPI['APPIAttrName']].Values ;
     let nComponents = Window.PPI['numberOfThreshold-histogram'] ;
     let fieldData = Window.PPI['image-object']['FieldData'] ;
     let threshold_idx = parseInt($("#hist-threshold").val()) ;
-    
+
     var cx = 0,
         cy = 0 ;
 
@@ -132,7 +132,7 @@ function drawSDMHistogram(socket) {
     tmp = getRangeOfPPI();
     min_persistence_pairs = tmp[0]
     max_persistence_pairs = tmp[1]
-    
+
     // extract information
     let hist_time_idx = iComponent ;
     for (let i = 0; i < Window.PPI['histogram-height']; i++) {
@@ -144,7 +144,7 @@ function drawSDMHistogram(socket) {
     }
 
     var tmp = getRangeOfPPI() ;
-    min_persistence_pairs = tmp[0] ; 
+    min_persistence_pairs = tmp[0] ;
     max_persistence_pairs = tmp[1] ;
 
     let max_threshold_window = parseInt($("#threshold-window").val()) ;
@@ -189,7 +189,7 @@ function drawSDMHistogram(socket) {
     let container = d3.select("#sdm-histogram_viz")
         .append("svg")
         .attr("width", Math.max(containerWidth, fixedContainerWidth))
-        .attr("height", Math.max(containerHeight, fixedContainerHeight)) ;
+        .attr("height", Math.max(containerHeight, fixedContainerHeight)+30) ;
 
     var svg = container
                 .append("g")
@@ -286,7 +286,7 @@ function drawSDMHistogram(socket) {
         .style("fill", function (d) {
             return customColor((lower + upper) / 2, d[2], undefined, undefined, true);
         })
-        
+
         .on("click", function (d, i) {
             $("#RendererContainer").loading({theme: "light"}) ;
             Window.PPI['selected-bin-id-sdm'] = $(this).attr("id")
@@ -339,21 +339,21 @@ function drawSDMHistogram(socket) {
         $(".sdm-vertical-column-g rect").each(function() {
             $(this).attr("width", parseFloat($(this).attr("ori-width")) / scale) ;
         }) ;
-         
+
         var yTrans = transFormApply($(".sdm-axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
         var yX = yTrans[0] ;
         var yY = yTrans[1] ;
         yX += d3.event.dx ;
-        yY += d3.event.dy ;    
-        var v = transFormApply($(".sdm-axis--hist--y").attr("transform"), 0, yY, scale) ;    
+        yY += d3.event.dy ;
+        var v = transFormApply($(".sdm-axis--hist--y").attr("transform"), 0, yY, scale) ;
         d3.select(".sdm-axis--hist--y").attr("transform", v);
 
         var xTrans = transFormApply($(".sdm-axis--hist--x").attr("transform"), undefined, undefined, undefined, true) ;
         var xX = xTrans[0] ;
         var xY = xTrans[1] ;
         xX += d3.event.dx ;
-        xY += d3.event.dy ;    
-        var v = transFormApply($(".sdm-axis--hist--x").attr("transform"), xX, undefined, scale) ;    
+        xY += d3.event.dy ;
+        var v = transFormApply($(".sdm-axis--hist--x").attr("transform"), xX, undefined, scale) ;
         d3.select(".sdm-axis--hist--x").attr("transform", v);
 
         if ( $(".sdm-rect-box-cover").length > 0) {
@@ -394,11 +394,13 @@ function drawSDMHistogram(socket) {
     svg.append("text")
         .attr("class", "sdm-hist-yaxis-title")
         .attr("transform", "rotate(-90)")
-        .attr("y", 0 - 62 )
+        .attr("y", 0 - 70 )
         .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
+        .style("font-size", "1.5em")
         .style("text-anchor", "middle")
+        .style("font-weight", "bold")
         .text("Scalar") ;
 
     // dd x-axis title
@@ -408,7 +410,9 @@ function drawSDMHistogram(socket) {
         .attr("x", fixedWidth / 2.5 + 110)
         .attr("z-index", 100)
         .attr("dy", "1em")
+        .style("font-size", "1.5em")
         .style("text-anchor", "middle")
+        .style("font-weight", "bold")
         .text("Threshold");
 
     // reset x-axis, y-axis, TRICKY
@@ -427,7 +431,7 @@ function drawSDMHistogram(socket) {
 
     function zoomed() { }
 
-    function zoomstart() { } 
+    function zoomstart() { }
 
     function slided(d) {
         zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
@@ -527,7 +531,7 @@ function drawSDMHistogram(socket) {
     }
     if (sdm_axis_hist_y) {
         $(".sdm-axis--hist--y").attr("transform", sdm_axis_hist_y) ;
-        
+
     }
     if (sdm_axis_hist_x) {
         $(".sdm-axis--hist--x").attr("transform", sdm_axis_hist_x) ;
@@ -556,7 +560,7 @@ function drawSDMHistogram(socket) {
 
 $("#hist-time").change(function () {
     $("#hist-time option:selected").each(function () {
-        Window.PPI['selected-time-id'] = parseInt($(this).val()) ; 
-        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)); 
+        Window.PPI['selected-time-id'] = parseInt($(this).val()) ;
+        drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
     });
 });

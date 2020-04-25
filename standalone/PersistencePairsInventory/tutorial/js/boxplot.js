@@ -11,7 +11,7 @@ function formatInput(numberofcomponents, data) {
     for (let i = 0; i < data.length; i++) {
         if ( Window.PPI['boxplot-timestamp-range-mode']['enable'] ) {
             if ( group_idx >= Window.PPI['boxplot-timestamp-range-mode']['start'] && group_idx <= Window.PPI['boxplot-timestamp-range-mode']['end']) {
-                format_data.push([com_idx, data[i], "group" + group_idx]) 
+                format_data.push([com_idx, data[i], "group" + group_idx])
             }
         } else {
             format_data.push([com_idx, data[i], "group" + group_idx])
@@ -35,7 +35,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
     var persistence_values = {
         xScale: Window.box_plot_config? Window.box_plot_config['xScale'].domain(): undefined,
-        yScale: Window.box_plot_config ? Window.box_plot_config['yScale'].domain(): undefined, 
+        yScale: Window.box_plot_config ? Window.box_plot_config['yScale'].domain(): undefined,
         switch_y_checked: $("#customSwitches--y").is(':checked'),
         boxplot_checkbox_checked: $("#boxplot-checkbox-lines").prop("checked"),
         boxplot_input_val: $("#boxplot-select-lines").val(),
@@ -98,7 +98,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("y2", height)
             .style("stroke", "red")
             .style("stroke-dasharray", ("5, 5"))
-            .style("stroke-width", 1);
+            .style("stroke-width", '0.15em');
 
             g.append("circle")
                 .attr("name", "box_optimal_left")
@@ -118,7 +118,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("y2", height)
             .style("stroke", "black")
             .style("stroke-dasharray", ("5, 5"))
-            .style("stroke-width", 1);
+            .style("stroke-width", '0.15em');
 
             g.append("circle")
                 .attr("name", "box_optimal_right")
@@ -145,7 +145,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     var svg = d3.select("#box_dataviz")
         .append("svg")
         .attr("width", Window.box_plot_config.containerWidth)
-        .attr("height", Window.box_plot_config.containerHeight);
+        .attr("height", Window.box_plot_config.containerHeight+5);
 
     var g = svg
         .append("g")
@@ -166,9 +166,9 @@ function drawBoxplotCurve(numberofcomponents, data) {
     })];
 
     if ( persistence_values['xScale'] !== undefined ) {
-        
+
         Window.box_plot_config['xScale'] = d3.scaleLinear()
-        .domain(persistence_values['xScale']) 
+        .domain(persistence_values['xScale'])
         .range([0, width]);
     } else {
         Window.box_plot_config['xScale'] = d3.scaleLinear()
@@ -193,7 +193,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .domain(persistence_values['yScale'])
             .range([height, 0]);
         }
-        
+
     } else {
         if ( persistence_values['switch_y_checked'] ) {
             Window.box_plot_config['yScale'] = d3.scaleLog()
@@ -246,8 +246,10 @@ function drawBoxplotCurve(numberofcomponents, data) {
     g.append("text")
         .attr("class", "axisLabel--x")
         .attr("transform",
-            "translate(" + (width / 2.5 + 10) + " ," + (height + 40) + ")")
+            "translate(" + (width / 2.5 + 10) + " ," + (height + 44) + ")")
+        .style("font-size", "1.3em")
         .style("text-anchor", "middle")
+        .style("font-weight", "bold")
         .text("Threshold")
         .on("click", function(e) {
             $("#boxplotRange").attr("data-source", "x") ;
@@ -271,9 +273,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
         .attr("x", 0 - (height / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
+        .style("font-size", "1.3em")
         .style("text-anchor", "middle")
-        .text("Number of Persistence Pairs")
-        .on("click", function(e) { 
+        .style("font-weight", "bold")
+        .text("Number of Pairs")
+        .on("click", function(e) {
             $("#boxplotRange").attr("data-source", "y") ;
             $("#boxplotRangeLabel").text("the range of Y axis") ;
             $("#notification_xxyy").click() ;
@@ -318,14 +322,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         if ( Window.box_plot_config['xScale'].domain()[0] - dx >= 0 - 0.1) {
             Window.box_plot_config['xScale'].domain([Window.box_plot_config['xScale'].domain()[0] - dx, Window.box_plot_config['xScale'].domain()[1] - dx]) ;
-        } 
-        
+        }
+
         if ( Window.box_plot_config['yScale'].domain()[0] - dy >= 1 - 0.1 ) {
             Window.box_plot_config['yScale'].domain([Window.box_plot_config['yScale'].domain()[0] - dy, Window.box_plot_config['yScale'].domain()[1] - dy]);
         }
-        
+
         zoom();
-        
+
         $("#hidden-optimal-threshold").click();
         // $("#hidden-notification_xxyy").click();
     }
@@ -383,11 +387,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
             Window.box_plot_config['xScale'].domain([sx[0][0], sx[1][0]].map(Window.box_plot_config['xScale'].invert));
             Window.box_plot_config['yScale'].domain([sx[1][1], sx[0][1]].map(Window.box_plot_config['yScale'].invert));
-            
+
             svg.select(".brush").call(brush.move, null);
         }
         zoom();
-        
+
         $("#hidden-optimal-threshold").click();
         // $("#hidden-notification_xxyy").click();
     }
@@ -436,7 +440,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             svg.append("g")
                 .attr("class", "brush")
                 .call(brush);
-                
+
             $("#brush_mode").attr("mode", "brush");
             $("#brush_mode").text("brush mode");
         }
@@ -729,7 +733,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("d", function (d) {
                 return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
             })
-        
+
         if ( ! persistence_values['boxplot_checkbox_checked'] ) {
             $("[name='box_line']").attr("visibility", "hidden");
             Window.PPI['boxplot-element-visibility']['box_line'] = false;
@@ -737,7 +741,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
         $('#boxplot-select-lines').change() ;
     }
     $("#hidden-optimal-threshold").click();
-    
+
     replaceTicks(".axis--x g", getThresholdArray()) ;
     removeTicksByDistance(".axis--x g")
     removeTicksByDistance(".axis--y g")
@@ -768,7 +772,7 @@ $("#box_zoom_back").unbind().click(function () {
 });
 
 $("#brush_mode").unbind().click(function() {
-    $("#hidden-brush-mode").click(); 
+    $("#hidden-brush-mode").click();
 }) ;
 
 $('#boxplotRange').on('show.bs.modal', function (event) {

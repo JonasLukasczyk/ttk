@@ -15,11 +15,11 @@ function drawHistogram(iComponent, socket, tag=0) {
 
     function getHistogramKey(iComponent) {
         var tmp = getRangeOfPPI()
-        min_persistence_pairs = tmp[0] ; 
+        min_persistence_pairs = tmp[0] ;
         max_persistence_pairs = tmp[1] ;
         // key: iComponent + left-right relibility + min-max threshold + min-max range of the bins
-        return iComponent + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") + 
-                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +  
+        return iComponent + ":" + getFloatValue("#histogram_viz_legend", "data-x_0") + "-" + getFloatValue("#histogram_viz_legend", "data-x_1") +
+                    $("#hist-threshold").val() + "-" + $("#threshold-window").val() + ":" +
                     min_persistence_pairs + "-" + max_persistence_pairs ;
 
     }
@@ -42,12 +42,12 @@ function drawHistogram(iComponent, socket, tag=0) {
 
     var tx = 0, ty = 0, scale = 0 ;
     console.log("invoke draw histogram functionaility") ;
-    
+
     function coverShadow(time_idx) {
         // cover shadow in a new method
         time_idx = parseInt(time_idx) ;
         $("#hist-clip-highlight rect").each(function() {
-            $(this).detach().appendTo("#hist-clip-opacity"); 
+            $(this).detach().appendTo("#hist-clip-opacity");
         }) ;
 
         $("#hist-clip-opacity").css("opacity", 0.1) ;
@@ -66,7 +66,7 @@ function drawHistogram(iComponent, socket, tag=0) {
             var gap = x(1) - x(0) ;
             var idx_first = gap * left ;
             var idx_sec = gap * (right + 1) ;
-            
+
             g_main.append("rect")
                 .attr("class", "mdm-rect-box-cover")
                 .attr("x", idx_first)
@@ -92,7 +92,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         cy = 0 ;
 
     var tmp = getRangeOfPPI()
-    min_persistence_pairs = tmp[0] ; 
+    min_persistence_pairs = tmp[0] ;
     max_persistence_pairs = tmp[1] ;
 
     let max_threshold_window = parseInt($("#threshold-window").val())
@@ -132,7 +132,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     //     fixedContainerHeight = 841 ;
     var fixedContainerWidth = $("#histogram_viz").outerWidth(),
          fixedContainerHeight = Window.PPI['main-container-height']  ;
-    
+
     var width = containerWidth - margin.left - margin.right,
         height = containerHeight - margin.top - margin.bottom;
 
@@ -142,7 +142,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     let container = d3.select("#histogram_viz")
         .append("svg")
         .attr("width", Math.max(containerWidth, fixedContainerWidth))
-        .attr("height", Math.max(containerHeight, fixedContainerHeight)) ;
+        .attr("height", Math.max(containerHeight, fixedContainerHeight+30)) ;
 
     var svg = container
                 .append("g")
@@ -165,7 +165,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         .attr('height', margin.bottom);
 
     var xg = svg.append("g")
-        .attr('clip-path', 'url(#hist-clip-x)')
+        .attr('clip-path', 'url(#hist-clip-x)');
 
     xg.append("g")
         .attr('class', 'axis--hist--x')
@@ -187,7 +187,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         .attr('height', fixedHeight);
 
     var yg = svg.append("g")
-        .attr('clip-path', 'url(#hist-clip-y)')
+        .attr('clip-path', 'url(#hist-clip-y)');
 
     yg.append("g")
         .attr('class', 'axis--hist--y')
@@ -222,59 +222,84 @@ function drawHistogram(iComponent, socket, tag=0) {
     var main = g_main.append("g").attr("id", "hist-clip-opacity") ;
     g_main.append("g").attr("id", "hist-clip-highlight") ;
 
-    main.selectAll()
-        .data(vData)
-        .enter()
-        .append("rect")
-        .attr("name", "bin")
-        .attr("mdm-bin-time-idx", function(d, i) { return parseInt(d[0]) ; })
-        .attr("id", function(d, i) { return "hist-bin-" + i ; })
-        .attr("x", function (d) {
-            return x(d[0]);
-        })
-        .attr("y", function (d) {
-            return y(d[1])
-        })
-        .attr("width", x.bandwidth())
-        .attr("height", y.bandwidth())
-        .attr("class", function(d) {
-            return customColor(d[5], d[2], undefined, undefined, undefined, true);
-        }).on("mouseover", function (d, i) {
-            tx = d3.event.pageX ;
-            ty = d3.event.pageY ;
-            if (!event.ctrlKey) {
-                if (Window.PPI["X-mode"] === 0) {
-                    d3.select("#tooltipSvg").selectAll("*").remove();
-                    drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
-                    return d3.select("#tooltip").style("visibility", "visible");
-                }
+    const crosshairSize = 100000;
+    const crosshairV = main.append('line')
+        .attr('x1', 0)
+        .attr('y1', -crosshairSize)
+        .attr('x2', 0)
+        .attr('y2', crosshairSize)
+        .attr('stroke','black')
+        .attr('stroke-width',1);
+
+    const crosshairH = main.append('line')
+        .attr('x1', -crosshairSize)
+        .attr('y1', 0)
+        .attr('x2', crosshairSize)
+        .attr('y2', 0)
+        .attr('stroke','black')
+        .attr('stroke-width',1);
+
+    const mainJQ = $(main.node());
+    mainJQ.empty();
+    const binWidth = x.bandwidth();
+    const binHeight = y.bandwidth();
+    const bins = [];
+
+    for(let i=0; i<vData.length; i++){
+        const d = vData[i];
+        const bin = $(document.createElementNS("http://www.w3.org/2000/svg", 'rect'));
+        bin.attr("x",x(d[0]));
+        bin.attr("y",y(d[1]));
+        bin.attr("width",binWidth);
+        bin.attr("height",binHeight);
+        bin.prop("data",d);
+        bin.addClass( customColor(d[5], d[2], undefined, undefined, undefined, true) );
+
+
+        bins.push(bin);
+    }
+    mainJQ.append(bins); // append at once
+
+    let selectedBin = null;
+    mainJQ
+        .on('click', e=>{
+            if(e.target.nodeName!=='rect')
+                return 1;
+
+            if(selectedBin){
+                d3.select(selectedBin[0])
+                    .style("stroke-width", 0.1)
+                    .attr("bin-selected", "off");
             }
-        })
-        .on("mousemove", function () {
-            return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
-        })
-        .on("mouseout", function () {
-            return d3.select("#tooltip").style("visibility", "hidden");
-        })
-        .on("mousedown", function (d, i) {
-            if (event.ctrlKey) {  
-                Window.PPI['selected-time-id'] = d[0] ;
-                coverShadow(d[0]) ;
-                // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire
-                d3.event.stopPropagation();  // prevent zoom & drag consuming mouseup event while ctrl is pressed
-            }
-        })
-        .on("mouseup", function (d, i) {
-            if (event.ctrlKey) {
-                triggerCtrlV() ;
-            }
-        })
-        .on("click", function (d, i) {
-            $("#RendererContainer").loading({theme: "light"}) ;
-            Window.PPI['selected-bin-id'] = $(this).attr("id")
-            d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
-            $(this).parent()[0].append($(this)[0]) ;
-            d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
+
+            selectedBin = $(e.target);
+            $("#RendererContainer").loading({theme: "light"});
+
+            Window.PPI['selected-bin-id'] = selectedBin.attr("id")
+            // d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
+            const parent = selectedBin.parent()[0];
+
+            // console.log(crosshairV);
+            parent.append(crosshairV.node());
+            parent.append(crosshairH.node());
+            parent.append(selectedBin[0]);
+
+            d3.select(selectedBin[0])
+                .style("stroke-width", 2)
+                .attr("bin-selected", "on");
+
+            const cX = parseFloat(selectedBin.attr('x'))+x.bandwidth()/2;
+            const cY = parseFloat(selectedBin.attr('y'))+y.bandwidth()/2;
+
+            crosshairV
+                .attr('x1',cX)
+                .attr('x2',cX);
+            crosshairH
+                .attr('y1',cY)
+                .attr('y2',cY);
+
+            const d = selectedBin.prop('data');
+
             var actual_scalar = getScalarArray(parseInt(d[1]));
             if (fieldData.hasOwnProperty("Time") ) {
                 var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
@@ -292,18 +317,140 @@ function drawHistogram(iComponent, socket, tag=0) {
             $("#histogram-notification-placeholder-default").html("") ;
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
 
-            console.log(backMsg) ;
+            // console.log(backMsg) ;
             if (!Window.PPI['DEV']) {
                 Window.socket = socket ;
                 socket.send(backMsg) ;
             }
-        }) ;
-    
+        })
+        // .on("mouseover", e => {
+        //     if(e.target.nodeName!=='rect')
+        //         return 1;
+
+        //     const bin =  $(e.target);
+        //     const d = bin.prop('data');
+        // })
+        // .on("mousemove", e => {
+        //     if(e.target.nodeName!=='rect')
+        //         return 1;
+
+        //     const bin =  $(e.target);
+        //     const d = bin.prop('data');
+        // })
+        // .on("mouseout", e => {
+        // })
+        // .on("mousedown", e => {
+        // })
+        // .on("mouseup", e => {
+        // })
+    ;
+
+    // main.selectAll()
+    //     .data(vData)
+    //     .enter()
+    //     .append("rect")
+    //     .attr("name", "bin")
+    //     .attr("mdm-bin-time-idx", function(d, i) { return parseInt(d[0]) ; })
+    //     .attr("id", function(d, i) { return "hist-bin-" + i ; })
+    //     .attr("x", function (d) {
+    //         return x(d[0]);
+    //     })
+    //     .attr("y", function (d) {
+    //         return y(d[1])
+    //     })
+    //     .attr("width", x.bandwidth())
+    //     .attr("height", y.bandwidth())
+    //     .attr("class", function(d) {
+    //         return customColor(d[5], d[2], undefined, undefined, undefined, true);
+    //     })
+
+        // .on("mouseover", function (d, i) {
+        //     tx = d3.event.pageX ;
+        //     ty = d3.event.pageY ;
+        //     if (!event.ctrlKey) {
+        //         if (Window.PPI["X-mode"] === 0) {
+        //             d3.select("#tooltipSvg").selectAll("*").remove();
+        //             drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
+        //             return d3.select("#tooltip").style("visibility", "visible");
+        //         }
+        //     }
+        // })
+        // .on("mousemove", function () {
+        //     return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
+        // })
+        // .on("mouseout", function () {
+        //     return d3.select("#tooltip").style("visibility", "hidden");
+        // })
+        // .on("mousedown", function (d, i) {
+        //     if (event.ctrlKey) {
+        //         Window.PPI['selected-time-id'] = d[0] ;
+        //         coverShadow(d[0]) ;
+        //         // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire
+        //         d3.event.stopPropagation();  // prevent zoom & drag consuming mouseup event while ctrl is pressed
+        //     }
+        // })
+        // .on("mouseup", function (d, i) {
+        //     if (event.ctrlKey) {
+        //         triggerCtrlV() ;
+        //     }
+        // })
+        // .on("click", function (d, i) {
+        //     $("#RendererContainer").loading({theme: "light"}) ;
+        //     const thisJQ = $(this);
+        //     Window.PPI['selected-bin-id'] = thisJQ.attr("id")
+        //     d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
+        //     const parent = thisJQ.parent()[0];
+
+        //     // console.log(crosshairV);
+        //     parent.append(crosshairV.node());
+        //     parent.append(crosshairH.node());
+        //     parent.append(thisJQ[0]);
+
+        //     d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
+
+        //     const cX = parseFloat(thisJQ.attr('x'))+x.bandwidth()/2;
+        //     const cY = parseFloat(thisJQ.attr('y'))+y.bandwidth()/2;
+
+        //     crosshairV
+        //         .attr('x1',cX)
+        //         .attr('x2',cX);
+        //     crosshairH
+        //         .attr('y1',cY)
+        //         .attr('y2',cY);
+
+        //     // const line = $('<line>')
+
+        //     // console.log(line);
+
+        //     var actual_scalar = getScalarArray(parseInt(d[1]));
+        //     if (fieldData.hasOwnProperty("Time") ) {
+        //         var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
+        //     } else {
+        //         var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
+        //     }
+        //     var actual_threshold = $("#hist-threshold :selected").text()
+        //     var idx_threshold = $("#hist-threshold :selected").val()
+        //     var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
+        //         '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
+        //         '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
+        //         '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
+        //         '"PPI": [' + d[2] + '] }}';
+
+        //     $("#histogram-notification-placeholder-default").html("") ;
+        //     $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
+
+        //     console.log(backMsg) ;
+        //     if (!Window.PPI['DEV']) {
+        //         Window.socket = socket ;
+        //         socket.send(backMsg) ;
+        //     }
+        // }) ;
+
     var drag = d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended);
-    
+
     var zoom = d3.zoom()
                  .scaleExtent([0.1, 10])
                  .on("zoom", zoomed)
@@ -322,7 +469,7 @@ function drawHistogram(iComponent, socket, tag=0) {
         main.call(drag).call(zoom);
     }
     setTimeout(callFunc, 0) ;
-    
+
     var t111 = performance.now() ;
     console.log("the cost of time for rendering bins of histogram: " + (t111 - t000) + " milliseconds");
 
@@ -330,12 +477,13 @@ function drawHistogram(iComponent, socket, tag=0) {
     svg.append("text")
         .attr("class", "hist-yaxis-title")
         .attr("transform", "rotate(-90)")
-        .attr("y", 0 - 62 )
+        .attr("y", 0 - 70 )
         .attr("x", 0 - (fixedHeight / 2))
         .attr("z-index", 100)
         .attr("dy", "1em")
-        .style("font-size", "16px")
+        .style("font-size", "1.5em")
         .style("text-anchor", "middle")
+        .style("font-weight", "bold")
         .text("Scalar") ;
 
     // Add x-axis title
@@ -345,9 +493,10 @@ function drawHistogram(iComponent, socket, tag=0) {
         .attr("x", (fixedWidth / 2.5 + 110))
         .attr("z-index", 100)
         .attr("dy", "1em")
-        .style("font-size", "16px")
+        .style("font-size", "1.5em")
         .style("text-anchor", "middle")
-        .text("Time"); 
+        .style("font-weight", "bold")
+        .text("Time");
 
     // reset x-axis, y-axis
     replaceTicks(".axis--hist--x g", getTimeArray()) ;
@@ -367,7 +516,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     function zoomed() {
     }
 
-    function zoomstart() { } 
+    function zoomstart() { }
 
     function slided(d) {
         zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
@@ -422,21 +571,21 @@ function drawHistogram(iComponent, socket, tag=0) {
         y += d3.event.dy;
         // bins of histogram
         d3.select(this).attr("transform", "translate(" + x + "," + y + ") scale(" + scale + ")" );
-        
+
         var yTrans = transFormApply($(".axis--hist--y").attr("transform"), undefined, undefined, undefined, true) ;
         var yX = yTrans[0] ;
         var yY = yTrans[1] ;
         yX += d3.event.dx ;
-        yY += d3.event.dy ;    
-        var v = transFormApply($(".axis--hist--y").attr("transform"), 0, yY, scale) ;    
+        yY += d3.event.dy ;
+        var v = transFormApply($(".axis--hist--y").attr("transform"), 0, yY, scale) ;
         d3.select(".axis--hist--y").attr("transform", v);
 
         var xTrans = transFormApply($(".axis--hist--x").attr("transform"), undefined, undefined, undefined, true) ;
         var xX = xTrans[0] ;
         var xY = xTrans[1] ;
         xX += d3.event.dx ;
-        xY += d3.event.dy ;    
-        var v = transFormApply($(".axis--hist--x").attr("transform"), xX, undefined, scale) ;    
+        xY += d3.event.dy ;
+        var v = transFormApply($(".axis--hist--x").attr("transform"), xX, undefined, scale) ;
         d3.select(".axis--hist--x").attr("transform", v);
 
         if ( $(".mdm-rect-box-cover").length > 0) {
@@ -470,7 +619,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     }
     if (axis_hist_y) {
         $(".axis--hist--y").attr("transform", axis_hist_y) ;
-        
+
     }
     if (axis_hist_x) {
         $(".axis--hist--x").attr("transform", axis_hist_x) ;
@@ -534,10 +683,10 @@ function drawCurveLine(key, data, iComponent, reliability, pp) {
     let max_threshold_window = parseInt($("#threshold-window").val())
     var idx_first = x(iComponent * Window.PPI['thresholdRatio']);
     var idx_sec = x(max_threshold_window * Window.PPI['thresholdRatio'])
-    
+
     addSvgLine(svg, idx_first, 0, idx_first, 136, "translate(28, 0)") ;
     addSvgLine(svg, idx_sec, 0, idx_sec, 136, "translate(28, 0)")
-    
+
     svg.append("rect")
         .attr("class", "zero")
         .attr("x", idx_first)

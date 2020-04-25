@@ -8,6 +8,10 @@ html, body {
     stroke-width: 2px;
 }
 
+canvas:focus {
+    outline: none;
+}
+
 kbd {
     display: inline-block;
     padding: 3px 5px;
@@ -27,8 +31,8 @@ kbd {
 .ul-menu {
     list-style: none;
     padding-left: 0;
-    font-size: 14px;
-    margin-bottom: 0px;
+    font-size: 1em;
+    margin-bottom: 0;
 }
 
 #histogram-notification {display : inline-block; }
@@ -38,14 +42,14 @@ kbd {
 .default-slider-range { display : inline-block; width : 12em; }
 
 #legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 3px;  /* -168px; 2px; */ right: 1px;}
-#legend-custom-handle-top { 
-    height: 0.8em; 
+#legend-custom-handle-top {
+    height: 0.8em;
     display: flex;
     width: 1.8em;
     justify-content: center;
     align-items: center;}
 
-#legend-slider-right {     
+#legend-slider-right {
     display: inline-block;
     width: 4px;
     height: 158px;
@@ -59,8 +63,8 @@ hr {
     border: 0;
     border-top: 1px solid rgba(0,0,0,.1);
 }
-#legend-custom-handle-right { 
-    height: 0.8em; 
+#legend-custom-handle-right {
+    height: 0.8em;
     margin-left: -9px;
     width: 1.8em;
     display: flex;
@@ -239,7 +243,7 @@ li {
     top: 3px;  /* -168px; 2px; */
     right: 1px;
     background: white;
-    border: thin dotted gray;
+    border: 0.15em solid gray;
 }
 
 .histogram_viz_boundary {
@@ -333,4 +337,16 @@ div.inline {
     stroke: #111;
     stroke-width: 3;
     opacity: 0.3;
+}
+
+div > .ui-slider {
+    background-color: gray !important;
+    border: 0 !important;
+}
+
+div > .ui-slider-horizontal {
+    height: 0.1em !important;
+}
+div > .ui-slider-vertical {
+    width: 0.1em !important;
 }

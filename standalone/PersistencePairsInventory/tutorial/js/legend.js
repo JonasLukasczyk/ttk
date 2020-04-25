@@ -326,7 +326,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
                 return customColor(x_1 + (1 - x_1) / 2, undefined, undefined, Math.floor(i / 3));
             }
         });
-    
+
     removeAllTicks(".axis--legend--y") ;
     removeAllTicks(".axis--legend--x") ;
 
@@ -337,26 +337,27 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .style("font-size", "small")
-        .text("#Bins") ;
+        .style("font-size", "1em")
+        .style("font-weight", "bold")
+        .text("# Pairs") ;
 
     svg.append("text")
-        .attr("y", height - 10)
-        .attr("x", 0 - 10)
+        .attr("y", 0)
+        .attr("x", 0 - 2)
         .attr("z-index", 100)
         .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .style("font-size", "small")
-        .text(min_persistence_pairs + "-") ;
+        .style("text-anchor", "end")
+        .style("font-size", "1em")
+        .text(max_persistence_pairs+'+') ;
 
     svg.append("text")
-        .attr("y", 0 - 4)
-        .attr("x", 0 - 14)
+        .attr("y", height - 20)
+        .attr("x", 0 - 2)
         .attr("z-index", 100)
         .attr("dy", "1em")
-        .style("text-anchor", "middle")
-        .style("font-size", "small")
-        .text(max_persistence_pairs + "+") ;
+        .style("text-anchor", "end")
+        .style("font-size", "1em")
+        .text(min_persistence_pairs+'-') ;
 
     // Add x-axis title
     svg.append("text")
@@ -365,9 +366,26 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
         .attr("z-index", 100)
         .attr("dy", "1em")
         .style("text-anchor", "middle")
-        .style("font-size", "small")
-        // .text("Reliability");
+        .style("font-size", "1em")
+        .style("font-weight", "bold")
         .text("Similarity") ;
+
+    svg.append("text")
+        .attr("y", height)
+        .attr("x", 0)
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "1em")
+        .text(0);
+    svg.append("text")
+        .attr("y", height)
+        .attr("x", width)
+        .attr("z-index", 100)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .style("font-size", "1em")
+        .text(1);
 
     // Add two vertical line for reliability
     lines = [
