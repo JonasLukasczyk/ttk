@@ -290,7 +290,7 @@ function drawHistogram(iComponent, socket, tag=0) {
                 '"PPI": [' + d[2] + '] }}';
 
             $("#histogram-notification-placeholder-default").html("") ;
-            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold) + ", ") ;
+            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
 
             console.log(backMsg) ;
             if (!Window.PPI['DEV']) {

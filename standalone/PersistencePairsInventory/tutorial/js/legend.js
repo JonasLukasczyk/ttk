@@ -256,7 +256,7 @@ function drawLegend(data, min_persistence_pairs, max_persistence_pairs, tag=0) {
 
     // updated notification
     $("#histogram-notification-placeholder-default").html("") ;
-    $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
+    // $("#histogram-notification-placeholder-1").html($("#histogram-notification").attr("data-pattern-1").replace("{Left}", x_0.toFixed(2)).replace("{Right}", x_1.toFixed(2))) ;
 
     // draw the main body SVG
     let widthGroups = getArray(3);

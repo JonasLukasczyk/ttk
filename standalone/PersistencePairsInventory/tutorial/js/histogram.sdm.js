@@ -309,7 +309,7 @@ function drawSDMHistogram(socket) {
             }
 
             $("#histogram-notification-placeholder-default").html("") ;
-            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time).replace("{Threshold}", actual_threshold) + ", ") ;
+            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time).replace("{Threshold}", actual_threshold)) ;
         })
         .append("title")
         .text(function(d) { return "PPI: " + d[2] });

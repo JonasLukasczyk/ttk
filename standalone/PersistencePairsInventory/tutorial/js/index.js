@@ -87,7 +87,7 @@ function resetHist() {
 	// fill in the multi-view
     $('#hist-threshold').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
-    	if ( i == Math.min(1, Math.floor(Window.PPI['numberOfThreshold-histogram'] * 0.1)) ) {
+    	if ( i === 0 ) {
         	$('#hist-threshold').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     	} else {
         	$('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
@@ -96,7 +96,7 @@ function resetHist() {
 
     $('#threshold-window').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
-    	if ( i == Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ) {
+    	if ( i === Window.PPI['numberOfThreshold-histogram'] - 1 ) {
         	$('#threshold-window').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
     	} else {
 	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
@@ -290,7 +290,7 @@ function LoadTest() {
 }
 
 function triggerCtrlV() {
-	$("#histogram-notification-placeholder-0").html("") ;
+	$("#histogram-notification-placeholder-0").html("-") ;
 	if (Window.PPI['histogram-mode'] == "multi") {
 		Window.PPI['histogram-mode'] = "single" ;
 		$("[element-show='mdm']").css("display", "none") ;

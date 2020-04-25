@@ -32,10 +32,10 @@ kbd {
 }
 
 #histogram-notification {display : inline-block; }
-#slider-range { display : inline-block; width : 8em; }
-#slider-range-single { display : inline-block; width : 8em; }
-#threshold-slider-range { display : inline-block; width : 8em; }
-.default-slider-range { display : inline-block; width : 8em; }
+#slider-range { display : inline-block; width : 12em; }
+#slider-range-single { display : inline-block; width : 12em; }
+#threshold-slider-range { display : inline-block; width : 12em; }
+.default-slider-range { display : inline-block; width : 12em; }
 
 #legend-slider-top { display : inline-block; width : 15.2em; height: 4px; position: absolute;top: 3px;  /* -168px; 2px; */ right: 1px;}
 #legend-custom-handle-top { 
