@@ -208,7 +208,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     }
 
     // https://github.com/d3/d3-format
-    var ticks_xAxis = 10;
+    var ticks_xAxis = 15;
     var xAxis = d3.axisBottom(Window.box_plot_config['xScale']).ticks(ticks_xAxis).tickFormat(function(d) {  return parseInt(d) == d? d: d.toFixed(1); }),
         yAxis = d3.axisLeft(Window.box_plot_config['yScale']).tickFormat(function(d) {  return  d == 5 || d == 7 || d == 9? "": (parseInt(d) == d? d: d.toFixed(1)); });
 
@@ -734,6 +734,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
     $("#hidden-optimal-threshold").click();
     
     // removeYAxisForBoxplot(".axis--y g") ;
+    replaceTicks(".axis--x g", getThresholdArray()) ;
     console.log(persistence_values) ;
 }
 

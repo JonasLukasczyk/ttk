@@ -279,12 +279,12 @@ function getArray(n, ratio=1) {
     return ans;
 }
 
-function replaceTicks(id, replace) {
+function replaceTicks(id, replace, interval=1) {
     var gs = $(id) ;
     for ( var i = 0; i < gs.length; i++ ) {
         var tc = $(gs[i].getElementsByTagName("text")[0]) ;
         var tc_i = parseInt(tc.text()) ;
-        tc_i = replace? replace[tc_i]: tc_i ;
+        tc_i = replace? replace[tc_i * interval]: tc_i ;
         tc.text(tc_i) ;
     }
 }

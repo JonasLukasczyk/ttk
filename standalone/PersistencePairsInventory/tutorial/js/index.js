@@ -88,18 +88,18 @@ function resetHist() {
     $('#hist-threshold').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
     	if ( i === 0 ) {
-        	$('#hist-threshold').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+        	$('#hist-threshold').append('<option class="histogram-selector" selected value=' + i + '>' + getThresholdByIndex(i * Window.PPI['thresholdRatio']) + '</option>');
     	} else {
-        	$('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+        	$('#hist-threshold').append('<option class="histogram-selector" value=' + i + '>' + getThresholdByIndex(i * Window.PPI['thresholdRatio']) + '</option>');
     	}
     }
 
     $('#threshold-window').html("").attr("title", 'for ' + Window.PPI['APPIAttrName']);
     for (let i = 0; i < Window.PPI['numberOfThreshold-histogram']; i++) {
     	if ( i === Window.PPI['numberOfThreshold-histogram'] - 1 ) {
-        	$('#threshold-window').append('<option class="histogram-selector" selected value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+        	$('#threshold-window').append('<option class="histogram-selector" selected value=' + i + '>' + getThresholdByIndex(i * Window.PPI['thresholdRatio']) + '</option>');
     	} else {
-	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + i * Window.PPI['thresholdRatio'] + '</option>');
+	        $('#threshold-window').append('<option class="histogram-selector" value=' + i + '>' + getThresholdByIndex(i * Window.PPI['thresholdRatio']) + '</option>');
     	}
     }
 
@@ -183,8 +183,8 @@ function objectCallback(msg) {
 		max: Window.PPI['numberOfThreshold-histogram'] - 1,
 		values: [0, Window.PPI['numberOfThreshold-histogram'] - 1],
 		slide: function( event, ui ) {
-			$("#threshold-picker_left").text(ui.values[0] * Window.PPI['thresholdRatio']) ;
-			$("#threshold-picker_right").text(ui.values[1] * Window.PPI['thresholdRatio']) ;
+			$("#threshold-picker_left").text(getThresholdByIndex(ui.values[0] * Window.PPI['thresholdRatio'])) ;
+			$("#threshold-picker_right").text(getThresholdByIndex(ui.values[1] * Window.PPI['thresholdRatio'])) ;
 		},
 		stop: function(event, ui) {
 			if (ui.values[0] !== Window.PPI['threshold-picker-left']) {
@@ -198,11 +198,11 @@ function objectCallback(msg) {
 			}
 		},
 		create: function() {
-			$("#threshold-picker_left").text(0) ;
-			$("#threshold-picker_right").text(Window.PPI['numberOfThreshold-histogram'] - 1 ) ;
+			$("#threshold-picker_left").text(getThresholdByIndex(0 * Window.PPI['thresholdRatio'])) ;
+			$("#threshold-picker_right").text(getThresholdByIndex((Window.PPI['numberOfThreshold-histogram'] - 1) * Window.PPI['thresholdRatio']) ) ;
 			$("#histogram-threshold-picker-default").html("") ;
-			Window.PPI['threshold-picker-left'] = Math.min(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ;
-			Window.PPI['threshold-picker-right'] = Math.max(1, Window.PPI['numberOfThreshold-histogram'] * 0.1) ;
+			Window.PPI['threshold-picker-left'] = 0 ;
+			Window.PPI['threshold-picker-right'] = Window.PPI['numberOfThreshold-histogram'] - 1 ;
 		}
 	});
 

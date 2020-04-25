@@ -412,7 +412,8 @@ function drawSDMHistogram(socket) {
         .text("Threshold");
 
     // reset x-axis, y-axis, TRICKY
-    removeNiceByKicks(".sdm-axis--hist--x g", keep=-1, ratio=Window.PPI['thresholdRatio']) ;
+    replaceTicks(".sdm-axis--hist--x g", getThresholdArray(), interval=Window.PPI['thresholdRatio']) ;
+    removeNiceByKicks(".sdm-axis--hist--x g", keep=-1) ;
     replaceTicks(".sdm-axis--hist--y g", getScalarArray()) ;
     removeNiceByKicks(".sdm-axis--hist--y g") ;
 
