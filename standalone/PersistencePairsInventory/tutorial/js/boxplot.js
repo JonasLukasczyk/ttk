@@ -96,14 +96,14 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("y1", 0)
             .attr("x2", Window.box_plot_config['xScale'](threshold_idx))
             .attr("y2", height)
-            .style("stroke", "gray")
+            .style("stroke", "red")
             .style("stroke-dasharray", ("5, 5"))
             .style("stroke-width", 1);
 
             g.append("circle")
                 .attr("name", "box_optimal_left")
                 .attr("r", 5)
-                .attr("fill", "gray")
+                .attr("fill", "red")
                 .attr("cx", function(d) { return Window.box_plot_config['xScale'](threshold_idx) })
                 .attr("cy", function(d) { return height; });
         }
@@ -116,13 +116,13 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .attr("y1", 0)
             .attr("x2", Window.box_plot_config['xScale'](max_threshold_window))
             .attr("y2", height)
-            .style("stroke", "red")
+            .style("stroke", "black")
             .style("stroke-dasharray", ("5, 5"))
             .style("stroke-width", 1);
 
             g.append("circle")
                 .attr("name", "box_optimal_right")
-                .attr("fill", "red")
+                .attr("fill", "black")
                 .attr("r", 5)
                 .attr("cx", function(d) { return Window.box_plot_config['xScale'](max_threshold_window) })
                 .attr("cy", function(d) { return height; });
