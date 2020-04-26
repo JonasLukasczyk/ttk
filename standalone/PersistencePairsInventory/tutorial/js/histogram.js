@@ -12,6 +12,9 @@ d3.select("body")
 // socket: webSocketIO object
 // returned: used for retrieving data purely
 function drawHistogram(iComponent, socket, tag=0) {
+    $("#hist-clip-highlight rect").each(function() {
+        $(this).detach().appendTo("#hist-clip-opacity");
+    }) ;
 
     function getHistogramKey(iComponent) {
         var tmp = getRangeOfPPI()
@@ -252,12 +255,17 @@ function drawHistogram(iComponent, socket, tag=0) {
         bin.attr("y",y(d[1]));
         bin.attr("width",binWidth);
         bin.attr("height",binHeight);
+        bin.attr("name", "bin") ;
+        bin.attr("mdm-bin-time-idx", parseInt(d[0])) ;
+        bin.attr("id", "hist-bin-" + i ) ;
         bin.prop("data",d);
         bin.addClass( customColor(d[5], d[2], undefined, undefined, undefined, true) );
-
-
         bins.push(bin);
     }
+
+    // using global variable to speed up
+    Window.PPI['histogram-bins'] = bins;
+
     mainJQ.append(bins); // append at once
 
     let selectedBin = null;
@@ -317,32 +325,57 @@ function drawHistogram(iComponent, socket, tag=0) {
             $("#histogram-notification-placeholder-default").html("") ;
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
 
-            // console.log(backMsg) ;
             if (!Window.PPI['DEV']) {
                 Window.socket = socket ;
                 socket.send(backMsg) ;
             }
         })
-        // .on("mouseover", e => {
-        //     if(e.target.nodeName!=='rect')
-        //         return 1;
+        .on("mouseover", e => {
+            if(e.target.nodeName!=='rect')
+                return 1;
 
-        //     const bin =  $(e.target);
-        //     const d = bin.prop('data');
-        // })
-        // .on("mousemove", e => {
-        //     if(e.target.nodeName!=='rect')
-        //         return 1;
+            const bin =  $(e.target);
+            const d = bin.prop('data');
 
-        //     const bin =  $(e.target);
-        //     const d = bin.prop('data');
-        // })
-        // .on("mouseout", e => {
-        // })
-        // .on("mousedown", e => {
-        // })
-        // .on("mouseup", e => {
-        // })
+            if (!e.ctrlKey) {
+                if (Window.PPI["X-mode"] === 0) {
+                    d3.select("#tooltipSvg").selectAll("*").remove();
+                    drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
+                    d3.select("#tooltip").style("visibility", "visible");
+                }
+            }
+        })
+        .on("mousemove", e => {
+            if(e.target.nodeName!=='rect')
+                return 1;
+
+            const bin =  $(e.target);
+            const d = bin.prop('data');
+            d3.select("#tooltip").style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
+        })
+        .on("mouseout", e => {
+            d3.select("#tooltip").style("visibility", "hidden");
+        }).on("mousedown", e => {
+            console.log("mousedown") ;
+            if(e.target.nodeName!=='rect')
+                return 1;
+
+            const bin =  $(e.target);
+            const d = bin.prop('data');
+
+            if (e.ctrlKey) {
+                Window.PPI['selected-time-id'] = d[0] ;
+                coverShadow(d[0]) ;
+                // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire
+                // e.stopPropagation();  // prevent zoom & drag consuming mouseup event while ctrl is pressed
+            }
+        })
+        .on("mouseup", e => {
+            console.log("mouseup") ;
+            if (e.ctrlKey) {
+                triggerCtrlV() ;
+            }
+        })
     ;
 
     // main.selectAll()
@@ -641,7 +674,8 @@ function drawHistogram(iComponent, socket, tag=0) {
 
     $("#hidden-mdm-add-window").click() ;
     if (Window.PPI['selected-bin-id']) {
-        d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+        // d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+        jClick("#" + Window.PPI['selected-bin-id']) ;
     }
     $("#histogram_viz").loading("stop");
 }

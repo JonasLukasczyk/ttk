@@ -250,7 +250,7 @@ class vtkRenderer{
         geometry.setIndex( new THREE.BufferAttribute(indices,1) );
 
 
-        if(vtkJson.PointData.hasOwnProperty('RegionId')){
+        if(vtkJson.hasOwnProperty("PointData") && vtkJson.PointData.hasOwnProperty('RegionId')){
             const regionIds = vtkJson.PointData.RegionId.Values;
 
             const indices = new Uint32Array(connectivityList.length/4*3);

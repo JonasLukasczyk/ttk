@@ -57,6 +57,8 @@ Window.PPI = {
 	"redraw-MDM-key": "",
 	"redraw-SDM-key": "",
 	"main-container-height": $("body").outerHeight() - $("#container-fluid-div").outerHeight() - $("#APPI-header-container").outerHeight() - 1.5 * $("#container-row").outerHeight(),
+	"histogram-bins": null,
+	"sdm-histogram-bins": null,
 } ;
 
 let ttk, ttk_render;
@@ -278,7 +280,7 @@ function Connect() {
 
 	ttk_render = new ttkWebSocketIO(PORT_RENDER, function () {
 		console.log("on_open for render");
-	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), true);
+	}, () => {}, () => {}, () => {}, obj => RENDERER.setScene(obj), $("#msg-host").val(), false);
 }
 
 function LoadTest() {
@@ -297,7 +299,8 @@ function triggerCtrlV() {
 		$("[element-show='sdm']").css("display", "") ;
 		drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 		if (Window.PPI['selected-bin-id-sdm']) {
-			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+			// d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+			jClick("#" + Window.PPI['selected-bin-id-sdm']) ;
 		}
 	} else {
 		Window.PPI['histogram-mode'] = "multi" ;
@@ -305,7 +308,8 @@ function triggerCtrlV() {
 		$("[element-show='sdm']").css("display", "none") ;
 		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 		if (Window.PPI['selected-bin-id']) {
-			d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+			jClick("#" + Window.PPI['selected-bin-id']) ;
 		}
 	}
 }
@@ -417,13 +421,15 @@ $(document).keydown(function (e) {
 				// multi view
 				if (selected) {
 					if (i + 1 <= Window.PPI['histogram-width'] - 1) {
-						d3.select("#hist-bin-" + (g_idx + 1)).dispatch("click");
+						// d3.select("#hist-bin-" + (g_idx + 1)).dispatch("click");
+						jClick("#hist-bin-" + (g_idx + 1)) ;
 					}
 				}
 			} else {
 				if (selected_sdm) {
 					if (i_sdm + 1 <= Window.PPI['sdm-histogram-width'] - 1) {
-						d3.select("#sdm-hist-bin-" + (g_idx_sdm + 1)).dispatch("click");
+						// d3.select("#sdm-hist-bin-" + (g_idx_sdm + 1)).dispatch("click");
+						jClick("#sdm-hist-bin-" + (g_idx_sdm + 1)) ;
 					}
 				}
 			}
@@ -435,13 +441,15 @@ $(document).keydown(function (e) {
 				// multi view
 				if (selected) {
 					if (i - 1 >= 0) {
-						d3.select("#hist-bin-" + (g_idx - 1)).dispatch("click");
+						// d3.select("#hist-bin-" + (g_idx - 1)).dispatch("click");
+						jClick("#hist-bin-" + (g_idx - 1)) ;
 					}
 				}
 			} else {
 				if (selected_sdm) {
 					if (i_sdm - 1 >= 0) {
-						d3.select("#sdm-hist-bin-" + (g_idx_sdm - 1)).dispatch("click");
+						// d3.select("#sdm-hist-bin-" + (g_idx_sdm - 1)).dispatch("click");
+						jClick("#sdm-hist-bin-" + (g_idx_sdm - 1)) ;
 					}
 				}
 			}
@@ -451,13 +459,15 @@ $(document).keydown(function (e) {
 			if (Window.PPI['histogram-mode'] == "multi") {
 				if (selected) {
 					if (j + 1 <= Window.PPI['histogram-height'] - 1) {
-						d3.select("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])).dispatch("click");
+						// d3.select("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])).dispatch("click");
+						jClick("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])) ;
 					}
 				}
 			} else {
 				if (selected_sdm) {
 					if (j_sdm + 1 <= Window.PPI['histogram-height'] - 1) {
-						d3.select("#sdm-hist-bin-" + (g_idx_sdm + Window.PPI['sdm-histogram-width'])).dispatch("click");
+						// d3.select("#sdm-hist-bin-" + (g_idx_sdm + Window.PPI['sdm-histogram-width'])).dispatch("click");
+						jClick("#sdm-hist-bin-" + (g_idx_sdm + Window.PPI['sdm-histogram-width'])) ;
 					}
 				}
 			}
@@ -468,13 +478,15 @@ $(document).keydown(function (e) {
 			if (Window.PPI['histogram-mode'] == "multi") {
 				if (selected) {
 					if (j - 1 >= 0) {
-						d3.select("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])).dispatch("click");
+						// d3.select("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])).dispatch("click");
+						jClick("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])) ;
 					}
 				}
 			} else {
 				if (selected_sdm) {
 					if (j_sdm - 1 >= 0) {
-						d3.select("#sdm-hist-bin-" + (g_idx_sdm - Window.PPI['sdm-histogram-width'])).dispatch("click");
+						// d3.select("#sdm-hist-bin-" + (g_idx_sdm - Window.PPI['sdm-histogram-width'])).dispatch("click");
+						jClick("#sdm-hist-bin-" + (g_idx_sdm - Window.PPI['sdm-histogram-width'])) ;
 					}
 				}
 			}
@@ -505,11 +517,13 @@ $("#hist-threshold").change(function () {
 	});
 	if ( Window.PPI['histogram-mode'] == "multi" ) {
 		if (Window.PPI['selected-bin-id']) {
-			d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+			jClick("#" + Window.PPI['selected-bin-id'])
 		}
 	} else {
 		if (Window.PPI['selected-bin-id-sdm']) {
-			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+			// d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+			jClick("#" + Window.PPI['selected-bin-id-sdm']) ;
 		}
 	}
 
@@ -538,11 +552,13 @@ $("#threshold-window").change(function() {
     });
     if ( Window.PPI['histogram-mode'] == "multi" ) {
 		if (Window.PPI['selected-bin-id']) {
-			d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
+			jClick("#" + Window.PPI['selected-bin-id']) ;
 		}
 	} else {
 		if (Window.PPI['selected-bin-id-sdm']) {
-			d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+			// d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
+			jClick("#" + Window.PPI['selected-bin-id-sdm']) ;
 		}
 	}
     $("#hidden-optimal-threshold").click();

@@ -268,31 +268,90 @@ function drawSDMHistogram(socket) {
 
     var main = g_main.append("g").attr("id", "sdm-hist-clip-g") ;
 
-    main.selectAll()
-        .data(vData)
-        .enter()
-        .append("rect")
-        .attr("class", "sdm-bin")
-        .attr("id", function(d, i) { return "sdm-hist-bin-" + i ; })
-        .attr("x", function (d) {
-            return x(d[0]);
-        })
-        .attr("y", function (d) {
-            return y(d[1])
-        })
-        .attr("title", function(d) { return "PPI:" + d[2] ; })
-        .attr("width", x.bandwidth())
-        .attr("height", y.bandwidth())
-        .style("fill", function (d) {
-            return customColor((lower + upper) / 2, d[2], undefined, undefined, true);
-        })
+    const crosshairSize = 100000;
+    const crosshairV = main.append('line')
+        .attr('x1', 0)
+        .attr('y1', -crosshairSize)
+        .attr('x2', 0)
+        .attr('y2', crosshairSize)
+        .attr('stroke','black')
+        .attr('stroke-width',1);
 
-        .on("click", function (d, i) {
-            $("#RendererContainer").loading({theme: "light"}) ;
-            Window.PPI['selected-bin-id-sdm'] = $(this).attr("id")
-            d3.selectAll(".sdm-bin").style("stroke-width", 0.1).attr("bin-selected-sdm", "off");
-            $(this).parent()[0].append($(this)[0]) ;
-            d3.select(this).style("stroke-width", 2).attr("bin-selected-sdm", "on");
+    const crosshairH = main.append('line')
+        .attr('x1', -crosshairSize)
+        .attr('y1', 0)
+        .attr('x2', crosshairSize)
+        .attr('y2', 0)
+        .attr('stroke','black')
+        .attr('stroke-width',1);
+
+    const mainJQ = $(main.node());
+    mainJQ.empty();
+    const binWidth = x.bandwidth();
+    const binHeight = y.bandwidth();
+    const bins = [];
+
+    for(let i=0; i<vData.length; i++){
+        const d = vData[i];
+        const bin = $(document.createElementNS("http://www.w3.org/2000/svg", 'rect'));
+        bin.attr("x",x(d[0]));
+        bin.attr("y",y(d[1]));
+        bin.attr("width",binWidth);
+        bin.attr("height",binHeight);
+        bin.attr("name", "sdm-bin") ;
+        bin.attr("mdm-bin-time-idx", parseInt(d[0])) ;
+        bin.attr("id", "sdm-hist-bin-" + i ) ;
+        bin.html("<title>PPI: " + d[2]+"</title>"); ;
+        bin.prop("data", d);
+        bin.addClass( customColor(d[5], d[2], undefined, undefined, undefined, true, true) );
+        bins.push(bin);
+    }
+
+    // using global variable to speed up
+    Window.PPI['sdm-histogram-bins'] = bins;
+
+    mainJQ.append(bins); // append at once
+
+    let selectedBin = null;
+    mainJQ
+        .on('click', e=>{
+            if(e.target.nodeName!=='rect')
+                return 1;
+
+            if(selectedBin){
+                d3.select(selectedBin[0])
+                    .style("stroke-width", 0.1)
+                    .attr("bin-selected-sdm", "off");
+            }
+
+            selectedBin = $(e.target);
+            $("#RendererContainer").loading({theme: "light"});
+
+            Window.PPI['selected-bin-id-sdm'] = selectedBin.attr("id")
+            // d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
+            const parent = selectedBin.parent()[0];
+
+            // console.log(crosshairV);
+            parent.append(crosshairV.node());
+            parent.append(crosshairH.node());
+            parent.append(selectedBin[0]);
+
+            d3.select(selectedBin[0])
+                .style("stroke-width", 2)
+                .attr("bin-selected-sdm", "on");
+
+            const cX = parseFloat(selectedBin.attr('x'))+x.bandwidth()/2;
+            const cY = parseFloat(selectedBin.attr('y'))+y.bandwidth()/2;
+
+            crosshairV
+                .attr('x1',cX)
+                .attr('x2',cX);
+            crosshairH
+                .attr('y1',cY)
+                .attr('y2',cY);
+
+            const d = selectedBin.prop('data');
+
             var actual_scalar = getScalarArray(parseInt(d[1]));
             var actual_time = $("#hist-time :selected").text()
             var idx_time = $("#hist-time :selected").val()
@@ -310,9 +369,58 @@ function drawSDMHistogram(socket) {
 
             $("#histogram-notification-placeholder-default").html("") ;
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time).replace("{Threshold}", actual_threshold)) ;
-        })
-        .append("title")
-        .text(function(d) { return "PPI: " + d[2] });
+
+            if (!Window.PPI['DEV']) {
+                Window.socket = socket ;
+                socket.send(backMsg) ;
+            }
+        });
+
+    // main.selectAll()
+    //     .data(vData)
+    //     .enter()
+    //     .append("rect")
+    //     .attr("class", "sdm-bin")
+    //     .attr("id", function(d, i) { return "sdm-hist-bin-" + i ; })
+    //     .attr("x", function (d) {
+    //         return x(d[0]);
+    //     })
+    //     .attr("y", function (d) {
+    //         return y(d[1])
+    //     })
+    //     .attr("title", function(d) { return "PPI:" + d[2] ; })
+    //     .attr("width", x.bandwidth())
+    //     .attr("height", y.bandwidth())
+    //     .style("fill", function (d) {
+    //         return customColor((lower + upper) / 2, d[2], undefined, undefined, true);
+    //     })
+
+    //     .on("click", function (d, i) {
+    //         $("#RendererContainer").loading({theme: "light"}) ;
+    //         Window.PPI['selected-bin-id-sdm'] = $(this).attr("id")
+    //         d3.selectAll(".sdm-bin").style("stroke-width", 0.1).attr("bin-selected-sdm", "off");
+    //         $(this).parent()[0].append($(this)[0]) ;
+    //         d3.select(this).style("stroke-width", 2).attr("bin-selected-sdm", "on");
+    //         var actual_scalar = getScalarArray(parseInt(d[1]));
+    //         var actual_time = $("#hist-time :selected").text()
+    //         var idx_time = $("#hist-time :selected").val()
+    //         var actual_threshold = parseInt(d[0]) * Window.PPI['thresholdRatio'] ;
+    //         var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
+    //             '{"idx_time": [' + idx_time + '], "actual_time": [' + actual_time + '], ' +
+    //             '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
+    //             '"idx_threshold": [' + d[0] + '], "actual_threshold": [' + actual_threshold + '],' +
+    //             '"PPI": [' + d[2] + '] }}';
+    //         console.log(backMsg) ;
+    //         if (!Window.PPI['DEV']) {
+    //             Window.socket = socket ;
+    //             socket.send(backMsg) ;
+    //         }
+
+    //         $("#histogram-notification-placeholder-default").html("") ;
+    //         $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time).replace("{Threshold}", actual_threshold)) ;
+    //     })
+    //     .append("title")
+    //     .text(function(d) { return "PPI: " + d[2] });
 
     var drag = d3.drag()
             .on("start", dragstarted)

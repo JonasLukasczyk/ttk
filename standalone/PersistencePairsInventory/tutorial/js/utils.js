@@ -289,6 +289,10 @@ function replaceTicks(id, replace, interval=1) {
     }
 }
 
+function jClick(id) {
+    $(id).click() ;
+}
+
 function removeTicksByDistance(id, fixedDistance=12) {
     var gs = $(id) ;
 
