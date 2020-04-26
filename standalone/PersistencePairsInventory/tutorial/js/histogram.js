@@ -271,6 +271,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     let selectedBin = null;
     mainJQ
         .on('click', e=>{
+            console.log("click") ;
             if(e.target.nodeName!=='rect')
                 return 1;
 
@@ -547,9 +548,12 @@ function drawHistogram(iComponent, socket, tag=0) {
     }) ;
 
     function zoomed() {
+        console.log("zooomed") ;
     }
 
-    function zoomstart() { }
+    function zoomstart() {
+        console.log("zoomstart") ;
+     }
 
     function slided(d) {
         zoom.scaleTo(svg, scaleConvert(d3.select(this).property("value")));
@@ -560,6 +564,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     }) ;
 
     function zoomend(d) {
+        console.log("zoomend") ;
         var currentTransform ;
         if (d === "zoom_back") {
             currentTransform = {"x":0, "y": (fixedHeight - height), "k":1}
@@ -591,11 +596,13 @@ function drawHistogram(iComponent, socket, tag=0) {
     }
 
     function dragstarted(d) {
+        console.log("dragstarted") ;
         d3.event.sourceEvent.stopPropagation();
         d3.select(this).classed("dragging", true);
     }
 
     function dragged(d) {
+        console.log("dragged") ;
         var scale = scaleConvert(d3.select("#range_input").property("value"))
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
         var x = trans[0] ;
@@ -635,7 +642,9 @@ function drawHistogram(iComponent, socket, tag=0) {
     }
 
     function dragended(d) {
+        console.log("dragended") ;
         d3.select(this).classed("dragging", false);
+        return false;
     }
 
     $("#histogram_zoom_back").click() ;
