@@ -94,7 +94,7 @@
             </div>
          </div>
 
-         <div class="col-8" style="padding-left: 0px;font-size: 12px;color: gray;">
+         <div class="col-8" style="padding-left: 50px;font-size: 12px;color: gray;">
             <table>
                <tr>
                  <td colspan="3"><kbd>ctrl v</kbd> Toggle between the APPI and PPI mode</td>
@@ -113,7 +113,7 @@
    </div>
    <div class="container-fluid">
       <div class="row">
-         <div class="col-4" style="padding-right:0px;border-right: 0.1em solid #ddd;">
+         <div class="col-4" style="padding-right:0px;">
             <div class="text-justify p-2" style="height: 100%;">
                <h4>Functional Boxplot of Persistence Curves</h4>
 
@@ -124,7 +124,7 @@
                         <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y"></label>
                      </div> <code>|</code>
 
-                     <div style="display:none;">
+                     <div style="display:none;" debug-mode='1'>
                         <span id="notification_xxyy"  class="p-1 bg-success text-white" title="x-y domain"
                                  style="font-size:12px;cursor:pointer;"
                                  data-toggle="modal"
@@ -132,13 +132,14 @@
                         <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
                      </div>
 
+                     <div debug-mode='1' style="display:none;">
                      <input type="checkbox" id="boxplot-checkbox-lines">
-                     <select id="boxplot-select-lines">
+                     <select id="boxplot-select-lines" >
                         <option value="all">all</option>
-                     </select><code>|</code>
+                     </select><code>|</code></div>
 
                      <!-- not required functionality -->
-                     <div style="display:none;" ><input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">polygon layer<code>|</code>
+                     <div style="display:none;" debug-mode='1'><input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">polygon layer<code>|</code>
                      <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a> <code>|</code> </div>
 
                      <img id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
@@ -146,7 +147,7 @@
                </ul>
 
                <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
-                  <h3>&nbsp; - </h3>
+                  <h3>- </h3>
                </div>
                <div id="left-continer-middle">
                <br>
@@ -157,7 +158,7 @@
          </div>
          <div class="col-8">
             <div class="text-justify p-2" style="height: 100%;" id="histogram-view-container">
-               <div id="APPI-header-container">
+               <div id="APPI-header-container" style="padding-left: 30px;">
                 <h4 element-show="mdm">Aggregated Persistence Pair Inventory (APPI)</h4>
                 <h4 element-show="sdm" style="display:none;">Persistence Pair Inventory (PPI)</h4>
 
@@ -246,7 +247,7 @@
 
                <div style="position: relative;">
                   <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
-                     <h3 style="padding-bottom: 10px;">&nbsp; - </h3>
+                     <h3 style="padding-bottom: 10px;padding-left: 30px;">-</h3>
                   </div>
                   <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.2" data-x_1="0.8"></div>
 

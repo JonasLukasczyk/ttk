@@ -273,6 +273,13 @@ function addSvgLine(svg, x1, y1, x2, y2, transform, className="zero", stroke="bl
         .attr("transform", transform);
 }
 
+function showupLineBoxplot(time_idx) {
+    // $("#boxplot-checkbox-lines").prop("checked", true) ;
+    $("[name='box_line']").attr("visibility", "show");
+    $("[group_idx^=group]").css({opacity: 0}) ;
+    $("[group_idx=group"+time_idx+"]").css({opacity: 1});
+}
+
 function getArray(n, ratio=1) {
     let ans = [];
     for (let i = 0; i < n; i++) { ans.push("" + ( i * ratio)); }

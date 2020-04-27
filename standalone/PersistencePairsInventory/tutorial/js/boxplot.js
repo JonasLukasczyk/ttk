@@ -703,7 +703,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
                 } else {
                     $("[group_idx^=group]").each(function () {
                         $(this).css({
-                            opacity: 0.1
+                            opacity: 0
                         })
                     });
                     $("[group_idx=" + $(this).val() + "]").css({
@@ -728,11 +728,11 @@ function drawBoxplotCurve(numberofcomponents, data) {
             })
             .attr("fill", "none")
             .attr("stroke", function (d) {
-                return color(d.key)
+                return "black" ;
             })
-            .attr("stroke-width", 1.5)
+            .attr("stroke-width", 2.5)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
+                return Window.box_plot_config.line(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
             })
 
         if ( ! persistence_values['boxplot_checkbox_checked'] ) {

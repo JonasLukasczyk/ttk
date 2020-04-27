@@ -24,6 +24,7 @@ function drawSDMHistogram(socket) {
         return ;
     }
     iComponent = Window.PPI['selected-time-id'] ;  // selected time stamp
+    showupLineBoxplot(parseInt(iComponent)) ;
     console.log("invoke draw SDMhistogram functionaility") ;
     $("#hist-time").val(iComponent) ;
     iComponent = parseInt(iComponent) ;
@@ -44,8 +45,9 @@ function drawSDMHistogram(socket) {
             .attr("height", height)
             .attr("width", idx_sec - idx_first)
             .style("fill", "none")
-            .style("stroke-width", 1)
-            .style("stroke", "rgb(0,0,0)")
+            .style("stroke", "black")
+            .style("stroke-dasharray", ("5, 5"))
+            .style("stroke-width", '0.15em')
             .attr("transform", transFormApply(d3.select("#sdm-hist-clip-g").attr("transform")));
     }
 

@@ -77,8 +77,9 @@ function drawHistogram(iComponent, socket, tag=0) {
                 .attr("height", height)
                 .attr("width", idx_sec - idx_first)
                 .style("fill", "none")
-                .style("stroke-width", 1)
-                .style("stroke", "rgb(0,0,0)")
+                .style("stroke", "black")
+                .style("stroke-dasharray", ("5, 5"))
+                .style("stroke-width", '0.15em')
                 .attr("transform", transFormApply(d3.select("#hist-clip-opacity").attr("transform")));
             }
     }
@@ -322,6 +323,8 @@ function drawHistogram(iComponent, socket, tag=0) {
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
                 '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
                 '"PPI": [' + d[2] + '] }}';
+
+            showupLineBoxplot(d[0]) ;
 
             $("#histogram-notification-placeholder-default").html("") ;
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;

@@ -5,7 +5,8 @@ Window.PPI = {
 	"selected-bin-id": "",
 	"selected-bin-id-sdm": "",
     // it MUST be only one value
-    "APPIAttrName": "",
+	"APPIAttrName": "",
+	"debug-mode": false,
     // color range
     // "color-green": ["#edf8e9", "#bae4b3", "#74c476", "#31a354", "#006d2c"],
     // "color-gray": ["#f7f7f7", "#d9d9d9", "#bdbdbd", "#969696", "#636363"],
@@ -597,3 +598,6 @@ $("#histRescaleCustom").unbind().click(function() {
     $("#histRescaleCustom-close").click() ;
 }) ;
 
+if (Window.PPI['debug-mode'] == true) {
+	$("[debug-mode='1']").css("display", "inline-block");
+}
