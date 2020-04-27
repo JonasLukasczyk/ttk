@@ -300,7 +300,7 @@ function drawSDMHistogram(socket) {
         bin.attr("width",binWidth);
         bin.attr("height",binHeight);
         bin.attr("name", "sdm-bin") ;
-        bin.attr("mdm-bin-time-idx", parseInt(d[0])) ;
+        bin.attr("sdm-bin-time-idx", parseInt(d[0])) ;
         bin.attr("id", "sdm-hist-bin-" + i ) ;
         bin.html("<title>PPI: " + d[2]+"</title>"); ;
         bin.prop("data", d);
