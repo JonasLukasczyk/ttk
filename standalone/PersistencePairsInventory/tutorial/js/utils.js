@@ -300,6 +300,11 @@ function jClick(id) {
     $(id).click() ;
 }
 
+function jClickAPPI(id) {
+    $("#hidden-click-event-APPI").prop("hist-id", id)
+    $("#hidden-click-event-APPI").click() ;
+}
+
 function removeTicksByDistance(id, fixedDistance=12) {
     var gs = $(id) ;
 
