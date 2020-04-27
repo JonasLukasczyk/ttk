@@ -318,7 +318,7 @@ function triggerCtrlV() {
 		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 		if (Window.PPI['selected-bin-id']) {
 			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-			jClick("#" + Window.PPI['selected-bin-id']) ;
+			jClickAPPI(Window.PPI['selected-bin-id']) ;
 		}
 	}
 }
@@ -431,7 +431,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (i + 1 <= Window.PPI['histogram-width'] - 1) {
 						// d3.select("#hist-bin-" + (g_idx + 1)).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx + 1)) ;
 						jClickAPPI("hist-bin-" + (g_idx + 1)) ;
 					}
 				}
@@ -452,7 +451,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (i - 1 >= 0) {
 						// d3.select("#hist-bin-" + (g_idx - 1)).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx - 1)) ;
 						jClickAPPI("hist-bin-" + (g_idx - 1)) ;
 					}
 				}
@@ -471,7 +469,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (j + 1 <= Window.PPI['histogram-height'] - 1) {
 						// d3.select("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])) ;
 						jClickAPPI("hist-bin-" + (g_idx + Window.PPI['histogram-width'])) ;
 					}
 				}
@@ -491,7 +488,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (j - 1 >= 0) {
 						// d3.select("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])) ;
 						jClickAPPI("hist-bin-" + (g_idx - Window.PPI['histogram-width'])) ;
 					}
 				}
@@ -531,7 +527,7 @@ $("#hist-threshold").change(function () {
 	if ( Window.PPI['histogram-mode'] == "multi" ) {
 		if (Window.PPI['selected-bin-id']) {
 			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-			jClick("#" + Window.PPI['selected-bin-id'])
+			jClickAPPI(Window.PPI['selected-bin-id'])
 		}
 	} else {
 		if (Window.PPI['selected-bin-id-sdm']) {
@@ -566,7 +562,7 @@ $("#threshold-window").change(function() {
     if ( Window.PPI['histogram-mode'] == "multi" ) {
 		if (Window.PPI['selected-bin-id']) {
 			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-			jClick("#" + Window.PPI['selected-bin-id']) ;
+			jClickAPPI(Window.PPI['selected-bin-id']) ;
 		}
 	} else {
 		if (Window.PPI['selected-bin-id-sdm']) {
