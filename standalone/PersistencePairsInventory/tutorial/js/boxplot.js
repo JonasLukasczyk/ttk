@@ -487,7 +487,7 @@ function drawBoxplotCurve(numberofcomponents, data) {
 
         g.selectAll("[name=box_line]") // .transition(t)
             .attr("d", function (d) {
-                return Window.box_plot_config.line_area(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
+                return Window.box_plot_config.line(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'], Window.box_plot_config['yScale'](0))(d.values);
             });
 
         replaceTicks(".axis--x g", getThresholdArray()) ;
@@ -746,6 +746,9 @@ function drawBoxplotCurve(numberofcomponents, data) {
     replaceTicks(".axis--x g", getThresholdArray()) ;
     removeTicksByDistance(".axis--x g")
     removeTicksByDistance(".axis--y g")
+
+    // highlight the selected time id
+    showupLineBoxplot(parseInt($("#hist-time").val())) ;
 }
 
 $("#boxplot-checkbox-lines").unbind().click(function () {

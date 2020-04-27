@@ -325,7 +325,8 @@ function drawHistogram(iComponent, socket, tag=0) {
                 '"PPI": [' + d[2] + '] }}';
 
             showupLineBoxplot(d[0]) ;
-
+            Window.PPI["selected-bin-time-id"] = d[0] ;
+ 
             $("#histogram-notification-placeholder-default").html("") ;
             $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
 

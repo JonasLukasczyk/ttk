@@ -43,6 +43,7 @@ Window.PPI = {
 	"histogram-mode": "multi", // multi or single
 	"thresholdRatio": 1,
 	"selected-time-id": 0,
+	"selected-bin-time-id": -1,
 	// {min_persistence_pairs}_{left_threshold}_{right_threshold}_{max_persistence_pairs}
 	"histogram_frame_data": { },
 	// the mode: hide/show the hover in the histogram
@@ -303,6 +304,7 @@ function triggerCtrlV() {
 			// d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
 			jClick("#" + Window.PPI['selected-bin-id-sdm']) ;
 		}
+		showupLineBoxplot(parseInt($("#hist-time").val())) ;
 	} else {
 		Window.PPI['histogram-mode'] = "multi" ;
 		$("[element-show='mdm']").css("display", "") ;
