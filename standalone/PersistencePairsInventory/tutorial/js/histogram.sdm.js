@@ -304,7 +304,7 @@ function drawSDMHistogram(socket) {
         bin.attr("id", "sdm-hist-bin-" + i ) ;
         bin.html("<title>PPI: " + d[2]+"</title>"); ;
         bin.prop("data", d);
-        bin.addClass( customColor(d[5], d[2], undefined, undefined, undefined, true, true) );
+        bin.addClass( customColor((lower + upper) / 2, d[2], undefined, undefined, true, true) );
         bins.push(bin);
     }
 
@@ -356,7 +356,7 @@ function drawSDMHistogram(socket) {
             var actual_scalar = getScalarArray(parseInt(d[1]));
             var actual_time = $("#hist-time :selected").text()
             var idx_time = $("#hist-time :selected").val()
-            var actual_threshold = parseInt(d[0]) * Window.PPI['thresholdRatio'] ;
+            var actual_threshold = getThresholdByIndex(parseInt(d[0]) * Window.PPI['thresholdRatio']) ;
             var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
                 '{"idx_time": [' + idx_time + '], "actual_time": [' + actual_time + '], ' +
                 '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
