@@ -12,6 +12,7 @@
 #include <vtkDoubleArray.h>
 
 #include <ttkMacros.h>
+#include <ttkUtils.h>
 
 vtkStandardNewMacro(ttkPLTSimplification);
 
@@ -47,6 +48,20 @@ int ttkPLTSimplification::RequestData(
     auto input = vtkDataSet::GetData( inputVector[0] );
     size_t nVertices = input->GetNumberOfPoints();
 
+    // get persistence threshold
+    double persistenceThreshold = 0;
+    {
+        std::string finalExpressionString;
+        std::string errorMsg;
+        if( !ttkUtils::replaceVariables( this->PersistenceThresholdExpression, input->GetFieldData(), finalExpressionString, errorMsg ) ){
+            this->printErr(errorMsg);
+            return 0;
+        }
+        std::vector<double> thresholds;
+        ttkUtils::stringListToDoubleVector( finalExpressionString, thresholds );
+        persistenceThreshold = thresholds[0];
+    }
+
     // Get triangulation of the input object (will create one if does not exist already)
     auto triangulation = ttkAlgorithm::GetTriangulation( input );
 
@@ -78,7 +93,7 @@ int ttkPLTSimplification::RequestData(
 
                 triangulation,
                 (VTK_TT*) inputScalars->GetVoidPointer(0),
-                (VTK_TT) this->PersistenceThreshold,
+                (VTK_TT) persistenceThreshold,
                 this->UseRegionBasedIterations,
                 this->AddPerturbation,
                 this->UseDeallocation,

@@ -73,8 +73,8 @@ function drawHistogram(iComponent, socket, tag=0) {
             g_main.append("rect")
                 .attr("class", "mdm-rect-box-cover")
                 .attr("x", idx_first)
-                .attr("y", 0)
-                .attr("height", height)
+                .attr("y", -10000)
+                .attr("height", 20000)
                 .attr("width", idx_sec - idx_first)
                 .style("fill", "none")
                 .style("stroke", "black")
@@ -271,217 +271,101 @@ function drawHistogram(iComponent, socket, tag=0) {
 
     let selectedBin = null;
     mainJQ
-        .on('click', e=>{
-            console.log("click") ;
-            if(e.target.nodeName!=='rect')
-                return 1;
+    //     .on('mouseup', e=>{
+    //         console.log("click") ;
+    //         if(e.target.nodeName!=='rect')
+    //             return 1;
 
-            if(selectedBin){
-                d3.select(selectedBin[0])
-                    .style("stroke-width", 0.1)
-                    .attr("bin-selected", "off");
-            }
+    //         if (e.ctrlKey) {
+    //             triggerCtrlV();
+    //             return 1;
+    //         }
 
-            selectedBin = $(e.target);
-            $("#RendererContainer").loading({theme: "light"});
+    //         if(selectedBin){
+    //             d3.select(selectedBin[0])
+    //                 .style("stroke-width", 0.1)
+    //                 .attr("bin-selected", "off");
+    //         }
 
-            Window.PPI['selected-bin-id'] = selectedBin.attr("id")
-            // d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
-            const parent = selectedBin.parent()[0];
+    //         selectedBin = $(e.target);
+    //         $("#RendererContainer").loading({theme: "light"});
 
-            // console.log(crosshairV);
-            parent.append(crosshairV.node());
-            parent.append(crosshairH.node());
-            parent.append(selectedBin[0]);
+    //         Window.PPI['selected-bin-id'] = selectedBin.attr("id")
+    //         // d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
+    //         const parent = selectedBin.parent()[0];
 
-            d3.select(selectedBin[0])
-                .style("stroke-width", 2)
-                .attr("bin-selected", "on");
+    //         // console.log(crosshairV);
+    //         parent.append(crosshairV.node());
+    //         parent.append(crosshairH.node());
+    //         parent.append(selectedBin[0]);
 
-            const cX = parseFloat(selectedBin.attr('x'))+x.bandwidth()/2;
-            const cY = parseFloat(selectedBin.attr('y'))+y.bandwidth()/2;
+    //         d3.select(selectedBin[0])
+    //             .style("stroke-width", 2)
+    //             .attr("bin-selected", "on");
 
-            crosshairV
-                .attr('x1',cX)
-                .attr('x2',cX);
-            crosshairH
-                .attr('y1',cY)
-                .attr('y2',cY);
+    //         const cX = parseFloat(selectedBin.attr('x'))+x.bandwidth()/2;
+    //         const cY = parseFloat(selectedBin.attr('y'))+y.bandwidth()/2;
 
-            const d = selectedBin.prop('data');
+    //         crosshairV
+    //             .attr('x1',cX)
+    //             .attr('x2',cX);
+    //         crosshairH
+    //             .attr('y1',cY)
+    //             .attr('y2',cY);
 
-            var actual_scalar = getScalarArray(parseInt(d[1]));
-            if (fieldData.hasOwnProperty("Time") ) {
-                var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
-            } else {
-                var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
-            }
-            var actual_threshold = $("#hist-threshold :selected").text()
-            var idx_threshold = $("#hist-threshold :selected").val()
-            var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
-                '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
-                '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
-                '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
-                '"PPI": [' + d[2] + '] }}';
+    //         const d = selectedBin.prop('data');
 
-            showupLineBoxplot(d[0]) ;
+    //         var actual_scalar = getScalarArray(parseInt(d[1]));
+    //         if (fieldData.hasOwnProperty("Time") ) {
+    //             var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
+    //         } else {
+    //             var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
+    //         }
+    //         var actual_threshold = $("#hist-threshold :selected").text()
+    //         var idx_threshold = $("#hist-threshold :selected").val()
+    //         var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
+    //             '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
+    //             '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
+    //             '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
+    //             '"PPI": [' + d[2] + '] }}';
 
-            $("#histogram-notification-placeholder-default").html("") ;
-            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
+    //         showupLineBoxplot(d[0]) ;
 
-            if (!Window.PPI['DEV']) {
-                Window.socket = socket ;
-                socket.send(backMsg) ;
-            }
-        })
-        .on("mouseover", e => {
-            if(e.target.nodeName!=='rect')
-                return 1;
+    //         $("#histogram-notification-placeholder-default").html("") ;
+    //         $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
 
-            const bin =  $(e.target);
-            const d = bin.prop('data');
+    //         if (!Window.PPI['DEV']) {
+    //             Window.socket = socket ;
+    //             socket.send(backMsg) ;
+    //         }
+    //     })
+    //     .on("mouseover", e => {
+    //         if(e.target.nodeName!=='rect')
+    //             return 1;
 
-            if (!e.ctrlKey) {
-                if (Window.PPI["X-mode"] === 0) {
-                    d3.select("#tooltipSvg").selectAll("*").remove();
-                    drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
-                    d3.select("#tooltip").style("visibility", "visible");
-                }
-            }
-        })
-        .on("mousemove", e => {
-            if(e.target.nodeName!=='rect')
-                return 1;
+    //         const bin =  $(e.target);
+    //         const d = bin.prop('data');
 
-            const bin =  $(e.target);
-            const d = bin.prop('data');
-            d3.select("#tooltip").style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
-        })
+    //         if (!e.ctrlKey) {
+    //             if (Window.PPI["X-mode"] === 0) {
+    //                 d3.select("#tooltipSvg").selectAll("*").remove();
+    //                 drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
+    //                 d3.select("#tooltip").style("visibility", "visible");
+    //             }
+    //         }
+    //     })
+    //     .on("mousemove", e => {
+    //         if(e.target.nodeName!=='rect')
+    //             return 1;
+
+    //         const bin =  $(e.target);
+    //         const d = bin.prop('data');
+    //         d3.select("#tooltip").style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
+    //     })
         .on("mouseout", e => {
             d3.select("#tooltip").style("visibility", "hidden");
-        }).on("mousedown", e => {
-            console.log("mousedown") ;
-            if(e.target.nodeName!=='rect')
-                return 1;
-
-            const bin =  $(e.target);
-            const d = bin.prop('data');
-
-            if (e.ctrlKey) {
-                Window.PPI['selected-time-id'] = d[0] ;
-                coverShadow(d[0]) ;
-                // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire
-                // e.stopPropagation();  // prevent zoom & drag consuming mouseup event while ctrl is pressed
-            }
         })
-        .on("mouseup", e => {
-            console.log("mouseup") ;
-            if (e.ctrlKey) {
-                triggerCtrlV() ;
-            }
-        })
-    ;
-
-    // main.selectAll()
-    //     .data(vData)
-    //     .enter()
-    //     .append("rect")
-    //     .attr("name", "bin")
-    //     .attr("mdm-bin-time-idx", function(d, i) { return parseInt(d[0]) ; })
-    //     .attr("id", function(d, i) { return "hist-bin-" + i ; })
-    //     .attr("x", function (d) {
-    //         return x(d[0]);
-    //     })
-    //     .attr("y", function (d) {
-    //         return y(d[1])
-    //     })
-    //     .attr("width", x.bandwidth())
-    //     .attr("height", y.bandwidth())
-    //     .attr("class", function(d) {
-    //         return customColor(d[5], d[2], undefined, undefined, undefined, true);
-    //     })
-
-        // .on("mouseover", function (d, i) {
-        //     tx = d3.event.pageX ;
-        //     ty = d3.event.pageY ;
-        //     if (!event.ctrlKey) {
-        //         if (Window.PPI["X-mode"] === 0) {
-        //             d3.select("#tooltipSvg").selectAll("*").remove();
-        //             drawCurveLine("tooltipSvg", d[3], iComponent, d[5], d[2]);
-        //             return d3.select("#tooltip").style("visibility", "visible");
-        //         }
-        //     }
-        // })
-        // .on("mousemove", function () {
-        //     return d3.select("#tooltip").style("top", (d3.event.pageY - 10) + "px").style("left", (d3.event.pageX + 10) + "px");
-        // })
-        // .on("mouseout", function () {
-        //     return d3.select("#tooltip").style("visibility", "hidden");
-        // })
-        // .on("mousedown", function (d, i) {
-        //     if (event.ctrlKey) {
-        //         Window.PPI['selected-time-id'] = d[0] ;
-        //         coverShadow(d[0]) ;
-        //         // https://stackoverflow.com/questions/49808356/d3-mousedown-event-fires-but-mouseup-event-does-not-fire
-        //         d3.event.stopPropagation();  // prevent zoom & drag consuming mouseup event while ctrl is pressed
-        //     }
-        // })
-        // .on("mouseup", function (d, i) {
-        //     if (event.ctrlKey) {
-        //         triggerCtrlV() ;
-        //     }
-        // })
-        // .on("click", function (d, i) {
-        //     $("#RendererContainer").loading({theme: "light"}) ;
-        //     const thisJQ = $(this);
-        //     Window.PPI['selected-bin-id'] = thisJQ.attr("id")
-        //     d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
-        //     const parent = thisJQ.parent()[0];
-
-        //     // console.log(crosshairV);
-        //     parent.append(crosshairV.node());
-        //     parent.append(crosshairH.node());
-        //     parent.append(thisJQ[0]);
-
-        //     d3.select(this).style("stroke-width", 2).attr("bin-selected", "on");
-
-        //     const cX = parseFloat(thisJQ.attr('x'))+x.bandwidth()/2;
-        //     const cY = parseFloat(thisJQ.attr('y'))+y.bandwidth()/2;
-
-        //     crosshairV
-        //         .attr('x1',cX)
-        //         .attr('x2',cX);
-        //     crosshairH
-        //         .attr('y1',cY)
-        //         .attr('y2',cY);
-
-        //     // const line = $('<line>')
-
-        //     // console.log(line);
-
-        //     var actual_scalar = getScalarArray(parseInt(d[1]));
-        //     if (fieldData.hasOwnProperty("Time") ) {
-        //         var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
-        //     } else {
-        //         var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
-        //     }
-        //     var actual_threshold = $("#hist-threshold :selected").text()
-        //     var idx_threshold = $("#hist-threshold :selected").val()
-        //     var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
-        //         '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
-        //         '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
-        //         '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
-        //         '"PPI": [' + d[2] + '] }}';
-
-        //     $("#histogram-notification-placeholder-default").html("") ;
-        //     $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
-
-        //     console.log(backMsg) ;
-        //     if (!Window.PPI['DEV']) {
-        //         Window.socket = socket ;
-        //         socket.send(backMsg) ;
-        //     }
-        // }) ;
+    // ;
 
     var drag = d3.drag()
             .on("start", dragstarted)
@@ -598,18 +482,36 @@ function drawHistogram(iComponent, socket, tag=0) {
         $("#hist-clip-highlight").attr("transform", $("#hist-clip-opacity").attr("transform")) ;
     }
 
+    let dragMode = -1; // -1: inactive, 0:started, 1:moved
+
     function dragstarted(d) {
-        console.log("dragstarted") ;
-        d3.event.sourceEvent.stopPropagation();
-        d3.select(this).classed("dragging", true);
+        // console.log("dragstarted");
+        const e = d3.event.sourceEvent;
+        if(e.ctrlKey){
+            if(e.target.nodeName!=='rect')
+                return 1;
+
+            const bin =  $(e.target);
+            const d = bin.prop('data');
+
+            Window.PPI['selected-time-id'] = d[0] ;
+            coverShadow(d[0]) ;
+        } else {
+            dragMode = 0;
+            d3.event.sourceEvent.stopPropagation();
+            d3.select(this).classed("dragging", true);
+        }
     }
 
     function dragged(d) {
         console.log("dragged") ;
+
+        dragMode = 1;
+
         var scale = scaleConvert(d3.select("#range_input").property("value"))
         var trans = transFormApply($(this).attr("transform"), undefined, undefined, undefined, true) ;
-        var x = trans[0] ;
-        var y = trans[1] ;
+        var x = trans[0];
+        var y = trans[1];
         x += d3.event.dx;
         y += d3.event.dy;
         // bins of histogram
@@ -646,8 +548,79 @@ function drawHistogram(iComponent, socket, tag=0) {
 
     function dragended(d) {
         console.log("dragended") ;
-        d3.select(this).classed("dragging", false);
-        return false;
+
+        const moved = dragMode===1;
+        dragMode = -1;
+
+        const e = d3.event.sourceEvent;
+        if(e.ctrlKey){
+            triggerCtrlV();
+            return 1;
+        } else {
+            if(e.target.nodeName!=='rect' || moved)
+                return 1;
+
+            if(selectedBin){
+                d3.select(selectedBin[0])
+                    .style("stroke-width", 0.1)
+                    .attr("bin-selected", "off");
+            }
+
+            selectedBin = $(e.target);
+            $("#RendererContainer").loading({theme: "light"});
+
+            Window.PPI['selected-bin-id'] = selectedBin.attr("id")
+            // d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
+            const parent = selectedBin.parent()[0];
+
+            // console.log(crosshairV);
+            parent.append(crosshairV.node());
+            parent.append(crosshairH.node());
+            parent.append(selectedBin[0]);
+
+            d3.select(selectedBin[0])
+                .style("stroke-width", 2)
+                .attr("bin-selected", "on");
+
+            const cX = parseFloat(selectedBin.attr('x'))+x.bandwidth()/2;
+            const cY = parseFloat(selectedBin.attr('y'))+y.bandwidth()/2;
+
+            crosshairV
+                .attr('x1',cX)
+                .attr('x2',cX);
+            crosshairH
+                .attr('y1',cY)
+                .attr('y2',cY);
+
+            const d = selectedBin.prop('data');
+
+            var actual_scalar = getScalarArray(parseInt(d[1]));
+            if (fieldData.hasOwnProperty("Time") ) {
+                var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
+            } else {
+                var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
+            }
+            var actual_threshold = $("#hist-threshold :selected").text()
+            var idx_threshold = $("#hist-threshold :selected").val()
+            var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
+                '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
+                '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
+                '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
+                '"PPI": [' + d[2] + '] }}';
+
+            showupLineBoxplot(d[0]) ;
+
+            $("#histogram-notification-placeholder-default").html("") ;
+            $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
+
+            if (!Window.PPI['DEV']) {
+                Window.socket = socket ;
+                socket.send(backMsg) ;
+            }
+
+            d3.select(this).classed("dragging", false);
+            return false;
+        }
     }
 
     $("#histogram_zoom_back").click() ;

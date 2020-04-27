@@ -38,7 +38,7 @@ class TTKPLTSIMPLIFICATION_EXPORT ttkPLTSimplification
         bool AddPerturbation{false};
         bool UseRegionBasedIterations{false};
         bool UseDeallocation{false};
-        double PersistenceThreshold{0};
+        std::string PersistenceThresholdExpression{"0"};
         int EscapeInterval{1000};
 
     public:
@@ -51,8 +51,8 @@ class TTKPLTSIMPLIFICATION_EXPORT ttkPLTSimplification
         vtkSetMacro(UseDeallocation, bool);
         vtkGetMacro(UseDeallocation, bool);
 
-        vtkGetMacro(PersistenceThreshold,double);
-        vtkSetMacro(PersistenceThreshold,double);
+        vtkGetMacro(PersistenceThresholdExpression,std::string);
+        vtkSetMacro(PersistenceThresholdExpression,std::string);
 
         vtkGetMacro(EscapeInterval,int);
         vtkSetMacro(EscapeInterval,int);
