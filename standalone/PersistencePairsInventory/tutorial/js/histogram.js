@@ -270,75 +270,8 @@ function drawHistogram(iComponent, socket, tag=0) {
     mainJQ.append(bins); // append at once
 
     let selectedBin = null;
-    mainJQ
-    //     .on('mouseup', e=>{
-    //         console.log("click") ;
-    //         if(e.target.nodeName!=='rect')
-    //             return 1;
-
-    //         if (e.ctrlKey) {
-    //             triggerCtrlV();
-    //             return 1;
-    //         }
-
-    //         if(selectedBin){
-    //             d3.select(selectedBin[0])
-    //                 .style("stroke-width", 0.1)
-    //                 .attr("bin-selected", "off");
-    //         }
-
-    //         selectedBin = $(e.target);
-    //         $("#RendererContainer").loading({theme: "light"});
-
-    //         Window.PPI['selected-bin-id'] = selectedBin.attr("id")
-    //         // d3.selectAll("[name=bin]").style("stroke-width", 0.1).attr("bin-selected", "off");
-    //         const parent = selectedBin.parent()[0];
-
-    //         // console.log(crosshairV);
-    //         parent.append(crosshairV.node());
-    //         parent.append(crosshairH.node());
-    //         parent.append(selectedBin[0]);
-
-    //         d3.select(selectedBin[0])
-    //             .style("stroke-width", 2)
-    //             .attr("bin-selected", "on");
-
-    //         const cX = parseFloat(selectedBin.attr('x'))+x.bandwidth()/2;
-    //         const cY = parseFloat(selectedBin.attr('y'))+y.bandwidth()/2;
-
-    //         crosshairV
-    //             .attr('x1',cX)
-    //             .attr('x2',cX);
-    //         crosshairH
-    //             .attr('y1',cY)
-    //             .attr('y2',cY);
-
-    //         const d = selectedBin.prop('data');
-
-    //         var actual_scalar = getScalarArray(parseInt(d[1]));
-    //         if (fieldData.hasOwnProperty("Time") ) {
-    //             var actual_time = fieldData['Time'].Values[parseInt(d[0])] ;
-    //         } else {
-    //             var actual_time = fieldData['t'].Values[parseInt(d[0])] ;
-    //         }
-    //         var actual_threshold = $("#hist-threshold :selected").text()
-    //         var idx_threshold = $("#hist-threshold :selected").val()
-    //         var backMsg = 'updateUnstructuredGrid:{"FieldData": ' +
-    //             '{"idx_time": [' + d[0] + '], "actual_time": [' + actual_time + '], ' +
-    //             '"idx_scalar": [' + d[1] + '], "actual_scalar": [' + actual_scalar + '],' +
-    //             '"idx_threshold": [' + idx_threshold + '], "actual_threshold": [' + actual_threshold + '],' +
-    //             '"PPI": [' + d[2] + '] }}';
-
-    //         showupLineBoxplot(d[0]) ;
-
-    //         $("#histogram-notification-placeholder-default").html("") ;
-    //         $("#histogram-notification-placeholder-0").html($("#histogram-notification").attr("data-pattern-0").replace("{Scalar}", actual_scalar.toFixed(2)).replace("{Time}", actual_time.toFixed(2)).replace("{Threshold}", actual_threshold)) ;
-
-    //         if (!Window.PPI['DEV']) {
-    //             Window.socket = socket ;
-    //             socket.send(backMsg) ;
-    //         }
-    //     })
+    // TODO: tooltip interaction
+    // mainJQ
     //     .on("mouseover", e => {
     //         if(e.target.nodeName!=='rect')
     //             return 1;
@@ -357,14 +290,13 @@ function drawHistogram(iComponent, socket, tag=0) {
     //     .on("mousemove", e => {
     //         if(e.target.nodeName!=='rect')
     //             return 1;
-
     //         const bin =  $(e.target);
     //         const d = bin.prop('data');
     //         d3.select("#tooltip").style("top", (e.pageY - 10) + "px").style("left", (e.pageX + 10) + "px");
     //     })
-        .on("mouseout", e => {
-            d3.select("#tooltip").style("visibility", "hidden");
-        })
+        // .on("mouseout", e => {
+        //     d3.select("#tooltip").style("visibility", "hidden");
+        // })
     // ;
 
     var drag = d3.drag()

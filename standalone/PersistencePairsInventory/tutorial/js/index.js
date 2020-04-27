@@ -43,6 +43,7 @@ Window.PPI = {
 	"histogram-mode": "multi", // multi or single
 	"thresholdRatio": 1,
 	"selected-time-id": 0,
+	"selected-bin-time-id": -1,
 	// {min_persistence_pairs}_{left_threshold}_{right_threshold}_{max_persistence_pairs}
 	"histogram_frame_data": { },
 	// the mode: hide/show the hover in the histogram
@@ -145,7 +146,10 @@ function objectCallback(msg) {
 			resetBoxplot() ;
     		drawBoxPlot() ;
     		// Add the box window over histogram's bins
-    		$("#hidden-mdm-add-window").click() ;
+			$("#hidden-mdm-add-window").click() ;
+			if ($("[bin-selected=on]").length > 0) {
+				showupLineBoxplot(parseInt($($("[bin-selected=on]")[0]).attr("mdm-bin-time-idx"))) ;
+			}
       }
     });
 
@@ -168,7 +172,10 @@ function objectCallback(msg) {
     				 		 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
 
 			// Add the box window over histogram's bins
-    		$("#hidden-mdm-add-window").click() ;
+			$("#hidden-mdm-add-window").click() ;
+			if ($("[bin-selected=on]").length > 0) {
+				showupLineBoxplot(parseInt($($("[bin-selected=on]")[0]).attr("mdm-bin-time-idx"))) ;
+			}
 		},
 		create: function() {
 			$("#picker_left").text(getTimeByIndex(0)) ;
@@ -303,6 +310,7 @@ function triggerCtrlV() {
 			// d3.select("#" + Window.PPI['selected-bin-id-sdm']).dispatch("click") ;
 			jClick("#" + Window.PPI['selected-bin-id-sdm']) ;
 		}
+		showupLineBoxplot(parseInt($("#hist-time").val())) ;
 	} else {
 		Window.PPI['histogram-mode'] = "multi" ;
 		$("[element-show='mdm']").css("display", "") ;

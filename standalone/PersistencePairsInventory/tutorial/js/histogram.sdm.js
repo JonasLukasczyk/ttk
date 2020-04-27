@@ -24,7 +24,6 @@ function drawSDMHistogram(socket) {
         return ;
     }
     iComponent = Window.PPI['selected-time-id'] ;  // selected time stamp
-    showupLineBoxplot(parseInt(iComponent)) ;
     console.log("invoke draw SDMhistogram functionaility") ;
     $("#hist-time").val(iComponent) ;
     iComponent = parseInt(iComponent) ;
@@ -672,5 +671,6 @@ $("#hist-time").change(function () {
     $("#hist-time option:selected").each(function () {
         Window.PPI['selected-time-id'] = parseInt($(this).val()) ;
         drawSDMHistogram(Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null));
+        showupLineBoxplot(parseInt($("#hist-time").val())) ;
     });
 });
