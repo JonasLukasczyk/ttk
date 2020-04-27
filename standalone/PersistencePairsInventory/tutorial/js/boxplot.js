@@ -746,9 +746,6 @@ function drawBoxplotCurve(numberofcomponents, data) {
     replaceTicks(".axis--x g", getThresholdArray()) ;
     removeTicksByDistance(".axis--x g")
     removeTicksByDistance(".axis--y g")
-
-    // highlight the selected time id
-    showupLineBoxplot(parseInt($("#hist-time").val())) ;
 }
 
 $("#boxplot-checkbox-lines").unbind().click(function () {

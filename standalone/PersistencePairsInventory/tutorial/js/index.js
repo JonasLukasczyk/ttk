@@ -146,7 +146,10 @@ function objectCallback(msg) {
 			resetBoxplot() ;
     		drawBoxPlot() ;
     		// Add the box window over histogram's bins
-    		$("#hidden-mdm-add-window").click() ;
+			$("#hidden-mdm-add-window").click() ;
+			if ($("[bin-selected=on]").length > 0) {
+				showupLineBoxplot(parseInt($($("[bin-selected=on]")[0]).attr("mdm-bin-time-idx"))) ;
+			}
       }
     });
 
@@ -169,7 +172,10 @@ function objectCallback(msg) {
     				 		 Window.PPI['image-object'].FieldData.PersistenceCurves.Values);
 
 			// Add the box window over histogram's bins
-    		$("#hidden-mdm-add-window").click() ;
+			$("#hidden-mdm-add-window").click() ;
+			if ($("[bin-selected=on]").length > 0) {
+				showupLineBoxplot(parseInt($($("[bin-selected=on]")[0]).attr("mdm-bin-time-idx"))) ;
+			}
 		},
 		create: function() {
 			$("#picker_left").text(getTimeByIndex(0)) ;
