@@ -255,6 +255,7 @@ function objectCallback(msg) {
 }
 
 function Connect() {
+	console.log("connect") ;
 	$('body').loading({theme: 'light'});
 	if (ttk && ttk.getSocketObject().readyState !== 3) {
 		alert("please try it again after closing current connection");
@@ -300,6 +301,10 @@ function LoadTest() {
 }
 
 function triggerCtrlV() {
+	if ( Window.PPI['image-object'] == null) {
+		console.warn("image-object is null") ;
+		return ;
+	}
 	$("#histogram-notification-placeholder-0").html("-") ;
 	if (Window.PPI['histogram-mode'] == "multi") {
 		Window.PPI['histogram-mode'] = "single" ;
