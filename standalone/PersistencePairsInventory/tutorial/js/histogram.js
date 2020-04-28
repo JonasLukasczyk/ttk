@@ -609,7 +609,7 @@ function drawHistogram(iComponent, socket, tag=0) {
     $("#hidden-mdm-add-window").click() ;
     if (Window.PPI['selected-bin-id']) {
         // d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-        jClick("#" + Window.PPI['selected-bin-id']) ;
+        jClickAPPI(Window.PPI['selected-bin-id']) ;
     }
     $("#histogram_viz").loading("stop");
 }

@@ -255,6 +255,7 @@ function objectCallback(msg) {
 }
 
 function Connect() {
+	console.log("connect") ;
 	$('body').loading({theme: 'light'});
 	if (ttk && ttk.getSocketObject().readyState !== 3) {
 		alert("please try it again after closing current connection");
@@ -300,6 +301,10 @@ function LoadTest() {
 }
 
 function triggerCtrlV() {
+	if ( Window.PPI['image-object'] == null) {
+		console.warn("image-object is null") ;
+		return ;
+	}
 	$("#histogram-notification-placeholder-0").html("-") ;
 	if (Window.PPI['histogram-mode'] == "multi") {
 		Window.PPI['histogram-mode'] = "single" ;
@@ -318,7 +323,7 @@ function triggerCtrlV() {
 		drawHistogram(parseInt($("#hist-threshold").val()), Window.PPI['DEV']? null: (ttk ? ttk.getSocketObject(): null)) ;
 		if (Window.PPI['selected-bin-id']) {
 			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-			jClick("#" + Window.PPI['selected-bin-id']) ;
+			jClickAPPI(Window.PPI['selected-bin-id']) ;
 		}
 	}
 }
@@ -431,7 +436,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (i + 1 <= Window.PPI['histogram-width'] - 1) {
 						// d3.select("#hist-bin-" + (g_idx + 1)).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx + 1)) ;
 						jClickAPPI("hist-bin-" + (g_idx + 1)) ;
 					}
 				}
@@ -452,7 +456,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (i - 1 >= 0) {
 						// d3.select("#hist-bin-" + (g_idx - 1)).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx - 1)) ;
 						jClickAPPI("hist-bin-" + (g_idx - 1)) ;
 					}
 				}
@@ -471,7 +474,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (j + 1 <= Window.PPI['histogram-height'] - 1) {
 						// d3.select("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx + Window.PPI['histogram-width'])) ;
 						jClickAPPI("hist-bin-" + (g_idx + Window.PPI['histogram-width'])) ;
 					}
 				}
@@ -491,7 +493,6 @@ $(document).keydown(function (e) {
 				if (selected) {
 					if (j - 1 >= 0) {
 						// d3.select("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])).dispatch("click");
-						// jClick("#hist-bin-" + (g_idx - Window.PPI['histogram-width'])) ;
 						jClickAPPI("hist-bin-" + (g_idx - Window.PPI['histogram-width'])) ;
 					}
 				}
@@ -531,7 +532,7 @@ $("#hist-threshold").change(function () {
 	if ( Window.PPI['histogram-mode'] == "multi" ) {
 		if (Window.PPI['selected-bin-id']) {
 			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-			jClick("#" + Window.PPI['selected-bin-id'])
+			jClickAPPI(Window.PPI['selected-bin-id'])
 		}
 	} else {
 		if (Window.PPI['selected-bin-id-sdm']) {
@@ -566,7 +567,7 @@ $("#threshold-window").change(function() {
     if ( Window.PPI['histogram-mode'] == "multi" ) {
 		if (Window.PPI['selected-bin-id']) {
 			// d3.select("#" + Window.PPI['selected-bin-id']).dispatch("click") ;
-			jClick("#" + Window.PPI['selected-bin-id']) ;
+			jClickAPPI(Window.PPI['selected-bin-id']) ;
 		}
 	} else {
 		if (Window.PPI['selected-bin-id-sdm']) {
