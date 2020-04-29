@@ -4,11 +4,14 @@
 #include <vtkObjectFactory.h> // for new macro
 
 #include <vtkDataArray.h>
-#include <vtkDataSet.h>
+#include <vtkUnstructuredGrid.h>
 #include <vtkPointData.h>
 #include <vtkSmartPointer.h>
 
 #include <vtkContourFilter.h>
+#include <vtkDataSetTriangleFilter.h>
+#include <vtkTableBasedClipDataSet.h>
+#include <vtkDataSetSurfaceFilter.h>
 
 #include <ttkUtils.h>
 
@@ -35,7 +38,7 @@ int ttkLevelSets::FillInputPortInformation(int port, vtkInformation *info) {
 
 int ttkLevelSets::FillOutputPortInformation(int port, vtkInformation *info) {
   if(port == 0)
-    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPolyData");
+    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkUnstructuredGrid");
   else
     return 0;
 
@@ -60,25 +63,59 @@ int ttkLevelSets::RequestData(vtkInformation *request,
   std::vector<double> levels;
   ttkUtils::stringListToDoubleVector( finalExpressionString, levels );
 
+  auto output = vtkUnstructuredGrid::GetData(outputVector);
+
   if(levels.size()<0){
     this->printErr("No level specified.");
     return 0;
   }
 
-  ttk::Timer t;
-  this->printMsg("Computing level sets ["+std::to_string(levels[0])+"]",0,0,ttk::debug::LineMode::REPLACE);
+  if(this->LevelSetType==0){ // Level Set
+      ttk::Timer t;
+      this->printMsg("Computing level sets ["+std::to_string(levels[0])+"]",0,0,ttk::debug::LineMode::REPLACE);
+      auto l = vtkSmartPointer<vtkContourFilter>::New();
+      l->SetInputData( inputDataSet );
+      l->SetGenerateTriangles( true );
+      l->SetInputArrayToProcess( 0, 0,0,0, inputArray->GetName() );
+      l->SetValue(0,levels[0]);
+      l->Update();
+      this->printMsg("Computing level sets ["+std::to_string(levels[0])+"]",1,t.getElapsedTime());
 
-  auto cf = vtkSmartPointer<vtkContourFilter>::New();
-  cf->SetInputData( inputDataSet );
-  cf->SetGenerateTriangles( true );
-  cf->SetInputArrayToProcess( 0, 0,0,0, inputArray->GetName() );
-  cf->SetValue(0,levels[0]);
-  cf->Update();
+      t.reStart();
+      this->printMsg("Triangulating output",0,0,ttk::debug::LineMode::REPLACE);
+      auto triangleFilter = vtkSmartPointer<vtkDataSetTriangleFilter>::New();
+      triangleFilter->SetInputData( l->GetOutput() );
+      triangleFilter->Update();
+      this->printMsg("Triangulating output",1,t.getElapsedTime());
 
-  this->printMsg("Computing level sets ["+std::to_string(levels[0])+"]",1,t.getElapsedTime());
+      output->ShallowCopy( triangleFilter->GetOutput() );
+  } else if(this->LevelSetType==2) { // Superlevel set
+      ttk::Timer t;
+      this->printMsg("Computing superlevel sets ["+std::to_string(levels[0])+"]",0,0,ttk::debug::LineMode::REPLACE);
+      auto l = vtkSmartPointer<vtkTableBasedClipDataSet>::New();
+      l->SetInputData( inputDataSet );
+      l->SetValue(levels[0]);
+      l->SetMergeTolerance(0.5);
+      l->SetInputArrayToProcess( 0, 0,0,0, inputArray->GetName() );
+      l->Update();
+      this->printMsg("Computing superlevel sets ["+std::to_string(levels[0])+"]",1,t.getElapsedTime());
 
-  auto output = vtkDataSet::GetData(outputVector);
-  output->ShallowCopy( cf->GetOutput() );
+      t.reStart();
+      this->printMsg("Computing surface",0,0,ttk::debug::LineMode::REPLACE);
+      auto e = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+      e->SetInputData( l->GetOutput() );
+      e->Update();
+      this->printMsg("Computing surface",1,t.getElapsedTime());
+
+      t.reStart();
+      this->printMsg("Triangulating output",0,0,ttk::debug::LineMode::REPLACE);
+      auto triangleFilter = vtkSmartPointer<vtkDataSetTriangleFilter>::New();
+      triangleFilter->SetInputData( e->GetOutput() );
+      triangleFilter->Update();
+      this->printMsg("Triangulating output",1,t.getElapsedTime());
+
+      output->ShallowCopy( triangleFilter->GetOutput() );
+  }
 
   return 1;
 }

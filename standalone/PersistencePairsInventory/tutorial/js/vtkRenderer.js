@@ -1,7 +1,17 @@
 'use strict'; /* globals $ THREE dat*/
+
+const HD = false;
+
+
 class vtkRenderer{
     constructor(containerID, width, height){
         // Parameters
+
+        if(HD){
+            width *= 4;
+            height *= 4;
+        }
+
         this.containerID = containerID;
         this.container = $('#'+this.containerID);
         this.width = width;
@@ -39,11 +49,17 @@ class vtkRenderer{
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
-            alpha: true
+            alpha: true,
+            preserveDrawingBuffer: true
         });
         this.renderer.setSize(this.width, this.height);
         this.renderer.setClearColor('#fff',0);
         this.container.append(this.renderer.domElement);
+
+        if(HD){
+            $(this.renderer.domElement).css('width','700px');
+            $(this.renderer.domElement).css('height','700px');
+        }
 
         // Cameras
         this.cameraFP = new THREE.PerspectiveCamera(45, this.width/this.height, 0.001, 6);
@@ -92,12 +108,13 @@ class vtkRenderer{
         // Scene
         this.sceneFP = new THREE.Scene();
 
-        // this.Scale = 64;
-        this.Scale = 255;
+        // this.scale = 64;
+        this.scale = 255;
+        // this.scale = 128;
 
         // add dummy object for testing
         {
-            if(this.Scale===64){
+            if(this.scale===64){
                 const geometry = new THREE.CylinderBufferGeometry( 32, 32, 5, 80 );
                 // const geometry = new THREE.SphereBufferGeometry( 64, 10, 10 );
                 geometry.translate(32,52,32);
@@ -111,9 +128,28 @@ class vtkRenderer{
 
                 const obj = new THREE.Mesh( geometry, this.objectMaterial );
                 this.sceneFP.add(obj);
-            } else {
+            } else if (this.scale===255) {
                 const geometry = new THREE.BoxBufferGeometry( 256, 256, 256 );
                 geometry.translate(128,128,128);
+
+                const nVertices = geometry.attributes.position.array.length;
+                const colors = new Uint8Array( nVertices*3 );
+                for(let i=0; i<nVertices*3; i++)
+                    colors[i] = 240;
+                geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3, true ) );
+
+                const mat = this.objectMaterial.clone();
+                mat.side = THREE.BackSide;
+                // // // mat.wireframe = true;
+                // // // mat.wireframeLineWidth = 2;
+
+                // var edges = new THREE.EdgesGeometry( geometry );
+
+                const obj = new THREE.Mesh( geometry, mat );
+                this.sceneFP.add(obj);
+            } else if (this.scale===128) {
+                const geometry = new THREE.BoxBufferGeometry( 128, 128, 256 );
+                geometry.translate(64,64,128);
 
                 const nVertices = geometry.attributes.position.array.length;
                 const colors = new Uint8Array( nVertices*3 );
@@ -157,7 +193,7 @@ class vtkRenderer{
                 uJLUKRadius: { type:'f', value: 5},
                 uJLUKScale: { type:'f', value: 1},
                 uJLUKDiffArea: { type:'f', value: 0.5},
-                uJLUKNoise: { type:'f', value: 1},
+                uJLUKNoise: { type:'f', value: 0.5},
                 uJLUKAOFactor: { type:'f', value: 1},
                 uJLUKNormalFactor: { type:'f', value: 10},
                 uJLUKLuminanceFactor: { type:'f', value: 0.01}
@@ -167,10 +203,13 @@ class vtkRenderer{
                 this.gui = new dat.GUI({ autoPlace: false });
                 this.container.append(this.gui.domElement);
 
-                this.gui.add(this,'Scale',1,256,1)
+                this.gui.add(this,'scale',1,256,1)
                     .onChange( ()=>this.scaleScene() );
                 this.gui.add(this.ssaoUniforms.uJLUKRadius,'value',0.1,100,1)
                     .name( 'Radius' )
+                    .onChange( ()=>this.render() );
+                this.gui.add(this.ssaoUniforms.uJLUKNoise,'value',0,2,0.1)
+                    .name( 'Noise' )
                     .onChange( ()=>this.render() );
                 this.gui.add(this.ssaoUniforms.uJLUKScale,'value',0.1,4,0.1)
                     .name( 'Falloff' )
@@ -228,17 +267,32 @@ class vtkRenderer{
     }
 
     resetCamera(){
-        this.cameraFP.position.set(
-            1.5*1,
-            1.5*0.05,
-            0
-        );
 
-        this.controls.target.set(
-            0,
-            0.05,
-            0
-        );
+        if(this.scale===128){
+            this.cameraFP.position.set(
+                2.8,
+                0,
+                0.5
+            );
+
+            this.controls.target.set(
+                0,
+                0,
+                0.5
+            );
+        } else {
+            this.cameraFP.position.set(
+                1.5*1,
+                1.5*0.05,
+                0
+            );
+
+            this.controls.target.set(
+                0,
+                0.05,
+                0
+            );
+        }
         this.controls.update();
 
         this.render();
@@ -264,6 +318,12 @@ class vtkRenderer{
             geometry.translate(-scaleHalf,-scaleHalf,-scaleHalf);
             geometry.rotateX(-Math.PI/2);
             geometry.translate(scaleHalf,scaleHalf,scaleHalf);
+        }
+        if(this.scale===128){
+            const scaleHalf = this.scale/2;
+            geometry.translate(-scaleHalf,-scaleHalf,-scaleHalf);
+            geometry.rotateX(-Math.PI/2);
+            geometry.translate(scaleHalf,scaleHalf,3*scaleHalf);
         }
 
         const connectivityList = vtkJson.ConnectivityList.Values;
@@ -339,9 +399,9 @@ class vtkRenderer{
     }
 
     scaleScene(){
-        const scale = 1/Math.max(this.Scale,Math.max(this.Scale,this.Scale));
+        const scale = 1/Math.max(this.scale,Math.max(this.scale,this.scale));
         for(let i=this.sceneFP.children.length-1; i>=0; i--){
-            this.sceneFP.children[i].position.set( -scale*this.Scale/2,-scale*this.Scale/2,-scale*this.Scale/2 );
+            this.sceneFP.children[i].position.set( -scale*this.scale/2,-scale*this.scale/2,-scale*this.scale/2 );
             this.sceneFP.children[i].scale.set( scale,scale,scale );
         }
 

@@ -17,7 +17,7 @@ uniform float uJLUKAOFactor;
 uniform float uJLUKNormalFactor;
 uniform float uJLUKLuminanceFactor;
 
-const int samples = 64;
+const int samples = 256;
 const float samplesF = float(samples);
 
 #define DL 2.399963229728653  // PI * ( 3.0 - sqrt( 5.0 ) )

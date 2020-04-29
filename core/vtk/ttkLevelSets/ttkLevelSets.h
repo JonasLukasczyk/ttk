@@ -34,10 +34,14 @@
 class TTKLEVELSETS_EXPORT ttkLevelSets : public ttkAlgorithm {
 private:
   std::string Expression{"0"};
+  int LevelSetType{0};
 
 public:
   vtkSetMacro(Expression, std::string);
   vtkGetMacro(Expression, std::string);
+
+  vtkSetMacro(LevelSetType, int);
+  vtkGetMacro(LevelSetType, int);
 
   static ttkLevelSets *New();
   vtkTypeMacro(ttkLevelSets, ttkAlgorithm);

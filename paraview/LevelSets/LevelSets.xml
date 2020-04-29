@@ -33,11 +33,22 @@
                 <Property name="InputArray" />
             </PropertyGroup>
 
+            <IntVectorProperty name="LevelSetType" label="Level Set Type" command="SetLevelSetType" number_of_elements="1" default_values="0">
+                <EnumerationDomain name="enum">
+                    <Entry value="1" text="Sublevel Set"/>
+                    <Entry value="0" text="Level Set"/>
+                    <Entry value="2" text="Superlevel Set"/>
+                </EnumerationDomain>
+                <Documentation>TODO.</Documentation>
+            </IntVectorProperty>
+
             <StringVectorProperty name="Expression" label="Expression" command="SetExpression" number_of_elements="1" default_values="0">
             </StringVectorProperty>
 
+
             <!-- Create a UI group that contains all output parameter widgets (here only one) -->
             <PropertyGroup panel_widget="Line" label="Output Options">
+                <Property name="LevelSetType" />
                 <Property name="Expression" />
             </PropertyGroup>
 

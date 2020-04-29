@@ -162,7 +162,7 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
                 const dataType s1 = scalars[v1];
 
                 dataType persistence = s1>s0 ? s1-s0 : s0-s1;
-                if(persistence>=persistenceThreshold)
+                if(persistence>persistenceThreshold)
                     nPairsAboveThreshold++;
             }
 
@@ -361,7 +361,7 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
 
                 // compute last persistence interval index for which pair still exists
                 size_t p1 = 0;
-                while(p1<nPersistenceThresholds && persistenceThresholds[p1]<=persistence)
+                while(p1<nPersistenceThresholds && persistenceThresholds[p1]<persistence)
                     p1++;
 
                 size_t offset = columnIndex*nPersistenceThresholds + b0*rowOffset;

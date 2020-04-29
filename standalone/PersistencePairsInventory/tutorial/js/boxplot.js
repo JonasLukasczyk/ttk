@@ -572,7 +572,8 @@ function drawBoxplotCurve(numberofcomponents, data) {
             .datum(points['median'])
             .attr("fill", "none")
             .attr("stroke", Window.box_plot_config.median_line_color)
-            .attr("stroke-width", 1)
+            // .attr("stroke-width", 1)
+            .attr("stroke-width", 3)
             .attr("d", function (d) {
                 return Window.box_plot_config.line(Window.box_plot_config['xScale'], Window.box_plot_config['yScale'])(d);
             })
