@@ -49,6 +49,19 @@
        * 3 - maximum,
        * 4 - degenerate,
        * 5 - regular,
+
+
+        Online examples:
+
+        - https://topology-tool-kit.github.io/examples/dragon/
+
+        - https://topology-tool-kit.github.io/examples/morsePersistence/
+
+        - https://topology-tool-kit.github.io/examples/uncertainStartingVortex/
+        
+        - https://topology-tool-kit.github.io/examples/interactionSites/
+
+
      </Documentation>
      <InputProperty
         name="Input"

@@ -1,11 +1,12 @@
 /// \class ttkDimensionReduction
 /// \ingroup vtk
-/// \author Your Name Here <Your Email Address Here>
-/// \date The Date Here.
+/// \author GuillaumeFavelier <guillaume.favelier@gmail.com>
+/// \date September 2018.
 ///
-/// \brief TTK VTK-filter that wraps the dimensionReduction processing package.
+/// \brief TTK VTK-filter that wraps the ttk::DimensionReduction
+/// processing package.
 ///
-/// VTK wrapping code for the @DimensionReduction package.
+/// VTK wrapping code for the ttk::DimensionReduction package.
 ///
 /// \param Input Input scalar field (vtkDataSet)
 /// \param Output Output scalar field (vtkDataSet)
@@ -17,6 +18,18 @@
 /// VTK pipeline.
 ///
 /// \sa ttk::DimensionReduction
+///
+/// \b Online \b examples: \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/karhunenLoveDigits64Dimensions//">Karhunen-Love
+///   Digits 64-Dimensions example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/1manifoldLearning/">1-Manifold
+///   Learning example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/mergeTreeClustering/">Merge
+///   Tree Clustering example</a> \n
+
 #pragma once
 
 // VTK Module

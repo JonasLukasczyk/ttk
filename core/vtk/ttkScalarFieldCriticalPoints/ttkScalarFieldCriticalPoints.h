@@ -53,6 +53,16 @@
 ///
 /// \sa ttk::ScalarFieldCriticalPoints
 ///
+/// \b Online \b examples: \n
+///   - <a href="https://topology-tool-kit.github.io/examples/dragon/">Dragon
+///   example</a>
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/uncertainStartingVortex/">
+///   Uncertain Starting Vortex example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/interactionSites/">
+///   Interaction sites</a> \n
+///
 #pragma once
 
 // VTK Module

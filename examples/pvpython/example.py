@@ -19,12 +19,23 @@
 
 from paraview.simple import *
 
+# paraview 5.9 VS 5.10 compatibility ===========================================
+def ThresholdBetween(threshold, lower, upper):
+    try:
+        # paraview 5.9
+        threshold.ThresholdRange = [lower, upper]
+    except:
+        # paraview 5.10
+        threshold.ThresholdMethod = "Between"
+        threshold.LowerThreshold = lower
+        threshold.UpperThreshold = upper
+# end of comphatibility ========================================================
+
 if len(sys.argv) == 2:
     inputFilePath = sys.argv[1]
 else:
     print("Missing mandatory argument: Path to input VTU file")
     sys.exit()
-
 
 # -- TTK pipeline
 
@@ -42,12 +53,12 @@ persistenceDiagram.ScalarField = ['POINTS', 'data']
 # 4. selecting the critical point pairs
 criticalPointPairs = Threshold(persistenceDiagram)
 criticalPointPairs.Scalars = ['CELLS', 'PairIdentifier']
-criticalPointPairs.ThresholdRange = [-0.1, 999999]
+ThresholdBetween(criticalPointPairs, -0.1, 999999999)
 
 # 5. selecting the most persistent pairs
 persistentPairs = Threshold(criticalPointPairs)
 persistentPairs.Scalars = ['CELLS', 'Persistence']
-persistentPairs.ThresholdRange = [0.05, 999999]
+ThresholdBetween(persistentPairs, 0.05, 999999999)
 
 # 6. simplifying the input data to remove non-persistent pairs
 topologicalSimplification = TTKTopologicalSimplification(

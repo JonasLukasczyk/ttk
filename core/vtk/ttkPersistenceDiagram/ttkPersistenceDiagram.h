@@ -39,13 +39,13 @@
 ///
 /// Two backends are available for the computation:
 ///
-///  1) FTM
+///  1) FTM \n
 /// \b Related \b publication \n
 /// "Task-based Augmented Contour Trees with Fibonacci Heaps"
 /// Charles Gueunet, Pierre Fortin, Julien Jomier, Julien Tierny
 /// IEEE Transactions on Parallel and Distributed Systems, 2019
 ///
-///  2) Progressive Approach
+///  2) Progressive Approach \n
 /// \b Related \b publication \n
 /// "A Progressive Approach to Scalar Field Topology" \n
 /// Jules Vidal, Pierre Guillou, Julien Tierny\n
@@ -56,6 +56,56 @@
 /// \sa ttkScalarFieldCriticalPoints
 /// \sa ttkTopologicalSimplification
 /// \sa ttk::PersistenceDiagram
+///
+/// \b Online \b examples: \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/1manifoldLearning/">1-Manifold
+///   Learning example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/1manifoldLearningCircles/">1-Manifold
+///   Learning Circles example</a> \n
+///   href="https://topology-tool-kit.github.io/examples/2manifoldLearning/">
+///   2-Manifold Learning example</a> \n
+///   - <a href="https://topology-tool-kit.github.io/examples/ctBones/">CT Bones
+///   example</a> \n
+///   - <a href="https://topology-tool-kit.github.io/examples/dragon/">Dragon
+///   example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/harmonicSkeleton/">
+///   Harmonic Skeleton example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/imageProcessing/">Image
+///   Processing example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/karhunenLoveDigits64Dimensions//">Karhunen-Love
+///   Digits 64-Dimensions example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/morsePersistence/">Morse
+///   Persistence example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/morseSmaleQuadrangulation/">Morse-Smale
+///   Quadrangulation example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/persistenceClustering0/">Persistence
+///   clustering 0 example</a> \n
+///   href="https://topology-tool-kit.github.io/examples/persistenceClustering0/">Persistence
+///   clustering 1 example</a> \n
+///   href="https://topology-tool-kit.github.io/examples/persistenceClustering0/">Persistence
+///   clustering 2 example</a> \n
+///   href="https://topology-tool-kit.github.io/examples/persistenceClustering0/">Persistence
+///   clustering 3 example</a> \n
+///   href="https://topology-tool-kit.github.io/examples/persistenceClustering0/">Persistence
+///   clustering 4 example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/tectonicPuzzle/">Tectonic
+///   Puzzle example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/uncertainStartingVortex/">
+///   Uncertain Starting Vortex example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/interactionSites/">
+///   Interaction sites</a> \n
+///
 
 #pragma once
 

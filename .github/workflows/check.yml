@@ -15,6 +15,12 @@ on:
     branches:
       - 'dev'
 
+
+env:
+  PV_TAG: v5.9.1-headless
+  PV_REPO: topology-tool-kit/ttk-paraview
+
+
 jobs:
 
 
@@ -77,8 +83,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - {tidy: true, sa: false}
-          - {tidy: false, sa: true}
+          - {tidy: true, sa: false, dox: false}
+          - {tidy: false, sa: true, dox: false}
+          - {tidy: false, sa: false, dox: true}
 
     steps:
     - uses: actions/checkout@v2
@@ -93,21 +100,23 @@ jobs:
           libboost-system-dev \
           libeigen3-dev \
           libgraphviz-dev \
+          libosmesa-dev \
           libsqlite3-dev \
           graphviz \
           python3-sklearn \
           zlib1g-dev \
+          doxygen \
           $CLANG_TIDY
 
     - uses: dsaltares/fetch-gh-release-asset@0.0.5
       with:
-        repo: "topology-tool-kit/ttk-paraview"
-        version: "tags/v5.8.1"
-        file: "ttk-paraview-ubuntu-20.04.deb"
+        repo: "${{ env.PV_REPO }}"
+        version: "tags/${{ env.PV_TAG }}"
+        file: "ttk-paraview-headless-ubuntu-20.04.deb"
 
     - name: Install ParaView .deb
       run: |
-        sudo apt install ./ttk-paraview-ubuntu-20.04.deb
+        sudo apt install ./ttk-paraview-headless-ubuntu-20.04.deb
 
     - name: Create & configure TTK build directory
       run: |
@@ -119,6 +128,7 @@ jobs:
           -DTTK_BUILD_VTK_WRAPPERS=TRUE \
           -DTTK_BUILD_STANDALONE_APPS=TRUE \
           -DTTK_ENABLE_OPENMP=FALSE \
+          -DTTK_BUILD_DOCUMENTATION=TRUE \
           $GITHUB_WORKSPACE
 
     - name: Use clang-tidy to lint code [NOT ENFORCED]
@@ -136,6 +146,12 @@ jobs:
         | grep core \
         | grep -E "\.cpp$|\.cxx$" \
         | xargs -n1 -P2 $CLANG_TIDY -p build --checks="-*,clang-analyzer-*" 2> /dev/null
+
+    - name: Check Doxygen documentation warnings
+      if: matrix.config.dox
+      run: |
+        cd build
+        ! cmake --build . --target doc | grep warning
 
 
   # ----------------------- #
@@ -162,6 +178,7 @@ jobs:
           libboost-system-dev \
           libeigen3-dev \
           libgraphviz-dev \
+          libosmesa-dev \
           libsqlite3-dev \
           graphviz \
           python3-sklearn \
@@ -170,13 +187,13 @@ jobs:
 
     - uses: dsaltares/fetch-gh-release-asset@0.0.5
       with:
-        repo: "topology-tool-kit/ttk-paraview"
-        version: "tags/v5.8.1"
-        file: "ttk-paraview-ubuntu-20.04.deb"
+        repo: "${{ env.PV_REPO }}"
+        version: "tags/${{ env.PV_TAG }}"
+        file: "ttk-paraview-headless-ubuntu-20.04.deb"
 
     - name: Install ParaView .deb
       run: |
-        sudo apt install ./ttk-paraview-ubuntu-20.04.deb
+        sudo apt install ./ttk-paraview-headless-ubuntu-20.04.deb
 
     - name: Create & configure TTK build directory
       run: |

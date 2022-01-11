@@ -27,6 +27,11 @@
 /// Mathieu Pont, Jules Vidal, Julie Delon, Julien Tierny.\n
 /// Proc. of IEEE VIS 2021.\n
 /// IEEE Transactions on Visualization and Computer Graphics, 2021
+///
+/// \b Online \b examples: \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/mergeTreeTemporalReduction/">Merge
+///   Tree Temporal Reduction</a> \n
 
 #pragma once
 
@@ -73,6 +78,8 @@ class TTKMERGETREETEMPORALREDUCTIONDECODING_EXPORT
                                                       // base class
 {
 private:
+  using idNode = ttk::ftm::idNode;
+
   // Output options
   bool OutputTrees = true;
   bool PlanarLayout = false;
@@ -97,9 +104,8 @@ private:
   std::vector<vtkDataSet *> treesSegmentation;
   // Output
   std::vector<std::vector<int>> treesNodeCorrMesh;
-  std::vector<MergeTree<double>> intermediateSTrees;
-  std::vector<std::vector<std::tuple<ftm::idNode, ftm::idNode, double>>>
-    allMatching;
+  std::vector<ttk::ftm::MergeTree<double>> intermediateSTrees;
+  std::vector<std::vector<std::tuple<idNode, idNode, double>>> allMatching;
 
   void setDataVisualization(int numInputs) {
     // Trees
@@ -111,9 +117,9 @@ private:
   void resetDataVisualization() {
     setDataVisualization(0);
     treesNodeCorrMesh = std::vector<std::vector<int>>();
-    intermediateSTrees = std::vector<MergeTree<double>>();
-    allMatching = std::vector<
-      std::vector<std::tuple<ftm::idNode, ftm::idNode, double>>>();
+    intermediateSTrees = std::vector<ttk::ftm::MergeTree<double>>();
+    allMatching
+      = std::vector<std::vector<std::tuple<idNode, idNode, double>>>();
   }
 
   bool isDataVisualizationFilled() {

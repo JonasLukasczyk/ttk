@@ -27,6 +27,11 @@
 /// Mathieu Pont, Jules Vidal, Julie Delon, Julien Tierny.\n
 /// Proc. of IEEE VIS 2021.\n
 /// IEEE Transactions on Visualization and Computer Graphics, 2021
+///
+/// \b Online \b examples: \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/mergeTreeTemporalReduction/">Merge
+///   Tree Temporal Reduction</a> \n
 
 #pragma once
 
@@ -55,22 +60,6 @@ private:
   // Input Options
   bool DoResampleToImage = false;
 
-  // Output options
-  bool OutputTrees = true;
-  bool OutputSegmentation = false;
-  bool PlanarLayout = false;
-  bool BranchDecompositionPlanarLayout = false;
-  double BranchSpacing = 1.;
-  bool RescaleTreesIndividually = false;
-  double DimensionSpacing = 1.;
-  int DimensionToShift = 0;
-  double ImportantPairs = 50.;
-  int MaximumImportantPairs = 0;
-  int MinimumImportantPairs = 0;
-  double ImportantPairsSpacing = 1.;
-  double NonImportantPairsSpacing = 1.;
-  double NonImportantPairsProximity = 0.05;
-
   // ----------------------
   // Data for visualization
   // ----------------------
@@ -81,7 +70,7 @@ private:
   // Output
   std::vector<std::vector<int>> treesNodeCorrMesh;
   std::vector<double> emptyTreeDistances;
-  std::vector<MergeTree<double>> keyFrames;
+  std::vector<ttk::ftm::MergeTree<double>> keyFrames;
   std::vector<int> removed;
 
   void setDataVisualization(int numInputs) {
@@ -95,7 +84,7 @@ private:
     setDataVisualization(0);
     treesNodeCorrMesh = std::vector<std::vector<int>>();
     emptyTreeDistances = std::vector<double>();
-    keyFrames = std::vector<MergeTree<double>>();
+    keyFrames = std::vector<ttk::ftm::MergeTree<double>>();
     removed = std::vector<int>();
   }
 
@@ -218,49 +207,6 @@ public:
     resetDataVisualization();
   }
   vtkGetMacro(TimeVariableName, std::string);
-
-  // Output Options
-  vtkSetMacro(OutputTrees, bool);
-  vtkGetMacro(OutputTrees, bool);
-
-  vtkSetMacro(OutputSegmentation, bool);
-  vtkGetMacro(OutputSegmentation, bool);
-
-  vtkSetMacro(PlanarLayout, bool);
-  vtkGetMacro(PlanarLayout, bool);
-
-  vtkSetMacro(BranchDecompositionPlanarLayout, bool);
-  vtkGetMacro(BranchDecompositionPlanarLayout, bool);
-
-  vtkSetMacro(BranchSpacing, double);
-  vtkGetMacro(BranchSpacing, double);
-
-  vtkSetMacro(RescaleTreesIndividually, bool);
-  vtkGetMacro(RescaleTreesIndividually, bool);
-
-  vtkSetMacro(DimensionSpacing, double);
-  vtkGetMacro(DimensionSpacing, double);
-
-  vtkSetMacro(DimensionToShift, int);
-  vtkGetMacro(DimensionToShift, int);
-
-  vtkSetMacro(ImportantPairs, double);
-  vtkGetMacro(ImportantPairs, double);
-
-  vtkSetMacro(MaximumImportantPairs, int);
-  vtkGetMacro(MaximumImportantPairs, int);
-
-  vtkSetMacro(MinimumImportantPairs, int);
-  vtkGetMacro(MinimumImportantPairs, int);
-
-  vtkSetMacro(ImportantPairsSpacing, double);
-  vtkGetMacro(ImportantPairsSpacing, double);
-
-  vtkSetMacro(NonImportantPairsSpacing, double);
-  vtkGetMacro(NonImportantPairsSpacing, double);
-
-  vtkSetMacro(NonImportantPairsProximity, double);
-  vtkGetMacro(NonImportantPairsProximity, double);
 
   /**
    * This static method and the macro below are VTK conventions on how to

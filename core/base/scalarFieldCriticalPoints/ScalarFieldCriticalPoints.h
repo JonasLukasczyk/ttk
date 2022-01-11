@@ -45,7 +45,8 @@ namespace ttk {
 
     /**
      * Execute the package.
-     * \param argment Dummy integer argument.
+     * \param offsets Pointer to order field on vertices
+     * \param triangulation Triangulation
      * \return Returns 0 upon success, negative values otherwise.
      *
      * @pre For this function to behave correctly in the absence of
@@ -507,7 +508,14 @@ template <class triangulationType>
 void ttk::ScalarFieldCriticalPoints::checkProgressivityRequirement(
   const triangulationType *ttkNotUsed(triangulation)) {
   if(BackEnd == BACKEND::PROGRESSIVE_TOPOLOGY) {
-    if(!std::is_same<triangulationType, ttk::ImplicitTriangulation>::value) {
+    if(std::is_same<triangulationType, ttk::CompactTriangulation>::value) {
+
+      printWrn("CompactTriangulation detected.");
+      printWrn("Defaulting to the generic backend.");
+
+      BackEnd = BACKEND::GENERIC;
+    } else if(!std::is_same<triangulationType,
+                            ttk::ImplicitTriangulation>::value) {
 
       printWrn("Explicit triangulation detected.");
       printWrn("Defaulting to the generic backend.");

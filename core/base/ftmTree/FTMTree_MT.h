@@ -379,7 +379,6 @@ namespace ttk {
         if(i >= mt_data_.superArcs->size()) {
           std::cout << "[Merge Tree] get superArc on bad id :" << i;
           std::cout << " / " << mt_data_.superArcs->size() << std::endl;
-          return nullptr;
         }
 #endif
         return &((*mt_data_.superArcs)[i]);
@@ -390,7 +389,6 @@ namespace ttk {
         if(i >= mt_data_.superArcs->size()) {
           std::cout << "[Merge Tree] get superArc on bad id :" << i;
           std::cout << " / " << mt_data_.superArcs->size() << std::endl;
-          return nullptr;
         }
 #endif
         return &((*mt_data_.superArcs)[i]);
@@ -880,7 +878,7 @@ namespace ttk {
       MergeTree() : MergeTree(emptyScalars(), emptyParams()) {
       }
 
-      MergeTree(ftm::Scalars scalarsT, ftm::Params paramsT)
+      MergeTree(const ftm::Scalars &scalarsT, ftm::Params paramsT)
         : scalars(scalarsT), params(paramsT),
           tree(&params, &scalars, params.treeType) {
         tree.makeAlloc();
@@ -889,7 +887,7 @@ namespace ttk {
         scalars.values = (void *)(scalarsValues.data());
       }
 
-      MergeTree(ftm::Scalars scalarsT,
+      MergeTree(const ftm::Scalars &scalarsT,
                 std::vector<dataType> scalarValuesT,
                 ftm::Params paramsT)
         : scalars(scalarsT), scalarsValues(scalarValuesT), params(paramsT),
