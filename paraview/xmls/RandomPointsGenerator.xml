@@ -3,28 +3,28 @@
   <ProxyGroup name="sources">
     <SourceProxy name="ttkRandomPointsGenerator" class="ttkRandomPointsGenerator" label="TTK RandomPointsGenerator">
       <Documentation long_help="RandomPointsGenerator Long" short_help="RandomPointsGenerator Short">
-        This filter creates a ?.
+        This filter creates a set of points which are uniform randomly distributed in the given domain. The output arrays Amplitude, Spread and Rate can be used to create a scalar field from the points with the filter ScalarFieldFromPoints.
       </Documentation>
 
       <!-- OUTPUT PARAMETER WIDGETS -->
       <IntVectorProperty name="nPoints" label="Number of points" command="SetnPoints" number_of_elements="1" default_values="10">
-          <Documentation>?</Documentation>
+          <Documentation>Number of points to be created.</Documentation>
       </IntVectorProperty>
 
       <IntVectorProperty name="PositionDomain" command="SetPositionDomain" default_values="10 10 10" number_of_elements="3">
-          <Documentation>?</Documentation>
+          <Documentation>The domain the points are distributed in.</Documentation>
       </IntVectorProperty>
 
       <DoubleVectorProperty name="Amplitude" command="SetAmplitude" default_values="0 1" number_of_elements="2">
-          <Documentation>?</Documentation>
+          <Documentation> The scalar value at the point. A scalar attribute, which can be used in filters such as ScalarFieldFromPoints to create scalar fields with features.</Documentation>
       </DoubleVectorProperty>
 
       <DoubleVectorProperty name="Spread" command="SetSpread" default_values="0 1" number_of_elements="2">
-          <Documentation>?</Documentation>
+          <Documentation> How a feature would spread from the point. A scalar attribute, which can be used in filters such as ScalarFieldFromPoints to create scalar fields with features.</Documentation>
       </DoubleVectorProperty>
 
       <IntVectorProperty name="RandomSeed" command="SetRandomSeed" number_of_elements="1" default_values="1">
-          <Documentation>?</Documentation>
+          <Documentation>The seed for the random number generators.</Documentation>
       </IntVectorProperty>
 
       <!-- Create a UI group that contains all output parameter widgets (here only one) -->
@@ -39,7 +39,7 @@
 
       <!-- MENU CATEGORY -->
       <Hints>
-        <ShowInMenu category="TTK - Misc" />
+        <ShowInMenu category="TTK" />
       </Hints>
     </SourceProxy>
   </ProxyGroup>
