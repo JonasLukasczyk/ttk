@@ -157,6 +157,7 @@
         <Property name="TimeInterval" />
         <Property name="StepLength" />
         <Property name="PerlinScaleFactor" />
+        <Property name="VecField" />
       </PropertyGroup>
 
       <!-- DEBUG -->

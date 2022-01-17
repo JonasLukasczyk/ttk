@@ -15,6 +15,10 @@
           <Documentation>The domain the points are distributed in.</Documentation>
       </IntVectorProperty>
 
+      <IntVectorProperty name="RandomSeed" command="SetRandomSeed" number_of_elements="1" default_values="1">
+          <Documentation>The seed for the random number generators.</Documentation>
+      </IntVectorProperty>
+
       <DoubleVectorProperty name="Amplitude" command="SetAmplitude" default_values="0 1" number_of_elements="2">
           <Documentation> The scalar value at the point. A scalar attribute, which can be used in filters such as ScalarFieldFromPoints to create scalar fields with features.</Documentation>
       </DoubleVectorProperty>
@@ -23,15 +27,13 @@
           <Documentation> How a feature would spread from the point. A scalar attribute, which can be used in filters such as ScalarFieldFromPoints to create scalar fields with features.</Documentation>
       </DoubleVectorProperty>
 
-      <IntVectorProperty name="RandomSeed" command="SetRandomSeed" number_of_elements="1" default_values="1">
-          <Documentation>The seed for the random number generators.</Documentation>
-      </IntVectorProperty>
-
       <!-- Create a UI group that contains all output parameter widgets (here only one) -->
       <PropertyGroup panel_widget="Line" label="Output Options">
         <Property name="nPoints" />
         <Property name="PositionDomain" />
         <Property name="RandomSeed" />
+        <Property name="Amplitude" />
+        <Property name="Spread" />
       </PropertyGroup>
 
       <!-- DEBUG -->
