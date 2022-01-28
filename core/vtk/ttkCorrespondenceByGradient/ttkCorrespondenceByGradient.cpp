@@ -91,7 +91,7 @@ int ttkCorrespondenceByGradient::ComputeCorrespondences(
   if(!status)
     return 0;
 
-  status = this->AddIndexLabelMaps(correspondenceMatrix,
+  status = this->AddIndexIdMaps(correspondenceMatrix,
                                    this->GetInputArrayToProcess(1, seeds0),
                                    this->GetInputArrayToProcess(1, seeds1));
   if(!status)

@@ -13,9 +13,15 @@ class TTKCORRESPONDENCEBYDISTANCE_EXPORT ttkCorrespondenceByDistance
   : public ttkCorrespondenceAlgorithm,
     protected ttk::CorrespondenceByDistance {
 
+private:
+  bool NormalizeMatrix{true};
+
 public:
   static ttkCorrespondenceByDistance *New();
   vtkTypeMacro(ttkCorrespondenceByDistance, ttkCorrespondenceAlgorithm);
+
+  vtkSetMacro(NormalizeMatrix, bool);
+  vtkGetMacro(NormalizeMatrix, bool);
 
 protected:
   ttkCorrespondenceByDistance();

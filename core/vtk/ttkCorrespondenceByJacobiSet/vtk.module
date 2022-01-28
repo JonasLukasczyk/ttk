@@ -3,9 +3,7 @@ NAME
 DEPENDS
   ttkCorrespondenceAlgorithm
   ttkJacobiSet
-  ttkPointMerger
   ttkConnectedComponents
 PRIVATE_DEPENDS
-  VTK::CommonSystem
-  VTK::IOInfovis
-  VTK::IOImage
+  VTK::FiltersCore
+  VTK::FiltersGeometry

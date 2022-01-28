@@ -17,6 +17,15 @@ include(CMake/cpack_config.cmake)
 # Use folder as configured by the distribution
 include(GNUInstallDirs)
 
+option (FORCE_COLORED_OUTPUT "Always produce ANSI-colored output (GNU/Clang only)." TRUE)
+if (${FORCE_COLORED_OUTPUT})
+  if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    add_compile_options (-fdiagnostics-color=always)
+  elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    add_compile_options (-fcolor-diagnostics)
+  endif ()
+endif ()
+
 # Base code
 # ---------
 
@@ -180,3 +189,4 @@ endif()
 
 include(CMake/Print.cmake)
 ttk_print_summary()
+

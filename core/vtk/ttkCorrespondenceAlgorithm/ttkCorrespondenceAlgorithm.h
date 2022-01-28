@@ -36,22 +36,23 @@ public:
   static ttkCorrespondenceAlgorithm *New();
   vtkTypeMacro(ttkCorrespondenceAlgorithm, ttkAlgorithm);
 
-  static int GetIndexLabelMaps(vtkDataArray *&indexLabelMapR,
-                               vtkDataArray *&indexLabelMapC,
-                               vtkFieldData *fieldData);
-  static int AddIndexLabelMaps(vtkImageData *correspondenceMatrix,
-                               vtkDataArray *indexLabelMapR,
-                               vtkDataArray *indexLabelMapC,
-                               const std::string& labelIdentifier = "");
-  static int AddIndexLabelMaps(
+  static std::string GetIdArrayName(vtkFieldData *fieldData);
+  static int GetIndexIdMaps(vtkDataArray *&indexIdMapP, vtkDataArray *&indexIdMapC, vtkFieldData *fieldData);
+  static int AddIndexIdMap( vtkImageData *correspondenceMatrix, vtkDataArray* indexIdMap, const bool isMapForCurrentTimestep );
+  static int AddIndexIdMaps(vtkImageData *correspondenceMatrix,
+                               vtkDataArray *indexIdMapR,
+                               vtkDataArray *indexIdMapC
+                               );
+
+  static int AddIndexIdMaps(
     vtkImageData *correspondenceMatrix,
-    const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &labelIndexMapP,
-    const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &labelIndexMapC,
-    const std::string& labelIdentifier);
+    const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapP,
+    const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapC,
+    const std::string& idArrayName);
 
   static int
-    BuildLabelIndexMap(std::unordered_map<ttk::SimplexId, ttk::SimplexId> &,
-                       const vtkDataArray *indexLabelMap);
+    BuildIdIndexMap(std::unordered_map<ttk::SimplexId, ttk::SimplexId> &,
+                       const vtkDataArray *indexIdMap);
 
 protected:
   ttkCorrespondenceAlgorithm();

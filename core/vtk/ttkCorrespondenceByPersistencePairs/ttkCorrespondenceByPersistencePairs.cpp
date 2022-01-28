@@ -142,7 +142,7 @@ int ttkCorrespondenceByPersistencePairs::ComputeCorrespondences(
     }
   }
 
-  status = ttkCorrespondenceAlgorithm::AddIndexLabelMaps(
+  status = ttkCorrespondenceAlgorithm::AddIndexIdMaps(
     correspondenceMatrix,
     this->GetInputArrayToProcess(0, p0),
     this->GetInputArrayToProcess(0, p1)

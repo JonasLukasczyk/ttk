@@ -29,64 +29,64 @@ int ttkCorrespondenceByOverlap::ComputeCorrespondences(
   vtkDataObject *inputDataObjects1) {
 
   if(this->GetInputArrayAssociation(0, inputDataObjects0) != 0)
-    return !this->printErr("Labels must be point data.");
+    return !this->printErr("Ids must be point data.");
 
-  // get label arrays
-  auto labels0 = this->GetInputArrayToProcess(0, inputDataObjects0);
-  auto labels1 = this->GetInputArrayToProcess(0, inputDataObjects1);
+  // get id arrays
+  auto ids0 = this->GetInputArrayToProcess(0, inputDataObjects0);
+  auto ids1 = this->GetInputArrayToProcess(0, inputDataObjects1);
 
   // validate arrays
-  if(!labels0 || !labels1)
-    return !this->printErr("Unable to retrieve labels.");
+  if(!ids0 || !ids1)
+    return !this->printErr("Unable to retrieve ids.");
 
-  if(labels0->GetNumberOfComponents() != 1
-     || labels1->GetNumberOfComponents() != 1)
-    return !this->printErr("Labels must have exactly one component.");
+  if(ids0->GetNumberOfComponents() != 1
+     || ids1->GetNumberOfComponents() != 1)
+    return !this->printErr("Ids must have exactly one component.");
 
-  if(labels0->GetNumberOfTuples() != labels1->GetNumberOfTuples())
-    return !this->printErr("Labels must have same number of values.");
+  if(ids0->GetNumberOfTuples() != ids1->GetNumberOfTuples())
+    return !this->printErr("Ids must have same number of values.");
 
-  if(labels0->GetDataType() != labels1->GetDataType())
-    return !this->printErr("Labels must have same data type.");
+  if(ids0->GetDataType() != ids1->GetDataType())
+    return !this->printErr("Ids must have same data type.");
 
-  const int nVertices = labels0->GetNumberOfTuples();
+  const int nVertices = ids0->GetNumberOfTuples();
 
-  // extract unique labels from volume
-  std::unordered_map<ttk::SimplexId, ttk::SimplexId> labelIndexMap0;
-  std::unordered_map<ttk::SimplexId, ttk::SimplexId> labelIndexMap1;
+  // extract unique ids from volume
+  std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap0;
+  std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap1;
   int status = 0;
   for(auto &it : std::vector<std::pair<
         vtkDataArray *, std::unordered_map<ttk::SimplexId, ttk::SimplexId> *>>(
-        {{labels0, &labelIndexMap0}, {labels1, &labelIndexMap1}})) {
+        {{ids0, &idIndexMap0}, {ids1, &idIndexMap1}})) {
     ttkTypeMacroA(
-      labels0->GetDataType(),
-      (status = this->computeLabelIndexMap<T0, ttk::SimplexId>(
+      ids0->GetDataType(),
+      (status = this->computeIdIndexMap<T0, ttk::SimplexId>(
          *it.second, ttkUtils::GetPointer<const T0>(it.first), nVertices)));
     if(!status)
       return 0;
   }
 
-  const int nLabels0 = labelIndexMap0.size();
-  const int nLabels1 = labelIndexMap1.size();
+  const int nIds0 = idIndexMap0.size();
+  const int nIds1 = idIndexMap1.size();
 
   // initialize correspondence matrix
-  correspondenceMatrix->SetDimensions(nLabels0, nLabels1, 1);
+  correspondenceMatrix->SetDimensions(nIds0, nIds1, 1);
   correspondenceMatrix->AllocateScalars(VTK_INT, 1);
   auto matrixData = correspondenceMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("Overlap");
 
   // compute overlaps
-  ttkTypeMacroA(labels0->GetDataType(),
+  ttkTypeMacroA(ids0->GetDataType(),
                 (status = this->computeAdjacencyMatrix<T0, ttk::SimplexId>(
                    ttkUtils::GetPointer<int>(matrixData),
-                   ttkUtils::GetPointer<const T0>(labels0),
-                   ttkUtils::GetPointer<const T0>(labels1), nVertices,
-                   labelIndexMap0, labelIndexMap1)));
+                   ttkUtils::GetPointer<const T0>(ids0),
+                   ttkUtils::GetPointer<const T0>(ids1), nVertices,
+                   idIndexMap0, idIndexMap1)));
   if(!status)
     return 0;
 
-  status = ttkCorrespondenceAlgorithm::AddIndexLabelMaps(
-    correspondenceMatrix, labelIndexMap0, labelIndexMap1, labels0->GetName());
+  status = ttkCorrespondenceAlgorithm::AddIndexIdMaps(
+    correspondenceMatrix, idIndexMap0, idIndexMap1, ids0->GetName());
   if(!status)
     return 0;
 

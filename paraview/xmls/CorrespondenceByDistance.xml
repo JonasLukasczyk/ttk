@@ -6,7 +6,6 @@
         TODO
       </Documentation>
 
-      <!-- Inputs -->
       <InputProperty name="Points" port_index="0" command="SetInputConnection">
         <ProxyGroupDomain name="groups">
           <Group name="sources" />
@@ -20,16 +19,25 @@
         <Documentation>Points.</Documentation>
       </InputProperty>
 
-      <OutputPort index="0" id="port0" name="Correlations" />
+      <OutputPort index="0" id="port0" name="Matrix" />
 
-      <StringVectorProperty name="Labels" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+      <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="ttkVertexScalarField">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
           <RequiredProperties>
             <Property function="Input" name="Points" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Feature Labels.</Documentation>
+        <Documentation>Feature Ids.</Documentation>
       </StringVectorProperty>
+
+      <IntVectorProperty name="Normalize" command="SetNormalizeMatrix" number_of_elements="1" default_values="0">
+        <BooleanDomain name="bool" />
+        <Documentation>
+          OFF: Ouput matrix records the Euclidean distance between input points.
+
+          ON: Eucleadian distances are normalized based on the maximum value of the matrix. Normalized values are also inverted to conform to the defintion of correspondence metrices, where matrix values must be positive proportional to the probability of a feature match.
+        </Documentation>
+      </IntVectorProperty>
 
       ${DEBUG_WIDGETS}
 

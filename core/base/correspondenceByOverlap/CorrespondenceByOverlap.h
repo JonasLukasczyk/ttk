@@ -33,15 +33,15 @@ namespace ttk {
     ~CorrespondenceByOverlap(){};
 
     template <typename DT, typename IT>
-    int computeLabelIndexMap(std::unordered_map<IT, IT> &labelIndexMap,
-                             const DT *labels,
-                             const IT nLabels) const {
+    int computeIdIndexMap(std::unordered_map<IT, IT> &idIndexMap,
+                             const DT *ids,
+                             const IT nIds) const {
 
-      IT labelIndex = 0;
-      for(IT i = 0; i < nLabels; i++) {
-        auto l = static_cast<const IT>(labels[i]);
-        if(l >= 0 && labelIndexMap.find(l) == labelIndexMap.end())
-          labelIndexMap.insert({l, labelIndex++});
+      IT idIndex = 0;
+      for(IT i = 0; i < nIds; i++) {
+        auto l = static_cast<const IT>(ids[i]);
+        if(l >= 0 && idIndexMap.find(l) == idIndexMap.end())
+          idIndexMap.insert({l, idIndex++});
       }
 
       return 1;
@@ -50,27 +50,27 @@ namespace ttk {
     template <typename DT, typename IT>
     int computeAdjacencyMatrix(
       int *adjacencyMatrix,
-      const DT *labels0,
-      const DT *labels1,
+      const DT *ids0,
+      const DT *ids1,
       const int nVertices,
-      const std::unordered_map<IT, IT> &labelIndexMap0,
-      const std::unordered_map<IT, IT> &labelIndexMap1) const {
+      const std::unordered_map<IT, IT> &idIndexMap0,
+      const std::unordered_map<IT, IT> &idIndexMap1) const {
 
       ttk::Timer timer;
 
-      const IT nLabels0 = labelIndexMap0.size();
-      const IT nLabels1 = labelIndexMap1.size();
+      const IT nIds0 = idIndexMap0.size();
+      const IT nIds1 = idIndexMap1.size();
 
-      if(nLabels0 < 1)
-        return this->printWrn("Number of first labels smaller than 1.");
-      if(nLabels1 < 1)
-        return this->printWrn("Number of second labels smaller than 1.");
+      if(nIds0 < 1)
+        return this->printWrn("Number of first ids smaller than 1.");
+      if(nIds1 < 1)
+        return this->printWrn("Number of second ids smaller than 1.");
 
-      const std::string msg = "Computing Overlap " + std::to_string(nLabels0)
-                              + "x" + std::to_string(nLabels1);
+      const std::string msg = "Computing Overlap " + std::to_string(nIds0)
+                              + "x" + std::to_string(nIds1);
       this->printMsg(msg, 0, 0, this->threadNumber_, debug::LineMode::REPLACE);
 
-      const IT nLables = nLabels0 * nLabels1;
+      const IT nLables = nIds0 * nIds1;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -83,12 +83,12 @@ namespace ttk {
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif
       for(IT i = 0; i < nVertices; i++) {
-        auto l0 = static_cast<const IT>(labels0[i]);
-        auto l1 = static_cast<const IT>(labels1[i]);
+        auto l0 = static_cast<const IT>(ids0[i]);
+        auto l1 = static_cast<const IT>(ids1[i]);
         if(l0 >= 0 && l1 >= 0) {
 #pragma omp atomic update
-          adjacencyMatrix[labelIndexMap1.at(l1) * nLabels0
-                          + labelIndexMap0.at(l0)]++;
+          adjacencyMatrix[idIndexMap1.at(l1) * nIds0
+                          + idIndexMap0.at(l0)]++;
         }
       }
 

@@ -83,7 +83,7 @@ int ttkCorrespondenceByMTS::ComputeCorrespondences(
   if(!status)
     return 0;
 
-  status = ttkCorrespondenceAlgorithm::AddIndexLabelMaps(
+  status = ttkCorrespondenceAlgorithm::AddIndexIdMaps(
     correspondenceMatrix, this->GetInputArrayToProcess(1, m0),
     this->GetInputArrayToProcess(1, m1));
   if(!status)

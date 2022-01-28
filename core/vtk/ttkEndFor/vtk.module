@@ -3,3 +3,4 @@ NAME
 DEPENDS
   ttkAlgorithm
   ttkForEach
+  ttkBlockAggregator

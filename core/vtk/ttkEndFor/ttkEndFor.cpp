@@ -14,6 +14,9 @@ vtkStandardNewMacro(ttkEndFor);
 ttkEndFor::ttkEndFor() {
   this->setDebugMsgPrefix("EndFor");
 
+  this->SetForceReset(false);
+  this->SetFlattenInput(true);
+
   SetNumberOfInputPorts(2);
   SetNumberOfOutputPorts(1);
 }
@@ -23,14 +26,6 @@ ttkEndFor::~ttkEndFor(){};
 int ttkEndFor::FillInputPortInformation(int port, vtkInformation *info) {
   if(port == 0 || port == 1) {
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject", 1);
-    return 1;
-  }
-  return 0;
-}
-
-int ttkEndFor::FillOutputPortInformation(int port, vtkInformation *info) {
-  if(port == 0) {
-    info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
     return 1;
   }
   return 0;
@@ -50,6 +45,11 @@ int ttkEndFor::RequestData(vtkInformation *request,
                            vtkInformationVector **inputVector,
                            vtkInformationVector *outputVector) {
 
+  // perform aggregation
+  int status = this->ttkBlockAggregator::RequestData(request, inputVector, outputVector);
+  if(!status)
+    return 0;
+
   // find for each head
   ttkForEach *forEach = nullptr;
   {
@@ -66,15 +66,17 @@ int ttkEndFor::RequestData(vtkInformation *request,
   }
 
   // get iteration info
-  int i = forEach->GetIterationIdx() - 1;
+  int i = forEach->GetIterationIdx()-1;
   int n = forEach->GetIterationNumber();
 
-  bool isRepeatedIteration = this->LastIterationIdx == i && i > 0;
+  bool isRepeatedIteration = (this->LastIterationIdx==i || this->LastIterationIdx<0) && i > 0;
   this->LastIterationIdx = i;
 
-  if(isRepeatedIteration)
+  if(isRepeatedIteration){
     this->printMsg("For Loop Modified -> Restarting Iterations",
                    ttk::debug::Separator::BACKSLASH);
+    forEach->SetIterationIdx(0);
+  }
   else
     this->printMsg("Iteration ( " + std::to_string(i) + " / "
                      + std::to_string(n - 1) + " ) complete ",
@@ -82,16 +84,12 @@ int ttkEndFor::RequestData(vtkInformation *request,
 
   if(i >= n - 1 && !isRepeatedIteration) {
     // if this is the last iteration
-    auto input = vtkDataObject::GetData(inputVector[0]);
-    auto output = vtkDataObject::GetData(outputVector);
-    output->ShallowCopy(input);
-    removeFieldDataRecursively(output);
+    removeFieldDataRecursively( vtkDataObject::GetData(outputVector) );
     request->Remove(vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING());
   } else {
-    // if this is an intermediate iteration
+    // if this is an intermediate or repeated iteration
     forEach->Modified();
-    this->GetInputAlgorithm(0, 0)->Update();
-
+    this->GetInputAlgorithm(0, 0)->Update(); // trigger update of data input
     request->Set(vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING(), 1);
   }
 

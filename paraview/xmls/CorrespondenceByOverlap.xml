@@ -6,7 +6,6 @@
         TODO
       </Documentation>
 
-      <!-- Inputs -->
       <InputProperty name="Segmentations" port_index="0" command="SetInputConnection">
         <ProxyGroupDomain name="groups">
           <Group name="sources" />
@@ -20,15 +19,15 @@
         <Documentation>Segmentations.</Documentation>
       </InputProperty>
 
-      <OutputPort index="0" id="port0" name="Correlations" />
+      <OutputPort index="0" id="port0" name="Matrix" />
 
-      <StringVectorProperty name="Labels" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+      <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
           <RequiredProperties>
             <Property function="Input" name="Segmentations" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Feature Labels (labels smaller 0 are ignored).</Documentation>
+        <Documentation>Feature Ids.</Documentation>
       </StringVectorProperty>
 
       ${DEBUG_WIDGETS}

@@ -20,6 +20,8 @@
         <Documentation>Persistence Diagrams.</Documentation>
       </InputProperty>
 
+      <OutputPort index="0" id="port0" name="Matrix" />
+
       <StringVectorProperty
       name="n"
       label="p parameter"
@@ -151,15 +153,13 @@ the extremum</Documentation>
 the extremum</Documentation>
       </DoubleVectorProperty>
 
-      <OutputPort index="0" id="port0" name="Correlations" />
-
-      <StringVectorProperty name="Labels" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+      <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
           <RequiredProperties>
             <Property function="Input" name="Diagrams" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Feature Labels.</Documentation>
+        <Documentation>Feature Ids.</Documentation>
       </StringVectorProperty>
 
       ${DEBUG_WIDGETS}

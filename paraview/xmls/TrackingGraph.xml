@@ -14,6 +14,7 @@
         <DataTypeDomain name="input_type">
           <DataType value="vtkMultiBlockDataSet" />
         </DataTypeDomain>
+        <InputArrayDomain attribute_type="point" name="matrix_point_arrays" number_of_components="1" />
         <Documentation>TODO.</Documentation>
       </InputProperty>
 
@@ -25,30 +26,19 @@
         <DataTypeDomain name="input_type">
           <DataType value="vtkMultiBlockDataSet" />
         </DataTypeDomain>
+        <InputArrayDomain attribute_type="point" name="feature_point_arrays" number_of_components="1" optional="1" />
         <Hints>
           <Optional />
         </Hints>
         <Documentation>TODO.</Documentation>
       </InputProperty>
 
-      <StringVectorProperty name="Matrix" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5"  default_values="0">
-        <ArrayListDomain name="array_list" input_domain_name="input_arrays">
+      <StringVectorProperty name="Matrix" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">
+        <ArrayListDomain name="array_list" input_domain_name="matrix_point_arrays">
           <RequiredProperties>
             <Property function="Input" name="Correspondences" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>TODO.</Documentation>
-      </StringVectorProperty>
-
-      <StringVectorProperty name="Labels" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
-        <ArrayListDomain name="array_list" input_domain_name="input_arrays">
-          <RequiredProperties>
-            <Property function="Input" name="Features" />
-          </RequiredProperties>
-        </ArrayListDomain>
-        <Hints>
-          <NoDefault />
-        </Hints>
         <Documentation>TODO.</Documentation>
       </StringVectorProperty>
 

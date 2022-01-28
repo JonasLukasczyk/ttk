@@ -9,6 +9,7 @@
 #include <vtkPointSet.h>
 
 #include <vtkPointData.h>
+#include <vtkCellData.h>
 #include <vtkStringArray.h>
 
 #include <ttkUtils.h>
@@ -16,9 +17,12 @@
 
 #include <vtkUnstructuredGrid.h>
 
+#include <vtkThreshold.h>
+#include <vtkDataSetSurfaceFilter.h>
+#include <vtkStaticCleanPolyData.h>
+
 // TTK Base Includes
 #include <ttkJacobiSet.h>
-#include <ttkPointMerger.h>
 #include <ttkConnectedComponents.h>
 
 vtkStandardNewMacro(ttkCorrespondenceByJacobiSet);
@@ -38,16 +42,46 @@ int computeStackedArray(
   DT* sd,
   const DT* d0,
   const DT* d1,
-  const int n
+  const int n,
+  const DT offset = 0
 ){
   for(int i=0; i<n; i++){
     sd[i] = d0[i];
   }
   for(int i=0, j=n; i<n; i++,j++){
-    sd[j] = d1[i];
+    sd[j] = d1[i] + offset;
   }
   return 1;
 }
+
+
+using ComponentIdMap = std::vector< std::tuple<std::vector<int>,std::vector<int>> >;
+
+template<typename IT, int mapIdx>
+int computeComponentIdMap(
+  ComponentIdMap& componentIdMap,
+  const IT* vidPoints,
+  const int n,
+  const float* vidComponents,
+  const int m,
+  const int* componentIds,
+  const IT vidOffset
+){
+  for(int i=0; i<n; i++){
+    const IT vid = vidPoints[i] + vidOffset;
+
+    // search for vid in seg
+    for(int j=0; j<m; j++){
+      if(static_cast<IT>(vidComponents[j])==vid){
+        std::get<mapIdx>(componentIdMap[ componentIds[j] ]).push_back(i);
+        break;
+      }
+    }
+  }
+
+  return 1;
+}
+
 
 int ttkCorrespondenceByJacobiSet::ComputeCorrespondences(
   vtkImageData *correspondenceMatrix,
@@ -134,20 +168,21 @@ int ttkCorrespondenceByJacobiSet::ComputeCorrespondences(
   vtkSmartPointer<vtkDataArray> stackedVertexIdentifiers;
   {
     // stack vertex identifiers
-    auto vertexIdentifiers0 = this->GetInputArrayToProcess(1,image0);
-    auto vertexIdentifiers1 = this->GetInputArrayToProcess(1,image1);
-    if(!vertexIdentifiers0 || !vertexIdentifiers1)
+    auto vidImage0 = this->GetInputArrayToProcess(1,image0);
+    auto vidImage1 = this->GetInputArrayToProcess(1,image1);
+    if(!vidImage0 || !vidImage1)
       return !this->printErr("Unable to retrieve vertex identifier arrays from input grid.");
 
-    stackedVertexIdentifiers = vtkSmartPointer<vtkDataArray>::Take(vertexIdentifiers1->NewInstance());
-    stackedVertexIdentifiers->SetName(vertexIdentifiers0->GetName());
+    stackedVertexIdentifiers = vtkSmartPointer<vtkDataArray>::Take(vidImage1->NewInstance());
+    stackedVertexIdentifiers->SetName(vidImage0->GetName());
     stackedVertexIdentifiers->SetNumberOfTuples(nTuplesPerImage*2);
     ttkTypeMacroA(
       stackedVertexIdentifiers->GetDataType(),
       computeStackedArray<T0>(
         ttkUtils::GetPointer<T0>(stackedVertexIdentifiers),
-        ttkUtils::GetPointer<T0>(vertexIdentifiers0),
-        ttkUtils::GetPointer<T0>(vertexIdentifiers1),
+        ttkUtils::GetPointer<T0>(vidImage0),
+        ttkUtils::GetPointer<T0>(vidImage1),
+        nTuplesPerImage,
         nTuplesPerImage
       )
     );
@@ -174,185 +209,170 @@ int ttkCorrespondenceByJacobiSet::ComputeCorrespondences(
 
   auto jacobiSet = vtkUnstructuredGrid::SafeDownCast(jacobiSetFilter->GetOutputDataObject(0));
 
-  // count number of temporal cells
-  int nTemporalCells = 0;
-  {
-    auto pointCoords = ttkUtils::GetPointer<float>(jacobiSet->GetPoints()->GetData());
-
-    int nCells = jacobiSet->GetNumberOfCells();
-    for(int i=0; i<nCells; i++){
-      auto pointIds = jacobiSet->GetCell(i)->GetPointIds();
-      if(pointCoords[pointIds->GetId(0)*3+2]!=pointCoords[pointIds->GetId(1)*3+2])
-        nTemporalCells++;
-    }
-  }
-
-  this->printMsg("Number of Temporal Jacobi Edges: " + std::to_string(nTemporalCells));
-
-  // build new edge set
+  // deriving connected components of temporal edges
+  auto components = vtkSmartPointer<vtkPolyData>::New();
   {
     ttk::Timer t;
     const std::string msg = "Extracting Temporal Edges";
     this->printMsg(msg,0,0,1,ttk::debug::LineMode::REPLACE);
 
-    auto temporalEdges = vtkSmartPointer<vtkUnstructuredGrid>::New();
-    temporalEdges->AllocateExact(nTemporalCells,nTemporalCells*2);
-    auto pointCoords = ttkUtils::GetPointer<float>(jacobiSet->GetPoints()->GetData());
+    // add mask for temporal edges
+    {
+      const int nJocobiSetEdges = jacobiSet->GetNumberOfCells();
 
-    auto points = vtkSmartPointer<vtkPoints>::New();
-    points->SetNumberOfPoints(nTemporalCells*2);
+      auto jsMask = vtkSmartPointer<vtkUnsignedCharArray>::New();
+      jsMask->SetName("MASK");
+      jsMask->SetNumberOfTuples(nJocobiSetEdges);
+      auto jsMaskData = ttkUtils::GetPointer<unsigned char>(jsMask);
+      jacobiSet->GetCellData()->AddArray(jsMask);
 
-    int nCells = jacobiSet->GetNumberOfCells();
-    for(int i=0,j=0; i<nCells; i++){
-      const auto pointIds = jacobiSet->GetCell(i)->GetPointIds();
-      const auto u = pointIds->GetId(0);
-      const auto v = pointIds->GetId(1);
-
-      if(pointCoords[u*3+2]!=pointCoords[v*3+2]){
-        points->SetPoint(j, &pointCoords[u*3]);
-        points->SetPoint(j+1, &pointCoords[v*3]);
-        vtkIdType ids[2] = {j,j+1};
-        temporalEdges->InsertNextCell(VTK_LINE,2,ids);
-        j+=2;
+      const auto jsTimeData = ttkUtils::GetPointer<ttk::SimplexId>(jacobiSet->GetPointData()->GetArray("TIME"));
+      for(int i=0; i<nJocobiSetEdges; i++){
+        auto pointIds = jacobiSet->GetCell(i)->GetPointIds();
+        jsMaskData[i] = jsTimeData[pointIds->GetId(0)]!=jsTimeData[pointIds->GetId(1)];
       }
     }
-    temporalEdges->SetPoints(points);
 
-    this->printMsg(msg,0.33,t.getElapsedTime(),1,ttk::debug::LineMode::REPLACE);
+    this->printMsg(msg,0.1,t.getElapsedTime(),1,ttk::debug::LineMode::REPLACE);
 
-    auto pointMerger = vtkSmartPointer<ttkPointMerger>::New();
-    pointMerger->SetInputDataObject(temporalEdges);
-    pointMerger->SetBoundaryOnly(false);
-    pointMerger->SetDistanceThreshold(0.01);
+    auto threshold = vtkSmartPointer<vtkThreshold>::New();
+    threshold->SetInputDataObject(jacobiSet);
+    threshold->SetInputArrayToProcess(0,0,0,1,"MASK");
+    threshold->SetUpperThreshold(0.5);
+    threshold->SetThresholdFunction( vtkThreshold::ThresholdType::THRESHOLD_UPPER );
+    threshold->Update();
+    this->printMsg(msg,0.3,t.getElapsedTime(),1,ttk::debug::LineMode::REPLACE);
+
+    // vtkUnstructuredGrid to vtkPolyData
+    auto dataSetSurfaceFilter = vtkSmartPointer<vtkDataSetSurfaceFilter>::New();
+    dataSetSurfaceFilter->SetInputConnection(0, threshold->GetOutputPort(0));
+    dataSetSurfaceFilter->Update();
+    this->printMsg(msg,0.5,t.getElapsedTime(),1,ttk::debug::LineMode::REPLACE);
+
+    // merge duplicate points
+    auto cleanPolyData = vtkSmartPointer<vtkStaticCleanPolyData>::New();
+    cleanPolyData->SetInputConnection(0, dataSetSurfaceFilter->GetOutputPort(0));
+    cleanPolyData->Update();
+    this->printMsg(msg,0.7,t.getElapsedTime(),1,ttk::debug::LineMode::REPLACE);
 
     auto connectedComponents = vtkSmartPointer<ttkConnectedComponents>::New();
-    connectedComponents->SetInputConnection(pointMerger->GetOutputPort());
-    connectedComponents->SetInputArrayToProcess(0,0,0,0,"NONE");
+    connectedComponents->SetInputConnection(0, cleanPolyData->GetOutputPort(0));
     connectedComponents->SetUseSeedIdAsComponentId(false);
     connectedComponents->Update();
+    this->printMsg(msg,0.9,t.getElapsedTime(),1,ttk::debug::LineMode::REPLACE);
 
-    this->printMsg(msg,1,t.getElapsedTime(),1);
-
-    auto components = vtkUnstructuredGrid::SafeDownCast(connectedComponents->GetOutputDataObject(0));
-    if(!components)
+    const auto temp = vtkPolyData::SafeDownCast(connectedComponents->GetOutputDataObject(0));
+    if(!temp)
       return !this->printErr("Unable to merge points and compute connected components of temporal Jacobi edges.");
+    components->ShallowCopy(temp);
 
-    auto componentIds = ttkUtils::GetPointer<int>(components->GetPointData()->GetArray("ComponentId"));
-    if(!componentIds)
-      return !this->printErr("Unable to retrieve componentIds from temporal Jacobi edges");
+    this->printMsg(msg + " (#"+std::to_string(components->GetNumberOfCells())+")",1,t.getElapsedTime(),1);
   }
 
   // iterate over features and find for each critical points its corresponding connected component
+  {
+    ttk::Timer t;
+    const std::string msg = "Computing Correspondence Matrix";
+    this->printMsg(msg,0,0,1,ttk::debug::LineMode::REPLACE);
 
+    auto componentIds = components->GetPointData()->GetArray("ComponentId");
+    if(!componentIds)
+      return !this->printErr("Unable to retrieve componentIds from temporal Jacobi edges");
 
+    const auto componentIdsData = ttkUtils::GetPointer<int>(componentIds);
 
+    ComponentIdMap componentIdToVertexIdMap(componentIds->GetRange()[1]+1);
 
+    auto vidPoints0 = this->GetInputArrayToProcess(1,points0);
+    auto vidPoints1 = this->GetInputArrayToProcess(1,points1);
+    if(!vidPoints0 || !vidPoints1)
+      return !this->printErr("Unable to retrieve vertex identifier arrays from input points.");
 
+    const int nPoints0 = vidPoints0->GetNumberOfTuples();
+    const int nPoints1 = vidPoints1->GetNumberOfTuples();
 
-  correspondenceMatrix->ShallowCopy(stackedImage);
+    // vtkStaticCleanPolyData turns this array into a float array, no matter the original data type
+    auto vidComponents = this->GetInputArrayToProcess(1,components);
+    if(!vidComponents)
+      return !this->printErr("Unable to retrieve vertex identifier arrays from connected components.");
+    const int nComponentVertices = vidComponents->GetNumberOfTuples();
 
-  // this->setSosOffsetsU(combinedOrderArrayData);
-  // this->setSosOffsetsV(stackedOrderArrayData);
-  // auto triangulation = ttkAlgorithm::GetTriangulation(stackedGrid);
-  // if(!triangulation)
-  //   return !this->printErr("Unable to derive triangulation of stacked image data object.");
-  // this->preconditionTriangulation(triangulation);
+    this->printMsg(msg,0.1,t.getElapsedTime(),this->threadNumber_,ttk::debug::LineMode::REPLACE);
 
-  // std::vector<std::pair<ttk::SimplexId, char>> jacobiSet{};
-  // // std::vector<char> isPareto{};
+    int status=0;
+    ttkTypeMacroI(
+      vidPoints0->GetDataType(),
+      (
+        status = computeComponentIdMap<T0,0>(
+          componentIdToVertexIdMap,
+          ttkUtils::GetPointer<T0>(vidPoints0),
+          nPoints0,
+          ttkUtils::GetPointer<float>(vidComponents),
+          nComponentVertices,
+          componentIdsData,
+          0
+        )
+      )
+    );
+    if(!status)
+      return 0;
 
+    this->printMsg(msg,0.4,t.getElapsedTime(),this->threadNumber_,ttk::debug::LineMode::REPLACE);
 
-  // int status = this->execute<ttk::SimplexId,ttk::SimplexId,ttk::ImplicitTriangulation>(
-  //   jacobiSet,
-  //   combinedOrderArrayData,
-  //   timeArrayData,
-  //   *static_cast<ttk::ImplicitTriangulation*>(triangulation->getData())
-  //   // &isPareto
-  // );
+    ttkTypeMacroI(
+      vidPoints1->GetDataType(),
+      (
+        status = computeComponentIdMap<T0,1>(
+          componentIdToVertexIdMap,
+          ttkUtils::GetPointer<T0>(vidPoints1),
+          nPoints1,
+          ttkUtils::GetPointer<float>(vidComponents),
+          nComponentVertices,
+          componentIdsData,
+          nTuplesPerImage
+        )
+      )
+    );
+    if(!status)
+      return 0;
 
-  // if(status!=0)
-  //   return 0;
+    this->printMsg(msg,0.8,t.getElapsedTime(),this->threadNumber_,ttk::debug::LineMode::REPLACE);
 
+    correspondenceMatrix->SetDimensions(nPoints0, nPoints1, 1);
+    correspondenceMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+    auto matrixArray = correspondenceMatrix->GetPointData()->GetArray(0);
+    matrixArray->SetName("Match");
 
+    const int n = nPoints0*nPoints1;
 
-  // vtkNew<vtkPolyData> output;
-  // output->AllocateExact(0,0, jacobiSet.size(), jacobiSet.size()*2, 0,0, 0,0);
+    auto matrixArrayData = ttkUtils::GetPointer<unsigned char>(matrixArray);
 
-  // vtkNew<vtkPoints> pts;
-  // output->SetPoints(pts);
-  // vtkIdType q=0;
-  // for(auto p: jacobiSet){
-  //   for(int i=0; i<2; i++){
-  //     ttk::SimplexId v;
-  //     triangulation->getEdgeVertex(p.first,i,v);
-  //     float pos[3];
-  //     triangulation->getVertexPoint(v,pos[0],pos[1],pos[2]);
-  //     pts->InsertNextPoint(pos);
-  //   }
-  //   const vtkIdType ids[2]{q,q+1};
-  //   output->InsertNextCell(VTK_LINE, 2, ids);
-  //   q+=2;
-  // }
+    for(int i=0; i<n; i++)
+      matrixArrayData[i]=0;
 
-  // vtkNew<vtkPolyDataWriter> writer;
-  // writer->SetInputDataObject(output);
-  // writer->SetFileName("/home/jones/external/data/ttk-data/test.vtp");
-  // writer->Update();
+    for(const auto& it: componentIdToVertexIdMap){
+      for(const auto& i: std::get<0>(it)){
+        for(const auto& j: std::get<1>(it)){
+          matrixArrayData[j*nPoints0+i] = 1;
+        }
+      }
+    }
 
-  // pts->InsertNextPoint(origin);
-  // pts->InsertNextPoint(p0);
-  // pts->InsertNextPoint(p1);
-  // output->AllocateExact(
-  //   0, // vtkIdType numVerts,
-  //   0, // vtkIdType vertConnSize,
-  //   jacobiSet.size(), // vtkIdType numLines,
-  //   jacobiSet.size(), // vtkIdType lineConnSize,
-  //   // vtkIdType numPolys,
-  //   // vtkIdType polyConnSize,
-  //   // vtkIdType numStrips,
-  //   // vtkIdType stripConnSize
-  // )
+    this->printMsg(msg,1,t.getElapsedTime(),this->threadNumber_);
+  }
 
+  // correspondenceMatrix->ShallowCopy(stackedImage);
 
-  // const auto uComponent = this->GetInputArrayToProcess(0, input);
-  // const auto vComponent = this->GetInputArrayToProcess(1, input);
-
-
-  // const int nPoints0 = p0->GetNumberOfPoints();
-  // const int nPoints1 = p1->GetNumberOfPoints();
-
-  // // get point coordinates
-
-  // auto temp = vtkSmartPointer<vtkFloatArray>::New();
-  // auto coords0 = nPoints0 > 0 ? p0->GetPoints()->GetData() : temp;
-  // auto coords1 = nPoints1 > 0 ? p1->GetPoints()->GetData() : temp;
-
-  // if(coords0->GetDataType() != coords1->GetDataType())
-  //   return !this->printErr("Input vtkPointSet need to have same precision.");
-
-  // // initialize correspondence matrix i.e., distance matrix
-  // correspondenceMatrix->SetDimensions(nPoints0, nPoints1, 1);
-  // correspondenceMatrix->AllocateScalars(coords0->GetDataType(), 1);
-  // auto matrixData = correspondenceMatrix->GetPointData()->GetArray(0);
-  // matrixData->SetName("Distance");
-
-  // // compute distance matrix
-  // int status = 0;
-  // switch(coords0->GetDataType()) {
-  //   vtkTemplateMacro(status = this->computeDistanceMatrix<VTK_TT>(
-  //                     ttkUtils::GetPointer<VTK_TT>(matrixData),
-  //                     ttkUtils::GetPointer<const VTK_TT>(coords0),
-  //                     ttkUtils::GetPointer<const VTK_TT>(coords1), nPoints0,
-  //                     nPoints1));
-  // }
-  // if(!status)
-  //   return 0;
-
-  // status = ttkCorrespondenceAlgorithm::AddIndexLabelMaps(
-  //   correspondenceMatrix, this->GetInputArrayToProcess(0, p0),
-  //   this->GetInputArrayToProcess(0, p1));
-  // if(!status)
-  //   return 0;
+  // Add Index Label Maps
+  {
+    int status = ttkCorrespondenceAlgorithm::AddIndexIdMaps(
+      correspondenceMatrix,
+      this->GetInputArrayToProcess(1, points0),
+      this->GetInputArrayToProcess(1, points1)
+    );
+    if(!status)
+      return 0;
+  }
 
   return 1;
 }

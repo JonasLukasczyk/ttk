@@ -30,6 +30,8 @@
         <Documentation>TODO</Documentation>
       </InputProperty>
 
+      <OutputPort index="0" id="port0" name="Matrix" />
+
       <StringVectorProperty name="Scalars" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">
         <ArrayListDomain attribute_type="Scalars" name="array_list">
           <RequiredProperties>
@@ -39,16 +41,14 @@
         <Documentation>TODO.</Documentation>
       </StringVectorProperty>
 
-      <StringVectorProperty name="Labels" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
+      <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
           <RequiredProperties>
             <Property function="Input" name="MergeTrees" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Feature Labels.</Documentation>
+        <Documentation>Feature Ids.</Documentation>
       </StringVectorProperty>
-
-      <OutputPort index="0" id="port0" name="Correlations" />
 
       ${DEBUG_WIDGETS}
 

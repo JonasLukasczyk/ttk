@@ -30,7 +30,7 @@ namespace ttk {
     };
     ~CorrespondenceByDistance(){};
 
-    template <class DT>
+    template <typename DT>
     int computeDistanceMatrix(DT *distanceMatrix,
                               const DT *coords0,
                               const DT *coords1,
@@ -60,6 +60,52 @@ namespace ttk {
 
           distanceMatrix[j * nPoints0 + i]
             = std::sqrt(dx * dx + dy * dy + dz * dz);
+        }
+      }
+
+      this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
+
+      return 1;
+    }
+
+    template <typename DT>
+    int normalizeDistanceMatrix(DT *distanceMatrix,
+                              const int nPoints0,
+                              const int nPoints1,
+                              const DT maxDistance=-1
+      ) const {
+
+      ttk::Timer timer;
+
+      const std::string msg = "Normalizing Distance Matrix ("
+                              + std::to_string(nPoints0) + "x"
+                              + std::to_string(nPoints1) + ")";
+      this->printMsg(
+        msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
+
+      const int n = nPoints0*nPoints1;
+
+      DT maxValue = maxDistance < 0 ? distanceMatrix[0] : maxDistance;
+
+      #ifdef TTK_ENABLE_OPENMP
+      #pragma omp parallel num_threads(this->threadNumber_)
+      #endif
+      {
+        // if maxDistance < 0 then search for max value inside matrix
+        if(maxDistance<0){
+          #ifdef TTK_ENABLE_OPENMP
+          #pragma omp for reduction(max:maxValue)
+          #endif
+          for(int i = 1; i < n; i++) {
+            maxValue = std::max(maxValue, distanceMatrix[i]);
+          }
+        }
+
+        #ifdef TTK_ENABLE_OPENMP
+        #pragma omp for
+        #endif
+        for(int i = 0; i < n; i++) {
+          distanceMatrix[i] = std::max(std::min(static_cast<DT>(1) - distanceMatrix[i]/maxValue,static_cast<DT>(1)), static_cast<DT>(0));
         }
       }
 

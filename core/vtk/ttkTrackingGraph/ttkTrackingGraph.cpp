@@ -52,28 +52,26 @@ template <typename CT, typename IT>
 int countEdges(int &nEdges,
                const int *dim,
                const CT *correspondences,
-               const int nLabels0 = 0,
-               const int nLables1 = 0,
-               const IT *labels0 = nullptr,
-               const IT *labels1 = nullptr,
-               const vtkDataArray *indexLabelMapP = nullptr,
-               const vtkDataArray *indexLabelMapC = nullptr) {
+               const int nIds0 = 0,
+               const int nIds1 = 0,
+               const IT *ids0 = nullptr,
+               const IT *ids1 = nullptr,
+               const vtkDataArray *indexIdMap0 = nullptr,
+               const vtkDataArray *indexIdMap1 = nullptr) {
 
-  if(nLabels0 > 0 && nLables1 > 0) {
-    std::unordered_map<ttk::SimplexId, ttk::SimplexId> labelIndexMap0;
-    std::unordered_map<ttk::SimplexId, ttk::SimplexId> labelIndexMap1;
-    ttkCorrespondenceAlgorithm::BuildLabelIndexMap(
-      labelIndexMap0, indexLabelMapP);
-    ttkCorrespondenceAlgorithm::BuildLabelIndexMap(
-      labelIndexMap1, indexLabelMapC);
+  if(nIds0 > 0 && nIds1 > 0) {
+    std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap0;
+    std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap1;
+    ttkCorrespondenceAlgorithm::BuildIdIndexMap(idIndexMap0, indexIdMap0);
+    ttkCorrespondenceAlgorithm::BuildIdIndexMap(idIndexMap1, indexIdMap1);
 
-    for(int i = 0; i < nLabels0; i++) {
-      for(int j = 0; j < nLables1; j++) {
-        auto iLabel = static_cast<ttk::SimplexId>(labels0[i]);
-        auto jLabel = static_cast<ttk::SimplexId>(labels1[j]);
-        const auto &iIt = labelIndexMap0.find(iLabel);
-        const auto &jIt = labelIndexMap1.find(jLabel);
-        if(iIt == labelIndexMap0.end() || jIt == labelIndexMap1.end())
+    for(int i = 0; i < nIds0; i++) {
+      for(int j = 0; j < nIds1; j++) {
+        auto iId = static_cast<ttk::SimplexId>(ids0[i]);
+        auto jId = static_cast<ttk::SimplexId>(ids1[j]);
+        const auto &iIt = idIndexMap0.find(iId);
+        const auto &jIt = idIndexMap1.find(jId);
+        if(iIt == idIndexMap0.end() || jIt == idIndexMap1.end())
           continue;
 
         const auto &iIdx = iIt->second;
@@ -106,12 +104,12 @@ int generateEdges(vtkPolyData *output,
                   const int &offset0,
                   const int &offset1,
                   const int *dim,
-                  const int nLabels0 = 0,
-                  const int nLables1 = 0,
-                  const IT *labels0 = nullptr,
-                  const IT *labels1 = nullptr,
-                  const vtkDataArray *indexLabelMapP = nullptr,
-                  const vtkDataArray *indexLabelMapC = nullptr) {
+                  const int nIds0 = 0,
+                  const int nIds1 = 0,
+                  const IT *ids0 = nullptr,
+                  const IT *ids1 = nullptr,
+                  const vtkDataArray *indexIdMap0 = nullptr,
+                  const vtkDataArray *indexIdMap1 = nullptr) {
 
   std::vector<std::pair<vtkAbstractArray *, vtkAbstractArray *>> arrayMap;
   for(int a = 0; a < trackingGraphCD->GetNumberOfArrays(); a++) {
@@ -120,21 +118,19 @@ int generateEdges(vtkPolyData *output,
       {oArray, correspondencesPD->GetArray(oArray->GetName())});
   }
 
-  if(nLabels0 > 0 && nLables1 > 0) {
-    std::unordered_map<ttk::SimplexId, ttk::SimplexId> labelIndexMap0;
-    std::unordered_map<ttk::SimplexId, ttk::SimplexId> labelIndexMap1;
-    ttkCorrespondenceAlgorithm::BuildLabelIndexMap(
-      labelIndexMap0, indexLabelMapP);
-    ttkCorrespondenceAlgorithm::BuildLabelIndexMap(
-      labelIndexMap1, indexLabelMapC);
+  if(nIds0 > 0 && nIds1 > 0) {
+    std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap0;
+    std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap1;
+    ttkCorrespondenceAlgorithm::BuildIdIndexMap( idIndexMap0, indexIdMap0);
+    ttkCorrespondenceAlgorithm::BuildIdIndexMap( idIndexMap1, indexIdMap1);
 
-    for(int i = 0; i < nLabels0; i++) {
-      for(int j = 0; j < nLables1; j++) {
-        auto iLabel = static_cast<ttk::SimplexId>(labels0[i]);
-        auto jLabel = static_cast<ttk::SimplexId>(labels1[j]);
-        const auto &iIt = labelIndexMap0.find(iLabel);
-        const auto &jIt = labelIndexMap1.find(jLabel);
-        if(iIt == labelIndexMap0.end() || jIt == labelIndexMap1.end())
+    for(int i = 0; i < nIds0; i++) {
+      for(int j = 0; j < nIds1; j++) {
+        auto iId = static_cast<ttk::SimplexId>(ids0[i]);
+        auto jId = static_cast<ttk::SimplexId>(ids1[j]);
+        const auto &iIt = idIndexMap0.find(iId);
+        const auto &jIt = idIndexMap1.find(jId);
+        if(iIt == idIndexMap0.end() || jIt == idIndexMap1.end())
           continue;
 
         const auto &iIdx = iIt->second;
@@ -182,45 +178,44 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
                                          vtkMultiBlockDataSet *features
                                          = nullptr) {
 
-  const int nSteps = correspondences->GetNumberOfBlocks();
+  const int nSteps = correspondences->GetNumberOfBlocks() + 1;
 
   nNodes = 0;
   nEdges = 0;
-  nodeIdxOffsets.resize(nSteps + 1, 0);
+  nodeIdxOffsets.resize(nSteps);
   nodeIdxOffsets[0] = 0;
 
   if(features) {
     // nodes
-    for(int t = 0; t <= nSteps; t++) {
-      auto f = static_cast<vtkPointSet *>(features->GetBlock(t));
+    for(int t = 1; t < nSteps; t++) {
+      auto f = static_cast<vtkPointSet *>(features->GetBlock(t-1));
       const auto n = f->GetNumberOfPoints();
       nNodes += n;
-      if(t < nSteps)
-        nodeIdxOffsets[t + 1] = n + nodeIdxOffsets[t];
+      nodeIdxOffsets[t] = n + nodeIdxOffsets[t-1];
     }
 
     // edges
-    for(int t = 0; t < nSteps; t++) {
-      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t));
-      auto f1 = static_cast<vtkPointSet *>(features->GetBlock(t + 1));
-
-      if(f0->GetNumberOfPoints()<1 || f1->GetNumberOfPoints()<1)
-        continue;
-
-      auto l0 = this->GetInputArrayToProcess(1, f0);
-      auto l1 = this->GetInputArrayToProcess(1, f1);
-
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t));
+    for(int t = 1; t < nSteps; t++) {
+      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t-1));
       int dim[3];
       c->GetDimensions(dim);
       auto matrix = this->GetInputArrayToProcess(0, c);
-
       auto cFD = c->GetFieldData();
-      vtkDataArray *indexLabelMapP{nullptr};
-      vtkDataArray *indexLabelMapC{nullptr};
-      if(!ttkCorrespondenceAlgorithm::GetIndexLabelMaps(
-           indexLabelMapP, indexLabelMapC, cFD))
-        return !this->printErr("Unable to retrieve Index-Label-Maps.");
+
+      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t-1));
+      auto f1 = static_cast<vtkPointSet *>(features->GetBlock(t));
+      if(f0->GetNumberOfPoints()<1 || f1->GetNumberOfPoints()<1)
+        continue;
+
+      const auto idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(cFD);
+      auto l0 = f0->GetPointData()->GetArray(idArrayName.data());
+      auto l1 = f1->GetPointData()->GetArray(idArrayName.data());
+
+      vtkDataArray *indexIdMapP{nullptr};
+      vtkDataArray *indexIdMapC{nullptr};
+      if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(
+           indexIdMapP, indexIdMapC, cFD))
+        return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
       int status = 0;
       ttkTypeMacroAI(
@@ -228,22 +223,22 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
         status = countEdges(nEdges, dim, ttkUtils::GetPointer<T0>(matrix),
                    l0->GetNumberOfValues(), l1->GetNumberOfValues(),
                    ttkUtils::GetPointer<T1>(l0), ttkUtils::GetPointer<T1>(l1),
-                   indexLabelMapP, indexLabelMapC));
+                   indexIdMapP, indexIdMapC));
       if(!status)
         return 0;
     }
   } else {
-    for(int t = 0; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t));
+    for(int t = 1; t < nSteps; t++) {
+      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t-1));
       int dim[3];
       c->GetDimensions(dim);
 
       // nodes
-      if(t == 0)
+      if(t == 1)
         nNodes += dim[0];
       nNodes += dim[1];
 
-      nodeIdxOffsets[t + 1] = dim[0] + nodeIdxOffsets[t];
+      nodeIdxOffsets[t] = dim[0] + nodeIdxOffsets[t-1];
 
       // edges
       auto matrix = this->GetInputArrayToProcess(0, c);
@@ -258,12 +253,12 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
 };
 
 int collectArrays(vtkFieldData *arrayMap,
-                  vtkMultiBlockDataSet *correspondences,
+                  vtkMultiBlockDataSet *objects,
                   int attribute) {
-  const int nSteps = correspondences->GetNumberOfBlocks();
+  const int nSteps = objects->GetNumberOfBlocks();
   for(int t = 0; t < nSteps; t++) {
-    auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t));
-    auto data = c->GetAttributesAsFieldData(attribute);
+    auto block = objects->GetBlock(t);
+    auto data = block->GetAttributesAsFieldData(attribute);
     for(int a = 0; a < data->GetNumberOfArrays(); a++)
       arrayMap->AddArray(data->GetAbstractArray(a));
   }
@@ -297,24 +292,30 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *correspondences,
   }
 
   if(features) {
-    if(features->GetNumberOfBlocks() - 1
-       != correspondences->GetNumberOfBlocks())
-      return !this->printErr(
-        "Number of feature sets (F) and number of correspondence matrices (C) "
-        "must satisfy F-1 = C.");
+    if(features->GetNumberOfBlocks() - 1 != correspondences->GetNumberOfBlocks())
+      return !this->printMsg(std::vector<std::string>({
+        "Number of feature sets (F) and correspondence matrices (C) inconsistent.",
+        "They must satisfy F = C + 1."
+      }),ttk::debug::Priority::ERROR);
 
-    auto ct = vtkSmartPointer<vtkCellTypes>::New();
+    // automatically determine indexIdMapName
+
+    std::string idArrayName;
+    for(int t = 0; t < nSteps; t++) {
+      idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(correspondences->GetBlock(t)->GetFieldData());
+      if(idArrayName.size()<1)
+        return !this->printMsg(std::vector<std::string>( {"Correspondence Matrices not augmented with IndexIdMaps.","Unable to perform FeatureId lookup."} ),
+                  ttk::debug::Priority::ERROR
+              );
+    }
 
     for(int t = 0; t <= nSteps; t++) {
       auto f = vtkPointSet::SafeDownCast(features->GetBlock(t));
       if(!f)
         return !this->printErr(errmsg1);
-      // f->GetCellTypes(ct);
-      // if(ct->GetNumberOfTypes() != 1 || !ct->IsType(VTK_VERTEX))
-      //   return !this->printErr(errmsg1);
-      auto labels = this->GetInputArrayToProcess(1, f);
-      if(f->GetNumberOfPoints()>0 && !labels)
-        return !this->printErr("Unable to retrieve feature labels.");
+      auto ids = f->GetPointData()->GetArray(idArrayName.data());
+      if(f->GetNumberOfPoints()>0 && !ids)
+        return !this->printErr("Unable to retrieve feature ids.");
     }
   }
 
@@ -333,7 +334,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   std::string msg = "Initializing Output";
   this->printMsg(msg, 0, 0, ttk::debug::LineMode::REPLACE);
 
-  const int nSteps = correspondences->GetNumberOfBlocks();
+  const int nSteps = correspondences->GetNumberOfBlocks()+1;
 
   int nNodes, nEdges;
   std::vector<int> nodeIdxOffsets;
@@ -344,6 +345,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   if(nNodes<1)
     return this->printWrn("Empty Input");
 
+  // collect arrays to augment tracking graph
   auto featuresPD = vtkSmartPointer<vtkFieldData>::New();
   collectArrays(featuresPD, features, 0);
   auto featuresFD = vtkSmartPointer<vtkFieldData>::New();
@@ -358,6 +360,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   auto points = vtkSmartPointer<vtkPoints>::New();
   points->SetDataTypeToFloat();
   points->SetNumberOfPoints(nNodes);
+
   trackingGraph->SetPoints(points);
   trackingGraph->AllocateExact(0, 0, nEdges, 2, 0, 0, 0, 0);
 
@@ -390,7 +393,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   // Nodes
   {
     auto pointCoords = points->GetData();
-    for(int t = 0, q = 0; t <= nSteps; t++) {
+    for(int t = 0, q = 0; t < nSteps; t++) {
       auto f = vtkPointSet::SafeDownCast(features->GetBlock(t));
       const int n = f->GetNumberOfPoints();
       if(n < 1)
@@ -401,13 +404,14 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
       auto fFD = f->GetFieldData();
       for(int a = 0; a < trackingGraphPD->GetNumberOfArrays(); a++) {
         auto oArray = trackingGraphPD->GetAbstractArray(a);
+        const int nComponents = oArray->GetNumberOfComponents();
         auto iArray = fPD->GetAbstractArray(oArray->GetName());
         if(iArray) {
           oArray->InsertTuples(q, n, 0, iArray);
         } else {
           iArray = fFD->GetAbstractArray(oArray->GetName());
           for(int i = 0; i < n; i++)
-            oArray->InsertTuples(q + i, 1, 0, iArray);
+            oArray->InsertTuples(q + i, nComponents, 0, iArray);
         }
       }
 
@@ -417,35 +421,37 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
 
   // Edges
   {
-    for(int t = 0, q = 0; t < nSteps; t++) {
-      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t));
-      auto f1 = static_cast<vtkPointSet *>(features->GetBlock(t + 1));
-      auto l0 = this->GetInputArrayToProcess(1, f0);
-      auto l1 = this->GetInputArrayToProcess(1, f1);
-
-      if(f0->GetNumberOfPoints()<1 || f1->GetNumberOfPoints()<1)
-        continue;
-
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t));
+    for(int t = 1, q = 0; t < nSteps; t++) {
+      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t-1));
       int dim[3];
       c->GetDimensions(dim);
       auto matrix = this->GetInputArrayToProcess(0, c);
-
       auto cFD = c->GetFieldData();
-      vtkDataArray *indexLabelMapP{nullptr};
-      vtkDataArray *indexLabelMapC{nullptr};
-      if(!ttkCorrespondenceAlgorithm::GetIndexLabelMaps(
-           indexLabelMapP, indexLabelMapC, cFD))
-        return !this->printErr("Unable to retrieve Index-Label-Maps.");
+
+      const auto idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(cFD);
+
+      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t-1));
+      auto f1 = static_cast<vtkPointSet *>(features->GetBlock(t));
+      if(f0->GetNumberOfPoints()<1 || f1->GetNumberOfPoints()<1)
+        continue;
+
+      auto l0 = f0->GetPointData()->GetArray(idArrayName.data());
+      auto l1 = f1->GetPointData()->GetArray(idArrayName.data());
+
+      vtkDataArray *indexIdMapP{nullptr};
+      vtkDataArray *indexIdMapC{nullptr};
+      if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(
+          indexIdMapP, indexIdMapC, cFD))
+        return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
       ttkTypeMacroAI(
         matrix->GetDataType(), l0->GetDataType(),
         (generateEdges<T0, T1>(
           trackingGraph, q, trackingGraphCD, c->GetPointData(),
-          ttkUtils::GetPointer<T0>(matrix), nodeIdxOffsets[t],
-          nodeIdxOffsets[t + 1], dim, f0->GetNumberOfPoints(),
+          ttkUtils::GetPointer<T0>(matrix), nodeIdxOffsets[t-1],
+          nodeIdxOffsets[t], dim, f0->GetNumberOfPoints(),
           f1->GetNumberOfPoints(), ttkUtils::GetPointer<T1>(l0),
-          ttkUtils::GetPointer<T1>(l1), indexLabelMapP, indexLabelMapC)));
+          ttkUtils::GetPointer<T1>(l1), indexIdMapP, indexIdMapC)));
     }
   }
 
@@ -493,20 +499,19 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
     trackingGraphCD->AddArray(arrayInstance);
   }
 
-  vtkSmartPointer<vtkDataArray> labels;
+  vtkSmartPointer<vtkDataArray> ids;
   {
-    vtkDataArray *someIndexLabelMap{nullptr};
-    vtkDataArray *temp{nullptr};
-    if(!ttkCorrespondenceAlgorithm::GetIndexLabelMaps(
-         someIndexLabelMap, temp, correspondencesFD))
-      return !this->printErr("Unable to retrieve Index-Label-Maps.");
+    vtkDataArray *indexIdMapP{nullptr};
+    vtkDataArray *indexIdMapC{nullptr};
+    if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(indexIdMapP, indexIdMapC, correspondencesFD))
+      return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
-    auto name = std::string(someIndexLabelMap->GetName());
-    labels
-      = vtkSmartPointer<vtkDataArray>::Take(someIndexLabelMap->NewInstance());
-    labels->SetName(name.substr(0, name.size() - 2).data());
-    labels->SetNumberOfTuples(nNodes);
-    trackingGraphPD->AddArray(labels);
+    std::string idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(correspondencesFD);
+
+    ids = vtkSmartPointer<vtkDataArray>::Take(indexIdMapP->NewInstance());
+    ids->SetName(idArrayName.data());
+    ids->SetNumberOfTuples(nNodes);
+    trackingGraphPD->AddArray(ids);
   }
 
   auto timeIdx = vtkSmartPointer<vtkIntArray>::New();
@@ -535,15 +540,15 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
     c->GetDimensions(dim);
 
     auto cFD = c->GetFieldData();
-    vtkDataArray *indexLabelMapP{nullptr};
-    vtkDataArray *indexLabelMapC{nullptr};
-    if(!ttkCorrespondenceAlgorithm::GetIndexLabelMaps(
-         indexLabelMapP, indexLabelMapC, cFD))
-      return !this->printErr("Unable to retrieve Index-Label-Maps.");
+    vtkDataArray *indexIdMapP{nullptr};
+    vtkDataArray *indexIdMapC{nullptr};
+    if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(
+         indexIdMapP, indexIdMapC, cFD))
+      return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
     // nodes
     if(t == 0) {
-      labels->InsertTuples(0, dim[0], 0, indexLabelMapP);
+      ids->InsertTuples(0, dim[0], 0, indexIdMapP);
       for(int i = 0; i < dim[0]; i++) {
         pointCoordsData[nodeIdx3++] = 0;
         pointCoordsData[nodeIdx3++] = i;
@@ -553,7 +558,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
       }
     }
 
-    labels->InsertTuples(nodeIdx, dim[1], 0, indexLabelMapC);
+    ids->InsertTuples(nodeIdx, dim[1], 0, indexIdMapC);
     for(int i = 0; i < dim[1]; i++) {
       pointCoordsData[nodeIdx3++] = t + 1;
       pointCoordsData[nodeIdx3++] = i;
@@ -596,7 +601,7 @@ int ttkTrackingGraph::RequestData(vtkInformation *,
 
   if(features) {
     if(!this->GenerateTrackingGraphFromFeatures(
-         trackingGraph, correspondences, features))
+        trackingGraph, correspondences, features))
       return 0;
   } else {
     if(!this->GenerateTrackingGraphFromMatrix(trackingGraph, correspondences))

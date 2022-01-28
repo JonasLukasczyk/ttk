@@ -19,6 +19,8 @@
         <Documentation>TODO</Documentation>
       </InputProperty>
 
+      <OutputPort index="0" id="port0" name="Matrix" />
+
       <InputProperty name="CriticalPoints" label="Critical Points" port_index="1" command="SetInputConnection">
         <ProxyGroupDomain name="groups">
           <Group name="sources" />
@@ -40,16 +42,14 @@
         <Documentation>Scalars.</Documentation>
       </StringVectorProperty>
 
-      <StringVectorProperty name="Labels" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
+      <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
           <RequiredProperties>
             <Property function="Input" name="CriticalPoints" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Feature Labels.</Documentation>
+        <Documentation>Feature Ids.</Documentation>
       </StringVectorProperty>
-
-      <OutputPort index="0" id="port0" name="Matrix" />
 
       ${DEBUG_WIDGETS}
 

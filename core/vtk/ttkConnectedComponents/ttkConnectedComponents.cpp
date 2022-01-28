@@ -18,6 +18,9 @@ vtkStandardNewMacro(ttkConnectedComponents);
 ttkConnectedComponents::ttkConnectedComponents() {
   this->SetNumberOfInputPorts(1);
   this->SetNumberOfOutputPorts(2);
+
+  // Suppress warning if one does not set the optional input array
+  this->SetInputArrayToProcess(0,0,0,0,"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 }
 
 ttkConnectedComponents::~ttkConnectedComponents() {
