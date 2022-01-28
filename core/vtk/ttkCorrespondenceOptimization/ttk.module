@@ -1,0 +1,9 @@
+NAME
+  ttkCorrespondenceOptimization
+SOURCES
+  ttkCorrespondenceOptimization.cpp
+HEADERS
+  ttkCorrespondenceOptimization.h
+DEPENDS
+  correspondenceOptimization
+  ttkAlgorithm
