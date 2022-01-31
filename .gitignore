@@ -14,6 +14,8 @@
 
 # Project files specific to a local user
 CMakeLists.txt.user
+scripts/apply-format
+scripts/git-pre-commit-format
 
 # Build and install folders at project root
 /build*/

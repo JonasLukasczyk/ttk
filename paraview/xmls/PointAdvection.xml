@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+  <ProxyGroup name="sources">
+    <SourceProxy name="ttkPointAdvection" class="ttkPointAdvection" label="TTK PointAdvection">
+      <Documentation long_help="PointAdvection Long" short_help="PointAdvection Short">This filter is a well documented ttk example filter that computes for each vertex of a vtkDataSet the average scalar value of itself and its neighbors.</Documentation>
+
+      <!-- POINT PARAMETER WIDGETS -->
+      <IntVectorProperty name="nPoints" label="Number of points" command="SetnPoints" number_of_elements="1" default_values="10">
+          <Documentation>Number of points to be created.</Documentation>
+      </IntVectorProperty>
+
+      <IntVectorProperty name="RandomSeed" command="SetRandomSeed" number_of_elements="1" default_values="1">
+          <Documentation>The seed for the random number generators.</Documentation>
+      </IntVectorProperty>
+
+      <DoubleVectorProperty name="PointWeight" command="SetPointWeight" default_values="0 1" number_of_elements="2">
+          <Documentation> The weight of the point. The range sets the interval for random value generation.</Documentation>
+      </DoubleVectorProperty>
+
+      <DoubleVectorProperty name="PointConstant" command="SetPointConstant" default_values="0 1" number_of_elements="2">
+          <Documentation> A point specific constant. The range sets the interval for random value generation.
+          </Documentation>
+      </DoubleVectorProperty>
+
+      <DoubleVectorProperty name="Birth" command="SetBirth" default_values="0 1" number_of_elements="2">
+          <Documentation> When a point appears in the data. The range sets the interval for random value generation.</Documentation>
+      </DoubleVectorProperty>
+
+      <DoubleVectorProperty name="Death" command="SetDeath" default_values="0 1" number_of_elements="2">
+          <Documentation> When a point disappears in the data. The range sets the interval for random value generation.
+          </Documentation>
+      </DoubleVectorProperty>
+
+
+      <!-- Create a UI group that contains all point parameter widgets (here only one) -->
+      <PropertyGroup panel_widget="Line" label="Point Options">
+        <Property name="nPoints" />
+        <Property name="RandomSeed" />
+        <Property name="PointWeight" />
+        <Property name="PointConstant" />
+        <Property name="Birth" />
+        <Property name="Death" />
+      </PropertyGroup>
+
+      <!-- ADVECTION PARAMETER WIDGETS -->
+      <IntVectorProperty name="nTimesteps" label="Number of timesteps" command="SetnTimesteps" number_of_elements="1" default_values="10">
+          <Documentation>The length of the time series.</Documentation>
+      </IntVectorProperty>
+
+      <DoubleVectorProperty name="TimeInterval" label="Time Interval" command="SetTimeInterval" number_of_elements="1" default_values="1">
+          <Documentation>The interval between each timestep.</Documentation>
+      </DoubleVectorProperty>
+
+      <DoubleVectorProperty name="StepLength" label="Step Length" command="SetStepLength" number_of_elements="1" default_values="0.1">
+          <Documentation>The length of steps taken along the vector field during the path integration.</Documentation>
+      </DoubleVectorProperty>
+
+      <DoubleVectorProperty name="PerlinScaleFactor" label="Perlin Scale Factor" command="SetPerlinScaleFactor" number_of_elements="1" default_values="10.0">
+          <Documentation>How much vector fields from perlin are scaled. Lower values yield lower resolution for the perlin fields.</Documentation>
+      </DoubleVectorProperty>
+
+      <IntVectorProperty name="VecField" label="Vector Field" command="SetVecField" number_of_elements="1" default_values="0">
+        <EnumerationDomain name="enum">
+          <Entry value="0" text="Perturbed Perlin" />
+          <Entry value="1" text="Perlin Gradient" />
+          <Entry value="2" text="Positive Diagonal" />
+          <Entry value="3" text="Positive X" />
+        </EnumerationDomain>
+        <Documentation>The list of vector fields which can be used during the integration.</Documentation>
+      </IntVectorProperty>
+
+      <!-- Create a UI group that contains all advection parameter widgets (here only one) -->
+      <PropertyGroup panel_widget="Line" label="Advection Options">
+        <Property name="nTimesteps" />
+        <Property name="TimeInterval" />
+        <Property name="StepLength" />
+        <Property name="PerlinScaleFactor" />
+        <Property name="VecField" />
+      </PropertyGroup>
+
+
+      <!-- DEBUG -->
+      ${DEBUG_WIDGETS}
+
+      <!-- MENU CATEGORY -->
+      <Hints>
+        <ShowInMenu category="TTK - Misc" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

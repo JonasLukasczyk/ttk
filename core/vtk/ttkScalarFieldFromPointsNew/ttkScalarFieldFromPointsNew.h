@@ -1,46 +1,46 @@
 /// TODO 4: Provide your information
 ///
 /// \ingroup vtk
-/// \class ttkScalarFieldFromPoints
+/// \class ttkScalarFieldFromPointsNew
 /// \author Emma Nilsson <emma.nilsson@liu.se>
 /// \date 2021-10-11.
 ///
-/// \brief TTK VTK-filter that wraps the ttk::ScalarFieldFromPoints module.
+/// \brief TTK VTK-filter that wraps the ttk::ScalarFieldFromPointsNew module.
 ///
-/// This VTK filter uses the ttk::ScalarFieldFromPoints module to compute the
+/// This VTK filter uses the ttk::ScalarFieldFromPointsNew module to compute the
 /// scalar field from a set of points for each timestep in the timeseries.
 ///
 /// \param Input vtkMultiBlockDataSet of vtkPolyData representing integrated
 /// path lines, from which a scalar field is computed. \param Output
 /// vtkMultiBlockDataSet of vtkImageData representing scalar fields.
 ///
-/// \sa ttk::ScalarFieldFromPoints
+/// \sa ttk::ScalarFieldFromPointsNew
 /// \sa ttkAlgorithm
 
 #pragma once
 
 // VTK Module
-#include <ttkScalarFieldFromPointsModule.h>
+#include <ttkScalarFieldFromPointsNewModule.h>
 
 // VTK Includes
 #include <ttkAlgorithm.h>
 
 // TTK Base Includes
-#include <ScalarFieldFromPoints.h>
+#include <ScalarFieldFromPointsNew.h>
 
-class TTKSCALARFIELDFROMPOINTS_EXPORT ttkScalarFieldFromPoints
+class TTKSCALARFIELDFROMPOINTSNEW_EXPORT ttkScalarFieldFromPointsNew
   : public ttkAlgorithm // we inherit from the generic ttkAlgorithm class
   ,
-    protected ttk::ScalarFieldFromPoints // and we inherit from the base class
+    protected ttk::ScalarFieldFromPointsNew // and we inherit from the base
+                                            // class
 {
 private:
-  double ImageBounds[6]{0,1,0,1,0,1};
-  double Resolution[3]{1,1,1};
+  double ImageBounds[6]{0, 1, 0, 1, 0, 1};
+  double Resolution[3]{1, 1, 1};
   double Bandwidth{1};
   int Kernel{0};
 
 public:
-
   vtkSetVector6Macro(ImageBounds, double);
   vtkGetVector6Macro(ImageBounds, double);
   vtkSetVector3Macro(Resolution, double);
@@ -50,18 +50,18 @@ public:
   vtkSetMacro(Kernel, int);
   vtkGetMacro(Kernel, int);
 
-  static ttkScalarFieldFromPoints *New();
-  vtkTypeMacro(ttkScalarFieldFromPoints, ttkAlgorithm);
+  static ttkScalarFieldFromPointsNew *New();
+  vtkTypeMacro(ttkScalarFieldFromPointsNew, ttkAlgorithm);
 
 protected:
-  ttkScalarFieldFromPoints();
-  ~ttkScalarFieldFromPoints() override;
+  ttkScalarFieldFromPointsNew();
+  ~ttkScalarFieldFromPointsNew() override;
 
   int FillInputPortInformation(int port, vtkInformation *info) override;
   int FillOutputPortInformation(int port, vtkInformation *info) override;
   int RequestInformation(vtkInformation *request,
-                  vtkInformationVector **inputVector,
-                  vtkInformationVector *outputVector);
+                         vtkInformationVector **inputVector,
+                         vtkInformationVector *outputVector);
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,
                   vtkInformationVector *outputVector) override;

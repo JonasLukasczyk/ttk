@@ -6,7 +6,7 @@
 
 // TTK Includes
 #include <CommandLineParser.h>
-#include <ttkPerlinPathIntegrator.h>
+#include <ttkPointAdvection.h>
 
 // VTK Includes
 #include <vtkCellData.h>
@@ -56,17 +56,17 @@ int main(int argc, char **argv) {
   // Command line output messages.
   // ---------------------------------------------------------------------------
   ttk::Debug msg;
-  msg.setDebugMsgPrefix("PerlinPathIntegrator");
+  msg.setDebugMsgPrefix("PointAdvection");
 
   // ---------------------------------------------------------------------------
-  // Initialize ttkPerlinPathIntegrator module (adjust parameters)
+  // Initialize ttkPointAdvection module (adjust parameters)
   // ---------------------------------------------------------------------------
-  auto perlinPathIntegrator = vtkSmartPointer<ttkPerlinPathIntegrator>::New();
+  auto pointAdvection = vtkSmartPointer<ttkPointAdvection>::New();
 
   // ---------------------------------------------------------------------------
   // TODO 14: Pass custom arguments and options to the module
   // ---------------------------------------------------------------------------
-  // perlinPathIntegrator->SetOutputArrayName(outputArrayName);
+  // pointAdvection->SetOutputArrayName(outputArrayName);
 
   // ---------------------------------------------------------------------------
   // Read input vtkDataObjects (optionally: print available arrays)
@@ -108,8 +108,8 @@ int main(int argc, char **argv) {
         return 1;
       }
     } else {
-      // feed input object to ttkPerlinPathIntegrator filter
-      perlinPathIntegrator->SetInputDataObject(i, reader->GetOutput());
+      // feed input object to ttkPointAdvection filter
+      pointAdvection->SetInputDataObject(i, reader->GetOutput());
 
       // default arrays
       if(!defaultArray) {
@@ -133,19 +133,20 @@ int main(int argc, char **argv) {
       inputArrayNames.push_back(defaultArray->GetName());
   }
   for(size_t i = 0; i < inputArrayNames.size(); i++)
-    perlinPathIntegrator->SetInputArrayToProcess(i, 0, 0, 0, inputArrayNames[i].data());
+    pointAdvection->SetInputArrayToProcess(
+      i, 0, 0, 0, inputArrayNames[i].data());
 
   // ---------------------------------------------------------------------------
-  // Execute ttkPerlinPathIntegrator filter
+  // Execute ttkPointAdvection filter
   // ---------------------------------------------------------------------------
-  perlinPathIntegrator->Update();
+  pointAdvection->Update();
 
   // ---------------------------------------------------------------------------
   // If output prefix is specified then write all output objects to disk
   // ---------------------------------------------------------------------------
   if(!outputPathPrefix.empty()) {
-    for(int i = 0; i < perlinPathIntegrator->GetNumberOfOutputPorts(); i++) {
-      auto output = perlinPathIntegrator->GetOutputDataObject(i);
+    for(int i = 0; i < pointAdvection->GetNumberOfOutputPorts(); i++) {
+      auto output = pointAdvection->GetOutputDataObject(i);
       auto writer
         = vtkXMLDataObjectWriter::NewWriter(output->GetDataObjectType());
 

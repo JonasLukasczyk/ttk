@@ -86,7 +86,7 @@
 
             <!-- MENU CATEGORY -->
                 <Hints>
-                    <ShowInMenu category="TTK - Misc" />
+                    <ShowInMenu category="TTK" />
                 </Hints>
         </SourceProxy>
     </ProxyGroup>

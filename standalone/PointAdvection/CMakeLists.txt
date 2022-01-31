@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(ttkPerlinVectorFieldCmd)
+project(ttkPointAdvectionCmd)
 
-if(TARGET ttkPerlinVectorField)
+if(TARGET ttkPointAdvection)
   add_executable(${PROJECT_NAME} main.cpp)
   target_link_libraries(${PROJECT_NAME}
     PRIVATE
-      ttkPerlinVectorField
+      ttkPointAdvection
       VTK::IOXML
     )
   set_target_properties(${PROJECT_NAME}

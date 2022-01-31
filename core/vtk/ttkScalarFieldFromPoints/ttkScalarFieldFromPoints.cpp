@@ -124,7 +124,6 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *request,
     auto scalarArrayData = ttkUtils::GetPointer<double>(scalarArray);
 
     auto nPixels = scalarArray->GetNumberOfTuples();
-    this->printMsg("nPixels: " + std::to_string(nPixels));
 
     auto voronoiArray = vtkSmartPointer<vtkIntArray>::New();
     voronoiArray->SetName("Voronoi");
