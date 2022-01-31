@@ -29,8 +29,8 @@ int ttkPlanarGraphLayout::FillInputPortInformation(int port,
                                                    vtkInformation *info) {
   if(port == 0) {
     info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
-    info->Append(
-      vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
+    info->Remove(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE());
+    info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
     info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData");
   } else
     return 0;
@@ -66,20 +66,15 @@ int ttkPlanarGraphLayout::planarGraphLayoutCall(
 
   // Get input arrays
   auto sequenceArray = this->GetInputArrayToProcess(0, inputVector);
-  if(this->GetUseSequences() && !sequenceArray)
-    return !this->printErr("Unable to retrieve sequence array.");
-
   auto sizeArray = this->GetInputArrayToProcess(1, inputVector);
-  if(this->GetUseSizes() && !sizeArray)
-    return !this->printErr("Unable to retrieve size array.");
-
   auto branchArray = this->GetInputArrayToProcess(2, inputVector);
-  if(this->GetUseBranches() && !branchArray)
-    return !this->printErr("Unable to retrieve branch array.");
-
   auto levelArray = this->GetInputArrayToProcess(3, inputVector);
-  if(this->GetUseLevels() && !levelArray)
-    return !this->printErr("Unable to retrieve level array.");
+
+  if(branchArray && levelArray && branchArray->GetDataType()!=levelArray->GetDataType())
+    return !this->printErr("Branch and Level Array must have same integer data type.");
+
+  if(sizeArray && sizeArray->GetDataType()!=VTK_FLOAT)
+    return !this->printErr("Size Array must be of type float.");
 
   // Initialize output array
   auto outputArray = vtkSmartPointer<vtkFloatArray>::New();
@@ -98,19 +93,18 @@ int ttkPlanarGraphLayout::planarGraphLayoutCall(
 
   int status = 1;
   ttkTypeMacroAII(
-    this->GetUseSequences() ? sequenceArray->GetDataType() : VTK_INT,
-    this->GetUseBranches() ? branchArray->GetDataType() : VTK_INT,
+    sequenceArray ? sequenceArray->GetDataType() : VTK_INT,
+    branchArray ? branchArray->GetDataType() : VTK_INT,
     cells->GetDataType(),
     (status = this->computeLayout<T0, T1, T2>(
        // Output
        ttkUtils::GetPointer<float>(outputArray),
        // Input
        ttkUtils::GetPointer<T2>(cells), nPoints, nEdges,
-       this->GetUseSequences() ? ttkUtils::GetPointer<T0>(sequenceArray)
-                               : nullptr,
-       this->GetUseSizes() ? ttkUtils::GetPointer<float>(sizeArray) : nullptr,
-       this->GetUseBranches() ? ttkUtils::GetPointer<T1>(branchArray) : nullptr,
-       this->GetUseLevels() ? ttkUtils::GetPointer<T1>(levelArray) : nullptr)));
+       ttkUtils::GetPointer<T0>(sequenceArray),
+       ttkUtils::GetPointer<float>(sizeArray),
+       ttkUtils::GetPointer<T1>(branchArray),
+       ttkUtils::GetPointer<T1>(levelArray))));
 
   if(status != 1)
     return 0;

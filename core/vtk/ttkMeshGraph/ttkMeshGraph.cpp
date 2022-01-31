@@ -12,6 +12,7 @@
 #include <vtkInformationVector.h>
 #include <vtkPointData.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkPolyData.h>
 
 #include <vtkArrayDispatch.h>
 #include <vtkDataArrayAccessor.h>
@@ -31,7 +32,9 @@ ttkMeshGraph::~ttkMeshGraph() {
 
 int ttkMeshGraph::FillInputPortInformation(int port, vtkInformation *info) {
   if(port == 0) {
-    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
+    info->Remove(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE());
+    info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
+    info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData");
     return 1;
   }
   return 0;
@@ -39,7 +42,7 @@ int ttkMeshGraph::FillInputPortInformation(int port, vtkInformation *info) {
 
 int ttkMeshGraph::FillOutputPortInformation(int port, vtkInformation *info) {
   if(port == 0) {
-    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkUnstructuredGrid");
+    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPolyData");
     return 1;
   }
   return 0;
@@ -53,7 +56,7 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
   // ---------------------------------------------------------------------------
   // Get Input
   // ---------------------------------------------------------------------------
-  auto input = vtkUnstructuredGrid::GetData(inputVector[0]);
+  auto input = vtkPointSet::GetData(inputVector[0]);
   if(input == nullptr) {
     return -1;
   }
@@ -82,7 +85,11 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
   outputPoints->SetNumberOfPoints(nOutputPoints);
 
   // Output Topology
-  auto inputConnectivityArray = input->GetCells()->GetConnectivityArray();
+  vtkDataArray *inputConnectivityArray{nullptr};
+  if(auto inputAsUG = vtkUnstructuredGrid::SafeDownCast(input))
+    inputConnectivityArray = inputAsUG->GetCells()->GetConnectivityArray();
+  else if(auto inputAsPD = vtkPolyData::SafeDownCast(input))
+    inputConnectivityArray = inputAsPD->GetLines()->GetConnectivityArray();
 
   auto nOutputCells = this->computeNumberOfOutputCells(
     nInputCells, this->GetUseQuadraticCells());
@@ -114,7 +121,7 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
 
          // Input
          ttkUtils::GetPointer<T0>(inputPoints->GetData()),
-         ttkUtils::GetPointer<T2>(input->GetCells()->GetConnectivityArray()),
+         ttkUtils::GetPointer<T2>(inputConnectivityArray),
          nInputPoints, nInputCells, ttkUtils::GetPointer<T1>(inputPointSizes),
          this->GetSizeScale(), this->GetSizeAxis())));
   } else {
@@ -129,7 +136,7 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
 
          // Input
          ttkUtils::GetPointer<T0>(inputPoints->GetData()),
-         ttkUtils::GetPointer<T2>(input->GetCells()->GetConnectivityArray()),
+         ttkUtils::GetPointer<T2>(inputConnectivityArray),
          nInputPoints, nInputCells, this->GetSubdivisions(),
          ttkUtils::GetPointer<T1>(inputPointSizes), this->GetSizeScale(),
          this->GetSizeAxis())));

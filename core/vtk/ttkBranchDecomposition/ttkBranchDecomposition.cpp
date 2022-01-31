@@ -5,6 +5,7 @@
 #include <vtkDataArray.h>
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
+#include <vtkCellData.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -96,16 +97,24 @@ int ttkBranchDecomposition::RequestData(vtkInformation *,
     ttkTrackingGraph.preconditionInOutEdges<T0>(
       nNodes, nEdges, ttkUtils::GetConstPointer<const T0>(connectivityList)));
 
-  auto branchId = vtkSmartPointer<vtkIntArray>::New();
-  branchId->SetName("BranchId");
-  branchId->SetNumberOfComponents(1);
-  branchId->SetNumberOfTuples(nNodes);
-  vtkTrackingGraph->GetPointData()->AddArray(branchId);
+  auto branchIdP = vtkSmartPointer<vtkIntArray>::New();
+  branchIdP->SetName("BranchId");
+  branchIdP->SetNumberOfComponents(1);
+  branchIdP->SetNumberOfTuples(nNodes);
+  vtkTrackingGraph->GetPointData()->AddArray(branchIdP);
+
+  auto branchIdC = vtkSmartPointer<vtkIntArray>::New();
+  branchIdC->SetName("BranchId");
+  branchIdC->SetNumberOfComponents(1);
+  branchIdC->SetNumberOfTuples(nEdges);
+  vtkTrackingGraph->GetCellData()->AddArray(branchIdC);
 
   int status = 0;
   ttkTypeMacroAA(timeArray->GetDataType(), attributeArray->GetDataType(),
                  (status = this->computeBranchDecompositionByAttribute<T0, T1>(
-                    ttkUtils::GetPointer<int>(branchId), ttkTrackingGraph,
+                    ttkUtils::GetPointer<int>(branchIdP),
+                    ttkUtils::GetPointer<int>(branchIdC),
+                    ttkTrackingGraph,
                     ttkUtils::GetConstPointer<const T0>(timeArray),
                     ttkUtils::GetConstPointer<const T1>(attributeArray),
                     attributeArrayAssociation)));

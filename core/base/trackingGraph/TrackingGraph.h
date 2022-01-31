@@ -38,6 +38,7 @@ namespace ttk {
 
     std::vector<std::vector<Edge>> inEdges;
     std::vector<std::vector<Edge>> outEdges;
+    int numberOfEdges{0};
 
     TrackingGraph();
 
@@ -53,6 +54,8 @@ namespace ttk {
       this->outEdges.resize(nNodes);
       this->inEdges.clear();
       this->inEdges.resize(nNodes);
+
+      this->numberOfEdges = nEdges;
 
       for(int i = 0; i < nEdges; i++) {
         const int u = connectivityList[i * 2 + 0];

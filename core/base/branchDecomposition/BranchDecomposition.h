@@ -38,13 +38,15 @@ namespace ttk {
     };
 
     template <typename IT, typename DT>
-    int computeBranchDecompositionByAttribute(int *branchId,
+    int computeBranchDecompositionByAttribute(int *branchIdPoints,
+                                              int *branchIdEdges,
                                               ttk::TrackingGraph &trackingGraph,
                                               const IT *time,
                                               const DT *attribute,
                                               const int attributeAssociation) {
       ttk::Timer globalTimer;
       const int nNodes = trackingGraph.inEdges.size();
+      const int nEdges = trackingGraph.numberOfEdges;
 
       std::vector<int> nodesSortedByTime(nNodes);
       // sort all nodes by time in ascending order
@@ -88,20 +90,16 @@ namespace ttk {
           for(int i = 0; i < nNodes; i++) {
             auto &outEdges = trackingGraph.outEdges[i];
             auto &inEdges = trackingGraph.inEdges[i];
-            if(outEdges.size() > 1)
-              std::sort(outEdges.begin(), outEdges.end(), compareAttributeV);
-            if(inEdges.size() > 1)
-              std::sort(inEdges.begin(), inEdges.end(), compareAttributeU);
+            std::sort(outEdges.begin(), outEdges.end(), compareAttributeV);
+            std::sort(inEdges.begin(), inEdges.end(), compareAttributeU);
           }
         } else {
 #pragma omp parallel for num_threads(this->threadNumber_)
           for(int i = 0; i < nNodes; i++) {
             auto &outEdges = trackingGraph.outEdges[i];
             auto &inEdges = trackingGraph.inEdges[i];
-            if(outEdges.size() > 1)
-              std::sort(outEdges.begin(), outEdges.end(), compareAttributeE);
-            if(inEdges.size() > 1)
-              std::sort(inEdges.begin(), inEdges.end(), compareAttributeE);
+            std::sort(outEdges.begin(), outEdges.end(), compareAttributeE);
+            std::sort(inEdges.begin(), inEdges.end(), compareAttributeE);
           }
         }
 
@@ -115,9 +113,18 @@ namespace ttk {
         this->printMsg(
           msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
-#pragma omp parallel for num_threads(this->threadNumber_)
-        for(int i = 0; i < nNodes; i++)
-          branchId[i] = trackingGraph.inEdges[i].size() < 1 ? i : -1;
+#pragma omp parallel num_threads(this->threadNumber_)
+      {
+        #pragma omp for
+        for(int i = 0; i < nNodes; i++){
+          branchIdPoints[i] = trackingGraph.inEdges[i].size() < 1 ? i : -1;
+        }
+
+        #pragma omp for
+        for(int i = 0; i < nEdges; i++){
+          branchIdEdges[i] = -1;
+        }
+      }
 
         this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
       }
@@ -128,21 +135,32 @@ namespace ttk {
         const std::string msg = "Propagating Branches";
         this->printMsg(msg, 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
-        // propagate branch id along graph
+        // propagate branch id along points
         for(int i = 0; i < nNodes; i++) {
           const auto &v = nodesSortedByTime[i];
-          if(branchId[v] != -1)
+          if(branchIdPoints[v] != -1)
             continue;
 
-          int maxPrevNodeOfV = -1;
-          for(const auto &e : trackingGraph.inEdges[v]) {
-            if(trackingGraph.outEdges[e.u][0].v == v) {
-              maxPrevNodeOfV = e.u;
-              break;
+          branchIdPoints[v] =  v;
+
+          // propagate id only if max incoming edge is max outgoing edge
+          if(trackingGraph.inEdges.size()>=1){
+            const auto& maxIncomingEdge = trackingGraph.inEdges[v][0];
+            if(trackingGraph.outEdges[maxIncomingEdge.u][0].v == v){
+              branchIdPoints[v] = branchIdPoints[maxIncomingEdge.u];
+              branchIdEdges[maxIncomingEdge.e] = branchIdPoints[v];
             }
           }
+        }
 
-          branchId[v] = maxPrevNodeOfV < 0 ? v : branchId[maxPrevNodeOfV];
+        for(int i = 0; i < nNodes; i++) {
+          const auto &v = nodesSortedByTime[i];
+          const auto& inEdges = trackingGraph.inEdges[v];
+          if(inEdges.size()==1)
+            branchIdEdges[inEdges[0].e] = branchIdPoints[inEdges[0].v];
+          const auto& outEdges = trackingGraph.outEdges[v];
+          if(outEdges.size()==1)
+            branchIdEdges[outEdges[0].e] = branchIdPoints[outEdges[0].u];
         }
 
         this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);

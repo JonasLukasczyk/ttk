@@ -56,13 +56,6 @@ class TTKPLANARGRAPHLAYOUT_EXPORT ttkPlanarGraphLayout
     protected ttk::PlanarGraphLayout {
 
 private:
-  // --- Graph Planar Layout
-  // optional field data
-  bool UseSequences{false};
-  bool UseSizes{false};
-  bool UseBranches{false};
-  bool UseLevels{false};
-
   // output field name
   std::string OutputArrayName{"Layout"};
 
@@ -78,20 +71,6 @@ private:
   double NonImportantPairsProximity = 0.05;
 
 public:
-  // --- Graph Planar Layout
-  // getters and setters for optional arrays
-  vtkSetMacro(UseSequences, bool);
-  vtkGetMacro(UseSequences, bool);
-
-  vtkSetMacro(UseSizes, bool);
-  vtkGetMacro(UseSizes, bool);
-
-  vtkSetMacro(UseBranches, bool);
-  vtkGetMacro(UseBranches, bool);
-
-  vtkSetMacro(UseLevels, bool);
-  vtkGetMacro(UseLevels, bool);
-
   // getters and setters for output array name
   vtkSetMacro(OutputArrayName, const std::string &);
   vtkGetMacro(OutputArrayName, std::string);
