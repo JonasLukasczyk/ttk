@@ -4,7 +4,7 @@
 /// \date 2021-06-04
 ///
 /// This filter creates a Perlin noise scalar field of chosen spatio-temporal
-/// dimenison.
+/// dimension.
 ///
 /// \sa ttk::PerlinNoise
 /// \sa ttkAlgorithm
@@ -23,12 +23,11 @@
 class TTKPERLINNOISE_EXPORT ttkPerlinNoise : public ttkAlgorithm,
                                              protected ttk::PerlinNoise {
 private:
-  int PerlinDim{0};
+  int Domain[3]{0, 0, 0};
   int Scale{0};
   int Frequency{0};
-  double Persistence{0.0};
   int nOctaves{0};
-  int CubeDomain{0};
+  double Persistence{0.0};
 
   int TimeProp{0};
   double TimeStep{0.0};
@@ -36,8 +35,8 @@ private:
   double Interval{0};
 
 public:
-  vtkSetMacro(PerlinDim, int);
-  vtkGetMacro(PerlinDim, int);
+  vtkSetVector3Macro(Domain, int);
+  vtkGetVector3Macro(Domain, int);
 
   vtkSetMacro(Scale, int);
   vtkGetMacro(Scale, int);
@@ -45,14 +44,11 @@ public:
   vtkSetMacro(Frequency, int);
   vtkGetMacro(Frequency, int);
 
-  vtkSetMacro(Persistence, double);
-  vtkGetMacro(Persistence, double);
-
   vtkSetMacro(nOctaves, int);
   vtkGetMacro(nOctaves, int);
 
-  vtkSetMacro(CubeDomain, int);
-  vtkGetMacro(CubeDomain, int);
+  vtkSetMacro(Persistence, double);
+  vtkGetMacro(Persistence, double);
 
   vtkSetMacro(TimeProp, int);
   vtkGetMacro(TimeProp, int);
@@ -75,9 +71,7 @@ protected:
 
   int FillInputPortInformation(int port, vtkInformation *info) override;
   int FillOutputPortInformation(int port, vtkInformation *info) override;
-  // int RequestInformation (vtkInformation* vtkNotUsed(request),
-  // vtkInformationVector** vtkNotUsed(inputVector), vtkInformationVector
-  // *outputVector)
+
   int RequestInformation(vtkInformation *request,
                          vtkInformationVector **inputVector,
                          vtkInformationVector *outputVector) override;

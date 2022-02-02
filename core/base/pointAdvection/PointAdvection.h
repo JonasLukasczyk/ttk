@@ -223,46 +223,36 @@ namespace ttk {
       return 1;
     }
 
-    template <class dataType>
-    int integrate(std::vector<std::vector<Point>> &outPoints,
-                  const int nTimesteps,
-                  const double timeInterval,
-                  const double stepLength,
-                  const double psf,
-                  const VectorField &vf) {
+    int setVariables(const double stepLength,
+                     const double psf,
+                     const VectorField &vf) {
       // Set class variables
       setStepLength(stepLength);
       setPerlinScaleFactor(psf);
       setVectorField(vf);
 
-      // Integrate the paths of the initial points by moving the points
-      // along the vector field for all timesteps
-      ttk::Timer timer;
-      this->printMsg("Integrating " + std::to_string(outPoints[0].size())
-                       + " particles along vector field",
-                     0, 0, this->threadNumber_, debug::LineMode::REPLACE);
+      return 1;
+    }
 
-      for(int i = 0; i < nTimesteps - 1; i++) {
-        std::vector<Point> &curPoints = outPoints[i];
-        double time = i * timeInterval;
-        for(size_t j = 0; j < outPoints[i].size(); j++) {
-          Point newP;
-          auto &curPoint = curPoints[j];
+    int advect(std::vector<Point> &points,
+               const std::vector<int> &ids,
+               const int timestep,
+               const double timeInterval) {
+      // current time
+      double time = timestep * timeInterval;
+      // for all points to be advected
+      for(unsigned int i = 0; i < ids.size(); i++) {
+        Point newP;
+        auto &curP = points[ids[i]];
 
-          // Integrate using RK4
-          RK4(curPoint, newP, time);
+        // Integrate using RK4
+        RK4(curP, newP, time);
 
-          // Add point to the next time-step
-          newP.timestep = i + 1;
-          newP.pointId = curPoint.pointId;
-          outPoints[i + 1].push_back(newP);
-        }
+        // Change time-step
+        newP.timestep = timestep + 1;
+        newP.pointId = curP.pointId;
+        curP = newP;
       }
-
-      this->printMsg("Integrating " + std::to_string(outPoints[0].size())
-                       + " particles along vector field",
-                     1, timer.getElapsedTime(), this->threadNumber_);
-
       return 1;
     }
 

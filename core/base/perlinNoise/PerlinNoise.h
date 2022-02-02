@@ -1,18 +1,10 @@
-/// TODO 1: Provide your information
-///
 /// \ingroup base
 /// \class ttk::PerlinNoise
-/// \author Your Name Here <Your Email Address Here>
-/// \date The Date Here.
+/// \author Emma Nilsson <emma.nilsson@liu.se>
+/// \date 2021-06-04.
 ///
-/// This module defines the %PerlinNoise class that computes for each vertex of
-/// a triangulation the average scalar value of itself and its direct neighbors.
-///
-/// \b Related \b publication: \n
-/// 'PerlinNoise'
-/// Jonas Lukasczyk and Julien Tierny.
-/// TTK Publications.
-/// 2021.
+/// This module defines the %PerlinNoise class that computes a perlin noise
+/// scalar field for the chosen dimensions.
 ///
 
 #pragma once
@@ -22,11 +14,6 @@
 #include <Triangulation.h>
 
 namespace ttk {
-
-  /**
-   * The PerlinNoise class provides methods to compute for each vertex of a
-   * triangulation the average scalar value of itself and its direct neighbors.
-   */
   class PerlinNoise : virtual public Debug {
 
   public:

@@ -18,8 +18,6 @@
 // std includes
 #include <random>
 
-// A VTK macro that enables the instantiation of this class via ::New()
-// You do not have to modify this
 vtkStandardNewMacro(ttkPointAdvection);
 
 ttkPointAdvection::ttkPointAdvection() {
@@ -44,50 +42,128 @@ int ttkPointAdvection::FillOutputPortInformation(int port,
   return 0;
 }
 
-int ttkPointAdvection::initializePoints() {
-  // Re-size first timestep for number of points to generate
-  this->pointsPerTimestep[0].resize(this->nPoints);
+int ttkPointAdvection::rampFunction(const int t,
+                                    const int lifetime,
+                                    double &y) {
+  // variables for ramp function, deciding slope, cutoff for constant value
+  double cut = std::min(1.0 / 3, 10.0 / lifetime);
+  double offset = 0.001;
+  double invCut = (1 - offset) / cut;
 
-  // Get random number engine and seed it with user provided seed
-  std::mt19937 randGen(RandomSeed);
+  double x = double(t) / lifetime;
 
-  // Position distributions
-  std::uniform_real_distribution<> disX(0.0, 1.0);
-  std::uniform_real_distribution<> disY(0.0, 1.0);
-  std::uniform_real_distribution<> disZ(0.0, 1.0);
-
-  // Time data distributions
-  std::uniform_int_distribution<> disBirth(
-    -floor(this->nTimesteps / 2), this->nTimesteps);
-  std::uniform_int_distribution<> disDeath(0, this->nTimesteps);
-  std::uniform_real_distribution<> disRate(0, 1);
-
-  // Attributes distributions
-  std::uniform_real_distribution<> disWeight(
-    this->PointWeight[0], this->PointWeight[1]);
-  std::uniform_real_distribution<> disConstant(
-    this->PointConstant[0], this->PointConstant[1]);
-
-  // Create all new points
-  for(int i = 0; i < this->nPoints; i++) {
-    auto &p = pointsPerTimestep[0][i];
-
-    // Positions
-    p.x = disX(randGen);
-    p.y = disY(randGen);
-    p.z = disZ(randGen);
-
-    // Point data
-    p.pointId = i;
-
-    p.timestep = 0;
-    p.birth = disBirth(randGen);
-    p.death = disDeath(randGen);
-    p.rate = disRate(randGen);
-
-    p.weight = disWeight(randGen);
-    p.constant = disConstant(randGen);
+  if(x < cut || x == cut) {
+    y = offset + invCut * x;
+  } else if(x > cut && x < (1 - cut)) {
+    y = 1.0;
+  } else {
+    y = offset + invCut - invCut * x;
   }
+
+  return 1;
+}
+
+int ttkPointAdvection::formatOutput(vtkPolyData *pd,
+                                    std::vector<int> &aliveIds,
+                                    const int timestep) {
+  // Function for formatting data arrays
+  auto prepArray
+    = [](vtkDataArray *array, std::string name, int nTuples, int nComponents) {
+        array->SetName(name.data());
+        array->SetNumberOfComponents(nComponents);
+        array->SetNumberOfTuples(nTuples);
+        return ttkUtils::GetVoidPointer(array);
+      };
+
+  auto dataPoints = vtkSmartPointer<vtkPoints>::New();
+
+  // Set point initial data
+  int nPs = aliveIds.size();
+  dataPoints->SetDataType(VTK_DOUBLE);
+  dataPoints->SetNumberOfPoints(nPs);
+
+  // Create cell arrays off offset array and connectivity array.
+  // Our cells are just vertices
+  auto offsetArray = vtkSmartPointer<vtkIntArray>::New();
+  offsetArray->SetNumberOfTuples(nPs + 1);
+  auto offsetArrayData
+    = static_cast<int *>(ttkUtils::GetVoidPointer(offsetArray));
+
+  auto connectivityArray = vtkSmartPointer<vtkIntArray>::New();
+  connectivityArray->SetNumberOfTuples(nPs);
+  auto connectivityArrayData
+    = static_cast<int *>(ttkUtils::GetVoidPointer(connectivityArray));
+
+  auto cellArray = vtkSmartPointer<vtkCellArray>::New();
+  cellArray->SetData(offsetArray, connectivityArray);
+
+  // Create arrays for point data
+  auto idArray = vtkSmartPointer<vtkIntArray>::New();
+  auto idArrayData = static_cast<int *>(prepArray(idArray, "PointId", nPs, 1));
+
+  auto birthArray = vtkSmartPointer<vtkIntArray>::New();
+  auto birthArrayData
+    = static_cast<int *>(prepArray(birthArray, "Birth", nPs, 1));
+  auto deathArray = vtkSmartPointer<vtkIntArray>::New();
+  auto deathArrayData
+    = static_cast<int *>(prepArray(deathArray, "Death", nPs, 1));
+
+  auto weightArray = vtkSmartPointer<vtkDoubleArray>::New();
+  auto weightArrayData
+    = static_cast<double *>(prepArray(weightArray, "PointWeight", nPs, 1));
+  auto constantArray = vtkSmartPointer<vtkDoubleArray>::New();
+  auto constantArrayData
+    = static_cast<double *>(prepArray(constantArray, "PointConstant", nPs, 1));
+
+  // Create arrays for field data
+  auto timeArray = vtkSmartPointer<vtkDoubleArray>::New();
+  auto timeArrayData
+    = static_cast<double *>(prepArray(timeArray, "Time", 1, 1));
+  timeArrayData[0] = timestep * this->TimeInterval;
+
+  // Add data to points and arrays
+  int idx = 0;
+  for(int j = 0; j < nPs; j++) {
+    auto p = this->allPoints[aliveIds[j]];
+
+    // Set position
+    double pos[3] = {p.x, p.y, p.z};
+    dataPoints->SetPoint(idx, pos);
+
+    // Calculate the point weight in current timestep
+    double pw = 0.0;
+    rampFunction(timestep - p.birth, p.death - p.birth, pw);
+
+    // Set data arrays
+    idArrayData[idx] = p.pointId;
+    birthArrayData[idx] = p.birth;
+    deathArrayData[idx] = p.death;
+    weightArrayData[idx] = pw * p.weight;
+    constantArrayData[idx] = p.constant;
+
+    // Set connectivity and offset array
+    connectivityArrayData[idx] = idx;
+    offsetArrayData[idx] = idx;
+    idx++;
+  }
+
+  // Set offset array last index to the number of elements in the connectivity
+  // array
+  offsetArrayData[nPs] = nPs;
+
+  // Format the output data structure into a dataset of vtkPolyData
+  pd->SetPoints(dataPoints);
+  pd->SetVerts(cellArray);
+
+  auto pointData = pd->GetPointData();
+  pointData->AddArray(idArray);
+  pointData->AddArray(birthArray);
+  pointData->AddArray(deathArray);
+
+  pointData->AddArray(weightArray);
+  pointData->AddArray(constantArray);
+
+  pd->GetFieldData()->AddArray(timeArray);
 
   return 1;
 }
@@ -98,12 +174,60 @@ int ttkPointAdvection::RequestData(vtkInformation *request,
   // Create output
   auto outputMB = vtkMultiBlockDataSet::GetData(outputVector);
 
-  // Clear previous data and format for number of timesteps
-  this->pointsPerTimestep.clear();
-  this->pointsPerTimestep.resize(this->nTimesteps);
+  /* Create sampling distributions */
 
-  // Create initial points
-  initializePoints();
+  // Get random number engine and seed it with user provided seed
+  std::mt19937 randGen(RandomSeed);
+
+  // Position distributions
+  std::uniform_real_distribution<> disX(0.0, 1.0);
+  std::uniform_real_distribution<> disY(0.0, 1.0);
+  std::uniform_real_distribution<> disZ(0.0, 1.0);
+
+  // Time data distributions
+  std::uniform_int_distribution<> disLifetime(
+    this->Lifetime[0], this->Lifetime[1]);
+  std::uniform_int_distribution<> disRespawnTime(
+    this->RespawnTime[0], this->RespawnTime[1]);
+  std::uniform_real_distribution<> disRate(1, 1);
+
+  // Attributes distributions
+  std::uniform_real_distribution<> disWeight(
+    this->PointWeight[0], this->PointWeight[1]);
+  std::uniform_real_distribution<> disConstant(
+    this->PointConstant[0], this->PointConstant[1]);
+
+  /* Create initial points */
+
+  // Delete old data and create space for new
+  this->allPoints.clear();
+  this->allPoints.resize(this->nPoints);
+
+  // Create all new points
+  for(int i = 0; i < this->nPoints; i++) {
+    auto &p = this->allPoints[i];
+
+    // Positions
+    p.x = disX(randGen);
+    p.y = disY(randGen);
+    p.z = disZ(randGen);
+
+    // Point data
+    p.pointId = i;
+
+    p.timestep = 0;
+    p.birth = 0 + disRespawnTime(randGen);
+    p.death = p.birth + disLifetime(randGen);
+    p.rate = disRate(randGen);
+
+    p.weight = disWeight(randGen);
+    p.constant = disConstant(randGen);
+  }
+
+  // maximum point id
+  int maxPointId = this->nPoints - 1;
+
+  /* set base layer variables */
 
   // Determine what vector field to use
   PointAdvection::VectorField vf = PointAdvection::VectorField::PerlinPerturbed;
@@ -126,125 +250,71 @@ int ttkPointAdvection::RequestData(vtkInformation *request,
     }
   }
 
-  // *CALL ADVECTION IN BASE LAYER*
-  int status = 0;
-  switch(VTK_DOUBLE) {
-    vtkTemplateMacro(status = this->integrate<VTK_TT>(
-                       pointsPerTimestep, this->nTimesteps, this->TimeInterval,
-                       this->StepLength, this->PerlinScaleFactor, vf));
-  }
-  if(!status) {
-    this->printErr("Integration could not be executed");
-    return 0;
-  }
+  this->setVariables(this->StepLength, this->PerlinScaleFactor, vf);
 
-  // Function for formatting data arrays
-  auto prepArray
-    = [](vtkDataArray *array, std::string name, int nTuples, int nComponents) {
-        array->SetName(name.data());
-        array->SetNumberOfComponents(nComponents);
-        array->SetNumberOfTuples(nTuples);
-        return ttkUtils::GetVoidPointer(array);
-      };
-
-  // Format output
+  /* Loop through all timesteps and advect points */
+  std::vector<int> alivePointsIds;
+  ttk::Timer timer;
+  this->printMsg("Advecting " + std::to_string(this->nPoints)
+                   + " points in vector field for "
+                   + std::to_string(this->nTimesteps) + " timesteps",
+                 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
   for(int t = 0; t < this->nTimesteps; t++) {
-    auto polyData = vtkSmartPointer<vtkPolyData>::New();
-    auto dataPoints = vtkSmartPointer<vtkPoints>::New();
+    alivePointsIds.clear();
 
-    // Set point initial data
-    int nPointsTimestep = pointsPerTimestep[t].size();
-    dataPoints->SetDataType(VTK_DOUBLE);
-    dataPoints->SetNumberOfPoints(nPointsTimestep);
+    // Go through all points
+    for(int i = 0; i < this->nPoints; i++) {
+      auto &p = this->allPoints[i];
 
-    // Create cell arrays off offset array and connectivity array.
-    // Our cells are just vertices
-    auto offsetArray = vtkSmartPointer<vtkIntArray>::New();
-    offsetArray->SetNumberOfTuples(nPointsTimestep + 1);
-    auto offsetArrayData
-      = static_cast<int *>(ttkUtils::GetVoidPointer(offsetArray));
+      // Check what points are alive
+      if(t >= p.birth && t <= p.death) {
+        alivePointsIds.push_back(i);
+      } else if(t > p.death) {
+        // re-spawn
+        ++maxPointId;
 
-    auto connectivityArray = vtkSmartPointer<vtkIntArray>::New();
-    connectivityArray->SetNumberOfTuples(nPointsTimestep);
-    auto connectivityArrayData
-      = static_cast<int *>(ttkUtils::GetVoidPointer(connectivityArray));
+        // Positions
+        p.x = disX(randGen);
+        p.y = disY(randGen);
+        p.z = disZ(randGen);
 
-    auto cellArray = vtkSmartPointer<vtkCellArray>::New();
-    cellArray->SetData(offsetArray, connectivityArray);
+        // Point data
+        p.pointId = maxPointId;
 
-    // Create arrays for point data
-    auto idArray = vtkSmartPointer<vtkIntArray>::New();
-    auto idArrayData
-      = static_cast<int *>(prepArray(idArray, "PointId", nPointsTimestep, 1));
+        p.timestep = t;
+        p.birth = t + disRespawnTime(randGen);
+        p.death = p.birth + disLifetime(randGen);
+        p.rate = disRate(randGen);
 
-    auto birthArray = vtkSmartPointer<vtkIntArray>::New();
-    auto birthArrayData
-      = static_cast<int *>(prepArray(birthArray, "Birth", nPointsTimestep, 1));
-    auto deathArray = vtkSmartPointer<vtkIntArray>::New();
-    auto deathArrayData
-      = static_cast<int *>(prepArray(deathArray, "Death", nPointsTimestep, 1));
+        p.weight = disWeight(randGen);
+        p.constant = disConstant(randGen);
 
-    auto weightArray = vtkSmartPointer<vtkDoubleArray>::New();
-    auto weightArrayData = static_cast<double *>(
-      prepArray(weightArray, "PointWeight", nPointsTimestep, 1));
-    auto constantArray = vtkSmartPointer<vtkDoubleArray>::New();
-    auto constantArrayData = static_cast<double *>(
-      prepArray(constantArray, "PointConstant", nPointsTimestep, 1));
-
-    // Create arrays for field data
-    auto timeArray = vtkSmartPointer<vtkDoubleArray>::New();
-    auto timeArrayData
-      = static_cast<double *>(prepArray(timeArray, "Time", 1, 1));
-    timeArrayData[0] = t * this->TimeInterval;
-
-    // Add data to points and arrays
-    int idx = 0;
-    for(int j = 0; j < nPoints; j++) {
-      auto p = pointsPerTimestep[t][j];
-
-      // Set position
-      double pos[3] = {p.x, p.y, p.z};
-      dataPoints->SetPoint(idx, pos);
-
-      // Calculate the point weight in current timestep
-      double pw = (1 / (1 + std::exp(-1 * p.rate * (t - p.birth))))
-                  + (1 / (1 + std::exp(-1 * p.rate * (p.death - t)))) - 1;
-
-      // Set data arrays
-      idArrayData[idx] = p.pointId;
-      birthArrayData[idx] = p.birth;
-      deathArrayData[idx] = p.death;
-      weightArrayData[idx] = pw * p.weight;
-      constantArrayData[idx] = p.constant;
-
-      // Set connectivity and offset array
-      connectivityArrayData[idx] = idx;
-      offsetArrayData[idx] = idx;
-      idx++;
+        // check case re-spawn time is zero, so the point is immediately added
+        if(p.birth == t) {
+          alivePointsIds.push_back(i);
+        }
+      } else if(t < p.birth) {
+        // do nothing
+        p.timestep = t;
+      }
     }
 
-    // Set offset array last index to the number of elements in the connectivity
-    // array
-    offsetArrayData[nPoints] = nPoints;
+    // Format output
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    this->formatOutput(polyData, alivePointsIds, t);
 
-    // Format the output data structure into a dataset of vtkPolyData
-    polyData->SetPoints(dataPoints);
-    polyData->SetVerts(cellArray);
-
-    auto pointData = polyData->GetPointData();
-    pointData->AddArray(idArray);
-    pointData->AddArray(birthArray);
-    pointData->AddArray(deathArray);
-
-    pointData->AddArray(weightArray);
-    pointData->AddArray(constantArray);
-
-    polyData->GetFieldData()->AddArray(timeArray);
+    // Advect points
+    this->advect(this->allPoints, alivePointsIds, t, this->TimeInterval);
 
     // Set data to a block in the output dataset
     size_t nBlocks = outputMB->GetNumberOfBlocks();
     outputMB->SetBlock(nBlocks, polyData);
   }
+
+  this->printMsg("Advecting " + std::to_string(this->nPoints)
+                   + " points in vector field for "
+                   + std::to_string(this->nTimesteps) + " timesteps",
+                 1, timer.getElapsedTime(), this->threadNumber_);
 
   // return success
   return 1;

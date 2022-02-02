@@ -2,7 +2,7 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="sources">
     <SourceProxy name="ttkPointAdvection" class="ttkPointAdvection" label="TTK PointAdvection">
-      <Documentation long_help="PointAdvection Long" short_help="PointAdvection Short">This filter is a well documented ttk example filter that computes for each vertex of a vtkDataSet the average scalar value of itself and its neighbors.</Documentation>
+      <Documentation long_help="PointAdvection Long" short_help="PointAdvection Short">This filter generates points randomly in the unit cube and advects the points through a user-chosen vector field. Each point has attributes randomly generated within intervals the user sets.</Documentation>
 
       <!-- POINT PARAMETER WIDGETS -->
       <IntVectorProperty name="nPoints" label="Number of points" command="SetnPoints" number_of_elements="1" default_values="10">
@@ -22,24 +22,23 @@
           </Documentation>
       </DoubleVectorProperty>
 
-      <DoubleVectorProperty name="Birth" command="SetBirth" default_values="0 1" number_of_elements="2">
-          <Documentation> When a point appears in the data. The range sets the interval for random value generation.</Documentation>
-      </DoubleVectorProperty>
+      <IntVectorProperty name="Lifetime" command="SetLifetime" default_values="0 1" number_of_elements="2">
+          <Documentation> How long a point appears in the data. The range sets the interval for random value generation.</Documentation>
+      </IntVectorProperty>
 
-      <DoubleVectorProperty name="Death" command="SetDeath" default_values="0 1" number_of_elements="2">
-          <Documentation> When a point disappears in the data. The range sets the interval for random value generation.
+      <IntVectorProperty name="RespawnTime" command="SetRespawnTime" default_values="0 1" number_of_elements="2">
+          <Documentation> The time it takes for a point to re-spawn as a new point after it has disappeared. The range sets the interval for random value generation.
           </Documentation>
-      </DoubleVectorProperty>
+      </IntVectorProperty>
 
-
-      <!-- Create a UI group that contains all point parameter widgets (here only one) -->
+      <!-- Create a UI group that contains all point parameter widgets -->
       <PropertyGroup panel_widget="Line" label="Point Options">
         <Property name="nPoints" />
         <Property name="RandomSeed" />
         <Property name="PointWeight" />
         <Property name="PointConstant" />
-        <Property name="Birth" />
-        <Property name="Death" />
+        <Property name="Lifetime" />
+        <Property name="RespawnTime" />
       </PropertyGroup>
 
       <!-- ADVECTION PARAMETER WIDGETS -->
@@ -52,11 +51,7 @@
       </DoubleVectorProperty>
 
       <DoubleVectorProperty name="StepLength" label="Step Length" command="SetStepLength" number_of_elements="1" default_values="0.1">
-          <Documentation>The length of steps taken along the vector field during the path integration.</Documentation>
-      </DoubleVectorProperty>
-
-      <DoubleVectorProperty name="PerlinScaleFactor" label="Perlin Scale Factor" command="SetPerlinScaleFactor" number_of_elements="1" default_values="10.0">
-          <Documentation>How much vector fields from perlin are scaled. Lower values yield lower resolution for the perlin fields.</Documentation>
+          <Documentation>The length of steps taken along the vector field during the advection.</Documentation>
       </DoubleVectorProperty>
 
       <IntVectorProperty name="VecField" label="Vector Field" command="SetVecField" number_of_elements="1" default_values="0">
@@ -69,13 +64,31 @@
         <Documentation>The list of vector fields which can be used during the integration.</Documentation>
       </IntVectorProperty>
 
-      <!-- Create a UI group that contains all advection parameter widgets (here only one) -->
+      <DoubleVectorProperty name="PerlinScaleFactor" label="Perlin Scale Factor" command="SetPerlinScaleFactor" number_of_elements="1" default_values="10.0">
+          <Documentation>How much vector fields based on perlin noise are scaled. Lower values yield lower resolution for the perlin fields.</Documentation>
+          <Hints>
+          <PropertyWidgetDecorator type="CompositeDecorator">
+            <Expression type="or">
+                <PropertyWidgetDecorator type="GenericDecorator"
+                mode="visibility"
+                property="VecField"
+                value="0" />
+                <PropertyWidgetDecorator type="GenericDecorator"
+                mode="visibility"
+                property="VecField"
+                value="1" />
+              </Expression>
+            </PropertyWidgetDecorator>
+          </Hints>
+      </DoubleVectorProperty>
+
+      <!-- Create a UI group that contains all advection parameter widgets -->
       <PropertyGroup panel_widget="Line" label="Advection Options">
         <Property name="nTimesteps" />
         <Property name="TimeInterval" />
         <Property name="StepLength" />
-        <Property name="PerlinScaleFactor" />
         <Property name="VecField" />
+        <Property name="PerlinScaleFactor" />
       </PropertyGroup>
 
 
