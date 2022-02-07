@@ -57,11 +57,13 @@ int ttkCorrespondenceByPersistencePairs::ComputeCorrespondences(
     = 0; // 2d tracking -> height spacing parameter for 3d display
   status = getDiagram<double>(CTDiagram0, p0, spacing, 0);
   if(status < 0)
-    return !this->printErr("Could not extract diagram from first input data-set");
+    return !this->printErr(
+      "Could not extract diagram from first input data-set");
 
   status = getDiagram<double>(CTDiagram1, p1, spacing, 1);
   if(status < 0)
-    return !this->printErr("Could not extract diagram from second input data-set");
+    return !this->printErr(
+      "Could not extract diagram from second input data-set");
 
   if(coords0->GetDataType() != coords1->GetDataType())
     return !this->printErr("Input diagrams need to have the same data type.");
@@ -135,7 +137,8 @@ int ttkCorrespondenceByPersistencePairs::ComputeCorrespondences(
       auto n1 = (int)std::get<0>(t); // diagram 0
       auto n2 = (int)std::get<1>(t); // diagram 1
       if(n1 >= nFeatures0 || n2 >= nFeatures1)
-        return !this->printErr("Invalid indexing: feature index > feature number.");
+        return !this->printErr(
+          "Invalid indexing: feature index > feature number.");
 
       correspondenceMatrixData[n2 * nFeatures0 + n1]
         = (float)1; // std::get<2>(t);
@@ -143,10 +146,8 @@ int ttkCorrespondenceByPersistencePairs::ComputeCorrespondences(
   }
 
   status = ttkCorrespondenceAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix,
-    this->GetInputArrayToProcess(0, p0),
-    this->GetInputArrayToProcess(0, p1)
-  );
+    correspondenceMatrix, this->GetInputArrayToProcess(0, p0),
+    this->GetInputArrayToProcess(0, p1));
   if(!status)
     return 0;
 

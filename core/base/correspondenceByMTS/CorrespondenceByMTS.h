@@ -3,7 +3,12 @@
 /// \author Jonas Lukasczyk <jl@jluk.de>
 /// \date 08/13/2022
 ///
-/// This module computes the spatial overlap of two merge tree segmentations (MTS) and records the results in a correspondence matrix. Both MTSs need to be defined on the same domain, and assign to each vertex of the domain the integer id of the corresponding merge tree edge. An overlap of two segments (merge tree edges) imply the overlap of the contained sub- and superlevel set components. For details see the related publication.
+/// This module computes the spatial overlap of two merge tree segmentations
+/// (MTS) and records the results in a correspondence matrix. Both MTSs need to
+/// be defined on the same domain, and assign to each vertex of the domain the
+/// integer id of the corresponding merge tree edge. An overlap of two segments
+/// (merge tree edges) imply the overlap of the contained sub- and superlevel
+/// set components. For details see the related publication.
 ///
 /// \b Related \b Publication:
 /// "Dynamic Nested Tracking Graphs".
@@ -100,9 +105,9 @@ namespace ttk {
           IT c0 = j;
           IT c1 = i;
           while(true) {
-            #ifdef TTK_ENABLE_OPENMP
-            #pragma omp atomic update
-            #endif
+#ifdef TTK_ENABLE_OPENMP
+#pragma omp atomic update
+#endif
             correspondenceMatrix[c1 * nNodes0 + c0] += overlap;
 
             const auto &cNext0 = next0[c0];

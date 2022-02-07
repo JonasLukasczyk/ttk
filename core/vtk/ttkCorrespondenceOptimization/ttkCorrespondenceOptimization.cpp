@@ -4,8 +4,8 @@
 
 #include <vtkDataArray.h>
 #include <vtkImageData.h>
-#include <vtkPointData.h>
 #include <vtkObjectFactory.h>
+#include <vtkPointData.h>
 #include <vtkSmartPointer.h>
 
 #include <ttkMacros.h>
@@ -18,9 +18,11 @@ ttkCorrespondenceOptimization::ttkCorrespondenceOptimization() {
   this->SetNumberOfOutputPorts(1);
 }
 
-ttkCorrespondenceOptimization::~ttkCorrespondenceOptimization() {}
+ttkCorrespondenceOptimization::~ttkCorrespondenceOptimization() {
+}
 
-int ttkCorrespondenceOptimization::FillInputPortInformation(int port, vtkInformation *info) {
+int ttkCorrespondenceOptimization::FillInputPortInformation(
+  int port, vtkInformation *info) {
   if(port == 0) {
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
     return 1;
@@ -28,7 +30,8 @@ int ttkCorrespondenceOptimization::FillInputPortInformation(int port, vtkInforma
   return 0;
 }
 
-int ttkCorrespondenceOptimization::FillOutputPortInformation(int port, vtkInformation *info) {
+int ttkCorrespondenceOptimization::FillOutputPortInformation(
+  int port, vtkInformation *info) {
   if(port == 0) {
     info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
     return 1;
@@ -36,28 +39,29 @@ int ttkCorrespondenceOptimization::FillOutputPortInformation(int port, vtkInform
   return 0;
 }
 
-int ttkCorrespondenceOptimization::RequestData(vtkInformation *ttkNotUsed(request),
+int ttkCorrespondenceOptimization::RequestData(
+  vtkInformation *ttkNotUsed(request),
   vtkInformationVector **inputVector,
   vtkInformationVector *outputVector) {
 
   auto iImage = vtkImageData::GetData(inputVector[0]);
   if(!iImage)
-  return !this->printErr("Unable to retrieve input data object.");
+    return !this->printErr("Unable to retrieve input data object.");
 
   int dim[3];
   iImage->GetDimensions(dim);
 
   auto iMatrix = this->GetInputArrayToProcess(0, inputVector);
   if(!iMatrix)
-  return !this->printErr("Unable to retrieve input matrix.");
+    return !this->printErr("Unable to retrieve input matrix.");
 
   if(this->GetInputArrayAssociation(0, inputVector) != 0)
-  return !this->printErr("Input matrix needs to be a point data array.");
+    return !this->printErr("Input matrix needs to be a point data array.");
 
   if(iMatrix->GetNumberOfComponents() != 1)
-  return !this->printErr("Input matrix needs to be a scalar array.");
+    return !this->printErr("Input matrix needs to be a scalar array.");
 
-  auto oMatrix = vtkSmartPointer < vtkDataArray > ::Take(iMatrix->NewInstance());
+  auto oMatrix = vtkSmartPointer<vtkDataArray>::Take(iMatrix->NewInstance());
   oMatrix->DeepCopy(iMatrix);
 
   int status = 0;
@@ -68,48 +72,29 @@ int ttkCorrespondenceOptimization::RequestData(vtkInformation *ttkNotUsed(reques
     case OPTIMIZATION_METHOD::N_LARGEST_CORRESPONDENCES_PER_FEATURE: {
       ttkTypeMacroA(
         iMatrix->GetDataType(),
-        (
-          status = this->sortAndReduceCorrespondencesPerFeature < T0 > (
-            ttkUtils::GetPointer < T0 > (oMatrix),
-            ttkUtils::GetPointer < T0 > (iMatrix),
-            dim[0], dim[1],
-            this->NumberOfLargestCorrespondencesPerFeature,
-            this->OptimizationMethod == OPTIMIZATION_METHOD::N_SMALLEST_CORRESPONDENCES_PER_FEATURE
-          )
-        )
-      );
+        (status = this->sortAndReduceCorrespondencesPerFeature<T0>(
+           ttkUtils::GetPointer<T0>(oMatrix), ttkUtils::GetPointer<T0>(iMatrix),
+           dim[0], dim[1], this->NumberOfLargestCorrespondencesPerFeature,
+           this->OptimizationMethod
+             == OPTIMIZATION_METHOD::N_SMALLEST_CORRESPONDENCES_PER_FEATURE)));
       break;
     }
     case OPTIMIZATION_METHOD::THRESHOLD_ABOVE: {
       ttkTypeMacroA(
         iMatrix->GetDataType(),
-        (
-          status = this->mapEachElement < T0 > (
-            ttkUtils::GetPointer < T0 > (oMatrix),
-            ttkUtils::GetPointer < T0 > (iMatrix),
-            dim[0], dim[1],
-            [ =](const T0& v) {
-              return v >= this->Threshold ? v: 0;
-            }
-          )
-        )
-      );
+        (status = this->mapEachElement<T0>(
+           ttkUtils::GetPointer<T0>(oMatrix), ttkUtils::GetPointer<T0>(iMatrix),
+           dim[0], dim[1],
+           [=](const T0 &v) { return v >= this->Threshold ? v : 0; })));
       break;
     }
     case OPTIMIZATION_METHOD::THRESHOLD_BELOW: {
       ttkTypeMacroA(
         iMatrix->GetDataType(),
-        (
-          status = this->mapEachElement < T0 > (
-            ttkUtils::GetPointer < T0 > (oMatrix),
-            ttkUtils::GetPointer < T0 > (iMatrix),
-            dim[0], dim[1],
-            [ =](const T0& v) {
-              return v <= this->Threshold ? v: 0;
-            }
-          )
-        )
-      );
+        (status = this->mapEachElement<T0>(
+           ttkUtils::GetPointer<T0>(oMatrix), ttkUtils::GetPointer<T0>(iMatrix),
+           dim[0], dim[1],
+           [=](const T0 &v) { return v <= this->Threshold ? v : 0; })));
       break;
     }
     default: {
@@ -117,7 +102,7 @@ int ttkCorrespondenceOptimization::RequestData(vtkInformation *ttkNotUsed(reques
     }
   }
   if(!status)
-  return 0;
+    return 0;
 
   auto oImage = vtkImageData::GetData(outputVector, 0);
   oImage->ShallowCopy(iImage);

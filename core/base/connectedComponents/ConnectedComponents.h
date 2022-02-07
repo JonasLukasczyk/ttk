@@ -101,8 +101,10 @@ namespace ttk {
     }
 
     template <typename DT>
-    int initializeOutputLabels(int *labels, const TID nVertices, const DT *featureMask=nullptr) const {
-      if(featureMask){
+    int initializeOutputLabels(int *labels,
+                               const TID nVertices,
+                               const DT *featureMask = nullptr) const {
+      if(featureMask) {
         for(TID i = 0; i < nVertices; i++)
           labels[i] = featureMask[i] > 0 ? this->UNLABELED : this->IGNORE;
       } else {
@@ -140,8 +142,7 @@ namespace ttk {
       if(useSeedAsComponentId) {
         timer.reStart();
         msg = "Labeling Components by Seed Id";
-        this->printMsg(
-          msg, 0, 0, 1, ttk::debug::LineMode::REPLACE);
+        this->printMsg(msg, 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
         for(TID i = 0; i < nVertices; i++) {
           auto &cid = outputLabels[i];

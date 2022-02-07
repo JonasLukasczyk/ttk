@@ -1,6 +1,4 @@
-ttk_add_base_library(trackingGraph
-  SOURCES
-    TrackingGraph.cpp
+ttk_add_base_template_library(trackingGraph
   HEADERS
     TrackingGraph.h
   DEPENDS

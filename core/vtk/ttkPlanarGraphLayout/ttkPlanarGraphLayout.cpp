@@ -30,7 +30,8 @@ int ttkPlanarGraphLayout::FillInputPortInformation(int port,
   if(port == 0) {
     info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
     info->Remove(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE());
-    info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
+    info->Append(
+      vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
     info->Append(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData");
   } else
     return 0;
@@ -70,10 +71,12 @@ int ttkPlanarGraphLayout::planarGraphLayoutCall(
   auto branchArray = this->GetInputArrayToProcess(2, inputVector);
   auto levelArray = this->GetInputArrayToProcess(3, inputVector);
 
-  if(branchArray && levelArray && branchArray->GetDataType()!=levelArray->GetDataType())
-    return !this->printErr("Branch and Level Array must have same integer data type.");
+  if(branchArray && levelArray
+     && branchArray->GetDataType() != levelArray->GetDataType())
+    return !this->printErr(
+      "Branch and Level Array must have same integer data type.");
 
-  if(sizeArray && sizeArray->GetDataType()!=VTK_FLOAT)
+  if(sizeArray && sizeArray->GetDataType() != VTK_FLOAT)
     return !this->printErr("Size Array must be of type float.");
 
   // Initialize output array
@@ -92,19 +95,18 @@ int ttkPlanarGraphLayout::planarGraphLayoutCall(
     return !this->printErr("Unable to retrieve connectivity array.");
 
   int status = 1;
-  ttkTypeMacroAII(
-    sequenceArray ? sequenceArray->GetDataType() : VTK_INT,
-    branchArray ? branchArray->GetDataType() : VTK_INT,
-    cells->GetDataType(),
-    (status = this->computeLayout<T0, T1, T2>(
-       // Output
-       ttkUtils::GetPointer<float>(outputArray),
-       // Input
-       ttkUtils::GetPointer<T2>(cells), nPoints, nEdges,
-       ttkUtils::GetPointer<T0>(sequenceArray),
-       ttkUtils::GetPointer<float>(sizeArray),
-       ttkUtils::GetPointer<T1>(branchArray),
-       ttkUtils::GetPointer<T1>(levelArray))));
+  ttkTypeMacroAII(sequenceArray ? sequenceArray->GetDataType() : VTK_INT,
+                  branchArray ? branchArray->GetDataType() : VTK_INT,
+                  cells->GetDataType(),
+                  (status = this->computeLayout<T0, T1, T2>(
+                     // Output
+                     ttkUtils::GetPointer<float>(outputArray),
+                     // Input
+                     ttkUtils::GetPointer<T2>(cells), nPoints, nEdges,
+                     ttkUtils::GetPointer<T0>(sequenceArray),
+                     ttkUtils::GetPointer<float>(sizeArray),
+                     ttkUtils::GetPointer<T1>(branchArray),
+                     ttkUtils::GetPointer<T1>(levelArray))));
 
   if(status != 1)
     return 0;

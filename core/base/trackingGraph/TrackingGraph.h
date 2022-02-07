@@ -40,7 +40,9 @@ namespace ttk {
     std::vector<std::vector<Edge>> outEdges;
     int numberOfEdges{0};
 
-    TrackingGraph();
+    TrackingGraph() {
+      this->setDebugMsgPrefix("TrackingGraph");
+    };
 
     template <typename IT>
     int preconditionInOutEdges(const int nNodes,

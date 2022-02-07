@@ -37,22 +37,25 @@ public:
   vtkTypeMacro(ttkCorrespondenceAlgorithm, ttkAlgorithm);
 
   static std::string GetIdArrayName(vtkFieldData *fieldData);
-  static int GetIndexIdMaps(vtkDataArray *&indexIdMapP, vtkDataArray *&indexIdMapC, vtkFieldData *fieldData);
-  static int AddIndexIdMap( vtkImageData *correspondenceMatrix, vtkDataArray* indexIdMap, const bool isMapForCurrentTimestep );
+  static int GetIndexIdMaps(vtkDataArray *&indexIdMapP,
+                            vtkDataArray *&indexIdMapC,
+                            vtkFieldData *fieldData);
+  static int AddIndexIdMap(vtkImageData *correspondenceMatrix,
+                           vtkDataArray *indexIdMap,
+                           const bool isMapForCurrentTimestep);
   static int AddIndexIdMaps(vtkImageData *correspondenceMatrix,
-                               vtkDataArray *indexIdMapR,
-                               vtkDataArray *indexIdMapC
-                               );
+                            vtkDataArray *indexIdMapR,
+                            vtkDataArray *indexIdMapC);
 
   static int AddIndexIdMaps(
     vtkImageData *correspondenceMatrix,
     const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapP,
     const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapC,
-    const std::string& idArrayName);
+    const std::string &idArrayName);
 
   static int
     BuildIdIndexMap(std::unordered_map<ttk::SimplexId, ttk::SimplexId> &,
-                       const vtkDataArray *indexIdMap);
+                    const vtkDataArray *indexIdMap);
 
 protected:
   ttkCorrespondenceAlgorithm();
@@ -64,9 +67,10 @@ protected:
                   vtkInformationVector **inputVector,
                   vtkInformationVector *outputVector) override;
 
-  virtual int ComputeCorrespondences(vtkImageData *vtkNotUsed(correspondenceMatrix),
-                                     vtkDataObject *vtkNotUsed(inputDataObjects0),
-                                     vtkDataObject *vtkNotUsed(inputDataObjects1)) {
+  virtual int
+    ComputeCorrespondences(vtkImageData *vtkNotUsed(correspondenceMatrix),
+                           vtkDataObject *vtkNotUsed(inputDataObjects0),
+                           vtkDataObject *vtkNotUsed(inputDataObjects1)) {
     return 0;
   };
 };

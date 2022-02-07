@@ -114,17 +114,17 @@ namespace ttk {
           msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
 #pragma omp parallel num_threads(this->threadNumber_)
-      {
-        #pragma omp for
-        for(int i = 0; i < nNodes; i++){
-          branchIdPoints[i] = trackingGraph.inEdges[i].size() < 1 ? i : -1;
-        }
+        {
+#pragma omp for
+          for(int i = 0; i < nNodes; i++) {
+            branchIdPoints[i] = trackingGraph.inEdges[i].size() < 1 ? i : -1;
+          }
 
-        #pragma omp for
-        for(int i = 0; i < nEdges; i++){
-          branchIdEdges[i] = -1;
+#pragma omp for
+          for(int i = 0; i < nEdges; i++) {
+            branchIdEdges[i] = -1;
+          }
         }
-      }
 
         this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
       }
@@ -141,12 +141,12 @@ namespace ttk {
           if(branchIdPoints[v] != -1)
             continue;
 
-          branchIdPoints[v] =  v;
+          branchIdPoints[v] = v;
 
           // propagate id only if max incoming edge is max outgoing edge
-          if(trackingGraph.inEdges.size()>=1){
-            const auto& maxIncomingEdge = trackingGraph.inEdges[v][0];
-            if(trackingGraph.outEdges[maxIncomingEdge.u][0].v == v){
+          if(trackingGraph.inEdges.size() >= 1) {
+            const auto &maxIncomingEdge = trackingGraph.inEdges[v][0];
+            if(trackingGraph.outEdges[maxIncomingEdge.u][0].v == v) {
               branchIdPoints[v] = branchIdPoints[maxIncomingEdge.u];
               branchIdEdges[maxIncomingEdge.e] = branchIdPoints[v];
             }
@@ -155,11 +155,11 @@ namespace ttk {
 
         for(int i = 0; i < nNodes; i++) {
           const auto &v = nodesSortedByTime[i];
-          const auto& inEdges = trackingGraph.inEdges[v];
-          if(inEdges.size()==1)
+          const auto &inEdges = trackingGraph.inEdges[v];
+          if(inEdges.size() == 1)
             branchIdEdges[inEdges[0].e] = branchIdPoints[inEdges[0].v];
-          const auto& outEdges = trackingGraph.outEdges[v];
-          if(outEdges.size()==1)
+          const auto &outEdges = trackingGraph.outEdges[v];
+          if(outEdges.size() == 1)
             branchIdEdges[outEdges[0].e] = branchIdPoints[outEdges[0].u];
         }
 

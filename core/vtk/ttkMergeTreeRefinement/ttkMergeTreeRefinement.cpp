@@ -428,7 +428,7 @@ int ttkMergeTreeRefinement::RefineMergeTreeAndSegmentation(
 
     // compute parent id of each refined edge
     for(size_t i = 0; i < n_o_mtEdges; i++) {
-      o_mtNodeIdEData[i] = o_mtConnectivityData[i*2];
+      o_mtNodeIdEData[i] = o_mtConnectivityData[i * 2];
     }
   }
 

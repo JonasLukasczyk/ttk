@@ -39,8 +39,7 @@ int ttkCorrespondenceByOverlap::ComputeCorrespondences(
   if(!ids0 || !ids1)
     return !this->printErr("Unable to retrieve ids.");
 
-  if(ids0->GetNumberOfComponents() != 1
-     || ids1->GetNumberOfComponents() != 1)
+  if(ids0->GetNumberOfComponents() != 1 || ids1->GetNumberOfComponents() != 1)
     return !this->printErr("Ids must have exactly one component.");
 
   if(ids0->GetNumberOfTuples() != ids1->GetNumberOfTuples())
@@ -80,8 +79,8 @@ int ttkCorrespondenceByOverlap::ComputeCorrespondences(
                 (status = this->computeAdjacencyMatrix<T0, ttk::SimplexId>(
                    ttkUtils::GetPointer<int>(matrixData),
                    ttkUtils::GetPointer<const T0>(ids0),
-                   ttkUtils::GetPointer<const T0>(ids1), nVertices,
-                   idIndexMap0, idIndexMap1)));
+                   ttkUtils::GetPointer<const T0>(ids1), nVertices, idIndexMap0,
+                   idIndexMap1)));
   if(!status)
     return 0;
 

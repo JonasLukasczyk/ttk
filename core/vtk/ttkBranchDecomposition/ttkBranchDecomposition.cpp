@@ -2,10 +2,10 @@
 
 #include <vtkInformation.h>
 
+#include <vtkCellData.h>
 #include <vtkDataArray.h>
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
-#include <vtkCellData.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
@@ -113,8 +113,7 @@ int ttkBranchDecomposition::RequestData(vtkInformation *,
   ttkTypeMacroAA(timeArray->GetDataType(), attributeArray->GetDataType(),
                  (status = this->computeBranchDecompositionByAttribute<T0, T1>(
                     ttkUtils::GetPointer<int>(branchIdP),
-                    ttkUtils::GetPointer<int>(branchIdC),
-                    ttkTrackingGraph,
+                    ttkUtils::GetPointer<int>(branchIdC), ttkTrackingGraph,
                     ttkUtils::GetConstPointer<const T0>(timeArray),
                     ttkUtils::GetConstPointer<const T1>(attributeArray),
                     attributeArrayAssociation)));

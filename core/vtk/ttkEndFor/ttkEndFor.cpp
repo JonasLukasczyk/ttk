@@ -46,7 +46,8 @@ int ttkEndFor::RequestData(vtkInformation *request,
                            vtkInformationVector *outputVector) {
 
   // perform aggregation
-  int status = this->ttkBlockAggregator::RequestData(request, inputVector, outputVector);
+  int status
+    = this->ttkBlockAggregator::RequestData(request, inputVector, outputVector);
   if(!status)
     return 0;
 
@@ -66,25 +67,25 @@ int ttkEndFor::RequestData(vtkInformation *request,
   }
 
   // get iteration info
-  int i = forEach->GetIterationIdx()-1;
+  int i = forEach->GetIterationIdx() - 1;
   int n = forEach->GetIterationNumber();
 
-  bool isRepeatedIteration = (this->LastIterationIdx==i || this->LastIterationIdx<0) && i > 0;
+  bool isRepeatedIteration
+    = (this->LastIterationIdx == i || this->LastIterationIdx < 0) && i > 0;
   this->LastIterationIdx = i;
 
-  if(isRepeatedIteration){
+  if(isRepeatedIteration) {
     this->printMsg("For Loop Modified -> Restarting Iterations",
                    ttk::debug::Separator::BACKSLASH);
     forEach->SetIterationIdx(0);
-  }
-  else
+  } else
     this->printMsg("Iteration ( " + std::to_string(i) + " / "
                      + std::to_string(n - 1) + " ) complete ",
                    ttk::debug::Separator::BACKSLASH);
 
   if(i >= n - 1 && !isRepeatedIteration) {
     // if this is the last iteration
-    removeFieldDataRecursively( vtkDataObject::GetData(outputVector) );
+    removeFieldDataRecursively(vtkDataObject::GetData(outputVector));
     request->Remove(vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING());
   } else {
     // if this is an intermediate or repeated iteration

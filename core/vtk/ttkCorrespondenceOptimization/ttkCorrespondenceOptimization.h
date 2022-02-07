@@ -11,8 +11,7 @@
 
 class TTKCORRESPONDENCEOPTIMIZATION_EXPORT ttkCorrespondenceOptimization
   : public ttkAlgorithm,
-    protected ttk::CorrespondenceOptimization
-{
+    protected ttk::CorrespondenceOptimization {
 public:
   enum class OPTIMIZATION_METHOD {
     N_SMALLEST_CORRESPONDENCES_PER_FEATURE = 0,
@@ -23,8 +22,8 @@ public:
   };
 
 private:
-
-  OPTIMIZATION_METHOD OptimizationMethod{OPTIMIZATION_METHOD::N_LARGEST_CORRESPONDENCES_PER_FEATURE};
+  OPTIMIZATION_METHOD OptimizationMethod{
+    OPTIMIZATION_METHOD::N_LARGEST_CORRESPONDENCES_PER_FEATURE};
   int NumberOfLargestCorrespondencesPerFeature{1};
   double Threshold{0};
 

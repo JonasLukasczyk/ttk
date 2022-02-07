@@ -11,8 +11,8 @@
 #include <vtkPointData.h>
 #include <vtkStringArray.h>
 
-#include <ttkUtils.h>
 #include <ttkMacros.h>
+#include <ttkUtils.h>
 
 vtkStandardNewMacro(ttkCorrespondenceByDistance);
 
@@ -58,33 +58,25 @@ int ttkCorrespondenceByDistance::ComputeCorrespondences(
   ttkTypeMacroR(
     matrixData->GetDataType(),
     (status = this->computeDistanceMatrix<T0>(
-                       ttkUtils::GetPointer<T0>(matrixData),
-                       ttkUtils::GetPointer<const T0>(coords0),
-                       ttkUtils::GetPointer<const T0>(coords1), nPoints0,
-                       nPoints1))
-  );
+       ttkUtils::GetPointer<T0>(matrixData),
+       ttkUtils::GetPointer<const T0>(coords0),
+       ttkUtils::GetPointer<const T0>(coords1), nPoints0, nPoints1)));
   if(!status)
     return 0;
 
   // normalize distance matrix
-  if(this->NormalizeMatrix){
+  if(this->NormalizeMatrix) {
     ttkTypeMacroR(
       matrixData->GetDataType(),
       (status = this->normalizeDistanceMatrix<T0>(
-         ttkUtils::GetPointer<T0>(matrixData),
-         nPoints0,nPoints1
-        )
-      )
-    );
+         ttkUtils::GetPointer<T0>(matrixData), nPoints0, nPoints1)));
     if(!status)
       return 0;
   }
 
   status = ttkCorrespondenceAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix,
-    this->GetInputArrayToProcess(0, p0),
-    this->GetInputArrayToProcess(0, p1)
-  );
+    correspondenceMatrix, this->GetInputArrayToProcess(0, p0),
+    this->GetInputArrayToProcess(0, p1));
   if(!status)
     return 0;
 

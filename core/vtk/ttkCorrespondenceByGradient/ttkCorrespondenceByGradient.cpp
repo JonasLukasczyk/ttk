@@ -71,7 +71,7 @@ int ttkCorrespondenceByGradient::ComputeCorrespondences(
        ttkUtils::GetPointer<ttk::SimplexId>(GetVertexIdArray(seeds1)),
        nFeatures0, nFeatures1, std::greater<ttk::SimplexId>{},
        [](ttk::SimplexId i, ttk::SimplexId j, ttk::SimplexId n,
-          ttk::SimplexId ) { return j * n + i; })));
+          ttk::SimplexId) { return j * n + i; })));
   if(!status)
     return 0;
 
@@ -92,8 +92,8 @@ int ttkCorrespondenceByGradient::ComputeCorrespondences(
     return 0;
 
   status = this->AddIndexIdMaps(correspondenceMatrix,
-                                   this->GetInputArrayToProcess(1, seeds0),
-                                   this->GetInputArrayToProcess(1, seeds1));
+                                this->GetInputArrayToProcess(1, seeds0),
+                                this->GetInputArrayToProcess(1, seeds1));
   if(!status)
     return 0;
 

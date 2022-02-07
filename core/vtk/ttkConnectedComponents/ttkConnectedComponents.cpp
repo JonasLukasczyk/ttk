@@ -20,7 +20,7 @@ ttkConnectedComponents::ttkConnectedComponents() {
   this->SetNumberOfOutputPorts(2);
 
   // Suppress warning if one does not set the optional input array
-  this->SetInputArrayToProcess(0,0,0,0,"%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+  this->SetInputArrayToProcess(0, 0, 0, 0, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 }
 
 ttkConnectedComponents::~ttkConnectedComponents() {
@@ -80,24 +80,19 @@ int ttkConnectedComponents::RequestData(vtkInformation *,
   {
     int status = 0;
 
-    ttkTypeMacroA(
-      featureMask ? featureMask->GetDataType() : VTK_INT,
-      (status = this->initializeOutputLabels<T0>(
-         ttkUtils::GetPointer<int>(outputArray),
-         nPoints,
-         ttkUtils::GetPointer<const T0>(featureMask)
-       ))
-    );
+    ttkTypeMacroA(featureMask ? featureMask->GetDataType() : VTK_INT,
+                  (status = this->initializeOutputLabels<T0>(
+                     ttkUtils::GetPointer<int>(outputArray), nPoints,
+                     ttkUtils::GetPointer<const T0>(featureMask))));
     if(status != 1)
       return 0;
 
     this->preconditionTriangulation(triangulation);
-    ttkTypeMacroT(
-      triangulation->getType(),
-      (status = this->computeConnectedComponents<T0>(
-         components, ttkUtils::GetPointer<int>(outputArray),
-         static_cast<const T0*>(triangulation->getData()),
-         this->UseSeedIdAsComponentId)));
+    ttkTypeMacroT(triangulation->getType(),
+                  (status = this->computeConnectedComponents<T0>(
+                     components, ttkUtils::GetPointer<int>(outputArray),
+                     static_cast<const T0 *>(triangulation->getData()),
+                     this->UseSeedIdAsComponentId)));
     if(status != 1)
       return 0;
   }

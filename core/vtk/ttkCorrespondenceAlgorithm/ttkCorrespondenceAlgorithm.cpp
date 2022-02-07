@@ -49,21 +49,23 @@ int ttkCorrespondenceAlgorithm::FillOutputPortInformation(
 
 template <typename DT>
 void BuildIdIndexMapDT(std::unordered_map<ttk::SimplexId, ttk::SimplexId> &map,
-                          const int n,
-                          const DT *indexIdMapData) {
+                       const int n,
+                       const DT *indexIdMapData) {
   for(int i = 0; i < n; i++)
-    map.emplace(std::make_pair(static_cast<ttk::SimplexId>(indexIdMapData[i]), i));
+    map.emplace(
+      std::make_pair(static_cast<ttk::SimplexId>(indexIdMapData[i]), i));
 }
 
 int ttkCorrespondenceAlgorithm::BuildIdIndexMap(
-  std::unordered_map<ttk::SimplexId, ttk::SimplexId> &map, const vtkDataArray *indexIdMap) {
+  std::unordered_map<ttk::SimplexId, ttk::SimplexId> &map,
+  const vtkDataArray *indexIdMap) {
   if(!indexIdMap)
     return 0;
 
   switch(indexIdMap->GetDataType()) {
-    vtkTemplateMacro(BuildIdIndexMapDT<VTK_TT>(
-      map, indexIdMap->GetNumberOfValues(),
-      ttkUtils::GetConstPointer<VTK_TT>(indexIdMap)));
+    vtkTemplateMacro(
+      BuildIdIndexMapDT<VTK_TT>(map, indexIdMap->GetNumberOfValues(),
+                                ttkUtils::GetConstPointer<VTK_TT>(indexIdMap)));
   }
 
   return 1;
@@ -143,7 +145,8 @@ int ttkCorrespondenceAlgorithm::RequestData(
   return 1;
 }
 
-std::string ttkCorrespondenceAlgorithm::GetIdArrayName(vtkFieldData *fieldData){
+std::string
+  ttkCorrespondenceAlgorithm::GetIdArrayName(vtkFieldData *fieldData) {
   std::string result;
   int found = 0;
   for(int a = 0; a < fieldData->GetNumberOfArrays(); a++) {
@@ -159,30 +162,34 @@ std::string ttkCorrespondenceAlgorithm::GetIdArrayName(vtkFieldData *fieldData){
     }
   }
 
-  return found==2 ? result : "";
+  return found == 2 ? result : "";
 };
 
-int ttkCorrespondenceAlgorithm::GetIndexIdMaps(vtkDataArray *&indexIdMapP, vtkDataArray *&indexIdMapC, vtkFieldData *fieldData){
-  std::string idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(fieldData);
+int ttkCorrespondenceAlgorithm::GetIndexIdMaps(vtkDataArray *&indexIdMapP,
+                                               vtkDataArray *&indexIdMapC,
+                                               vtkFieldData *fieldData) {
+  std::string idArrayName
+    = ttkCorrespondenceAlgorithm::GetIdArrayName(fieldData);
 
-  if(idArrayName.size()<1)
+  if(idArrayName.size() < 1)
     return 0;
 
-  indexIdMapP = fieldData->GetArray((idArrayName+"_t-1").data());
-  indexIdMapC = fieldData->GetArray((idArrayName+"_t").data());
+  indexIdMapP = fieldData->GetArray((idArrayName + "_t-1").data());
+  indexIdMapC = fieldData->GetArray((idArrayName + "_t").data());
 
   return 1;
 };
 
 int ttkCorrespondenceAlgorithm::AddIndexIdMap(
   vtkImageData *correspondenceMatrix,
-  vtkDataArray* idArray,
-  const bool isMapForCurrentTimestep
-){
+  vtkDataArray *idArray,
+  const bool isMapForCurrentTimestep) {
   auto fd = correspondenceMatrix->GetFieldData();
   auto array = vtkSmartPointer<vtkDataArray>::Take(idArray->NewInstance());
   array->ShallowCopy(idArray);
-  array->SetName( (std::string(idArray->GetName()) + (isMapForCurrentTimestep ? "_t" : "_t-1")).data() );
+  array->SetName((std::string(idArray->GetName())
+                  + (isMapForCurrentTimestep ? "_t" : "_t-1"))
+                   .data());
   fd->AddArray(array);
   return 1;
 }
@@ -190,14 +197,15 @@ int ttkCorrespondenceAlgorithm::AddIndexIdMap(
 int ttkCorrespondenceAlgorithm::AddIndexIdMaps(
   vtkImageData *correspondenceMatrix,
   vtkDataArray *indexIdMapP,
-  vtkDataArray *indexIdMapC
-) {
+  vtkDataArray *indexIdMapC) {
   int status = 0;
-  status = ttkCorrespondenceAlgorithm::AddIndexIdMap(correspondenceMatrix, indexIdMapP, false);
+  status = ttkCorrespondenceAlgorithm::AddIndexIdMap(
+    correspondenceMatrix, indexIdMapP, false);
   if(!status)
     return 0;
 
-  status = ttkCorrespondenceAlgorithm::AddIndexIdMap(correspondenceMatrix, indexIdMapC, true);
+  status = ttkCorrespondenceAlgorithm::AddIndexIdMap(
+    correspondenceMatrix, indexIdMapC, true);
   if(!status)
     return 0;
 
@@ -208,7 +216,7 @@ int ttkCorrespondenceAlgorithm::AddIndexIdMaps(
   vtkImageData *correspondenceMatrix,
   const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapP,
   const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapC,
-  const std::string& idArrayName) {
+  const std::string &idArrayName) {
   auto fd = correspondenceMatrix->GetFieldData();
   int a = 0;
   const std::string suffix[2]{"_t-1", "_t"};

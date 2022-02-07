@@ -121,8 +121,8 @@ int generateEdges(vtkPolyData *output,
   if(nIds0 > 0 && nIds1 > 0) {
     std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap0;
     std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap1;
-    ttkCorrespondenceAlgorithm::BuildIdIndexMap( idIndexMap0, indexIdMap0);
-    ttkCorrespondenceAlgorithm::BuildIdIndexMap( idIndexMap1, indexIdMap1);
+    ttkCorrespondenceAlgorithm::BuildIdIndexMap(idIndexMap0, indexIdMap0);
+    ttkCorrespondenceAlgorithm::BuildIdIndexMap(idIndexMap1, indexIdMap1);
 
     for(int i = 0; i < nIds0; i++) {
       for(int j = 0; j < nIds1; j++) {
@@ -188,23 +188,23 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
   if(features) {
     // nodes
     for(int t = 1; t < nSteps; t++) {
-      auto f = static_cast<vtkPointSet *>(features->GetBlock(t-1));
+      auto f = static_cast<vtkPointSet *>(features->GetBlock(t - 1));
       const auto n = f->GetNumberOfPoints();
       nNodes += n;
-      nodeIdxOffsets[t] = n + nodeIdxOffsets[t-1];
+      nodeIdxOffsets[t] = n + nodeIdxOffsets[t - 1];
     }
 
     // edges
     for(int t = 1; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t-1));
+      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t - 1));
       int dim[3];
       c->GetDimensions(dim);
       auto matrix = this->GetInputArrayToProcess(0, c);
       auto cFD = c->GetFieldData();
 
-      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t-1));
+      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t - 1));
       auto f1 = static_cast<vtkPointSet *>(features->GetBlock(t));
-      if(f0->GetNumberOfPoints()<1 || f1->GetNumberOfPoints()<1)
+      if(f0->GetNumberOfPoints() < 1 || f1->GetNumberOfPoints() < 1)
         continue;
 
       const auto idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(cFD);
@@ -218,18 +218,18 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
         return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
       int status = 0;
-      ttkTypeMacroAI(
-        matrix->GetDataType(), l0->GetDataType(),
-        status = countEdges(nEdges, dim, ttkUtils::GetPointer<T0>(matrix),
-                   l0->GetNumberOfValues(), l1->GetNumberOfValues(),
-                   ttkUtils::GetPointer<T1>(l0), ttkUtils::GetPointer<T1>(l1),
-                   indexIdMapP, indexIdMapC));
+      ttkTypeMacroAI(matrix->GetDataType(), l0->GetDataType(),
+                     status = countEdges(
+                       nEdges, dim, ttkUtils::GetPointer<T0>(matrix),
+                       l0->GetNumberOfValues(), l1->GetNumberOfValues(),
+                       ttkUtils::GetPointer<T1>(l0),
+                       ttkUtils::GetPointer<T1>(l1), indexIdMapP, indexIdMapC));
       if(!status)
         return 0;
     }
   } else {
     for(int t = 1; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t-1));
+      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t - 1));
       int dim[3];
       c->GetDimensions(dim);
 
@@ -238,7 +238,7 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
         nNodes += dim[0];
       nNodes += dim[1];
 
-      nodeIdxOffsets[t] = dim[0] + nodeIdxOffsets[t-1];
+      nodeIdxOffsets[t] = dim[0] + nodeIdxOffsets[t - 1];
 
       // edges
       auto matrix = this->GetInputArrayToProcess(0, c);
@@ -292,21 +292,26 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *correspondences,
   }
 
   if(features) {
-    if(features->GetNumberOfBlocks() - 1 != correspondences->GetNumberOfBlocks())
-      return !this->printMsg(std::vector<std::string>({
-        "Number of feature sets (F) and correspondence matrices (C) inconsistent.",
-        "They must satisfy F = C + 1."
-      }),ttk::debug::Priority::ERROR);
+    if(features->GetNumberOfBlocks() - 1
+       != correspondences->GetNumberOfBlocks())
+      return !this->printMsg(
+        std::vector<std::string>({"Number of feature sets (F) and "
+                                  "correspondence matrices (C) inconsistent.",
+                                  "They must satisfy F = C + 1."}),
+        ttk::debug::Priority::ERROR);
 
     // automatically determine indexIdMapName
 
     std::string idArrayName;
     for(int t = 0; t < nSteps; t++) {
-      idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(correspondences->GetBlock(t)->GetFieldData());
-      if(idArrayName.size()<1)
-        return !this->printMsg(std::vector<std::string>( {"Correspondence Matrices not augmented with IndexIdMaps.","Unable to perform FeatureId lookup."} ),
-                  ttk::debug::Priority::ERROR
-              );
+      idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(
+        correspondences->GetBlock(t)->GetFieldData());
+      if(idArrayName.size() < 1)
+        return !this->printMsg(
+          std::vector<std::string>(
+            {"Correspondence Matrices not augmented with IndexIdMaps.",
+             "Unable to perform FeatureId lookup."}),
+          ttk::debug::Priority::ERROR);
     }
 
     for(int t = 0; t <= nSteps; t++) {
@@ -314,7 +319,7 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *correspondences,
       if(!f)
         return !this->printErr(errmsg1);
       auto ids = f->GetPointData()->GetArray(idArrayName.data());
-      if(f->GetNumberOfPoints()>0 && !ids)
+      if(f->GetNumberOfPoints() > 0 && !ids)
         return !this->printErr("Unable to retrieve feature ids.");
     }
   }
@@ -334,7 +339,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   std::string msg = "Initializing Output";
   this->printMsg(msg, 0, 0, ttk::debug::LineMode::REPLACE);
 
-  const int nSteps = correspondences->GetNumberOfBlocks()+1;
+  const int nSteps = correspondences->GetNumberOfBlocks() + 1;
 
   int nNodes, nEdges;
   std::vector<int> nodeIdxOffsets;
@@ -342,7 +347,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
        nNodes, nEdges, nodeIdxOffsets, correspondences, features))
     return 0;
 
-  if(nNodes<1)
+  if(nNodes < 1)
     return this->printWrn("Empty Input");
 
   // collect arrays to augment tracking graph
@@ -422,7 +427,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   // Edges
   {
     for(int t = 1, q = 0; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t-1));
+      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t - 1));
       int dim[3];
       c->GetDimensions(dim);
       auto matrix = this->GetInputArrayToProcess(0, c);
@@ -430,9 +435,9 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
 
       const auto idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(cFD);
 
-      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t-1));
+      auto f0 = static_cast<vtkPointSet *>(features->GetBlock(t - 1));
       auto f1 = static_cast<vtkPointSet *>(features->GetBlock(t));
-      if(f0->GetNumberOfPoints()<1 || f1->GetNumberOfPoints()<1)
+      if(f0->GetNumberOfPoints() < 1 || f1->GetNumberOfPoints() < 1)
         continue;
 
       auto l0 = f0->GetPointData()->GetArray(idArrayName.data());
@@ -441,14 +446,14 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
       vtkDataArray *indexIdMapP{nullptr};
       vtkDataArray *indexIdMapC{nullptr};
       if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(
-          indexIdMapP, indexIdMapC, cFD))
+           indexIdMapP, indexIdMapC, cFD))
         return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
       ttkTypeMacroAI(
         matrix->GetDataType(), l0->GetDataType(),
         (generateEdges<T0, T1>(
           trackingGraph, q, trackingGraphCD, c->GetPointData(),
-          ttkUtils::GetPointer<T0>(matrix), nodeIdxOffsets[t-1],
+          ttkUtils::GetPointer<T0>(matrix), nodeIdxOffsets[t - 1],
           nodeIdxOffsets[t], dim, f0->GetNumberOfPoints(),
           f1->GetNumberOfPoints(), ttkUtils::GetPointer<T1>(l0),
           ttkUtils::GetPointer<T1>(l1), indexIdMapP, indexIdMapC)));
@@ -503,10 +508,12 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
   {
     vtkDataArray *indexIdMapP{nullptr};
     vtkDataArray *indexIdMapC{nullptr};
-    if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(indexIdMapP, indexIdMapC, correspondencesFD))
+    if(!ttkCorrespondenceAlgorithm::GetIndexIdMaps(
+         indexIdMapP, indexIdMapC, correspondencesFD))
       return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
-    std::string idArrayName = ttkCorrespondenceAlgorithm::GetIdArrayName(correspondencesFD);
+    std::string idArrayName
+      = ttkCorrespondenceAlgorithm::GetIdArrayName(correspondencesFD);
 
     ids = vtkSmartPointer<vtkDataArray>::Take(indexIdMapP->NewInstance());
     ids->SetName(idArrayName.data());
@@ -601,7 +608,7 @@ int ttkTrackingGraph::RequestData(vtkInformation *,
 
   if(features) {
     if(!this->GenerateTrackingGraphFromFeatures(
-        trackingGraph, correspondences, features))
+         trackingGraph, correspondences, features))
       return 0;
   } else {
     if(!this->GenerateTrackingGraphFromMatrix(trackingGraph, correspondences))
