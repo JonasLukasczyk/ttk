@@ -91,7 +91,7 @@
       <!-- Create a UI group that contains all output parameter widgets-->
       <PropertyGroup panel_widget="Line" label="Output Options">
         <Property name="ImageBounds" />
-        <Property name="Resolution" />
+        <Property name="CellSpacing" />
         <Property name="Kernel" />
       </PropertyGroup>      
 
