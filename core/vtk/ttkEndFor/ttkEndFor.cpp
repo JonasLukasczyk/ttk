@@ -14,8 +14,8 @@ vtkStandardNewMacro(ttkEndFor);
 ttkEndFor::ttkEndFor() {
   this->setDebugMsgPrefix("EndFor");
 
-  this->SetForceReset(false);
-  this->SetFlattenInput(true);
+  // this->SetForceReset(false);
+  // this->SetFlattenInput(true);
 
   SetNumberOfInputPorts(2);
   SetNumberOfOutputPorts(1);
@@ -25,7 +25,8 @@ ttkEndFor::~ttkEndFor(){};
 
 int ttkEndFor::FillInputPortInformation(int port, vtkInformation *info) {
   if(port == 0 || port == 1) {
-    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject", 1);
+    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataObject");
+    info->Set(vtkAlgorithm::INPUT_IS_REPEATABLE(), 1);
     return 1;
   }
   return 0;
@@ -90,7 +91,11 @@ int ttkEndFor::RequestData(vtkInformation *request,
   } else {
     // if this is an intermediate or repeated iteration
     forEach->Modified();
-    this->GetInputAlgorithm(0, 0)->Update(); // trigger update of data input
+
+    size_t nInputs = inputVector[0]->GetNumberOfInformationObjects();
+    for(size_t i=0; i<nInputs; i++)
+      this->GetInputAlgorithm(0, i)->Update(); // trigger update of data input
+
     request->Set(vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING(), 1);
   }
 
