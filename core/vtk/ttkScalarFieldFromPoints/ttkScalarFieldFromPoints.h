@@ -1,5 +1,3 @@
-/// TODO 4: Provide your information
-///
 /// \ingroup vtk
 /// \class ttkScalarFieldFromPoints
 /// \author Emma Nilsson <emma.nilsson@liu.se>
@@ -8,11 +6,10 @@
 /// \brief TTK VTK-filter that wraps the ttk::ScalarFieldFromPoints module.
 ///
 /// This VTK filter uses the ttk::ScalarFieldFromPoints module to compute the
-/// scalar field from a set of points for each timestep in the timeseries.
+/// scalar field from a set of points using a kernel to generate scalar values.
 ///
-/// \param Input vtkMultiBlockDataSet of vtkPolyData representing integrated
-/// path lines, from which a scalar field is computed. \param Output
-/// vtkMultiBlockDataSet of vtkImageData representing scalar fields.
+/// \param Input vtkPointSet.
+/// \param Output vtkImageData.
 ///
 /// \sa ttk::ScalarFieldFromPoints
 /// \sa ttkAlgorithm

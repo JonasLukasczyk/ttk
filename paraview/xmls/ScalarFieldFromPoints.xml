@@ -4,7 +4,7 @@
   <ProxyGroup name="filters">
     <SourceProxy name="ScalarFieldFromPoints" class="ttkScalarFieldFromPoints" label="TTK ScalarFieldFromPoints">
       <Documentation long_help="ScalarFieldFromPoints Long" short_help="ScalarFieldFromPoints Short">
-        The filter takes as input points from the PathIntegrator module, and for each timestep creates a scalar field.
+        The filter takes as input points and generates a scalar field.
       </Documentation>
 
       <!-- INPUT -->
@@ -17,7 +17,7 @@
           <DataType value="vtkMultiBlockDataSet" />
         </DataTypeDomain>
         <InputArrayDomain name="point_array" number_of_components="1"/>
-        <Documentation>A vtkMultiBlockDataSet of points.</Documentation>
+        <Documentation>A vtkPointSet.</Documentation>
       </InputProperty>
 
       <!-- INPUT PARAMETER WIDGETS -->
@@ -72,7 +72,7 @@
             <Property function="Input" name="Input" />
           </RequiredProperties>
         </BoundsDomain>
-        <Documentation>The bounds for the output scalar field. Should be similar to the domain points were generated in.</Documentation>
+        <Documentation>The bounds for the output scalar field.</Documentation>
       </DoubleVectorProperty>
 
       <DoubleVectorProperty name="CellSpacing" command="SetCellSpacing" default_values="1 1 1" number_of_elements="3">

@@ -1,19 +1,12 @@
-/// TODO 1: Provide your information
-///
 /// \ingroup base
 /// \class ttk::ScalarFieldFromPoints
-/// \author Your Name Here <Your Email Address Here>
-/// \date The Date Here.
+/// \author Emma Nilsson <emma.nilsson@liu.se>
+/// \date 2021-10-11.
 ///
-/// This module defines the %ScalarFieldFromPoints class that computes for
-/// each vertex of a triangulation the average scalar value of itself and its
-/// direct neighbors.
+/// This module defines the %ScalarFieldFromPoints class that computes a 2D or
+/// 3D the scalar field by using kernels on input points.
 ///
 /// \b Related \b publication: \n
-/// 'ScalarFieldFromPoints'
-/// Jonas Lukasczyk and Julien Tierny.
-/// TTK Publications.
-/// 2020.
 ///
 
 #pragma once
@@ -25,12 +18,6 @@
 #include <math.h>
 
 namespace ttk {
-
-  /**
-   * The ScalarFieldFromPoints class provides methods to compute for each
-   * vertex of a triangulation the average scalar value of itself and its direct
-   * neighbors.
-   */
 
   class ScalarFieldFromPoints : virtual public Debug {
 
@@ -122,7 +109,6 @@ namespace ttk {
             double xxx = (x - xi) * dx;
             double yyy = (y - yi) * dy;
             const double u = (xxx * xxx + yyy * yyy);
-            // this->printMsg(std::to_string(std::sqrt(u)));
             const double ku = k(u, constants[i], weights[i]);
 
             int pixelIndex = y * width + x;
@@ -221,7 +207,6 @@ namespace ttk {
               double yyy = (y - yi) * dy;
               double zzz = (z - zi) * dz;
               const double u = (xxx * xxx + yyy * yyy + zzz * zzz);
-              // this->printMsg(std::to_string(std::sqrt(u)));
               const double ku = k(u, constants[i], weights[i]);
 
               int pixelIndex = z * width * height + y * width + x;

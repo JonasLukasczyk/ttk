@@ -1,9 +1,0 @@
-NAME
-  ttkScalarFieldFromPointsNew
-SOURCES
-  ttkScalarFieldFromPointsNew.cpp
-HEADERS
-  ttkScalarFieldFromPointsNew.h
-DEPENDS
-  scalarFieldFromPointsNew
-  ttkAlgorithm
