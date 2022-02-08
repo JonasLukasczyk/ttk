@@ -36,17 +36,14 @@ class TTKSCALARFIELDFROMPOINTSNEW_EXPORT ttkScalarFieldFromPointsNew
 {
 private:
   double ImageBounds[6]{0, 1, 0, 1, 0, 1};
-  double Resolution[3]{1, 1, 1};
-  double Bandwidth{1};
+  double CellSpacing[3]{1, 1, 1};
   int Kernel{0};
 
 public:
   vtkSetVector6Macro(ImageBounds, double);
   vtkGetVector6Macro(ImageBounds, double);
-  vtkSetVector3Macro(Resolution, double);
-  vtkGetVector3Macro(Resolution, double);
-  vtkSetMacro(Bandwidth, double);
-  vtkGetMacro(Bandwidth, double);
+  vtkSetVector3Macro(CellSpacing, double);
+  vtkGetVector3Macro(CellSpacing, double);
   vtkSetMacro(Kernel, int);
   vtkGetMacro(Kernel, int);
 

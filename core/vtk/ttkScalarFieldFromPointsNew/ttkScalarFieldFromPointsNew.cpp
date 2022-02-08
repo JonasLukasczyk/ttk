@@ -30,7 +30,7 @@ ttkScalarFieldFromPointsNew::~ttkScalarFieldFromPointsNew() {
 int ttkScalarFieldFromPointsNew::FillInputPortInformation(
   int port, vtkInformation *info) {
   if(port == 0)
-    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
+    info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPointSet");
   else
     return 0;
 
@@ -40,7 +40,7 @@ int ttkScalarFieldFromPointsNew::FillInputPortInformation(
 int ttkScalarFieldFromPointsNew::FillOutputPortInformation(
   int port, vtkInformation *info) {
   if(port == 0)
-    info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
+    info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkImageData");
   else
     return 0;
 
@@ -52,6 +52,40 @@ int ttkScalarFieldFromPointsNew::RequestInformation(
   vtkInformationVector **,
   vtkInformationVector *outputVector) {
 
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+
+  if(this->CellSpacing[0] > 0 && this->CellSpacing[1] > 0
+     && this->CellSpacing[2] > 0) {
+    // Check what dimension the domain is in
+    int dimXmin, dimXmax, dimYmin, dimYmax, dimZmin, dimZmax;
+    if(this->ImageBounds[4] == this->ImageBounds[5]) {
+      dimZmin = dimZmax = 0;
+    } else {
+      dimZmin = floor(this->ImageBounds[4] * 1 / this->CellSpacing[2]);
+      dimZmax = ceil(this->ImageBounds[5] * 1 / this->CellSpacing[2]);
+    }
+
+    // Define and set all required attributes of the vtkImageData output
+    // The extent is the number of data points in each dimension and is
+    // therefore scaled by the cell spacing
+    dimXmin = floor(this->ImageBounds[0] * 1 / this->CellSpacing[0]);
+    dimXmax = ceil(this->ImageBounds[1] * 1 / this->CellSpacing[0]);
+    dimYmin = floor(this->ImageBounds[2] * 1 / this->CellSpacing[1]);
+    dimYmax = ceil(this->ImageBounds[3] * 1 / this->CellSpacing[1]);
+    int extent[6] = {dimXmin, dimXmax, dimYmin, dimYmax, dimZmin, dimZmax};
+    double spacing[3]
+      = {this->CellSpacing[0], this->CellSpacing[1], this->CellSpacing[2]};
+    double origin[3] = {0, 0, 0};
+
+    outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), extent, 6);
+    outInfo->Set(vtkDataObject::SPACING(), spacing, 3);
+    outInfo->Set(vtkDataObject::ORIGIN(), origin, 3);
+    vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
+  } else {
+    this->printErr("The Cell Spacing contains zeros.");
+    return 0;
+  }
+
   return 1;
 }
 
@@ -59,243 +93,141 @@ int ttkScalarFieldFromPointsNew::RequestData(
   vtkInformation *request,
   vtkInformationVector **inputVector,
   vtkInformationVector *outputVector) {
-
-  auto inputMB = vtkMultiBlockDataSet::GetData(inputVector[0]);
-  if(!inputMB) {
-    this->printErr("No input data available.");
+  // Get input
+  auto input = vtkPointSet::GetData(inputVector[0], 0);
+  if(!input) {
+    this->printErr("There is no input provided.");
     return 0;
   }
 
-  for(unsigned int t = 0; t < inputMB->GetNumberOfBlocks(); t++) {
-    // Get points for current timestep
-    auto tBlock = inputMB->GetBlock(t);
-    auto curPoints = vtkSmartPointer<vtkPolyData>::New();
-    curPoints->ShallowCopy(tBlock);
-    const size_t nPoints = curPoints->GetNumberOfPoints();
+  const size_t nPoints = input->GetNumberOfPoints();
 
-    // Get amplitude and spread for points in the timestep
-    auto ampArray = GetInputArrayToProcess(2, curPoints);
-    if(!ampArray) {
-      this->printErr("No amplitude array was provided.");
-      // return 0;
-    }
-
-    auto spreadArray = GetInputArrayToProcess(3, curPoints);
-    if(!spreadArray) {
-      this->printErr("No spread array was provided.");
-      // return 0;
-    }
-
-    auto rateArray = GetInputArrayToProcess(4, curPoints);
-    if(!rateArray) {
-      this->printErr("No rate array was provided.");
-      // return 0;
-    }
-
-    auto birthTimeArray = GetInputArrayToProcess(5, curPoints);
-    if(!birthTimeArray) {
-      this->printErr("No birth time array was provided.");
-      // return 0;
-    }
-
-    auto deathTimeArray = GetInputArrayToProcess(6, curPoints);
-    if(!deathTimeArray) {
-      this->printErr("No death time array was provided.");
-      // return 0;
-    }
-
-    auto image = vtkSmartPointer<vtkImageData>::New();
-    image->SetDimensions(
-      this->Resolution[0], this->Resolution[1], this->Resolution[2]);
-    image->SetOrigin(
-      this->ImageBounds[0], this->ImageBounds[2], this->ImageBounds[4]);
-    image->SetSpacing(
-      this->Resolution[0] > 1 ? (this->ImageBounds[1] - this->ImageBounds[0])
-                                  / (this->Resolution[0] - 1)
-                              : 0,
-      this->Resolution[1] > 1 ? (this->ImageBounds[3] - this->ImageBounds[2])
-                                  / (this->Resolution[1] - 1)
-                              : 0,
-      this->Resolution[2] > 1 ? (this->ImageBounds[5] - this->ImageBounds[4])
-                                  / (this->Resolution[2] - 1)
-                              : 0);
-    image->AllocateScalars(VTK_DOUBLE, 1);
-
-    auto scalarArray = image->GetPointData()->GetArray(0);
-    scalarArray->SetName("Scalars");
-    auto scalarArrayData = ttkUtils::GetPointer<double>(scalarArray);
-
-    auto nPixels = scalarArray->GetNumberOfTuples();
-
-    auto voronoiArray = vtkSmartPointer<vtkIntArray>::New();
-    voronoiArray->SetName("Voronoi");
-    voronoiArray->SetNumberOfComponents(1);
-    voronoiArray->SetNumberOfTuples(nPixels);
-    image->GetPointData()->AddArray(voronoiArray);
-    auto voronoiArrayData = ttkUtils::GetPointer<int>(voronoiArray);
-
-    auto weightedVoronoiArray = vtkSmartPointer<vtkIntArray>::New();
-    weightedVoronoiArray->SetName("WeightedVoronoi");
-    weightedVoronoiArray->SetNumberOfComponents(1);
-    weightedVoronoiArray->SetNumberOfTuples(nPixels);
-    image->GetPointData()->AddArray(weightedVoronoiArray);
-    auto weightedVoronoiArrayData
-      = ttkUtils::GetPointer<int>(weightedVoronoiArray);
-
-    auto powerDiagramArray = vtkSmartPointer<vtkIntArray>::New();
-    powerDiagramArray->SetName("PowerDiagram");
-    powerDiagramArray->SetNumberOfComponents(1);
-    powerDiagramArray->SetNumberOfTuples(nPixels);
-    image->GetPointData()->AddArray(powerDiagramArray);
-    auto powerDiagramArrayData = ttkUtils::GetPointer<int>(powerDiagramArray);
-
-    // auto countArray = vtkSmartPointer<vtkIntArray>::New();
-    // countArray->SetName("Count");
-    // countArray->SetNumberOfComponents(1);
-    // countArray->SetNumberOfTuples(nPixels);
-    // image->GetPointData()->AddArray(countArray);
-    // auto countArrayData = ttkUtils::GetPointer<int>(countArray);
-
-    int status = 0;
-
-    // status = this->computeCounts2D(
-    //   countArrayData,
-    //   ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-    //   this->ImageBounds,
-    //   this->Resolution,
-    //   nPoints,
-    //   nPixels
-    // );
-    // if(!status)
-    //   return 0;
-
-    ttk::Triangulation *triangulation = ttkAlgorithm::GetTriangulation(image);
-    if(!triangulation)
-      return 0;
-
-    switch(this->Kernel) {
-      case 0: {
-        // status =
-        // this->computeScalarField3D<ScalarFieldFromPointsNew::Gaussian>(
-        //   scalarArrayData,
-        //   ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-        //   ttkUtils::GetPointer<double>(ampArray),
-        //   ttkUtils::GetPointer<double>(spreadArray),
-        //   this->Bandwidth,
-        //   this->ImageBounds,
-        //   this->Resolution,
-        //   nPoints
-        // );
-        ttkVtkTemplateMacro(
-          scalarArray->GetDataType(), triangulation->getType(),
-          (status
-           = this->computeScalarField<TTK_TT,
-                                      ScalarFieldFromPointsNew::Gaussian>(
-             scalarArrayData, voronoiArrayData, weightedVoronoiArrayData,
-             powerDiagramArrayData,
-             ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-             ttkUtils::GetPointer<double>(ampArray),
-             ttkUtils::GetPointer<double>(spreadArray),
-             ttkUtils::GetPointer<double>(rateArray),
-             ttkUtils::GetPointer<int>(birthTimeArray),
-             ttkUtils::GetPointer<int>(deathTimeArray), nPoints, t,
-             this->Bandwidth, (TTK_TT *)triangulation->getData())));
-        break;
-      }
-      case 1: {
-        //   status =
-        //   this->computeScalarField3D<ScalarFieldFromPointsNew::Linear>(
-        //     scalarArrayData,
-        //     ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-        //     ttkUtils::GetPointer<double>(ampArray),
-        //     ttkUtils::GetPointer<double>(spreadArray),
-        //     this->Bandwidth,
-        //     this->ImageBounds,
-        //     this->Resolution,
-        //     nPoints
-        //   );
-        ttkVtkTemplateMacro(
-          scalarArray->GetDataType(), triangulation->getType(),
-          (status
-           = this->computeScalarField<TTK_TT, ScalarFieldFromPointsNew::Linear>(
-             scalarArrayData, voronoiArrayData, weightedVoronoiArrayData,
-             powerDiagramArrayData,
-             ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-             ttkUtils::GetPointer<double>(ampArray),
-             ttkUtils::GetPointer<double>(spreadArray),
-             ttkUtils::GetPointer<double>(rateArray),
-             ttkUtils::GetPointer<int>(birthTimeArray),
-             ttkUtils::GetPointer<int>(deathTimeArray), nPoints, t,
-             this->Bandwidth, (TTK_TT *)triangulation->getData())));
-        break;
-      }
-      case 2: {
-        // status =
-        // this->computeScalarField3D<ScalarFieldFromPointsNew::Epanechnikov>(
-        //   scalarArrayData,
-        //   ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-        //   ttkUtils::GetPointer<double>(ampArray),
-        //   ttkUtils::GetPointer<double>(spreadArray),
-        //   this->Bandwidth,
-        //   this->ImageBounds,
-        //   this->Resolution,
-        //   nPoints
-        // );
-        ttkVtkTemplateMacro(
-          scalarArray->GetDataType(), triangulation->getType(),
-          (status
-           = this->computeScalarField<TTK_TT,
-                                      ScalarFieldFromPointsNew::Epanechnikov>(
-             scalarArrayData, voronoiArrayData, weightedVoronoiArrayData,
-             powerDiagramArrayData,
-             ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-             ttkUtils::GetPointer<double>(ampArray),
-             ttkUtils::GetPointer<double>(spreadArray),
-             ttkUtils::GetPointer<double>(rateArray),
-             ttkUtils::GetPointer<int>(birthTimeArray),
-             ttkUtils::GetPointer<int>(deathTimeArray), nPoints, t,
-             this->Bandwidth, (TTK_TT *)triangulation->getData())));
-        break;
-      }
-      case 3: {
-        // status =
-        // this->computeScalarField3D<ScalarFieldFromPointsNew::Constant>(
-        //   scalarArrayData,
-        //   ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-        //   ttkUtils::GetPointer<double>(ampArray),
-        //   ttkUtils::GetPointer<double>(spreadArray),
-        //   this->Bandwidth,
-        //   this->ImageBounds,
-        //   this->Resolution,
-        //   nPoints
-        // );
-        ttkVtkTemplateMacro(
-          scalarArray->GetDataType(), triangulation->getType(),
-          (status
-           = this->computeScalarField<TTK_TT,
-                                      ScalarFieldFromPointsNew::Constant>(
-             scalarArrayData, voronoiArrayData, weightedVoronoiArrayData,
-             powerDiagramArrayData,
-             ttkUtils::GetPointer<double>(curPoints->GetPoints()->GetData()),
-             ttkUtils::GetPointer<double>(ampArray),
-             ttkUtils::GetPointer<double>(spreadArray),
-             ttkUtils::GetPointer<double>(rateArray),
-             ttkUtils::GetPointer<int>(birthTimeArray),
-             ttkUtils::GetPointer<int>(deathTimeArray), nPoints, t,
-             this->Bandwidth, (TTK_TT *)triangulation->getData())));
-        break;
-      }
-    }
-
-    // On error cancel filter execution
-    if(status == 0)
-      return 0;
-
-    auto outputMB = vtkMultiBlockDataSet::GetData(outputVector);
-    // Set image to a block in the output dataset
-    size_t nBlocks = outputMB->GetNumberOfBlocks();
-    outputMB->SetBlock(nBlocks, image);
+  // Get point attributes arrays from input
+  auto pwArray = GetInputArrayToProcess(2, input);
+  if(!pwArray) {
+    this->printErr("No point weight array was provided.");
+    return 0;
   }
+
+  auto pcArray = GetInputArrayToProcess(3, input);
+  if(!pcArray) {
+    this->printErr("No point constant array was provided.");
+    return 0;
+  }
+
+  // Format output
+  auto output = vtkImageData::GetData(outputVector);
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+
+  if(this->CellSpacing[0] > 0 && this->CellSpacing[1] > 0
+     && this->CellSpacing[2] > 0) {
+    // do nothing
+  } else {
+    this->printErr("The Cell Spacing contains zeros.");
+    return 0;
+  }
+
+  // Check what dimension the output domain should be in
+  int dimXmin, dimXmax, dimYmin, dimYmax, dimZmin, dimZmax;
+  bool dim2D = false;
+  if(this->ImageBounds[4] == this->ImageBounds[5]) {
+    dimZmin = dimZmax = 0;
+    dim2D = true;
+  } else {
+    dimZmin = floor(this->ImageBounds[4] * 1 / this->CellSpacing[2]);
+    dimZmax = ceil(this->ImageBounds[5] * 1 / this->CellSpacing[2]);
+  }
+
+  // Set the necessary data to format the vtkImageData output
+  // The extent is the number of data points in each dimension and is therefore
+  // scaled by the cell spacing
+  dimXmin = floor(this->ImageBounds[0] * 1 / this->CellSpacing[0]);
+  dimXmax = ceil(this->ImageBounds[1] * 1 / this->CellSpacing[0]);
+  dimYmin = floor(this->ImageBounds[2] * 1 / this->CellSpacing[1]);
+  dimYmax = ceil(this->ImageBounds[3] * 1 / this->CellSpacing[1]);
+  int extent[6] = {dimXmin, dimXmax, dimYmin, dimYmax, dimZmin, dimZmax};
+  output->SetOrigin(0, 0, 0);
+  output->SetExtent(extent);
+  outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), extent);
+  output->SetSpacing(
+    this->CellSpacing[0], this->CellSpacing[1], this->CellSpacing[2]);
+  output->AllocateScalars(VTK_DOUBLE, 1);
+
+  int dims[3] = {0, 0, 0};
+  output->GetDimensions(dims);
+
+  // Get data array to put the filter results in
+  auto scalarArray = output->GetPointData()->GetArray(0);
+  scalarArray->SetName("Scalars");
+  auto scalarArrayData = ttkUtils::GetPointer<double>(scalarArray);
+
+  auto nPixels = scalarArray->GetNumberOfTuples();
+
+  // Used to check base layer execution status
+  int status = 0;
+
+  // Execute either 2D or 3D case for the chosen kernel
+  switch(this->Kernel) {
+    case 0: {
+      if(dim2D) {
+        status = this->computeScalarField2D<ScalarFieldFromPointsNew::Gaussian>(
+          scalarArrayData,
+          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
+          ttkUtils::GetPointer<double>(pwArray),
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
+          this->CellSpacing, dims, nPoints, nPixels);
+      } else {
+        status = this->computeScalarField3D<ScalarFieldFromPointsNew::Gaussian>(
+          scalarArrayData,
+          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
+          ttkUtils::GetPointer<double>(pwArray),
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
+          this->CellSpacing, dims, nPoints, nPixels);
+      }
+
+      break;
+    }
+    case 1: {
+      if(dim2D) {
+        status = this->computeScalarField2D<ScalarFieldFromPointsNew::Linear>(
+          scalarArrayData,
+          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
+          ttkUtils::GetPointer<double>(pwArray),
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
+          this->CellSpacing, dims, nPoints, nPixels);
+      } else {
+        status = this->computeScalarField3D<ScalarFieldFromPointsNew::Linear>(
+          scalarArrayData,
+          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
+          ttkUtils::GetPointer<double>(pwArray),
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
+          this->CellSpacing, dims, nPoints, nPixels);
+      }
+      break;
+    }
+    case 2: {
+      if(dim2D) {
+        status = this->computeScalarField2D<ScalarFieldFromPointsNew::Constant>(
+          scalarArrayData,
+          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
+          ttkUtils::GetPointer<double>(pwArray),
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
+          this->CellSpacing, dims, nPoints, nPixels);
+      } else {
+        status = this->computeScalarField3D<ScalarFieldFromPointsNew::Constant>(
+          scalarArrayData,
+          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
+          ttkUtils::GetPointer<double>(pwArray),
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
+          this->CellSpacing, dims, nPoints, nPixels);
+      }
+      break;
+    }
+  }
+
+  // On error cancel filter execution
+  if(status == 0)
+    return 0;
 
   return 1;
 }

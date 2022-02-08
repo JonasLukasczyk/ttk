@@ -31,22 +31,19 @@
 class TTKSCALARFIELDFROMPOINTS_EXPORT ttkScalarFieldFromPoints
   : public ttkAlgorithm // we inherit from the generic ttkAlgorithm class
   ,
-    protected ttk::ScalarFieldFromPoints // and we inherit from the base class
+    protected ttk::ScalarFieldFromPoints // and we inherit from the base
+                                         // class
 {
 private:
-  double ImageBounds[6]{0,1,0,1,0,1};
-  double Resolution[3]{1,1,1};
-  double Bandwidth{1};
+  double ImageBounds[6]{0, 1, 0, 1, 0, 1};
+  double CellSpacing[3]{1, 1, 1};
   int Kernel{0};
 
 public:
-
   vtkSetVector6Macro(ImageBounds, double);
   vtkGetVector6Macro(ImageBounds, double);
-  vtkSetVector3Macro(Resolution, double);
-  vtkGetVector3Macro(Resolution, double);
-  vtkSetMacro(Bandwidth, double);
-  vtkGetMacro(Bandwidth, double);
+  vtkSetVector3Macro(CellSpacing, double);
+  vtkGetVector3Macro(CellSpacing, double);
   vtkSetMacro(Kernel, int);
   vtkGetMacro(Kernel, int);
 
@@ -60,8 +57,8 @@ protected:
   int FillInputPortInformation(int port, vtkInformation *info) override;
   int FillOutputPortInformation(int port, vtkInformation *info) override;
   int RequestInformation(vtkInformation *request,
-                  vtkInformationVector **inputVector,
-                  vtkInformationVector *outputVector);
+                         vtkInformationVector **inputVector,
+                         vtkInformationVector *outputVector);
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,
                   vtkInformationVector *outputVector) override;

@@ -23,102 +23,45 @@
       <!-- INPUT PARAMETER WIDGETS -->
 
       <StringVectorProperty 
-        name="AmpArray"
-        label="Amplitude"
+        name="PwArray"
+        label="Point Weight"
         command="SetInputArrayToProcess"
         element_types="0 0 0 0 2"
         number_of_elements="5" 
-        default_values="2 0 0 0 Amps">
+        default_values="2 0 0 0 Pws">
         <ArrayListDomain 
-          name="amps"
+          name="pws"
           input_domain_name="point_array"
           >
           <RequiredProperties>
             <Property function="Input" name="Input" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>The array that contains the amplitude. Created by the RandomPointsGenerator module.</Documentation>
+        <Documentation>The array that contains the point weights.</Documentation>
       </StringVectorProperty>
 
       <StringVectorProperty 
-        name="SpArray"
-        label="Spread"
+        name="PcArray"
+        label="Point Constant"
         command="SetInputArrayToProcess"
         element_types="0 0 0 0 2"
         number_of_elements="5" 
-        default_values="3 0 0 0 Spreads">
+        default_values="3 0 0 0 Pcs">
         <ArrayListDomain 
-          name="spreads"
+          name="pcs"
           input_domain_name="point_array"
           >
           <RequiredProperties>
             <Property function="Input" name="Input" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>The array that contains the spread. Created by the RandomPointsGenerator module.</Documentation>
+        <Documentation>The array that contains the point constant.</Documentation>
       </StringVectorProperty>
-
-      <StringVectorProperty 
-        name="rArray"
-        label="Rate"
-        command="SetInputArrayToProcess"
-        element_types="0 0 0 0 2"
-        number_of_elements="5" 
-        default_values="4 0 0 0 Rates">
-        <ArrayListDomain 
-          name="rates"
-          input_domain_name="point_array"
-          >
-          <RequiredProperties>
-            <Property function="Input" name="Input" />
-          </RequiredProperties>
-        </ArrayListDomain>
-        <Documentation>The array that contains the rate. Created by the RandomPointsGenerator module.</Documentation>
-      </StringVectorProperty> 
-
-      <StringVectorProperty 
-        name="btArray"
-        label="Birth Time"
-        command="SetInputArrayToProcess"
-        element_types="0 0 0 0 2"
-        number_of_elements="5" 
-        default_values="5 0 0 0 BirthTimes">
-        <ArrayListDomain 
-          name="birthtimes"
-          input_domain_name="point_array"
-          >
-          <RequiredProperties>
-            <Property function="Input" name="Input" />
-          </RequiredProperties>
-        </ArrayListDomain>
-        <Documentation>The array that contains the birth time.  Created by the PathIntegrator module.</Documentation>
-      </StringVectorProperty> 
-
-      <StringVectorProperty 
-        name="dtArray"
-        label="Death Time"
-        command="SetInputArrayToProcess"
-        element_types="0 0 0 0 2"
-        number_of_elements="5" 
-        default_values="6 0 0 0 DeathTimes">
-        <ArrayListDomain 
-          name="deathtimes"
-          input_domain_name="point_array"
-          >
-          <RequiredProperties>
-            <Property function="Input" name="Input" />
-          </RequiredProperties>
-        </ArrayListDomain>
-        <Documentation>The array that contains the death time. Created by the PathIntegrator module.</Documentation>
-      </StringVectorProperty> 
 
       <!-- Create a UI group that contains all input parameter widgets-->
       <PropertyGroup panel_widget="Line" label="Input Options">
-        <Property name="AmpArray" />
-        <Property name="SpArray" />
-        <Property name="rArray" />
-        <Property name="btArray" />
-        <Property name="dtArray" />
+        <Property name="PwArray" />
+        <Property name="PcArray" />
       </PropertyGroup>      
 
       <!-- OUTPUT PARAMETER WIDGETS -->
@@ -132,18 +75,15 @@
         <Documentation>The bounds for the output scalar field. Should be similar to the domain points were generated in.</Documentation>
       </DoubleVectorProperty>
 
-      <DoubleVectorProperty name="Resolution" command="SetResolution" default_values="1 1 1" number_of_elements="3">
-        <Documentation>The resolution of the field. Sets how many points are in the between the bounds.</Documentation>
+      <DoubleVectorProperty name="CellSpacing" command="SetCellSpacing" default_values="1 1 1" number_of_elements="3">
+        <Documentation>The size of each cell in the field.</Documentation>
       </DoubleVectorProperty>
-
-      <DoubleVectorProperty name="Bandwidth" command="SetBandwidth" default_values="1" number_of_elements="1"></DoubleVectorProperty>
 
       <IntVectorProperty name="Kernel" command="SetKernel" number_of_elements="1" default_values="0">
         <EnumerationDomain name="enum">
           <Entry value="0" text="Gaussian" />
           <Entry value="1" text="Linear" />
-          <Entry value="2" text="Epanechnikov" />
-          <Entry value="3" text="Constant" />
+          <Entry value="2" text="Constant" />
         </EnumerationDomain>
         <Documentation>Kernel.</Documentation>
       </IntVectorProperty>
@@ -152,7 +92,6 @@
       <PropertyGroup panel_widget="Line" label="Output Options">
         <Property name="ImageBounds" />
         <Property name="Resolution" />
-        <Property name="Bandwidth" />
         <Property name="Kernel" />
       </PropertyGroup>      
 
