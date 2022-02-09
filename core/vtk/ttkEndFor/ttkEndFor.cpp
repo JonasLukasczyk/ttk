@@ -93,7 +93,7 @@ int ttkEndFor::RequestData(vtkInformation *request,
     forEach->Modified();
 
     size_t nInputs = inputVector[0]->GetNumberOfInformationObjects();
-    for(size_t i=0; i<nInputs; i++)
+    for(size_t i = 0; i < nInputs; i++)
       this->GetInputAlgorithm(0, i)->Update(); // trigger update of data input
 
     request->Set(vtkStreamingDemandDrivenPipeline::CONTINUE_EXECUTING(), 1);
