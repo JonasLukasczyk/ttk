@@ -1,0 +1,9 @@
+ttk_add_base_library(pointAdvection
+  SOURCES
+    PointAdvection.cpp
+  HEADERS
+    PointAdvection.h
+  DEPENDS
+    triangulation
+    perlinNoise
+)

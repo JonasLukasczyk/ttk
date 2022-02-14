@@ -1,0 +1,8 @@
+NAME
+  ttkSimilarityByJacobiSet
+SOURCES
+  ttkSimilarityByJacobiSet.cpp
+HEADERS
+  ttkSimilarityByJacobiSet.h
+DEPENDS
+  ttkSimilarityAlgorithm

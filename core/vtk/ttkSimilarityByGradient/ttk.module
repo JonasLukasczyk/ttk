@@ -1,0 +1,9 @@
+NAME
+  ttkSimilarityByGradient
+SOURCES
+  ttkSimilarityByGradient.cpp
+HEADERS
+  ttkSimilarityByGradient.h
+DEPENDS
+  similarityByGradient
+  ttkSimilarityAlgorithm

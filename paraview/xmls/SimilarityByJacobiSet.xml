@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+    <SourceProxy name="ttkSimilarityByJacobiSet" class="ttkSimilarityByJacobiSet" label="TTK SimilarityByJacobiSet">
+      <Documentation long_help="SimilarityByJacobiSet" short_help="SimilarityByJacobiSet">
+        TODO
+      </Documentation>
+
+      <!-- Inputs -->
+      <InputProperty name="2DGrid" label="2D Grid" port_index="0" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkImageData" />
+          <DataType value="vtkMultiBlockDataSet" />
+        </DataTypeDomain>
+        <Documentation>TODO</Documentation>
+      </InputProperty>
+
+      <OutputPort index="0" id="port0" name="Matrix" />
+
+      <InputProperty name="CriticalPoints" label="Critical Points" port_index="1" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkPointSet" />
+          <DataType value="vtkMultiBlockDataSet" />
+        </DataTypeDomain>
+        <Documentation>TODO</Documentation>
+      </InputProperty>
+
+      <StringVectorProperty name="Scalars" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">
+        <ArrayListDomain attribute_type="Scalars" name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="2DGrid" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>Scalars.</Documentation>
+      </StringVectorProperty>
+
+      <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
+        <ArrayListDomain name="array_list" input_domain_name="input_arrays">
+          <RequiredProperties>
+            <Property function="Input" name="CriticalPoints" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>Feature Ids.</Documentation>
+      </StringVectorProperty>
+
+      ${DEBUG_WIDGETS}
+
+      <Hints>
+        <ShowInMenu category="TTK - Time-Varying Scalar Data" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

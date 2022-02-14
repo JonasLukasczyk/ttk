@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+    <SourceProxy name="ttkMapData" class="ttkMapData" label="TTK MapData">
+      <Documentation long_help="MapData Long" short_help="MapData Short"></Documentation>
+
+      <InputProperty name="Target" port_index="0" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkDataObject" />
+        </DataTypeDomain>
+        <Documentation>.</Documentation>
+      </InputProperty>
+
+      <InputProperty name="Source" port_index="1" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkDataSet" />
+        </DataTypeDomain>
+        <Documentation>.</Documentation>
+      </InputProperty>
+
+      <StringVectorProperty name="Domain0" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">
+        <ArrayListDomain attribute_type="Scalars" name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="Source" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation></Documentation>
+      </StringVectorProperty>
+      <StringVectorProperty name="Domain1" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
+        <ArrayListDomain attribute_type="Scalars" name="array_list" none_string="None">
+          <RequiredProperties>
+            <Property function="Input" name="Source" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation></Documentation>
+      </StringVectorProperty>
+      <StringVectorProperty name="CoDomain" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="2">
+        <ArrayListDomain attribute_type="Scalars" name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="Source" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation></Documentation>
+      </StringVectorProperty>
+
+      <StringVectorProperty name="Lookup0" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="3">
+        <ArrayListDomain name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="Target" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation></Documentation>
+      </StringVectorProperty>
+      <StringVectorProperty name="Lookup1" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="4">
+        <ArrayListDomain name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="Target" none_string="None"/>
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation></Documentation>
+      </StringVectorProperty>
+
+      <DoubleVectorProperty name="MissingValue" command="SetMissingValue" number_of_elements="1" default_values="-1">
+        <Documentation>.</Documentation>
+      </DoubleVectorProperty>
+
+      <PropertyGroup panel_widget="Line" label="Map Generation">
+        <Property name="Domain0" />
+        <Property name="Domain1" />
+        <Property name="CoDomain" />
+      </PropertyGroup>
+
+      <PropertyGroup panel_widget="Line" label="Map Lookup">
+        <Property name="Lookup0" />
+        <Property name="Lookup1" />
+        <Property name="MissingValue" />
+      </PropertyGroup>
+
+      <!-- DEBUG -->
+      ${DEBUG_WIDGETS}
+
+      <!-- MENU CATEGORY -->
+      <Hints>
+        <ShowInMenu category="TTK - Pipeline" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

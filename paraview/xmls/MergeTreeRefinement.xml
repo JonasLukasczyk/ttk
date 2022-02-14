@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+    <ProxyGroup name="filters">
+        <SourceProxy name="MergeTreeRefinement" class="ttkMergeTreeRefinement" label="TTK MergeTreeRefinement">
+           <Documentation long_help="TODO" short_help="TODO">
+               TODO
+           </Documentation>
+
+           <InputProperty name="MergeTree" port_index="0" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkUnstructuredGrid" />
+                </DataTypeDomain>
+                <Documentation>TODO.</Documentation>
+            </InputProperty>
+
+            <InputProperty name="Segmentation" port_index="1" command="SetInputConnection">
+                <ProxyGroupDomain name="groups">
+                    <Group name="sources" />
+                    <Group name="filters" />
+                </ProxyGroupDomain>
+                <DataTypeDomain name="input_type">
+                    <DataType value="vtkDataSet" />
+                </DataTypeDomain>
+                <Documentation>TODO.</Documentation>
+            </InputProperty>
+
+            <StringVectorProperty name="Scalar Array" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="MergeTree" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Documentation>TODO.</Documentation>
+            </StringVectorProperty>
+
+            <StringVectorProperty name="BranchId" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
+                <ArrayListDomain attribute_type="Scalars" name="array_list">
+                    <RequiredProperties>
+                        <Property function="Input" name="Segmentation" />
+                    </RequiredProperties>
+                </ArrayListDomain>
+                <Documentation>TODO.</Documentation>
+            </StringVectorProperty>
+
+            <StringVectorProperty name="Interval" command="SetInterval" number_of_elements="1" default_values="100">
+                <Documentation>TODO</Documentation>
+            </StringVectorProperty>
+
+            <PropertyGroup panel_widget="Line" label="Input Options">
+                <Property name="Scalar Array" />
+                <Property name="Interval" />
+                <Property name="BranchId" />
+            </PropertyGroup>
+
+            <OutputPort name="Merge Tree" index="0" />
+            <OutputPort name="Segmentation" index="1" />
+
+            ${DEBUG_WIDGETS}
+
+            <Hints>
+                <ShowInMenu category="TTK - Scalar Data" />
+            </Hints>
+        </SourceProxy>
+    </ProxyGroup>
+</ServerManagerConfiguration>

@@ -1,0 +1,9 @@
+NAME
+  ttkMapData
+SOURCES
+  ttkMapData.cpp
+HEADERS
+  ttkMapData.h
+DEPENDS
+  mapData
+  ttkAlgorithm

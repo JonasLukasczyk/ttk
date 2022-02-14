@@ -1,0 +1,9 @@
+NAME
+  ttkSimilarityByJacobiSet
+DEPENDS
+  ttkSimilarityAlgorithm
+  ttkJacobiSet
+  ttkConnectedComponents
+PRIVATE_DEPENDS
+  VTK::FiltersCore
+  VTK::FiltersGeometry

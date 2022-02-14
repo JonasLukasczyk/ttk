@@ -1,0 +1,9 @@
+NAME
+  ttkMergeTreeRefinement
+SOURCES
+  ttkMergeTreeRefinement.cpp
+HEADERS
+  ttkMergeTreeRefinement.h
+DEPENDS
+  ttkAlgorithm
+  MergeTreeRefinement
