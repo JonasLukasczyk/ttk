@@ -359,7 +359,8 @@ int ttk::PerlinNoise::perlin2Daux(int dims[2],
   // points
   int dimX = dims[0];
   int dimY = dims[1];
-  dataType dimD = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDX = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDY = (((dataType)dimY) - 1.0) / scale;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -368,8 +369,8 @@ int ttk::PerlinNoise::perlin2Daux(int dims[2],
     for(int x = 0; x < dimX; x++) {
       // Acccumulate noise values over the number of octaves
       dataType accNoise = 0;
-      dataType xD = ((dataType)x) / dimD;
-      dataType yD = ((dataType)y) / dimD;
+      dataType xD = ((dataType)x) / dimDX;
+      dataType yD = ((dataType)y) / dimDY;
 
       for(int o = 0; o < nOctaves; o++) {
         dataType noise;
@@ -398,7 +399,8 @@ int ttk::PerlinNoise::perlin2DTaux(int dims[2],
   // points
   int dimX = dims[0];
   int dimY = dims[1];
-  dataType dimD = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDX = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDY = (((dataType)dimY) - 1.0) / scale;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -407,8 +409,8 @@ int ttk::PerlinNoise::perlin2DTaux(int dims[2],
     for(int x = 0; x < dimX; x++) {
       // Acccumulate noise values over the number of octaves
       dataType accNoise = 0;
-      dataType xD = ((dataType)x) / dimD;
-      dataType yD = ((dataType)y) / dimD;
+      dataType xD = ((dataType)x) / dimDX;
+      dataType yD = ((dataType)y) / dimDY;
 
       for(int o = 0; o < nOctaves; o++) {
         dataType noise;
@@ -437,7 +439,9 @@ int ttk::PerlinNoise::perlin3Daux(int dims[3],
   int dimX = dims[0];
   int dimY = dims[1];
   int dimZ = dims[2];
-  dataType dimD = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDX = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDY = (((dataType)dimY) - 1.0) / scale;
+  dataType dimDZ = (((dataType)dimZ) - 1.0) / scale;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -447,9 +451,9 @@ int ttk::PerlinNoise::perlin3Daux(int dims[3],
       for(int x = 0; x < dimX; x++) {
         // Acccumulate noise values over the number of octaves
         dataType accNoise = 0;
-        dataType xD = ((dataType)x) / dimD;
-        dataType yD = ((dataType)y) / dimD;
-        dataType zD = ((dataType)z) / dimD;
+        dataType xD = ((dataType)x) / dimDX;
+        dataType yD = ((dataType)y) / dimDY;
+        dataType zD = ((dataType)z) / dimDZ;
 
         for(int o = 0; o < nOctaves; o++) {
           dataType noise;
@@ -481,7 +485,9 @@ int ttk::PerlinNoise::perlin3DTaux(int dims[3],
   int dimX = dims[0];
   int dimY = dims[1];
   int dimZ = dims[2];
-  dataType dimD = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDX = (((dataType)dimX) - 1.0) / scale;
+  dataType dimDY = (((dataType)dimY) - 1.0) / scale;
+  dataType dimDZ = (((dataType)dimZ) - 1.0) / scale;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -491,9 +497,9 @@ int ttk::PerlinNoise::perlin3DTaux(int dims[3],
       for(int x = 0; x < dimX; x++) {
         // Acccumulate noise values over the number of octaves
         dataType accNoise = 0;
-        dataType xD = ((dataType)x) / dimD;
-        dataType yD = ((dataType)y) / dimD;
-        dataType zD = ((dataType)z) / dimD;
+        dataType xD = ((dataType)x) / dimDX;
+        dataType yD = ((dataType)y) / dimDY;
+        dataType zD = ((dataType)z) / dimDZ;
 
         for(int o = 0; o < nOctaves; o++) {
           dataType noise;
