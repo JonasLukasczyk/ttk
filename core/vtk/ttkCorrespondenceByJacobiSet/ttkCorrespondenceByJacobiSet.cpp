@@ -11,6 +11,7 @@
 #include <vtkCellData.h>
 #include <vtkPointData.h>
 #include <vtkStringArray.h>
+#include <vtkUnsignedCharArray.h>
 
 #include <ttkMacros.h>
 #include <ttkUtils.h>
