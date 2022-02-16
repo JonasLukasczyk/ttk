@@ -16,6 +16,7 @@
 
 // VTK Includes
 #include <ttkAlgorithm.h>
+#include <vtkImageData.h>
 
 // TTK Base Includes
 #include <PerlinNoise.h>
@@ -23,7 +24,7 @@
 class TTKPERLINNOISE_EXPORT ttkPerlinNoise : public ttkAlgorithm,
                                              protected ttk::PerlinNoise {
 private:
-  int Domain[3]{0, 0, 0};
+  int Resolution[3]{0, 0, 0};
   int Scale{0};
   int Frequency{0};
   int nOctaves{0};
@@ -35,8 +36,8 @@ private:
   double Interval{0};
 
 public:
-  vtkSetVector3Macro(Domain, int);
-  vtkGetVector3Macro(Domain, int);
+  vtkSetVector3Macro(Resolution, int);
+  vtkGetVector3Macro(Resolution, int);
 
   vtkSetMacro(Scale, int);
   vtkGetMacro(Scale, int);
@@ -75,6 +76,8 @@ protected:
   int RequestInformation(vtkInformation *request,
                          vtkInformationVector **inputVector,
                          vtkInformationVector *outputVector) override;
+
+  int initializeOutput(vtkImageData *img, int extent[6], int nTuples);
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,
