@@ -10,7 +10,7 @@ namespace ttk {
   class MapData : virtual public Debug {
 
   public:
-    typedef std::tuple<long long, long long> Key;
+    typedef std::tuple<double, double> Key;
     struct tuple_hash {
       template <typename T0, typename T1>
       std::size_t operator()(const std::tuple<T0, T1> &tuple) const {
@@ -36,8 +36,8 @@ namespace ttk {
       this->printMsg(msg, 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
       for(int i = 0; i < n; i++) {
-        const auto d0 = static_cast<long long>(domain0[i]);
-        const auto d1 = static_cast<long long>(domain1[i]);
+        const auto d0 = static_cast<double>(domain0[i]);
+        const auto d1 = static_cast<double>(domain1[i]);
         const auto v = static_cast<double>(codomain[i]);
         map.insert({{d0, d1}, v});
       }
@@ -60,8 +60,8 @@ namespace ttk {
       this->printMsg(msg, 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
       for(int i = 0; i < m; i++) {
-        const auto l0 = static_cast<long long>(lookup0[std::min(i, nL0)]);
-        const auto l1 = static_cast<long long>(lookup1[std::min(i, nL1)]);
+        const auto l0 = static_cast<double>(lookup0[std::min(i, nL0)]);
+        const auto l1 = static_cast<double>(lookup1[std::min(i, nL1)]);
         const auto &it = map.find({l0, l1});
         outputArray[i] = it == map.end() ? missingValue : it->second;
       }
