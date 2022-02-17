@@ -77,7 +77,10 @@ protected:
                          vtkInformationVector **inputVector,
                          vtkInformationVector *outputVector) override;
 
-  int initializeOutput(vtkImageData *img, int extent[6], int nTuples);
+  int initializeOutput(vtkImageData *img,
+                       int extent[6],
+                       const int nTuples,
+                       const double t);
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,
