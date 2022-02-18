@@ -11,6 +11,7 @@
 #include <vtkPointData.h>
 
 #include <ttkUtils.h>
+#include <ttkMacros.h>
 
 vtkStandardNewMacro(ttkSimilarityByMergeTreeSegmentation);
 
@@ -68,18 +69,18 @@ int ttkSimilarityByMergeTreeSegmentation::ComputeCorrespondences(
 
   // compute overlap of segments
   int status = 0;
-  switch(scalars0->GetDataType()) {
-    vtkTemplateMacro(
-      (status = this->computeSegmentationOverlap<int, VTK_TT>(
+  ttkTypeMacroA(
+    scalars0->GetDataType(),
+    (status = this->computeSegmentationOverlap<int, T0>(
          ttkUtils::GetPointer<int>(matrixData),
 
          ttkUtils::GetPointer<const int>(seg0),
          ttkUtils::GetPointer<const int>(seg1), seg0->GetNumberOfTuples(),
          ttkUtils::GetPointer<const int>(next0),
          ttkUtils::GetPointer<const int>(next1),
-         ttkUtils::GetPointer<const VTK_TT>(scalars0),
-         ttkUtils::GetPointer<const VTK_TT>(scalars1), nNodes0, nNodes1)));
-  }
+         ttkUtils::GetPointer<const T0>(scalars0),
+         ttkUtils::GetPointer<const T0>(scalars1), nNodes0, nNodes1))
+  );
   if(!status)
     return 0;
 

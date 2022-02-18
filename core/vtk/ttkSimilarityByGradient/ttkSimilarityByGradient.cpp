@@ -59,13 +59,13 @@ int ttkSimilarityByGradient::ComputeCorrespondences(
   auto triangulation = this->GetTriangulation(domain0);
   this->preconditionTriangulation(triangulation);
 
-  ttkVtkTemplateMacro(
-    orderArray1->GetDataType(), triangulation->getType(),
-    (status = this->computeCorrespondences<ttk::SimplexId, TTK_TT>(
+  ttkTypeMacroT(
+    triangulation->getType(),
+    (status = this->computeCorrespondences<ttk::SimplexId, T0>(
        ttkUtils::GetPointer<int>(forward),
 
        ttkUtils::GetPointer<ttk::SimplexId>(orderArray1),
-       static_cast<TTK_TT *>(triangulation->getData()),
+       static_cast<T0 *>(triangulation->getData()),
 
        ttkUtils::GetPointer<ttk::SimplexId>(GetVertexIdArray(seeds0)),
        ttkUtils::GetPointer<ttk::SimplexId>(GetVertexIdArray(seeds1)),
@@ -75,13 +75,13 @@ int ttkSimilarityByGradient::ComputeCorrespondences(
   if(!status)
     return 0;
 
-  ttkVtkTemplateMacro(
-    orderArray0->GetDataType(), triangulation->getType(),
-    (status = this->computeCorrespondences<ttk::SimplexId, TTK_TT>(
+  ttkTypeMacroT(
+    triangulation->getType(),
+    (status = this->computeCorrespondences<ttk::SimplexId, T0>(
        ttkUtils::GetPointer<int>(backward),
 
        ttkUtils::GetPointer<ttk::SimplexId>(orderArray0),
-       static_cast<TTK_TT *>(triangulation->getData()),
+       static_cast<T0 *>(triangulation->getData()),
 
        ttkUtils::GetPointer<ttk::SimplexId>(GetVertexIdArray(seeds1)),
        ttkUtils::GetPointer<ttk::SimplexId>(GetVertexIdArray(seeds0)),
