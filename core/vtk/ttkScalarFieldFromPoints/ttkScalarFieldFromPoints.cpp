@@ -168,24 +168,6 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
       }
       break;
     }
-    case 2: {
-      if(dim2D) {
-        status = this->computeScalarField2D<ScalarFieldFromPoints::Constant>(
-          scalarArrayData,
-          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
-          ttkUtils::GetPointer<double>(pwArray),
-          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
-          spacing, this->Resolution, nPoints, nPixels);
-      } else {
-        status = this->computeScalarField3D<ScalarFieldFromPoints::Constant>(
-          scalarArrayData,
-          ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
-          ttkUtils::GetPointer<double>(pwArray),
-          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
-          spacing, this->Resolution, nPoints, nPixels);
-      }
-      break;
-    }
   }
 
   // On error cancel filter execution
