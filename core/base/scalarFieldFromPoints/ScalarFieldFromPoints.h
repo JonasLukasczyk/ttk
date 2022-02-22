@@ -25,21 +25,15 @@ namespace ttk {
     typedef double (*KERNEL)(const double &, const double &, const double &);
 
     static double
-      Linear(const double &u, const double &bandwidth, const double &amp) {
+      Linear(const double &u, const double &bandwidth, const double &weight) {
       double su = std::sqrt(u) / bandwidth;
-      return su >= 1 ? 0 : 1 - su;
+      return su >= 1 ? 0 : weight * (1 - su);
     };
 
     static double
-      Gaussian(const double &u, const double &bandwidth, const double &amp) {
-      return amp * exp(-0.5 * (u / bandwidth));
+      Gaussian(const double &u, const double &bandwidth, const double &weight) {
+      return weight * exp(-0.5 * (u / bandwidth));
     };
-
-    static double
-      Constant(const double &u, const double &bandwidth, const double &amp) {
-      double su = std::sqrt(u) / bandwidth;
-      return su < 1.0 ? 1.0 : 0;
-    }
 
     ScalarFieldFromPoints() {
       this->setDebugMsgPrefix("ScalarFieldFromPoints");

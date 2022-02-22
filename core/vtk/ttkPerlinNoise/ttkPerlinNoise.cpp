@@ -26,7 +26,7 @@ ttkPerlinNoise::ttkPerlinNoise() {
 ttkPerlinNoise::~ttkPerlinNoise() {
 }
 
-int ttkPerlinNoise::FillInputPortInformation(int port, vtkInformation *info) {
+int ttkPerlinNoise::FillInputPortInformation(int, vtkInformation *) {
   return 0;
 }
 
@@ -42,8 +42,8 @@ int ttkPerlinNoise::FillOutputPortInformation(int port, vtkInformation *info) {
   return 1;
 }
 
-int ttkPerlinNoise::RequestInformation(vtkInformation *request,
-                                       vtkInformationVector **inputVector,
+int ttkPerlinNoise::RequestInformation(vtkInformation *,
+                                       vtkInformationVector **,
                                        vtkInformationVector *outputVector) {
   // For vtkImageData output we have to set extent, spacing and origin already
   // in request information
@@ -51,16 +51,17 @@ int ttkPerlinNoise::RequestInformation(vtkInformation *request,
     vtkInformation *outInfo = outputVector->GetInformationObject(0);
     int dimZ = 0;
 
-    if(this->Domain[2] == 0) {
+    if(this->Resolution[2] == 0) {
       dimZ = 0;
-    } else if(this->Domain[2] > 0) {
-      dimZ = this->Domain[2] - 1;
+    } else if(this->Resolution[2] > 0) {
+      dimZ = this->Resolution[2] - 1;
     } else {
       this->printErr("Perlin noise dimension is off.");
       return 0;
     }
 
-    int extent[6] = {0, this->Domain[0] - 1, 0, this->Domain[1] - 1, 0, dimZ};
+    int extent[6]
+      = {0, this->Resolution[0] - 1, 0, this->Resolution[1] - 1, 0, dimZ};
     double spacing[3] = {1.0, 1.0, 1.0};
     double origin[3] = {0.0, 0.0, 0.0};
     outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), extent, 6);
@@ -72,26 +73,58 @@ int ttkPerlinNoise::RequestInformation(vtkInformation *request,
   return 1;
 }
 
-int ttkPerlinNoise::RequestData(vtkInformation *request,
-                                vtkInformationVector **inputVector,
-                                vtkInformationVector *outputVector) {
+int ttkPerlinNoise::initializeOutput(vtkImageData *img,
+                                     int extent[6],
+                                     const int nTuples,
+                                     const double t) {
 
-  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  // Set dimensions and extent for image data
+  img->SetOrigin(0, 0, 0);
+  img->SetExtent(extent);
+  const double spacing[3]{
+    this->Resolution[0] > 1 ? 1.0 / (this->Resolution[0] - 1) : 0,
+    this->Resolution[1] > 1 ? 1.0 / (this->Resolution[1] - 1) : 0,
+    this->Resolution[2] > 1 ? 1.0 / (this->Resolution[2] - 1) : 0};
+  img->SetSpacing(spacing);
+
+  auto noiseArray = vtkSmartPointer<vtkDoubleArray>::New();
+  noiseArray->SetName("Field");
+  noiseArray->SetNumberOfComponents(1);
+  noiseArray->SetNumberOfTuples(nTuples);
+  img->GetPointData()->AddArray(noiseArray);
+
+  if(this->TimeProp > 0) {
+
+    // Create an array to store time-step in
+    auto tsArray = vtkSmartPointer<vtkDoubleArray>::New();
+    tsArray->SetName("Time");
+    tsArray->SetNumberOfComponents(1);
+    tsArray->InsertNextValue(t);
+    img->GetFieldData()->AddArray(tsArray);
+  }
+
+  return 1;
+}
+
+int ttkPerlinNoise::RequestData(vtkInformation *,
+                                vtkInformationVector **,
+                                vtkInformationVector *outputVector) {
 
   // Set dimensions, extent and number of tuples with values
   int dimZ = 0;
   int nTuples = 0;
 
-  if(this->Domain[2] == 0) {
-    nTuples = this->Domain[0] * this->Domain[1];
-  } else if(this->Domain[2] > 0) {
-    dimZ = this->Domain[2] - 1;
-    nTuples = this->Domain[0] * this->Domain[1] * this->Domain[2];
+  if(this->Resolution[2] == 0) {
+    nTuples = this->Resolution[0] * this->Resolution[1];
+  } else if(this->Resolution[2] > 0) {
+    dimZ = this->Resolution[2] - 1;
+    nTuples = this->Resolution[0] * this->Resolution[1] * this->Resolution[2];
   } else {
     this->printErr("Perlin noise dimension is invalid.");
     return 0;
   }
-  int extent[6] = {0, this->Domain[0] - 1, 0, this->Domain[1] - 1, 0, dimZ};
+  int extent[6]
+    = {0, this->Resolution[0] - 1, 0, this->Resolution[1] - 1, 0, dimZ};
 
   // Create timer for measuring execution
   ttk::Timer timer;
@@ -106,47 +139,38 @@ int ttkPerlinNoise::RequestData(vtkInformation *request,
       }
 
       this->printMsg("Creating Perlin noise image ["
-                       + std::to_string(this->Domain[0]) + ", "
-                       + std::to_string(this->Domain[1]) + ", "
-                       + std::to_string(this->Domain[2]) + "]",
+                       + std::to_string(this->Resolution[0]) + ", "
+                       + std::to_string(this->Resolution[1]) + ", "
+                       + std::to_string(this->Resolution[2]) + "]",
                      0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
-      // Set dimensions and extent for image data
-      output->SetOrigin(0, 0, 0);
-      output->SetDimensions(extent[1], extent[3], extent[5]);
-      outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), extent);
-      output->SetExtent(extent);
+      initializeOutput(output, extent, nTuples, -1);
 
-      // Create array to store noise in
-      auto noiseArray = vtkSmartPointer<vtkDoubleArray>::New();
-      noiseArray->SetName("Field");
-      noiseArray->SetNumberOfComponents(1);
-      noiseArray->SetNumberOfTuples(nTuples);
-
-      if(this->Domain[2] == 0) {
+      if(this->Resolution[2] == 0) {
         // Calculate 2D noise for image
-        int dims[2] = {this->Domain[0], this->Domain[1]};
-        switch(noiseArray->GetDataType()) {
+        int dims[2] = {this->Resolution[0], this->Resolution[1]};
+        switch(VTK_DOUBLE) {
           vtkTemplateMacro(this->perlin2Daux<VTK_TT>(
             dims, this->nOctaves, this->Scale, this->Frequency,
             this->Persistence,
-            static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(noiseArray))));
+            static_cast<VTK_TT *>(
+              ttkUtils::GetVoidPointer(output->GetPointData()->GetArray(0)))));
         }
       } else {
         // Calculate 3D noise for image
-        switch(noiseArray->GetDataType()) {
+        switch(VTK_DOUBLE) {
           vtkTemplateMacro(this->perlin3Daux<VTK_TT>(
-            this->Domain, this->nOctaves, this->Scale, this->Frequency,
+            this->Resolution, this->nOctaves, this->Scale, this->Frequency,
             this->Persistence,
-            static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(noiseArray))));
+            static_cast<VTK_TT *>(
+              ttkUtils::GetVoidPointer(output->GetPointData()->GetArray(0)))));
         }
       }
-      output->GetPointData()->AddArray(noiseArray);
 
       this->printMsg("Creating Perlin noise image ["
-                       + std::to_string(this->Domain[0]) + ", "
-                       + std::to_string(this->Domain[1]) + ", "
-                       + std::to_string(this->Domain[2]) + "]",
+                       + std::to_string(this->Resolution[0]) + ", "
+                       + std::to_string(this->Resolution[1]) + ", "
+                       + std::to_string(this->Resolution[2]) + "]",
                      1, timer.getElapsedTime(), this->threadNumber_);
       timer.reStart();
 
@@ -160,57 +184,40 @@ int ttkPerlinNoise::RequestData(vtkInformation *request,
       }
 
       this->printMsg("Creating Perlin noise image ["
-                       + std::to_string(this->Domain[0]) + ", "
-                       + std::to_string(this->Domain[1]) + ", "
-                       + std::to_string(this->Domain[2])
+                       + std::to_string(this->Resolution[0]) + ", "
+                       + std::to_string(this->Resolution[1]) + ", "
+                       + std::to_string(this->Resolution[2])
                        + "], t = " + std::to_string(this->TimeStep),
                      0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
-      // Set dimensions and extent for image data
-      output->SetOrigin(0, 0, 0);
-      output->SetDimensions(extent[1], extent[3], extent[5]);
-      outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), extent);
-      output->SetExtent(extent);
-
-      // Create array to store noise in
-      auto noiseArray = vtkSmartPointer<vtkDoubleArray>::New();
-      noiseArray->SetName("Field");
-      noiseArray->SetNumberOfComponents(1);
-      noiseArray->SetNumberOfTuples(nTuples);
-
-      // Create an array to store time-step in
-      auto tsArray = vtkSmartPointer<vtkDoubleArray>::New();
-      tsArray->SetName("Time");
-      tsArray->SetNumberOfComponents(1);
-      tsArray->InsertNextValue(this->TimeStep);
+      initializeOutput(output, extent, nTuples, this->TimeStep);
 
       // Check perlin dimension
-      if(this->Domain[2] == 0) {
+      if(this->Resolution[2] == 0) {
         // Get 2D+T noise for chosen time-step
-        int dims[2] = {this->Domain[0], this->Domain[1]};
-        switch(noiseArray->GetDataType()) {
+        int dims[2] = {this->Resolution[0], this->Resolution[1]};
+        switch(VTK_DOUBLE) {
           vtkTemplateMacro(this->perlin2DTaux<VTK_TT>(
             dims, this->TimeStep, this->nOctaves, this->Scale, this->Frequency,
             this->Persistence,
-            static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(noiseArray))));
+            static_cast<VTK_TT *>(
+              ttkUtils::GetVoidPointer(output->GetPointData()->GetArray(0)))));
         }
       } else {
         // Get 3D+T noise for chosen time-step
-        switch(noiseArray->GetDataType()) {
+        switch(VTK_DOUBLE) {
           vtkTemplateMacro(this->perlin3DTaux<VTK_TT>(
-            this->Domain, this->TimeStep, this->nOctaves, this->Scale,
+            this->Resolution, this->TimeStep, this->nOctaves, this->Scale,
             this->Frequency, this->Persistence,
-            static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(noiseArray))));
+            static_cast<VTK_TT *>(
+              ttkUtils::GetVoidPointer(output->GetPointData()->GetArray(0)))));
         }
       }
-      // Add arrays to image output
-      output->GetPointData()->AddArray(noiseArray);
-      output->GetFieldData()->AddArray(tsArray);
 
       this->printMsg("Creating Perlin noise image ["
-                       + std::to_string(this->Domain[0]) + ", "
-                       + std::to_string(this->Domain[1]) + ", "
-                       + std::to_string(this->Domain[2])
+                       + std::to_string(this->Resolution[0]) + ", "
+                       + std::to_string(this->Resolution[1]) + ", "
+                       + std::to_string(this->Resolution[2])
                        + "], t = " + std::to_string(this->TimeStep),
                      1, timer.getElapsedTime(), this->threadNumber_);
       timer.reStart();
@@ -228,57 +235,41 @@ int ttkPerlinNoise::RequestData(vtkInformation *request,
       this->printMsg(
         "Creating time series of " + std::to_string(this->TimeSeries)
           + " timesteps, interval = " + std::to_string(this->Interval)
-          + ", of Perlin noise images [" + std::to_string(this->Domain[0])
-          + ", " + std::to_string(this->Domain[1]) + ", "
-          + std::to_string(this->Domain[2]) + "]",
+          + ", of Perlin noise images [" + std::to_string(this->Resolution[0])
+          + ", " + std::to_string(this->Resolution[1]) + ", "
+          + std::to_string(this->Resolution[2]) + "]",
         0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
+
       for(int t = 0; t < this->TimeSeries; t++) {
-        // Calculate actual time-step with Interval
-        double timeStep = this->Interval * t;
+        // Calculate actual time with Interval
+        double time = this->Interval * t;
 
         // Create a VTK image for current time-step using smart pointers
         auto image = vtkSmartPointer<vtkImageData>::New();
 
-        // Set image origin, dims and extent
-        image->SetOrigin(0, 0, 0);
-        image->SetDimensions(extent[1], extent[3], extent[5]);
-        image->SetExtent(extent);
-
-        // Create an array to store the noise in and set attributes
-        auto noiseArray = vtkSmartPointer<vtkDoubleArray>::New();
-        noiseArray->SetName("Field");
-        noiseArray->SetNumberOfComponents(1);
-        noiseArray->SetNumberOfTuples(nTuples);
-
-        // Create an array to store time-step in
-        auto tsArray = vtkSmartPointer<vtkDoubleArray>::New();
-        tsArray->SetName("Time");
-        tsArray->SetNumberOfComponents(1);
-        tsArray->InsertNextValue(timeStep);
+        initializeOutput(image, extent, nTuples, time);
 
         // Check perlin dimension
-        if(this->Domain[2] == 0) {
-          int dims[2] = {this->Domain[0], this->Domain[1]};
+        if(this->Resolution[2] == 0) {
+          int dims[2] = {this->Resolution[0], this->Resolution[1]};
           // Execute perlin for time-step
-          switch(noiseArray->GetDataType()) {
+          switch(VTK_DOUBLE) {
             vtkTemplateMacro(this->perlin2DTaux<VTK_TT>(
-              dims, timeStep, this->nOctaves, this->Scale, this->Frequency,
+              dims, time, this->nOctaves, this->Scale, this->Frequency,
               this->Persistence,
-              static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(noiseArray))));
+              static_cast<VTK_TT *>(
+                ttkUtils::GetVoidPointer(image->GetPointData()->GetArray(0)))));
           }
         } else {
           // Execute perlin for time-step
-          switch(noiseArray->GetDataType()) {
+          switch(VTK_DOUBLE) {
             vtkTemplateMacro(this->perlin3DTaux<VTK_TT>(
-              this->Domain, timeStep, this->nOctaves, this->Scale,
+              this->Resolution, time, this->nOctaves, this->Scale,
               this->Frequency, this->Persistence,
-              static_cast<VTK_TT *>(ttkUtils::GetVoidPointer(noiseArray))));
+              static_cast<VTK_TT *>(
+                ttkUtils::GetVoidPointer(image->GetPointData()->GetArray(0)))));
           }
         }
-
-        // Add arrays to image
-        image->GetPointData()->AddArray(noiseArray);
-        image->GetFieldData()->AddArray(tsArray);
 
         // Set image to a block in the output dataset
         size_t nBlocks = output->GetNumberOfBlocks();
@@ -287,9 +278,9 @@ int ttkPerlinNoise::RequestData(vtkInformation *request,
       this->printMsg(
         "Creating time series of " + std::to_string(this->TimeSeries)
           + " timesteps, interval = " + std::to_string(this->Interval)
-          + ", of Perlin noise images [" + std::to_string(this->Domain[0])
-          + ", " + std::to_string(this->Domain[1]) + ", "
-          + std::to_string(this->Domain[2]) + "]",
+          + ", of Perlin noise images [" + std::to_string(this->Resolution[0])
+          + ", " + std::to_string(this->Resolution[1]) + ", "
+          + std::to_string(this->Resolution[2]) + "]",
         1, timer.getElapsedTime(), this->threadNumber_);
       timer.reStart();
       break;
