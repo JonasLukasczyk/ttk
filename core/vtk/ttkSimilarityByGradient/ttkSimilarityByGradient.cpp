@@ -25,8 +25,8 @@ vtkIntArray *GetVertexIdArray(vtkDataSet *input) {
     input->GetPointData()->GetArray("ttkVertexScalarField"));
 }
 
-int ttkSimilarityByGradient::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityByGradient::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
   auto inputs0AsMB = static_cast<vtkMultiBlockDataSet *>(inputDataObjects0);
@@ -41,16 +41,16 @@ int ttkSimilarityByGradient::ComputeCorrespondences(
   int nFeatures1 = seeds1->GetNumberOfElements(0);
 
   // allocate correlation matrices
-  correspondenceMatrix->SetDimensions(nFeatures0, nFeatures1, 1);
-  correspondenceMatrix->AllocateScalars(VTK_INT, 1);
+  similarityMatrix->SetDimensions(nFeatures0, nFeatures1, 1);
+  similarityMatrix->AllocateScalars(VTK_INT, 1);
 
-  auto forward = correspondenceMatrix->GetPointData()->GetArray(0);
+  auto forward = similarityMatrix->GetPointData()->GetArray(0);
   forward->SetName("Forward");
 
   auto backward = vtkSmartPointer<vtkIntArray>::New();
   backward->DeepCopy(forward);
   backward->SetName("Backward");
-  correspondenceMatrix->GetPointData()->AddArray(backward);
+  similarityMatrix->GetPointData()->AddArray(backward);
 
   auto orderArray0 = ttkAlgorithm::GetOrderArray(domain0, 0);
   auto orderArray1 = ttkAlgorithm::GetOrderArray(domain1, 0);
@@ -61,7 +61,7 @@ int ttkSimilarityByGradient::ComputeCorrespondences(
 
   ttkTypeMacroT(
     triangulation->getType(),
-    (status = this->computeCorrespondences<ttk::SimplexId, T0>(
+    (status = this->computeSimilarityMatrix<ttk::SimplexId, T0>(
        ttkUtils::GetPointer<int>(forward),
 
        ttkUtils::GetPointer<ttk::SimplexId>(orderArray1),
@@ -77,7 +77,7 @@ int ttkSimilarityByGradient::ComputeCorrespondences(
 
   ttkTypeMacroT(
     triangulation->getType(),
-    (status = this->computeCorrespondences<ttk::SimplexId, T0>(
+    (status = this->computeSimilarityMatrix<ttk::SimplexId, T0>(
        ttkUtils::GetPointer<int>(backward),
 
        ttkUtils::GetPointer<ttk::SimplexId>(orderArray0),
@@ -91,7 +91,7 @@ int ttkSimilarityByGradient::ComputeCorrespondences(
   if(!status)
     return 0;
 
-  status = this->AddIndexIdMaps(correspondenceMatrix,
+  status = this->AddIndexIdMaps(similarityMatrix,
                                 this->GetInputArrayToProcess(1, seeds0),
                                 this->GetInputArrayToProcess(1, seeds1));
   if(!status)

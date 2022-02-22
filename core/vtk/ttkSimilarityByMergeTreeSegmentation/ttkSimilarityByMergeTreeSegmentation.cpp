@@ -23,8 +23,8 @@ ttkSimilarityByMergeTreeSegmentation::ttkSimilarityByMergeTreeSegmentation() {
 ttkSimilarityByMergeTreeSegmentation::~ttkSimilarityByMergeTreeSegmentation() {
 }
 
-int ttkSimilarityByMergeTreeSegmentation::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityByMergeTreeSegmentation::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
 
@@ -61,10 +61,10 @@ int ttkSimilarityByMergeTreeSegmentation::ComputeCorrespondences(
   if(!scalars0 || !scalars1)
     return !this->printErr("Unable to retrieve merge tree scalar arrays.");
 
-  // initialize correspondence matrix
-  correspondenceMatrix->SetDimensions(nNodes0, nNodes1, 1);
-  correspondenceMatrix->AllocateScalars(VTK_INT, 1);
-  auto matrixData = correspondenceMatrix->GetPointData()->GetArray(0);
+  // initialize similarity matrix
+  similarityMatrix->SetDimensions(nNodes0, nNodes1, 1);
+  similarityMatrix->AllocateScalars(VTK_INT, 1);
+  auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("Overlap");
 
   // compute overlap of segments
@@ -85,7 +85,7 @@ int ttkSimilarityByMergeTreeSegmentation::ComputeCorrespondences(
     return 0;
 
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix, this->GetInputArrayToProcess(1, m0),
+    similarityMatrix, this->GetInputArrayToProcess(1, m0),
     this->GetInputArrayToProcess(1, m1));
   if(!status)
     return 0;

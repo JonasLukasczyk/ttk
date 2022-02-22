@@ -23,8 +23,8 @@ ttkSimilarityByOverlap::ttkSimilarityByOverlap() {
 ttkSimilarityByOverlap::~ttkSimilarityByOverlap() {
 }
 
-int ttkSimilarityByOverlap::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityByOverlap::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
 
@@ -68,10 +68,10 @@ int ttkSimilarityByOverlap::ComputeCorrespondences(
   const int nIds0 = idIndexMap0.size();
   const int nIds1 = idIndexMap1.size();
 
-  // initialize correspondence matrix
-  correspondenceMatrix->SetDimensions(nIds0, nIds1, 1);
-  correspondenceMatrix->AllocateScalars(VTK_INT, 1);
-  auto matrixData = correspondenceMatrix->GetPointData()->GetArray(0);
+  // initialize similarity matrix
+  similarityMatrix->SetDimensions(nIds0, nIds1, 1);
+  similarityMatrix->AllocateScalars(VTK_INT, 1);
+  auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("Overlap");
 
   // compute overlaps
@@ -85,7 +85,7 @@ int ttkSimilarityByOverlap::ComputeCorrespondences(
     return 0;
 
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix, idIndexMap0, idIndexMap1, ids0->GetName());
+    similarityMatrix, idIndexMap0, idIndexMap1, ids0->GetName());
   if(!status)
     return 0;
 

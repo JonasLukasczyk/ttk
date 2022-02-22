@@ -74,7 +74,7 @@ namespace ttk {
     };
 
     template <typename IT, typename TT, typename CF, typename IF>
-    int computeCorrespondences(int *correspondences,
+    int computeSimilarityMatrix(int *matrix,
 
                                const IT *order,
                                const TT *triangulation,
@@ -86,11 +86,11 @@ namespace ttk {
                                const CF comperatorFunction,
                                const IF indexFunction) const {
       ttk::Timer timer;
-      this->printMsg("Computing Correspondences", 0, 0, this->threadNumber_,
+      this->printMsg("Computing Similarity Matrix", 0, 0, this->threadNumber_,
                      debug::LineMode::REPLACE);
 
       for(int i = 0, j = nFeatures0 * nFeatures1; i < j; i++)
-        correspondences[i] = 0;
+        matrix[i] = 0;
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -104,7 +104,7 @@ namespace ttk {
         bool found = false;
         for(IT j = 0; j < nFeatures1; j++) {
           if(criticalPointVertexIds1[j] == matchIdx) {
-            correspondences[indexFunction(i, j, nFeatures0, nFeatures1)] = 1;
+            matrix[indexFunction(i, j, nFeatures0, nFeatures1)] = 1;
             found = true;
             break;
           }
@@ -114,7 +114,7 @@ namespace ttk {
             "Unable to find matched vertex in given list of extrema.");
       }
 
-      this->printMsg("Computing Correspondences", 1, timer.getElapsedTime(),
+      this->printMsg("Computing Similarity Matrix", 1, timer.getElapsedTime(),
                      this->threadNumber_);
 
       return 1;

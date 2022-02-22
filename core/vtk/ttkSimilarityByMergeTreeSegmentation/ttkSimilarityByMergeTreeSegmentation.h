@@ -21,7 +21,7 @@ protected:
   ttkSimilarityByMergeTreeSegmentation();
   ~ttkSimilarityByMergeTreeSegmentation() override;
 
-  int ComputeCorrespondences(vtkImageData *correspondenceMatrix,
+  int ComputeSimilarityMatrix(vtkImageData *similarityMatrix,
                              vtkDataObject *inputDataObjects0,
                              vtkDataObject *inputDataObjects1) override;
 };

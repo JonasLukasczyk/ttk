@@ -51,7 +51,7 @@ int ttkTrackingGraph::FillOutputPortInformation(int port,
 template <typename CT, typename IT>
 int countEdges(int &nEdges,
                const int *dim,
-               const CT *correspondences,
+               const CT *similarities,
                const int nIds0 = 0,
                const int nIds1 = 0,
                const IT *ids0 = nullptr,
@@ -77,7 +77,7 @@ int countEdges(int &nEdges,
         const auto &iIdx = iIt->second;
         const auto &jIdx = jIt->second;
         const int index = jIdx * dim[0] + iIdx;
-        if(correspondences[index] > 0)
+        if(similarities[index] > 0)
           nEdges++;
       }
     }
@@ -87,7 +87,7 @@ int countEdges(int &nEdges,
         const auto &iIdx = i;
         const auto &jIdx = j;
         const int index = jIdx * dim[0] + iIdx;
-        if(correspondences[index] > 0)
+        if(similarities[index] > 0)
           nEdges++;
       }
   }
@@ -99,8 +99,8 @@ template <typename CT, typename IT>
 int generateEdges(vtkPolyData *output,
                   int &iEdge,
                   vtkFieldData *trackingGraphCD,
-                  vtkFieldData *correspondencesPD,
-                  const CT *correspondences,
+                  vtkFieldData *similaritiesPD,
+                  const CT *similarities,
                   const int &offset0,
                   const int &offset1,
                   const int *dim,
@@ -115,7 +115,7 @@ int generateEdges(vtkPolyData *output,
   for(int a = 0; a < trackingGraphCD->GetNumberOfArrays(); a++) {
     auto oArray = trackingGraphCD->GetAbstractArray(a);
     arrayMap.push_back(
-      {oArray, correspondencesPD->GetArray(oArray->GetName())});
+      {oArray, similaritiesPD->GetArray(oArray->GetName())});
   }
 
   if(nIds0 > 0 && nIds1 > 0) {
@@ -136,7 +136,7 @@ int generateEdges(vtkPolyData *output,
         const auto &iIdx = iIt->second;
         const auto &jIdx = jIt->second;
         const int index = jIdx * dim[0] + iIdx;
-        if(correspondences[index] <= 0)
+        if(similarities[index] <= 0)
           continue;
 
         vtkIdType points[2]{offset0 + i, offset1 + j};
@@ -154,7 +154,7 @@ int generateEdges(vtkPolyData *output,
         const auto &iIdx = i;
         const auto &jIdx = j;
         const int index = jIdx * dim[0] + iIdx;
-        if(correspondences[index] <= 0)
+        if(similarities[index] <= 0)
           continue;
 
         const vtkIdType points[2]{offset0 + i, offset1 + j};
@@ -174,11 +174,11 @@ int generateEdges(vtkPolyData *output,
 int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
                                          int &nEdges,
                                          std::vector<int> &nodeIdxOffsets,
-                                         vtkMultiBlockDataSet *correspondences,
+                                         vtkMultiBlockDataSet *similarities,
                                          vtkMultiBlockDataSet *features
                                          = nullptr) {
 
-  const int nSteps = correspondences->GetNumberOfBlocks() + 1;
+  const int nSteps = similarities->GetNumberOfBlocks() + 1;
 
   nNodes = 0;
   nEdges = 0;
@@ -196,7 +196,7 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
 
     // edges
     for(int t = 1; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t - 1));
+      auto c = static_cast<vtkImageData *>(similarities->GetBlock(t - 1));
       int dim[3];
       c->GetDimensions(dim);
       auto matrix = this->GetInputArrayToProcess(0, c);
@@ -229,7 +229,7 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
     }
   } else {
     for(int t = 1; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t - 1));
+      auto c = static_cast<vtkImageData *>(similarities->GetBlock(t - 1));
       int dim[3];
       c->GetDimensions(dim);
 
@@ -266,37 +266,37 @@ int collectArrays(vtkFieldData *arrayMap,
   return 1;
 }
 
-int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *correspondences,
+int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *similarities,
                                vtkMultiBlockDataSet *features) {
   ttk::Timer timer;
   const std::string msg = "Validating Input";
   this->printMsg(msg, 0, 0, ttk::debug::LineMode::REPLACE);
 
   const std::string errmsg0
-    = "Correspondences input must be a flat vtkMultiBlockDataSet that contains "
+    = "Similarity Matrix input must be a flat vtkMultiBlockDataSet that contains "
       "only vtkImageData objects.";
   const std::string errmsg1 = "Features must be vtkPointSet where each feature "
                               "is represented by a single point.";
 
-  if(!correspondences)
+  if(!similarities)
     return !this->printErr(errmsg0);
 
-  const int nSteps = correspondences->GetNumberOfBlocks();
+  const int nSteps = similarities->GetNumberOfBlocks();
   for(int t = 0; t < nSteps; t++) {
-    auto c = correspondences->GetBlock(t);
+    auto c = similarities->GetBlock(t);
     if(!c || !c->IsA("vtkImageData"))
       return !this->printErr(errmsg0);
     auto matrix = this->GetInputArrayToProcess(0, c);
     if(!matrix)
-      return !this->printErr("Unable to retrieve correspondence matrix.");
+      return !this->printErr("Unable to retrieve similarity matrix.");
   }
 
   if(features) {
     if(features->GetNumberOfBlocks() - 1
-       != correspondences->GetNumberOfBlocks())
+       != similarities->GetNumberOfBlocks())
       return !this->printMsg(
         std::vector<std::string>({"Number of feature sets (F) and "
-                                  "correspondence matrices (C) inconsistent.",
+                                  "similarity matrices (C) inconsistent.",
                                   "They must satisfy F = C + 1."}),
         ttk::debug::Priority::ERROR);
 
@@ -305,11 +305,11 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *correspondences,
     std::string idArrayName;
     for(int t = 0; t < nSteps; t++) {
       idArrayName = ttkSimilarityAlgorithm::GetIdArrayName(
-        correspondences->GetBlock(t)->GetFieldData());
+        similarities->GetBlock(t)->GetFieldData());
       if(idArrayName.size() < 1)
         return !this->printMsg(
           std::vector<std::string>(
-            {"Correspondence Matrices not augmented with IndexIdMaps.",
+            {"Similarity Matrices not augmented with IndexIdMaps.",
              "Unable to perform FeatureId lookup."}),
           ttk::debug::Priority::ERROR);
     }
@@ -331,7 +331,7 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *correspondences,
 
 int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   vtkPolyData *trackingGraph,
-  vtkMultiBlockDataSet *correspondences,
+  vtkMultiBlockDataSet *similarities,
   vtkMultiBlockDataSet *features) {
 
   // initialize trackingGraph
@@ -339,12 +339,12 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   std::string msg = "Initializing Output";
   this->printMsg(msg, 0, 0, ttk::debug::LineMode::REPLACE);
 
-  const int nSteps = correspondences->GetNumberOfBlocks() + 1;
+  const int nSteps = similarities->GetNumberOfBlocks() + 1;
 
   int nNodes, nEdges;
   std::vector<int> nodeIdxOffsets;
   if(!this->CountNodesAndEdges(
-       nNodes, nEdges, nodeIdxOffsets, correspondences, features))
+       nNodes, nEdges, nodeIdxOffsets, similarities, features))
     return 0;
 
   if(nNodes < 1)
@@ -355,8 +355,8 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   collectArrays(featuresPD, features, 0);
   auto featuresFD = vtkSmartPointer<vtkFieldData>::New();
   collectArrays(featuresFD, features, 2);
-  auto correspondencesPD = vtkSmartPointer<vtkFieldData>::New();
-  collectArrays(correspondencesPD, correspondences, 0);
+  auto similaritiesPD = vtkSmartPointer<vtkFieldData>::New();
+  collectArrays(similaritiesPD, similarities, 0);
 
   // allocating memory
   auto trackingGraphPD = trackingGraph->GetPointData();
@@ -372,7 +372,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   {
     ArrayMapSet oSet{{trackingGraphPD, featuresPD, nNodes},
                      {trackingGraphPD, featuresFD, nNodes},
-                     {trackingGraphCD, correspondencesPD, nEdges}};
+                     {trackingGraphCD, similaritiesPD, nEdges}};
     for(auto it : oSet) {
       auto arrayTemplates = std::get<1>(it);
       for(int a = 0; a < arrayTemplates->GetNumberOfArrays(); a++) {
@@ -427,7 +427,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
   // Edges
   {
     for(int t = 1, q = 0; t < nSteps; t++) {
-      auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t - 1));
+      auto c = static_cast<vtkImageData *>(similarities->GetBlock(t - 1));
       int dim[3];
       c->GetDimensions(dim);
       auto matrix = this->GetInputArrayToProcess(0, c);
@@ -466,25 +466,25 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
 }
 
 int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
-  vtkPolyData *trackingGraph, vtkMultiBlockDataSet *correspondences) {
+  vtkPolyData *trackingGraph, vtkMultiBlockDataSet *similarities) {
 
   // initialize output
   ttk::Timer timer;
   std::string msg = "Initializing Output";
   this->printMsg(msg, 0, 0, ttk::debug::LineMode::REPLACE);
 
-  const int nSteps = correspondences->GetNumberOfBlocks();
+  const int nSteps = similarities->GetNumberOfBlocks();
 
   int nNodes, nEdges;
   std::vector<int> nodeIdxOffsets;
-  if(!this->CountNodesAndEdges(nNodes, nEdges, nodeIdxOffsets, correspondences))
+  if(!this->CountNodesAndEdges(nNodes, nEdges, nodeIdxOffsets, similarities))
     return 0;
 
-  auto correspondencesPD = vtkSmartPointer<vtkFieldData>::New();
-  collectArrays(correspondencesPD, correspondences, 0);
+  auto similaritiesPD = vtkSmartPointer<vtkFieldData>::New();
+  collectArrays(similaritiesPD, similarities, 0);
 
-  auto correspondencesFD = vtkSmartPointer<vtkFieldData>::New();
-  collectArrays(correspondencesFD, correspondences, 2);
+  auto similaritiesFD = vtkSmartPointer<vtkFieldData>::New();
+  collectArrays(similaritiesFD, similarities, 2);
 
   // allocate memory
   auto points = vtkSmartPointer<vtkPoints>::New();
@@ -493,8 +493,8 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
 
   auto trackingGraphPD = trackingGraph->GetPointData();
   auto trackingGraphCD = trackingGraph->GetCellData();
-  for(int a = 0; a < correspondencesPD->GetNumberOfArrays(); a++) {
-    auto arrayTemplate = correspondencesPD->GetAbstractArray(a);
+  for(int a = 0; a < similaritiesPD->GetNumberOfArrays(); a++) {
+    auto arrayTemplate = similaritiesPD->GetAbstractArray(a);
     auto arrayInstance
       = vtkSmartPointer<vtkAbstractArray>::Take(arrayTemplate->NewInstance());
     arrayInstance->SetName(arrayTemplate->GetName());
@@ -509,11 +509,11 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
     vtkDataArray *indexIdMapP{nullptr};
     vtkDataArray *indexIdMapC{nullptr};
     if(!ttkSimilarityAlgorithm::GetIndexIdMaps(
-         indexIdMapP, indexIdMapC, correspondencesFD))
+         indexIdMapP, indexIdMapC, similaritiesFD))
       return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
     std::string idArrayName
-      = ttkSimilarityAlgorithm::GetIdArrayName(correspondencesFD);
+      = ttkSimilarityAlgorithm::GetIdArrayName(similaritiesFD);
 
     ids = vtkSmartPointer<vtkDataArray>::Take(indexIdMapP->NewInstance());
     ids->SetName(idArrayName.data());
@@ -542,7 +542,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
   auto timeIdxData = ttkUtils::GetPointer<int>(timeIdx);
 
   for(int t = 0, nodeIdx = 0, nodeIdx3 = 0, edgeIdx = 0; t < nSteps; t++) {
-    auto c = static_cast<vtkImageData *>(correspondences->GetBlock(t));
+    auto c = static_cast<vtkImageData *>(similarities->GetBlock(t));
     int dim[3];
     c->GetDimensions(dim);
 
@@ -580,7 +580,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
 
     auto cMatrix = this->GetInputArrayToProcess(0, c);
     if(!cMatrix)
-      return !this->printErr("Unable to retrieve correspondence matrix.");
+      return !this->printErr("Unable to retrieve similarity matrix.");
 
     switch(cMatrix->GetDataType()) {
       vtkTemplateMacro((generateEdges<VTK_TT, int>(
@@ -599,19 +599,19 @@ int ttkTrackingGraph::RequestData(vtkInformation *,
                                   vtkInformationVector **inputVector,
                                   vtkInformationVector *outputVector) {
   // get input / output
-  auto correspondences = vtkMultiBlockDataSet::GetData(inputVector[0]);
+  auto similarities = vtkMultiBlockDataSet::GetData(inputVector[0]);
   auto features = vtkMultiBlockDataSet::GetData(inputVector[1]);
   auto trackingGraph = vtkPolyData::GetData(outputVector);
 
-  if(!this->Validate(correspondences, features))
+  if(!this->Validate(similarities, features))
     return 0;
 
   if(features) {
     if(!this->GenerateTrackingGraphFromFeatures(
-         trackingGraph, correspondences, features))
+         trackingGraph, similarities, features))
       return 0;
   } else {
-    if(!this->GenerateTrackingGraphFromMatrix(trackingGraph, correspondences))
+    if(!this->GenerateTrackingGraphFromMatrix(trackingGraph, similarities))
       return 0;
   }
 

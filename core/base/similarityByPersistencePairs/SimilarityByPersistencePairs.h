@@ -4,7 +4,7 @@
 /// \author Maxime Soler
 /// \date 09.06.2021
 ///
-/// \brief Computes a correspondence matrix from persistence diagram matchings.
+/// \brief Computes a similarity matrix from persistence diagram matchings.
 ///
 /// This module defines the SimilarityByPersistencePairs class that computes
 /// the correspondance matrix from the output of a Wasserstein-based matching

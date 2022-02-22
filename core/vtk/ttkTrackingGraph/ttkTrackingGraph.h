@@ -43,14 +43,14 @@ protected:
   int CountNodesAndEdges(int &nNodes,
                          int &nEdges,
                          std::vector<int> &nodeIdxOffsets,
-                         vtkMultiBlockDataSet *correspondences,
+                         vtkMultiBlockDataSet *similarities,
                          vtkMultiBlockDataSet *features);
-  int Validate(vtkMultiBlockDataSet *correspondences,
+  int Validate(vtkMultiBlockDataSet *similarities,
                vtkMultiBlockDataSet *features);
 
   int GenerateTrackingGraphFromFeatures(vtkPolyData *output,
-                                        vtkMultiBlockDataSet *correspondences,
+                                        vtkMultiBlockDataSet *similarities,
                                         vtkMultiBlockDataSet *features);
   int GenerateTrackingGraphFromMatrix(vtkPolyData *output,
-                                      vtkMultiBlockDataSet *correspondences);
+                                      vtkMultiBlockDataSet *similarities);
 };

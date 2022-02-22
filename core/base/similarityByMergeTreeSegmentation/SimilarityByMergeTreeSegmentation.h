@@ -4,7 +4,7 @@
 /// \date 08/13/2022
 ///
 /// This module computes the spatial overlap of two merge tree segmentations
-/// (MTS) and records the results in a correspondence matrix. Both MTSs need to
+/// (MTS) and records the results in a similarity matrix. Both MTSs need to
 /// be defined on the same domain, and assign to each vertex of the domain the
 /// integer id of the corresponding merge tree edge. An overlap of two segments
 /// (merge tree edges) imply the overlap of the contained sub- and superlevel
@@ -46,7 +46,7 @@ namespace ttk {
     }
 
     template <typename IT, typename DT>
-    int computeSegmentationOverlap(IT *correspondenceMatrix,
+    int computeSegmentationOverlap(IT *similarityMatrix,
 
                                    const IT *seg0,
                                    const IT *seg1,
@@ -63,14 +63,14 @@ namespace ttk {
       this->printMsg(
         msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
-      // clear correspondence matrix
+      // clear similarity matrix
       const IT nNodePairs = nNodes0 * nNodes1;
       for(IT i = 0; i < nNodePairs; i++) {
-        correspondenceMatrix[i] = 0;
+        similarityMatrix[i] = 0;
       }
 
       // compute overlap of base edges
-      std::vector<IT> baseCorrespondenceMatrix(nNodePairs, 0);
+      std::vector<IT> baseSimilarityMatrix(nNodePairs, 0);
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif
@@ -87,10 +87,10 @@ namespace ttk {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp atomic update
 #endif
-        baseCorrespondenceMatrix[base1 * nNodes0 + base0]++;
+        baseSimilarityMatrix[base1 * nNodes0 + base0]++;
       }
 
-      // propagate base correspondences towards roots
+      // propagate base similarities towards roots
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif
@@ -98,7 +98,7 @@ namespace ttk {
         const auto offset = nNodes0 * i;
 
         for(IT j = 0; j < nNodes0; j++) {
-          const auto &overlap = baseCorrespondenceMatrix[offset + j];
+          const auto &overlap = baseSimilarityMatrix[offset + j];
           if(overlap < 1)
             continue;
 
@@ -108,7 +108,7 @@ namespace ttk {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp atomic update
 #endif
-            correspondenceMatrix[c1 * nNodes0 + c0] += overlap;
+            similarityMatrix[c1 * nNodes0 + c0] += overlap;
 
             const auto &cNext0 = next0[c0];
             const auto &cNext1 = next1[c1];

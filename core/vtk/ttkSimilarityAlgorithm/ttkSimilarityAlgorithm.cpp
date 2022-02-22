@@ -119,17 +119,17 @@ int ttkSimilarityAlgorithm::RequestData(
   }
 
   for(size_t s = 1; s < sequence.size(); s++) {
-    auto correspondenceMatrix = vtkSmartPointer<vtkImageData>::New();
+    auto similarityMatrix = vtkSmartPointer<vtkImageData>::New();
     auto data0 = sequence[s - 1];
     auto data1 = sequence[s + 0];
     bool singleInput = data0->GetNumberOfBlocks() == 1;
 
-    if(!this->ComputeCorrespondences(correspondenceMatrix,
+    if(!this->ComputeSimilarityMatrix(similarityMatrix,
                                      singleInput ? data0->GetBlock(0) : data0,
                                      singleInput ? data1->GetBlock(0) : data1))
       return 0;
 
-    output->SetBlock(s - 1, correspondenceMatrix);
+    output->SetBlock(s - 1, similarityMatrix);
   }
 
   if(streamingMode) {
@@ -181,10 +181,10 @@ int ttkSimilarityAlgorithm::GetIndexIdMaps(vtkDataArray *&indexIdMapP,
 };
 
 int ttkSimilarityAlgorithm::AddIndexIdMap(
-  vtkImageData *correspondenceMatrix,
+  vtkImageData *similarityMatrix,
   vtkDataArray *idArray,
   const bool isMapForCurrentTimestep) {
-  auto fd = correspondenceMatrix->GetFieldData();
+  auto fd = similarityMatrix->GetFieldData();
   auto array = vtkSmartPointer<vtkDataArray>::Take(idArray->NewInstance());
   array->ShallowCopy(idArray);
   array->SetName((std::string(idArray->GetName())
@@ -195,17 +195,17 @@ int ttkSimilarityAlgorithm::AddIndexIdMap(
 }
 
 int ttkSimilarityAlgorithm::AddIndexIdMaps(
-  vtkImageData *correspondenceMatrix,
+  vtkImageData *similarityMatrix,
   vtkDataArray *indexIdMapP,
   vtkDataArray *indexIdMapC) {
   int status = 0;
   status = ttkSimilarityAlgorithm::AddIndexIdMap(
-    correspondenceMatrix, indexIdMapP, false);
+    similarityMatrix, indexIdMapP, false);
   if(!status)
     return 0;
 
   status = ttkSimilarityAlgorithm::AddIndexIdMap(
-    correspondenceMatrix, indexIdMapC, true);
+    similarityMatrix, indexIdMapC, true);
   if(!status)
     return 0;
 
@@ -213,11 +213,11 @@ int ttkSimilarityAlgorithm::AddIndexIdMaps(
 }
 
 int ttkSimilarityAlgorithm::AddIndexIdMaps(
-  vtkImageData *correspondenceMatrix,
+  vtkImageData *similarityMatrix,
   const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapP,
   const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapC,
   const std::string &idArrayName) {
-  auto fd = correspondenceMatrix->GetFieldData();
+  auto fd = similarityMatrix->GetFieldData();
   int a = 0;
   const std::string suffix[2]{"_t-1", "_t"};
   for(auto map :

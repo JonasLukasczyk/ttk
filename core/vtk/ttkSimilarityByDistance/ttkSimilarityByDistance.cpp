@@ -24,8 +24,8 @@ ttkSimilarityByDistance::ttkSimilarityByDistance() {
 ttkSimilarityByDistance::~ttkSimilarityByDistance() {
 }
 
-int ttkSimilarityByDistance::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityByDistance::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
   // unpack input
@@ -46,10 +46,10 @@ int ttkSimilarityByDistance::ComputeCorrespondences(
   if(coords0->GetDataType() != coords1->GetDataType())
     return !this->printErr("Input vtkPointSet need to have same precision.");
 
-  // initialize correspondence matrix i.e., distance matrix
-  correspondenceMatrix->SetDimensions(nPoints0, nPoints1, 1);
-  correspondenceMatrix->AllocateScalars(coords0->GetDataType(), 1);
-  auto matrixData = correspondenceMatrix->GetPointData()->GetArray(0);
+  // initialize similarity matrix i.e., distance matrix
+  similarityMatrix->SetDimensions(nPoints0, nPoints1, 1);
+  similarityMatrix->AllocateScalars(coords0->GetDataType(), 1);
+  auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("Distance");
 
   int status = 0;
@@ -75,7 +75,7 @@ int ttkSimilarityByDistance::ComputeCorrespondences(
   }
 
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix, this->GetInputArrayToProcess(0, p0),
+    similarityMatrix, this->GetInputArrayToProcess(0, p0),
     this->GetInputArrayToProcess(0, p1));
   if(!status)
     return 0;

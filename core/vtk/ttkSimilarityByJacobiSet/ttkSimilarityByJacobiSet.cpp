@@ -76,8 +76,8 @@ int computeComponentIdMap(ComponentIdMap &componentIdMap,
   return 1;
 }
 
-int ttkSimilarityByJacobiSet::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityByJacobiSet::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
 
@@ -283,7 +283,7 @@ int ttkSimilarityByJacobiSet::ComputeCorrespondences(
   // connected component
   {
     ttk::Timer t;
-    const std::string msg = "Computing Correspondence Matrix";
+    const std::string msg = "Computing Similarity Matrix";
     this->printMsg(msg, 0, 0, 1, ttk::debug::LineMode::REPLACE);
 
     auto componentIds = components->GetPointData()->GetArray("ComponentId");
@@ -340,9 +340,9 @@ int ttkSimilarityByJacobiSet::ComputeCorrespondences(
     this->printMsg(msg, 0.8, t.getElapsedTime(), this->threadNumber_,
                    ttk::debug::LineMode::REPLACE);
 
-    correspondenceMatrix->SetDimensions(nPoints0, nPoints1, 1);
-    correspondenceMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
-    auto matrixArray = correspondenceMatrix->GetPointData()->GetArray(0);
+    similarityMatrix->SetDimensions(nPoints0, nPoints1, 1);
+    similarityMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+    auto matrixArray = similarityMatrix->GetPointData()->GetArray(0);
     matrixArray->SetName("Match");
 
     const int n = nPoints0 * nPoints1;
@@ -363,12 +363,12 @@ int ttkSimilarityByJacobiSet::ComputeCorrespondences(
     this->printMsg(msg, 1, t.getElapsedTime(), this->threadNumber_);
   }
 
-  // correspondenceMatrix->ShallowCopy(stackedImage);
+  // similarityMatrix->ShallowCopy(stackedImage);
 
   // Add Index Label Maps
   {
     int status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-      correspondenceMatrix, this->GetInputArrayToProcess(1, points0),
+      similarityMatrix, this->GetInputArrayToProcess(1, points0),
       this->GetInputArrayToProcess(1, points1));
     if(!status)
       return 0;

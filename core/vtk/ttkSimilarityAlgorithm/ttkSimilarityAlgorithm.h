@@ -40,15 +40,15 @@ public:
   static int GetIndexIdMaps(vtkDataArray *&indexIdMapP,
                             vtkDataArray *&indexIdMapC,
                             vtkFieldData *fieldData);
-  static int AddIndexIdMap(vtkImageData *correspondenceMatrix,
+  static int AddIndexIdMap(vtkImageData *similarityMatrix,
                            vtkDataArray *indexIdMap,
                            const bool isMapForCurrentTimestep);
-  static int AddIndexIdMaps(vtkImageData *correspondenceMatrix,
+  static int AddIndexIdMaps(vtkImageData *similarityMatrix,
                             vtkDataArray *indexIdMapR,
                             vtkDataArray *indexIdMapC);
 
   static int AddIndexIdMaps(
-    vtkImageData *correspondenceMatrix,
+    vtkImageData *similarityMatrix,
     const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapP,
     const std::unordered_map<ttk::SimplexId, ttk::SimplexId> &idIndexMapC,
     const std::string &idArrayName);
@@ -68,7 +68,7 @@ protected:
                   vtkInformationVector *outputVector) override;
 
   virtual int
-    ComputeCorrespondences(vtkImageData *vtkNotUsed(correspondenceMatrix),
+    ComputeSimilarityMatrix(vtkImageData *vtkNotUsed(similarityMatrix),
                            vtkDataObject *vtkNotUsed(inputDataObjects0),
                            vtkDataObject *vtkNotUsed(inputDataObjects1)) {
     return 0;

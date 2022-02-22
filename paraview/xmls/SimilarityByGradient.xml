@@ -2,7 +2,7 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
     <SourceProxy name="SimilarityByGradient" class="ttkSimilarityByGradient" label="TTK SimilarityByGradient">
-      <Documentation long_help="SimilarityByGradient Long" short_help="SimilarityByGradient Short">
+      <Documentation long_help="SimilarityByGradient" short_help="SimilarityByGradient">
         TODO
       </Documentation>
 

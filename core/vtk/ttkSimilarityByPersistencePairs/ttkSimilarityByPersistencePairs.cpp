@@ -23,8 +23,8 @@ ttkSimilarityByPersistencePairs::ttkSimilarityByPersistencePairs() {
 ttkSimilarityByPersistencePairs::~ttkSimilarityByPersistencePairs() {
 }
 
-int ttkSimilarityByPersistencePairs::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityByPersistencePairs::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
   int status = 0;
@@ -68,22 +68,22 @@ int ttkSimilarityByPersistencePairs::ComputeCorrespondences(
   if(coords0->GetDataType() != coords1->GetDataType())
     return !this->printErr("Input diagrams need to have the same data type.");
 
-  // compute correspondence matrix dimensions
+  // compute similarity matrix dimensions
   const int nFeatures0 = CTDiagram0.size();
   const int nFeatures1 = CTDiagram1.size();
 
-  // initialize correspondence matrix i.e., distance matrix
-  correspondenceMatrix->SetDimensions(nFeatures0, nFeatures1, 1);
-  correspondenceMatrix->AllocateScalars(
+  // initialize similarity matrix i.e., distance matrix
+  similarityMatrix->SetDimensions(nFeatures0, nFeatures1, 1);
+  similarityMatrix->AllocateScalars(
     VTK_FLOAT, 1); // matching output = float
 
-  auto correspondencesArray = correspondenceMatrix->GetPointData()->GetArray(0);
-  correspondencesArray->SetName("LiftedWassersteinDistance");
-  auto correspondenceMatrixData
-    = ttkUtils::GetPointer<float>(correspondencesArray);
+  auto similaritiesArray = similarityMatrix->GetPointData()->GetArray(0);
+  similaritiesArray->SetName("LiftedWassersteinDistance");
+  auto similarityMatrixData
+    = ttkUtils::GetPointer<float>(similaritiesArray);
   for(int i = 0; i < nFeatures0; ++i)
     for(int j = 0; j < nFeatures1; ++j) {
-      correspondenceMatrixData[j * nFeatures0 + i] = 0;
+      similarityMatrixData[j * nFeatures0 + i] = 0;
     }
 
   // get metric parameters
@@ -116,7 +116,7 @@ int ttkSimilarityByPersistencePairs::ComputeCorrespondences(
     ps = persistenceLift;
   }
 
-  // compute correspondences in basecode
+  // compute similarities in basecode
   std::vector<mT> matchings;
   switch(coords0->GetDataType()) {
     vtkTemplateMacro(status = this->computeDistanceMatrix<double>(
@@ -140,13 +140,13 @@ int ttkSimilarityByPersistencePairs::ComputeCorrespondences(
         return !this->printErr(
           "Invalid indexing: feature index > feature number.");
 
-      correspondenceMatrixData[n2 * nFeatures0 + n1]
+      similarityMatrixData[n2 * nFeatures0 + n1]
         = (float)1; // std::get<2>(t);
     }
   }
 
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix, this->GetInputArrayToProcess(0, p0),
+    similarityMatrix, this->GetInputArrayToProcess(0, p0),
     this->GetInputArrayToProcess(0, p1));
   if(!status)
     return 0;
