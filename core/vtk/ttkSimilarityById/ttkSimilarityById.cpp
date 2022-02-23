@@ -24,8 +24,8 @@ ttkSimilarityById::ttkSimilarityById() {
 ttkSimilarityById::~ttkSimilarityById() {
 }
 
-int ttkSimilarityById::ComputeCorrespondences(
-  vtkImageData *correspondenceMatrix,
+int ttkSimilarityById::ComputeSimilarityMatrix(
+  vtkImageData *similarityMatrix,
   vtkDataObject *inputDataObjects0,
   vtkDataObject *inputDataObjects1) {
   // unpack input
@@ -69,10 +69,10 @@ int ttkSimilarityById::ComputeCorrespondences(
   uniqueIds0->Resize(numUniqueIds0);
   uniqueIds1->Resize(numUniqueIds1);
 
-  // initialize correspondence matrix i.e., identity matrix
-  correspondenceMatrix->SetDimensions(numUniqueIds0, numUniqueIds1, 1);
-  correspondenceMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
-  auto matrixData = correspondenceMatrix->GetPointData()->GetArray(0);
+  // initialize similarity matrix i.e., identity matrix
+  similarityMatrix->SetDimensions(numUniqueIds0, numUniqueIds1, 1);
+  similarityMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
+  auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("Identity");
 
   // // compute indentity matrix
@@ -86,7 +86,7 @@ int ttkSimilarityById::ComputeCorrespondences(
     return 0;
 
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-    correspondenceMatrix, uniqueIds0, uniqueIds1);
+    similarityMatrix, uniqueIds0, uniqueIds1);
   if(!status)
     return 0;
 
