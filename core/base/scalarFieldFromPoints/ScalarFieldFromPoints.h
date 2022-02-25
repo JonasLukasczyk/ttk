@@ -146,9 +146,9 @@ namespace ttk {
       const double dx = spacing[0];
       const double dy = spacing[1];
       const double dz = spacing[2];
-      const double dx2 = dx/2.0;
-      const double dy2 = dy/2.0;
-      const double dz2 = dz/2.0;
+      const double dx2 = dx / 2.0;
+      const double dy2 = dy / 2.0;
+      const double dz2 = dz / 2.0;
       const int width = dims[0];
       const int height = dims[1];
       const int depth = dims[2];

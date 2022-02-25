@@ -22,7 +22,7 @@ protected:
   ttkSimilarityById();
   ~ttkSimilarityById();
 
-  int ComputeCorrespondences(vtkImageData *correspondenceMatrix,
-                             vtkDataObject *inputDataObjects0,
-                             vtkDataObject *inputDataObjects1) override;
+  int ComputeSimilarityMatrix(vtkImageData *similarityMatrix,
+                              vtkDataObject *inputDataObjects0,
+                              vtkDataObject *inputDataObjects1) override;
 };

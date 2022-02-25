@@ -18,6 +18,6 @@ protected:
   ~ttkSimilarityByJacobiSet();
 
   int ComputeSimilarityMatrix(vtkImageData *similarityMatrix,
-                             vtkDataObject *inputDataObjects0,
-                             vtkDataObject *inputDataObjects1) override;
+                              vtkDataObject *inputDataObjects0,
+                              vtkDataObject *inputDataObjects1) override;
 };

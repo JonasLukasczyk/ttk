@@ -12,8 +12,8 @@
 #include <vtkSmartPointer.h>
 #include <vtkStringArray.h>
 
-#include <ttkSimilarityAlgorithm.h>
 #include <ttkMacros.h>
+#include <ttkSimilarityAlgorithm.h>
 #include <ttkUtils.h>
 
 typedef std::vector<std::tuple<vtkFieldData *, vtkFieldData *, int>>
@@ -114,8 +114,7 @@ int generateEdges(vtkPolyData *output,
   std::vector<std::pair<vtkAbstractArray *, vtkAbstractArray *>> arrayMap;
   for(int a = 0; a < trackingGraphCD->GetNumberOfArrays(); a++) {
     auto oArray = trackingGraphCD->GetAbstractArray(a);
-    arrayMap.push_back(
-      {oArray, similaritiesPD->GetArray(oArray->GetName())});
+    arrayMap.push_back({oArray, similaritiesPD->GetArray(oArray->GetName())});
   }
 
   if(nIds0 > 0 && nIds1 > 0) {
@@ -213,8 +212,7 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
 
       vtkDataArray *indexIdMapP{nullptr};
       vtkDataArray *indexIdMapC{nullptr};
-      if(!ttkSimilarityAlgorithm::GetIndexIdMaps(
-           indexIdMapP, indexIdMapC, cFD))
+      if(!ttkSimilarityAlgorithm::GetIndexIdMaps(indexIdMapP, indexIdMapC, cFD))
         return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
       int status = 0;
@@ -272,9 +270,9 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *similarities,
   const std::string msg = "Validating Input";
   this->printMsg(msg, 0, 0, ttk::debug::LineMode::REPLACE);
 
-  const std::string errmsg0
-    = "Similarity Matrix input must be a flat vtkMultiBlockDataSet that contains "
-      "only vtkImageData objects.";
+  const std::string errmsg0 = "Similarity Matrix input must be a flat "
+                              "vtkMultiBlockDataSet that contains "
+                              "only vtkImageData objects.";
   const std::string errmsg1 = "Features must be vtkPointSet where each feature "
                               "is represented by a single point.";
 
@@ -292,8 +290,7 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *similarities,
   }
 
   if(features) {
-    if(features->GetNumberOfBlocks() - 1
-       != similarities->GetNumberOfBlocks())
+    if(features->GetNumberOfBlocks() - 1 != similarities->GetNumberOfBlocks())
       return !this->printMsg(
         std::vector<std::string>({"Number of feature sets (F) and "
                                   "similarity matrices (C) inconsistent.",
@@ -445,8 +442,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
 
       vtkDataArray *indexIdMapP{nullptr};
       vtkDataArray *indexIdMapC{nullptr};
-      if(!ttkSimilarityAlgorithm::GetIndexIdMaps(
-           indexIdMapP, indexIdMapC, cFD))
+      if(!ttkSimilarityAlgorithm::GetIndexIdMaps(indexIdMapP, indexIdMapC, cFD))
         return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
       ttkTypeMacroAI(
@@ -549,8 +545,7 @@ int ttkTrackingGraph::GenerateTrackingGraphFromMatrix(
     auto cFD = c->GetFieldData();
     vtkDataArray *indexIdMapP{nullptr};
     vtkDataArray *indexIdMapC{nullptr};
-    if(!ttkSimilarityAlgorithm::GetIndexIdMaps(
-         indexIdMapP, indexIdMapC, cFD))
+    if(!ttkSimilarityAlgorithm::GetIndexIdMaps(indexIdMapP, indexIdMapC, cFD))
       return !this->printErr("Unable to retrieve Index-Id-Maps.");
 
     // nodes

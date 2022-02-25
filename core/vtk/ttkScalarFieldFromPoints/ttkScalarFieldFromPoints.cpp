@@ -55,11 +55,11 @@ int ttkScalarFieldFromPoints::RequestInformation(
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
 
   // Extent
-  int wholeExtent[6] = {0, (int)this->Resolution[0]-1,
-       0, (int)this->Resolution[1]-1,
-       0, (int)this->Resolution[2]-1};
+  int wholeExtent[6]
+    = {0, (int)this->Resolution[0] - 1, 0, (int)this->Resolution[1] - 1,
+       0, (int)this->Resolution[2] - 1};
   outInfo->Set(
-      vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), wholeExtent, 6);
+    vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), wholeExtent, 6);
 
   return 1;
 }
@@ -91,28 +91,26 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
 
   auto output = vtkImageData::GetData(outputVector);
   output->SetDimensions(
-    this->Resolution[0],
-    this->Resolution[1],
-    this->Resolution[2]
-  );
+    this->Resolution[0], this->Resolution[1], this->Resolution[2]);
   output->SetOrigin(
-    this->ImageBounds[0],
-    this->ImageBounds[2],
-    this->ImageBounds[4]
-  );
+    this->ImageBounds[0], this->ImageBounds[2], this->ImageBounds[4]);
 
   const double spacing[3]{
-    this->Resolution[0]>1 ? (this->ImageBounds[1]-this->ImageBounds[0])/(this->Resolution[0]-1) : 0,
-    this->Resolution[1]>1 ? (this->ImageBounds[3]-this->ImageBounds[2])/(this->Resolution[1]-1) : 0,
-    this->Resolution[2]>1 ? (this->ImageBounds[5]-this->ImageBounds[4])/(this->Resolution[2]-1) : 0
-  };
-  output->SetSpacing( spacing );
+    this->Resolution[0] > 1 ? (this->ImageBounds[1] - this->ImageBounds[0])
+                                / (this->Resolution[0] - 1)
+                            : 0,
+    this->Resolution[1] > 1 ? (this->ImageBounds[3] - this->ImageBounds[2])
+                                / (this->Resolution[1] - 1)
+                            : 0,
+    this->Resolution[2] > 1 ? (this->ImageBounds[5] - this->ImageBounds[4])
+                                / (this->Resolution[2] - 1)
+                            : 0};
+  output->SetSpacing(spacing);
 
   output->AllocateScalars(VTK_DOUBLE, 1);
 
-
-
-  if(this->Resolution[0] < 1 || this->Resolution[1] < 1 || this->Resolution[2] < 1)
+  if(this->Resolution[0] < 1 || this->Resolution[1] < 1
+     || this->Resolution[2] < 1)
     return !this->printErr("Resolution contains zeros.");
 
   // Check what dimension the output domain should be in
@@ -137,15 +135,15 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
           scalarArrayData,
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
-          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
-          spacing, this->Resolution, nPoints, nPixels);
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
+          this->Resolution, nPoints, nPixels);
       } else {
         status = this->computeScalarField3D<ScalarFieldFromPoints::Gaussian>(
           scalarArrayData,
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
-          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
-          spacing, this->Resolution, nPoints, nPixels);
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
+          this->Resolution, nPoints, nPixels);
       }
 
       break;
@@ -156,15 +154,15 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
           scalarArrayData,
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
-          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
-          spacing, this->Resolution, nPoints, nPixels);
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
+          this->Resolution, nPoints, nPixels);
       } else {
         status = this->computeScalarField3D<ScalarFieldFromPoints::Linear>(
           scalarArrayData,
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
-          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds,
-          spacing, this->Resolution, nPoints, nPixels);
+          ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
+          this->Resolution, nPoints, nPixels);
       }
       break;
     }

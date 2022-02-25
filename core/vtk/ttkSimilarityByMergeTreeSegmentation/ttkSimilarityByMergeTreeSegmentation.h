@@ -9,7 +9,8 @@
 // TTK Base Includes
 #include <SimilarityByMergeTreeSegmentation.h>
 
-class TTKSIMILARITYBYMERGETREESEGMENTATION_EXPORT ttkSimilarityByMergeTreeSegmentation
+class TTKSIMILARITYBYMERGETREESEGMENTATION_EXPORT
+  ttkSimilarityByMergeTreeSegmentation
   : public ttkSimilarityAlgorithm,
     protected ttk::SimilarityByMergeTreeSegmentation {
 
@@ -22,6 +23,6 @@ protected:
   ~ttkSimilarityByMergeTreeSegmentation() override;
 
   int ComputeSimilarityMatrix(vtkImageData *similarityMatrix,
-                             vtkDataObject *inputDataObjects0,
-                             vtkDataObject *inputDataObjects1) override;
+                              vtkDataObject *inputDataObjects0,
+                              vtkDataObject *inputDataObjects1) override;
 };

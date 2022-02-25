@@ -21,8 +21,8 @@ ttkFeatureCorrespondences::ttkFeatureCorrespondences() {
 ttkFeatureCorrespondences::~ttkFeatureCorrespondences() {
 }
 
-int ttkFeatureCorrespondences::FillInputPortInformation(
-  int port, vtkInformation *info) {
+int ttkFeatureCorrespondences::FillInputPortInformation(int port,
+                                                        vtkInformation *info) {
   if(port == 0) {
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
     return 1;
@@ -30,8 +30,8 @@ int ttkFeatureCorrespondences::FillInputPortInformation(
   return 0;
 }
 
-int ttkFeatureCorrespondences::FillOutputPortInformation(
-  int port, vtkInformation *info) {
+int ttkFeatureCorrespondences::FillOutputPortInformation(int port,
+                                                         vtkInformation *info) {
   if(port == 0) {
     info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
     return 1;
@@ -39,10 +39,9 @@ int ttkFeatureCorrespondences::FillOutputPortInformation(
   return 0;
 }
 
-int ttkFeatureCorrespondences::RequestData(
-  vtkInformation *ttkNotUsed(request),
-  vtkInformationVector **inputVector,
-  vtkInformationVector *outputVector) {
+int ttkFeatureCorrespondences::RequestData(vtkInformation *ttkNotUsed(request),
+                                           vtkInformationVector **inputVector,
+                                           vtkInformationVector *outputVector) {
 
   auto iImage = vtkImageData::GetData(inputVector[0]);
   if(!iImage)

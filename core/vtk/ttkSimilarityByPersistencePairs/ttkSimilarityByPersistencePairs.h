@@ -10,8 +10,7 @@
 // TTK Base Includes
 #include <SimilarityByPersistencePairs.h>
 
-class TTKSIMILARITYBYPERSISTENCEPAIRS_EXPORT
-  ttkSimilarityByPersistencePairs
+class TTKSIMILARITYBYPERSISTENCEPAIRS_EXPORT ttkSimilarityByPersistencePairs
   : public ttkSimilarityAlgorithm,
     protected ttk::SimilarityByPersistencePairs {
 
@@ -73,8 +72,8 @@ protected:
   ~ttkSimilarityByPersistencePairs();
 
   int ComputeSimilarityMatrix(vtkImageData *similarityMatrix,
-                             vtkDataObject *inputDataObjects0,
-                             vtkDataObject *inputDataObjects1) override;
+                              vtkDataObject *inputDataObjects0,
+                              vtkDataObject *inputDataObjects1) override;
 
 private:
   // Metric weights

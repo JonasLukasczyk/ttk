@@ -28,7 +28,7 @@ ttkSimilarityAlgorithm::~ttkSimilarityAlgorithm() {
 }
 
 int ttkSimilarityAlgorithm::FillInputPortInformation(int port,
-                                                         vtkInformation *info) {
+                                                     vtkInformation *info) {
   if(port >= 0 && port < this->GetNumberOfInputPorts()) {
     info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkDataSet");
     info->Append(
@@ -38,8 +38,8 @@ int ttkSimilarityAlgorithm::FillInputPortInformation(int port,
   return 0;
 }
 
-int ttkSimilarityAlgorithm::FillOutputPortInformation(
-  int port, vtkInformation *info) {
+int ttkSimilarityAlgorithm::FillOutputPortInformation(int port,
+                                                      vtkInformation *info) {
   if(port == 0) {
     info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkMultiBlockDataSet");
     return 1;
@@ -71,10 +71,9 @@ int ttkSimilarityAlgorithm::BuildIdIndexMap(
   return 1;
 }
 
-int ttkSimilarityAlgorithm::RequestData(
-  vtkInformation *,
-  vtkInformationVector **inputVector,
-  vtkInformationVector *outputVector) {
+int ttkSimilarityAlgorithm::RequestData(vtkInformation *,
+                                        vtkInformationVector **inputVector,
+                                        vtkInformationVector *outputVector) {
 
   auto output = vtkMultiBlockDataSet::GetData(outputVector);
 
@@ -125,8 +124,8 @@ int ttkSimilarityAlgorithm::RequestData(
     bool singleInput = data0->GetNumberOfBlocks() == 1;
 
     if(!this->ComputeSimilarityMatrix(similarityMatrix,
-                                     singleInput ? data0->GetBlock(0) : data0,
-                                     singleInput ? data1->GetBlock(0) : data1))
+                                      singleInput ? data0->GetBlock(0) : data0,
+                                      singleInput ? data1->GetBlock(0) : data1))
       return 0;
 
     output->SetBlock(s - 1, similarityMatrix);
@@ -145,8 +144,7 @@ int ttkSimilarityAlgorithm::RequestData(
   return 1;
 }
 
-std::string
-  ttkSimilarityAlgorithm::GetIdArrayName(vtkFieldData *fieldData) {
+std::string ttkSimilarityAlgorithm::GetIdArrayName(vtkFieldData *fieldData) {
   std::string result;
   int found = 0;
   for(int a = 0; a < fieldData->GetNumberOfArrays(); a++) {
@@ -166,10 +164,9 @@ std::string
 };
 
 int ttkSimilarityAlgorithm::GetIndexIdMaps(vtkDataArray *&indexIdMapP,
-                                               vtkDataArray *&indexIdMapC,
-                                               vtkFieldData *fieldData) {
-  std::string idArrayName
-    = ttkSimilarityAlgorithm::GetIdArrayName(fieldData);
+                                           vtkDataArray *&indexIdMapC,
+                                           vtkFieldData *fieldData) {
+  std::string idArrayName = ttkSimilarityAlgorithm::GetIdArrayName(fieldData);
 
   if(idArrayName.size() < 1)
     return 0;
@@ -180,10 +177,9 @@ int ttkSimilarityAlgorithm::GetIndexIdMaps(vtkDataArray *&indexIdMapP,
   return 1;
 };
 
-int ttkSimilarityAlgorithm::AddIndexIdMap(
-  vtkImageData *similarityMatrix,
-  vtkDataArray *idArray,
-  const bool isMapForCurrentTimestep) {
+int ttkSimilarityAlgorithm::AddIndexIdMap(vtkImageData *similarityMatrix,
+                                          vtkDataArray *idArray,
+                                          const bool isMapForCurrentTimestep) {
   auto fd = similarityMatrix->GetFieldData();
   auto array = vtkSmartPointer<vtkDataArray>::Take(idArray->NewInstance());
   array->ShallowCopy(idArray);
@@ -194,10 +190,9 @@ int ttkSimilarityAlgorithm::AddIndexIdMap(
   return 1;
 }
 
-int ttkSimilarityAlgorithm::AddIndexIdMaps(
-  vtkImageData *similarityMatrix,
-  vtkDataArray *indexIdMapP,
-  vtkDataArray *indexIdMapC) {
+int ttkSimilarityAlgorithm::AddIndexIdMaps(vtkImageData *similarityMatrix,
+                                           vtkDataArray *indexIdMapP,
+                                           vtkDataArray *indexIdMapC) {
   int status = 0;
   status = ttkSimilarityAlgorithm::AddIndexIdMap(
     similarityMatrix, indexIdMapP, false);

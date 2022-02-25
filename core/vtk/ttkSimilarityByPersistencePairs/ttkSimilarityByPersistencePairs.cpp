@@ -74,13 +74,11 @@ int ttkSimilarityByPersistencePairs::ComputeSimilarityMatrix(
 
   // initialize similarity matrix i.e., distance matrix
   similarityMatrix->SetDimensions(nFeatures0, nFeatures1, 1);
-  similarityMatrix->AllocateScalars(
-    VTK_FLOAT, 1); // matching output = float
+  similarityMatrix->AllocateScalars(VTK_FLOAT, 1); // matching output = float
 
   auto similaritiesArray = similarityMatrix->GetPointData()->GetArray(0);
   similaritiesArray->SetName("LiftedWassersteinDistance");
-  auto similarityMatrixData
-    = ttkUtils::GetPointer<float>(similaritiesArray);
+  auto similarityMatrixData = ttkUtils::GetPointer<float>(similaritiesArray);
   for(int i = 0; i < nFeatures0; ++i)
     for(int j = 0; j < nFeatures1; ++j) {
       similarityMatrixData[j * nFeatures0 + i] = 0;
@@ -140,8 +138,7 @@ int ttkSimilarityByPersistencePairs::ComputeSimilarityMatrix(
         return !this->printErr(
           "Invalid indexing: feature index > feature number.");
 
-      similarityMatrixData[n2 * nFeatures0 + n1]
-        = (float)1; // std::get<2>(t);
+      similarityMatrixData[n2 * nFeatures0 + n1] = (float)1; // std::get<2>(t);
     }
   }
 

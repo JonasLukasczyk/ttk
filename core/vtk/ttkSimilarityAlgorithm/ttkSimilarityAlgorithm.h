@@ -69,8 +69,8 @@ protected:
 
   virtual int
     ComputeSimilarityMatrix(vtkImageData *vtkNotUsed(similarityMatrix),
-                           vtkDataObject *vtkNotUsed(inputDataObjects0),
-                           vtkDataObject *vtkNotUsed(inputDataObjects1)) {
+                            vtkDataObject *vtkNotUsed(inputDataObjects0),
+                            vtkDataObject *vtkNotUsed(inputDataObjects1)) {
     return 0;
   };
 };
