@@ -69,7 +69,7 @@ int ttkSimilarityById::ComputeSimilarityMatrix(
   uniqueIds0->Resize(numUniqueIds0);
   uniqueIds1->Resize(numUniqueIds1);
 
-  // initialize correspondence matrix i.e., identity matrix
+  // initialize similarity matrix i.e., identity matrix
   similarityMatrix->SetDimensions(numUniqueIds0, numUniqueIds1, 1);
   similarityMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
   auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
