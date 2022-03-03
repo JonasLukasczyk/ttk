@@ -1,0 +1,4 @@
+NAME
+  ttkUmbrellaClustering
+DEPENDS
+  ttkSimilarityAlgorithm
