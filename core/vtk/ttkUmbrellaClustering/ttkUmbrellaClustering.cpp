@@ -73,7 +73,7 @@ int ttkUmbrellaClustering::ComputeSimilarityMatrix(
   auto coords1 = nPoints1 > 0 ? p1->GetPoints()->GetData() : temp;
 
   if(coords0->GetDataType() != coords1->GetDataType())
-    return !this->printErr("Input vtkPointSet need to have same precision.");
+    return this->printErr("Input vtkPointSet need to have same precision.");
 
   // Check if both data objects feature ids should be calculated
   if(umbrellasPerTimestep.size() == 0) {
@@ -172,9 +172,14 @@ int ttkUmbrellaClustering::AddUmbrellaIds(vtkDataObject *inputDataObjects,
                                           const size_t t) {
   // unpack input
   auto p0 = vtkPointSet::SafeDownCast(inputDataObjects);
+  if(!p0)
+    return !this->printErr("No points");
 
   // Get number of points
   const int nPoints = p0->GetNumberOfPoints();
+
+  if(nPoints == 0)
+    return !this->printErr("Zero points");
 
   // Get ids
   auto ids = GetInputArrayToProcess(0, p0);
@@ -216,7 +221,8 @@ int ttkUmbrellaClustering::RequestData(vtkInformation *request,
   pointsOut->DeepCopy(vtkMultiBlockDataSet::GetData(inputVector[0]));
 
   for(size_t t = 0; t < pointsOut->GetNumberOfBlocks(); t++) {
-    AddUmbrellaIds(pointsOut->GetBlock(t), t);
+    if(!AddUmbrellaIds(pointsOut->GetBlock(t), t))
+      return 0;
   }
 
   this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
