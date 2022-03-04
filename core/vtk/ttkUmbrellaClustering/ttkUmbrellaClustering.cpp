@@ -68,12 +68,11 @@ int ttkUmbrellaClustering::ComputeSimilarityMatrix(
       "Input data is missing array containing point constants.");
 
   // Get point coords
-  auto temp = vtkSmartPointer<vtkFloatArray>::New();
-  auto coords0 = nPoints0 > 0 ? p0->GetPoints()->GetData() : temp;
-  auto coords1 = nPoints1 > 0 ? p1->GetPoints()->GetData() : temp;
+  auto coords0 = p0->GetPoints()->GetData();
+  auto coords1 = p1->GetPoints()->GetData();
 
   if(coords0->GetDataType() != coords1->GetDataType())
-    return this->printErr("Input vtkPointSet need to have same precision.");
+    return !this->printErr("Input vtkPointSet need to have same precision.");
 
   // Check if both data objects feature ids should be calculated
   if(umbrellasPerTimestep.size() == 0) {
@@ -117,11 +116,11 @@ int ttkUmbrellaClustering::ComputeSimilarityMatrix(
 
     umbrellasPerTimestep.push_back(umb1);
   }
+  auto &umb0 = umbrellasPerTimestep[umbrellasPerTimestep.size() - 2];
+  auto &umb1 = umbrellasPerTimestep[umbrellasPerTimestep.size() - 1];
 
-  int numumbrellaIds0
-    = umbrellasPerTimestep[umbrellasPerTimestep.size() - 2].size();
-  int numumbrellaIds1
-    = umbrellasPerTimestep[umbrellasPerTimestep.size() - 1].size();
+  int numumbrellaIds0 = umb0.size();
+  int numumbrellaIds1 = umb1.size();
 
   // initialize similarity matrix i.e., umbrella overlap matrix
   similarityMatrix->SetDimensions(numumbrellaIds0, numumbrellaIds1, 1);
@@ -131,11 +130,12 @@ int ttkUmbrellaClustering::ComputeSimilarityMatrix(
 
   // compute umbrella matrix
   int status = 0;
-  status = this->computeUmbrellaMatrix(
-    ttkUtils::GetPointer<unsigned char>(matrixData),
-    umbrellasPerTimestep[umbrellasPerTimestep.size() - 2],
-    umbrellasPerTimestep[umbrellasPerTimestep.size() - 1], numumbrellaIds0,
-    numumbrellaIds1);
+  ttkTypeMacroI(
+    ids0->GetDataType(),
+    status = this->computeUmbrellaMatrix<T0>(
+      ttkUtils::GetPointer<unsigned char>(matrixData), umb0, umb1,
+      ttkUtils::GetPointer<const T0>(ids0),
+      ttkUtils::GetPointer<const T0>(ids1), numumbrellaIds0, numumbrellaIds1));
   if(!status)
     return 0;
 
@@ -150,12 +150,13 @@ int ttkUmbrellaClustering::ComputeSimilarityMatrix(
   umbrellaIds1->SetNumberOfTuples(numumbrellaIds1);
 
   int index = 0;
-  for(const auto &i : umbrellasPerTimestep[umbrellasPerTimestep.size() - 2]) {
+  for(const auto &i : umb0) {
     umbrellaIds0->SetTuple1(index, ids0->GetTuple1(i.first));
     index++;
   }
+
   index = 0;
-  for(const auto &i : umbrellasPerTimestep[umbrellasPerTimestep.size() - 1]) {
+  for(const auto &i : umb1) {
     umbrellaIds1->SetTuple1(index, ids1->GetTuple1(i.first));
     index++;
   }
@@ -178,8 +179,9 @@ int ttkUmbrellaClustering::AddUmbrellaIds(vtkDataObject *inputDataObjects,
   // Get number of points
   const int nPoints = p0->GetNumberOfPoints();
 
+  // Do nothing if there are no points
   if(nPoints == 0)
-    return !this->printErr("Zero points");
+    return 1;
 
   // Get ids
   auto ids = GetInputArrayToProcess(0, p0);

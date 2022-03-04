@@ -112,9 +112,12 @@ namespace ttk {
       return 1;
     }
 
+    template <typename DT>
     int computeUmbrellaMatrix(unsigned char *umbrellaMatrix,
                               std::map<int, std::vector<int>> &umbrellas0,
                               std::map<int, std::vector<int>> &umbrellas1,
+                              const DT *ids0,
+                              const DT *ids1,
                               const int nUmbrellas0,
                               const int nUmbrellas1) const {
 
@@ -133,7 +136,7 @@ namespace ttk {
           int exist = 0;
           for(long unsigned int p0 = 0; p0 < u0.second.size(); p0++) {
             for(long unsigned int p1 = 0; p1 < u1.second.size(); p1++) {
-              if(u0.second[p0] == u1.second[p1]) {
+              if(ids0[u0.second[p0]] == ids1[u1.second[p1]]) {
                 exist = 1;
               }
             }

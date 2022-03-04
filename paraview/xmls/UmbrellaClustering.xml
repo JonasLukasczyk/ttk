@@ -20,6 +20,7 @@
       </InputProperty>
 
       <OutputPort index="0" id="port0" name="Matrix" />
+      <OutputPort index="1" id="port1" name="Points" />
 
       <StringVectorProperty name="PointIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="ttkVertexScalarField">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
