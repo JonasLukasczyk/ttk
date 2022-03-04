@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+    <SourceProxy name="ttkUmbrellaClustering" class="ttkUmbrellaClustering" label="TTK UmbrellaClustering">
+      <Documentation long_help="UmbrellaClustering" short_help="UmbrellaClustering">
+        TODO
+      </Documentation>
+
+      <InputProperty name="Points" port_index="0" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkPointSet" />
+          <DataType value="vtkMultiBlockDataSet" />
+        </DataTypeDomain>
+        <InputArrayDomain name="input_arrays" attribute_type="point" />
+        <Documentation>Points.</Documentation>
+      </InputProperty>
+
+      <OutputPort index="0" id="port0" name="Matrix" />
+
+      <StringVectorProperty name="PointIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="ttkVertexScalarField">
+        <ArrayListDomain name="array_list" input_domain_name="input_arrays">
+          <RequiredProperties>
+            <Property function="Input" name="Points" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>Feature Ids.</Documentation>
+      </StringVectorProperty>
+
+      <StringVectorProperty
+        name="PwArray"
+        label="Point Weight"
+        command="SetInputArrayToProcess"
+        element_types="0 0 0 0 2"
+        number_of_elements="5"
+        default_values="2 0 0 0 Pws">
+        <ArrayListDomain
+          name="pws"
+          input_domain_name="input_arrays"
+          >
+          <RequiredProperties>
+            <Property function="Input" name="Points" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>The array that contains the point weights.</Documentation>
+      </StringVectorProperty>
+
+      <StringVectorProperty
+        name="PcArray"
+        label="Point Constant"
+        command="SetInputArrayToProcess"
+        element_types="0 0 0 0 2"
+        number_of_elements="5"
+        default_values="3 0 0 0 Pcs">
+        <ArrayListDomain
+          name="pcs"
+          input_domain_name="input_arrays"
+          >
+          <RequiredProperties>
+            <Property function="Input" name="Points" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>The array that contains the point constant.</Documentation>
+      </StringVectorProperty>
+
+      <IntVectorProperty name="Kernel" command="SetKernel" number_of_elements="1" default_values="0">
+        <EnumerationDomain name="enum">
+          <Entry value="0" text="Gaussian" />
+          <Entry value="1" text="Linear" />
+        </EnumerationDomain>
+        <Documentation>Kernel.</Documentation>
+      </IntVectorProperty>
+
+      ${DEBUG_WIDGETS}
+
+      <Hints>
+        <ShowInMenu category="TTK - Time-Varying Scalar Data" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>
