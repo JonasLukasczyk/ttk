@@ -7,6 +7,7 @@
 #include <vtkImageData.h>
 #include <vtkMultiBlockDataSet.h>
 #include <vtkPointSet.h>
+#include <vtkPolyData.h>
 
 #include <vtkIntArray.h>
 #include <vtkPointData.h>
@@ -19,7 +20,7 @@ vtkStandardNewMacro(ttkUmbrellaClustering);
 
 ttkUmbrellaClustering::ttkUmbrellaClustering() {
   this->SetNumberOfInputPorts(1);
-  this->SetNumberOfOutputPorts(2);
+  this->SetNumberOfOutputPorts(3);
 }
 
 ttkUmbrellaClustering::~ttkUmbrellaClustering() {
@@ -27,7 +28,7 @@ ttkUmbrellaClustering::~ttkUmbrellaClustering() {
 
 int ttkUmbrellaClustering::FillOutputPortInformation(int port,
                                                      vtkInformation *info) {
-  if(port == 0 || port == 1) {
+  if(port == 0 || port == 1 || port == 2) {
     info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkMultiBlockDataSet");
     return 1;
   }
@@ -204,6 +205,54 @@ int ttkUmbrellaClustering::AddUmbrellaIds(vtkDataObject *inputDataObjects,
   return 1;
 }
 
+int ttkUmbrellaClustering::FormatClusters(vtkDataObject *inputDataObjects,
+                                          vtkPolyData *outputPoints,
+                                          const size_t t) {
+  // unpack input
+  auto inPointSet = vtkPointSet::SafeDownCast(inputDataObjects);
+  if(!inPointSet)
+    return !this->printErr("No points");
+
+  auto inPD = inPointSet->GetPointData();
+
+  int nPoints = inPointSet->GetNumberOfPoints();
+  // Do nothing if there are no points
+  if(nPoints == 0)
+    return 1;
+
+  // Get ids
+  auto ids = GetInputArrayToProcess(0, inPointSet);
+  if(!ids)
+    return !this->printErr("Input data is missing array containing ids.");
+
+  // Create new points and allocate point data
+  auto newPoints = vtkSmartPointer<vtkPoints>::New();
+  auto outPD = outputPoints->GetPointData();
+  outPD->CopyAllocate(inPD);
+  newPoints->SetDataType(inPointSet->GetPoints()->GetDataType());
+
+  // Create array for umbrella ids
+  auto umbrellaIds = vtkSmartPointer<vtkIntArray>::New();
+  umbrellaIds->SetName("UmbrellaId");
+  umbrellaIds->SetNumberOfComponents(1);
+  umbrellaIds->SetNumberOfTuples(umbrellasPerTimestep[t].size());
+
+  double pPos[3];
+  for(const auto &u : umbrellasPerTimestep[t]) {
+    inPointSet->GetPoint(u.first, pPos);
+    int p = newPoints->InsertNextPoint(pPos);
+    outPD->CopyData(inPD, u.first, p);
+    umbrellaIds->SetTuple1(p, ids->GetTuple1(u.first));
+  }
+
+  outputPoints->SetPoints(newPoints);
+  outPD->AddArray(umbrellaIds);
+  outputPoints->Squeeze();
+  outputPoints->GetFieldData()->DeepCopy(inPointSet->GetFieldData());
+
+  return 1;
+}
+
 int ttkUmbrellaClustering::RequestData(vtkInformation *request,
                                        vtkInformationVector **inputVector,
                                        vtkInformationVector *outputVector) {
@@ -218,9 +267,10 @@ int ttkUmbrellaClustering::RequestData(vtkInformation *request,
   ttk::Timer timer;
   const std::string msg = "Add Umbrella Ids to Points";
   this->printMsg(msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
+  auto input = vtkMultiBlockDataSet::GetData(inputVector[0]);
 
   auto pointsOut = vtkMultiBlockDataSet::GetData(outputVector, 1);
-  pointsOut->DeepCopy(vtkMultiBlockDataSet::GetData(inputVector[0]));
+  pointsOut->DeepCopy(input);
 
   for(size_t t = 0; t < pointsOut->GetNumberOfBlocks(); t++) {
     if(!AddUmbrellaIds(pointsOut->GetBlock(t), t))
@@ -228,6 +278,21 @@ int ttkUmbrellaClustering::RequestData(vtkInformation *request,
   }
 
   this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
+
+  const std::string msg2 = "Create Cluster Output";
+  this->printMsg(
+    msg2, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
+
+  // Create and format all clusters via function
+  auto clustersOut = vtkMultiBlockDataSet::GetData(outputVector, 2);
+  for(size_t t = 0; t < input->GetNumberOfBlocks(); t++) {
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    if(!FormatClusters(input->GetBlock(t), polyData, t))
+      return 0;
+    clustersOut->SetBlock(t, polyData);
+  }
+
+  this->printMsg(msg2, 1, timer.getElapsedTime(), this->threadNumber_);
 
   return 1;
 }

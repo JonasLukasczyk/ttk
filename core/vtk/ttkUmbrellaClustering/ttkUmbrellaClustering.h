@@ -5,6 +5,7 @@
 
 // VTK Includes
 #include <ttkSimilarityAlgorithm.h>
+#include <vtkPolyData.h>
 
 // TTK Base Includes
 #include <UmbrellaClustering.h>
@@ -41,6 +42,10 @@ protected:
                               vtkDataObject *inputDataObjects1) override;
 
   int AddUmbrellaIds(vtkDataObject *inputDataObjects, const size_t t);
+
+  int FormatClusters(vtkDataObject *inputDataObjects,
+                     vtkPolyData *outputPoints,
+                     const size_t t);
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,
