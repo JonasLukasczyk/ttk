@@ -91,15 +91,15 @@ int ttkSimilarityMatrixTemporalDownsampling::RequestData(
       curMatrix->GetDimensions(curDims);
 
       outMatrix->SetDimensions(prevDims[0], curDims[1], 1);
-      outMatrix->AllocateScalars(VTK_DOUBLE, 1);
+      outMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
       auto matrixData = outMatrix->GetPointData()->GetArray(0);
       matrixData->SetName("Downscaled");
 
       int status = 0;
-      ttkTypeMacroA(
+      ttkTypeMacroI(
         prevData->GetDataType(),
         status = this->multiplyMatrices<T0>(
-          ttkUtils::GetPointer<double>(matrixData),
+          ttkUtils::GetPointer<unsigned char>(matrixData),
           ttkUtils::GetPointer<const T0>(prevData),
           ttkUtils::GetPointer<const T0>(curData), prevDims, curDims));
       if(!status)

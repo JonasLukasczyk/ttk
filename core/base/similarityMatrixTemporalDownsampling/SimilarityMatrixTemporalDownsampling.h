@@ -19,7 +19,7 @@ namespace ttk {
     SimilarityMatrixTemporalDownsampling();
 
     template <typename DT>
-    int multiplyMatrices(double *resMatrix,
+    int multiplyMatrices(unsigned char *resMatrix,
                          const DT *prevMatrix,
                          const DT *curMatrix,
                          const int *prevDims,
