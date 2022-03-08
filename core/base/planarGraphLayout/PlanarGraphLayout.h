@@ -562,7 +562,7 @@ int ttk::PlanarGraphLayout::GenerateLayout(
       = {(DT)root_branch->currentX, pointSequences[curr_branch->saddlePoint],
          (DT)newB, pointSequences[curr_branch->leaf]};
 
-    bool safe = false;
+    bool safe = branchList.size() < 2;
 
     while(!safe) {
       // start with 1 to skip intersection test with root branch

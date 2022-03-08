@@ -1,0 +1,71 @@
+html {
+    /*zoom: 1;*/
+}
+
+body {
+    min-height: 100vh;
+}
+
+.container {
+    max-width: none;
+}
+
+#treeContainerDonut {
+    min-height: 600px;
+}
+
+#treeContainerPie {
+    min-height: 600px;
+}
+
+#treeContainerStreamgraph {
+    min-height: 600px;
+}
+
+.pad-top-bottom {
+    font-size: 8pt;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    /*border: solid #dadada;*/
+}
+
+#mapContainer {
+    height: 600px;
+    position: relative;
+    z-index: 0;
+}
+
+#legend_div {
+    font-size: 10pt;
+    scale: 0.7;
+    position: absolute;
+    z-index: 1;
+    /*background-color: white;*/
+    width: 250px;
+    height: 250px;
+    left: 445px;
+    top: 20px;
+}
+
+.more {
+    display: none;
+}
+
+/*#div_graph_options {*/
+/*    float: left;*/
+/*    width: 230px;*/
+/*    height: 500px;*/
+/*    margin: 0 auto;*/
+/*    padding-left: 40px;*/
+/*    padding-right: 40px;*/
+/*}*/
+
+/*h5 {*/
+/*    margin: 3px 0 3px;*/
+/*}*/
+
+/*.options_box {*/
+/*    padding: 10px;*/
+/*    margin: 5px;*/
+/*    border: solid #9f9f9f;*/
+/*}*/

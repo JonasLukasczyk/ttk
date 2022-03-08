@@ -9,44 +9,6 @@ class KDERenderer {
       alpha: true
     });
 
-    // Color Maps
-    this.colorBrewerQuantitative12 = new Uint8Array([
-      166,206,227,
-      31,120,180,
-      178,223,138,
-      51,160,44,
-      251,154,153,
-      227,26,28,
-      253,191,111,
-      255,127,0,
-      202,178,214,
-      106,61,154,
-      255,255,153,
-      177,89,40,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-    ]);
-    this.colorBrewerQuantitative6 = new Uint8Array([
-      31,120,180,
-      51,160,44,
-      227,26,28,
-      255,127,0,
-      106,61,154,
-      177,89,40,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-      0,0,0,
-    ]);
-
     this.mask = null;
 
     // Camera
@@ -60,14 +22,17 @@ class KDERenderer {
       opacity: 0.8,
       resolution: [0,0],
       nContours: 7,
-      contourWidth: 1
+      contourWidth: 1,
+      nHatching: 7,
+      hatchingWidth: 1,
     };
 
     this.planeMaterial = new THREE.MeshBasicMaterial({color:'red'});
     this.uniforms = {
-      texColor: {type:'t', value: this.createTexture(3,[1,16],this.colorBrewerQuantitative12)},
+      texColor: {type:'t', value: null},
       texKDE: {type:'t', value: null},
       texMask: {type:'t', value: null},
+      texSelection: {type:'t', value: null},
     };
 
     this.quad = new THREE.Mesh(
@@ -75,7 +40,6 @@ class KDERenderer {
         this.planeMaterial
     );
     this.scene.add(this.quad);
-
 
     // Leaflet
     this.leafletMap = leafletMap;
@@ -105,7 +69,7 @@ class KDERenderer {
       this.imageOverlay._image = this.renderer.domElement;
 
       // Force Leaflet to update the canvas size and position
-      this.leafletMap.setZoom(12);
+      this.leafletMap.setView([(lon0 + lon1) / 2, (lat0 + lat1) / 2], 12);
     }
   }
 
@@ -131,38 +95,48 @@ precision highp float;
 uniform sampler2D texColor;
 uniform sampler2D texKDE;
 uniform sampler2D texMask;
+uniform sampler2D texSelection;
 
 const float opacity = ${this.consts.opacity};
-const vec2 resolution = vec2(${this.consts.resolution[0]},${this.consts.resolution[1]});
+// const vec2 resolution = vec2(${this.consts.resolution[0]},${this.consts.resolution[1]});
 varying vec2 vUV;
 
-float isolineIntensity(){
+float isolineIntensity(float scalar, float n, float w){
 
-    float v = texture2D(texKDE, vUV).a*${(2*this.consts.nContours).toFixed(1)}+0.1;
+    float v = scalar*n+0.1;
 
     float d = fract(v);
     if(mod(v, 2.0) > 1.) d = 1.-d;
 
-    return v<0.5 ? 1.0 : clamp( d/(${this.consts.contourWidth.toFixed(2)}*fwidth(v)), 0.0 , 1.0);
+    return clamp( d/(w*fwidth(v)), 0.0 , 1.0);
+    // return v<0.5 ? 1.0 : clamp( d/(w*fwidth(v)), 0.0 , 1.0);
 }
 
 void main() {
     float nColors = 12.0;
 
-    float iso = isolineIntensity();
+    float hatching = isolineIntensity(10.0 * (vUV.x + vUV.y), ${(8*this.consts.nHatching).toFixed(1)}, ${(1/2 * this.consts.hatchingWidth).toFixed(2)});
+    float iso = isolineIntensity(texture2D(texKDE, vUV).a, ${(2*this.consts.nContours).toFixed(1)}, ${this.consts.contourWidth.toFixed(2)});
     float mask = texture2D(texMask, vUV).a*255.0;
+    float selection = texture2D(texSelection, vUV).a*255.0;
 
     vec4 isoColor = vec4(0,0,0,1.0-iso);
     vec3 catColor = texture2D( texColor, vec2(
         0,
         mod(mask,nColors)/15.0
       )).rgb;
-    ;
-
-    vec4 color = mask<254.5
-      ? vec4(catColor*iso*opacity, opacity)
-      : vec4(0);
-
+    
+    vec4 isoCatColor = vec4(catColor * iso * opacity, opacity);
+    
+    vec4 color = vec4(0,0,0,0);
+    if (mask < 254.5) {
+      if (selection == 1.0) {
+        color = mix(vec4(0, 0, 0, 0.6), isoCatColor, hatching);
+      } else {
+        color = isoCatColor;
+      }
+    }
+    
     gl_FragColor = isoColor + color;
 }
         `;
@@ -184,11 +158,60 @@ void main() {
     );
   }
 
-  computeMask(idx, segList){
+  hexToRgb(hex) {
+    // from https://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+
+  setColorMap(cscheme, cmap) {
+    let elems = [];
+    cscheme.forEach(cHex => {
+      const __tmp = this.hexToRgb(cHex);
+      elems = elems.concat([__tmp.r, __tmp.g, __tmp.b]);
+    });
+    elems = elems.concat(new Array((16 - cscheme.length) * 3).fill(0));  // fill with zeroes, so we get a 2^x size
+
+    this.colorScheme = new Uint8Array(elems);
+    this.colorMapping = cmap;
+    this.colorMapping[255] = 255;
+
+    this.uniforms.texColor = {type:'t', value: this.createTexture(3,[1,16],this.colorScheme)};
+    this.uniforms.texColor.value.needsUpdate = true;
+
+    this.update_render();
+  }
+
+  computeSelection(branchId_list, scalar_value) {
     const n = this.mask.length;
-    const idxMod = idx%255;
-    for(let i=0; i<n; i++)
-      this.mask[i] = segList.includes(this.segmentation[i]) ? idxMod : 255;
+    const kde = this.vtkDataSet.pointData.KDE.data;
+    const branchIds = this.vtkDataSet.pointData.BranchId.data;
+    for (let i = 0; i < n; i++) {
+      if (branchId_list.includes(branchIds[i]) && kde[i] >= scalar_value) {
+        this.selection[i] = 1;
+      } else {
+        this.selection[i] = 0;
+      }
+    }
+
+    this.uniforms.texSelection.value.needsUpdate = true;
+  }
+
+  computeMaskNoSelection() {
+    if (this.mask === null) {
+      return;
+    }
+
+    const n = this.mask.length;
+    const kde = this.vtkDataSet.pointData.KDE.data;
+    const branchIds = this.vtkDataSet.pointData.BranchId.data;
+    for (let i = 0; i < n; i++) {
+      this.mask[i] = this.colorMapping[this.tree.getColorIDbyBranchIdAndScalar(branchIds[i], kde[i].toString())];
+    }
 
     this.uniforms.texMask.value.needsUpdate = true;
   }
@@ -199,17 +222,19 @@ void main() {
 
     const size = new THREE.Vector2();
     this.renderer.getSize(size);
+    const hd = 1.0;
+    const resX = this.vtkDataSet.dimension[0] * hd;
+    const resY = this.vtkDataSet.dimension[1] * hd;
 
     // update size if necessary (possible optimization: only create data textures if no swap possible)
     if(size.x!==this.vtkDataSet.dimension[0] || size.y!==this.vtkDataSet.dimension[1]){
       this.renderer.setSize(
-        this.vtkDataSet.dimension[0],
-        this.vtkDataSet.dimension[1]
+        resX, resY
       );
     } else {
     }
 
-    this.consts.resolution = [vtkDataSet.dimension[0],vtkDataSet.dimension[1]];
+    this.consts.resolution = [resX, resY];
 
     const uniforms = this.uniforms;
 
@@ -217,8 +242,10 @@ void main() {
 
     this.segmentation = vtkDataSet.pointData.NodeId.data;
 
-    this.mask = new Uint8Array(vtkDataSet.dimension[0]*vtkDataSet.dimension[1]);
+    this.mask = new Uint8Array(vtkDataSet.dimension[0]*vtkDataSet.dimension[1]).fill(255);
+    this.selection = new Uint8Array(vtkDataSet.dimension[0]*vtkDataSet.dimension[1]).fill(0);
     uniforms.texMask.value = this.createTexture(1,vtkDataSet.dimension, this.mask);
+    uniforms.texSelection.value = this.createTexture(1, vtkDataSet.dimension, this.selection);
 
     this.appendCanvas(
       vtkDataSet.origin[0],
@@ -226,13 +253,23 @@ void main() {
       vtkDataSet.origin[0]+vtkDataSet.spacing[0]*vtkDataSet.dimension[0],
       vtkDataSet.origin[1]+vtkDataSet.spacing[1]*vtkDataSet.dimension[1]
     );
+
+    this.computeMaskNoSelection();
+  }
+
+  setTree(tree) {
+    this.tree = tree;
   }
 
   render(opacity, nContours, contourWidth){
-    this.consts.opacity = opacity;
+    this.consts.opacity = opacity.toFixed(2);
     this.consts.nContours = nContours;
     this.consts.contourWidth = contourWidth;
 
+    this.update_render();
+  }
+
+  update_render() {
     this.quad.material = new THREE.RawShaderMaterial({
       vertexShader: this.getVertexShader(),
       fragmentShader: this.getFragmentShader(),
@@ -240,5 +277,20 @@ void main() {
     });
 
     this.renderer.render( this.scene, this.camera );
+  }
+
+  update_nContours(n) {
+    this.consts.nContours = n;
+    this.update_render();
+  }
+
+  update_nHatching(n) {
+    this.consts.nHatching = n;
+    this.update_render();
+  }
+
+  update_HatchingWidth(n) {
+    this.consts.hatchingWidth = n;
+    this.update_render();
   }
 }
