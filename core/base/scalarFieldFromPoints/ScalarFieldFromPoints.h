@@ -42,6 +42,7 @@ namespace ttk {
 
     template <KERNEL k>
     int computeScalarField2D(double *outputData,
+                             int *maxIdData,
                              const double *pointCoordiantes,
                              const double *weights,
                              const double *constants,
@@ -73,6 +74,7 @@ namespace ttk {
       // clear data and init locks
       for(int i = 0, j = nPixels; i < j; i++) {
         outputData[i] = 0.0;
+        maxIdData[i] = -1;
         omp_init_lock(&(lock[i]));
       }
 
@@ -107,7 +109,10 @@ namespace ttk {
 
             int pixelIndex = y * width + x;
             omp_set_lock(&(lock[pixelIndex]));
-            outputData[pixelIndex] = std::max(ku, outputData[pixelIndex]);
+            if(ku > outputData[pixelIndex]) {
+              outputData[pixelIndex] = ku;
+              maxIdData[pixelIndex] = i;
+            }
             omp_unset_lock(&(lock[pixelIndex]));
           }
         }
@@ -128,6 +133,7 @@ namespace ttk {
 
     template <KERNEL k>
     int computeScalarField3D(double *outputData,
+                             int *maxIdData,
                              const double *pointCoordiantes,
                              const double *weights,
                              const double *constants,
@@ -163,6 +169,7 @@ namespace ttk {
       // clear data and init locks
       for(int i = 0, j = nPixels; i < j; i++) {
         outputData[i] = 0.0;
+        maxIdData[i] = -1;
         omp_init_lock(&(lock[i]));
       }
 
@@ -205,7 +212,10 @@ namespace ttk {
 
               int pixelIndex = z * width * height + y * width + x;
               omp_set_lock(&(lock[pixelIndex]));
-              outputData[pixelIndex] = std::max(ku, outputData[pixelIndex]);
+              if(ku > outputData[pixelIndex]) {
+                outputData[pixelIndex] = ku;
+                maxIdData[pixelIndex] = i;
+              }
               omp_unset_lock(&(lock[pixelIndex]));
             }
           }

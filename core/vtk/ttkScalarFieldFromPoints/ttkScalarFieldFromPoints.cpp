@@ -124,6 +124,12 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
 
   auto nPixels = scalarArray->GetNumberOfTuples();
 
+  // Create array to store feature ids in
+  auto maxIdArray = vtkSmartPointer<vtkIntArray>::New();
+  maxIdArray->SetName("MaxId");
+  maxIdArray->SetNumberOfTuples(nPixels);
+  maxIdArray->SetNumberOfComponents(1);
+
   // Used to check base layer execution status
   int status = 0;
 
@@ -132,14 +138,14 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
     case 0: {
       if(dim2D) {
         status = this->computeScalarField2D<ScalarFieldFromPoints::Gaussian>(
-          scalarArrayData,
+          scalarArrayData, ttkUtils::GetPointer<int>(maxIdArray),
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
           ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
           this->Resolution, nPoints, nPixels);
       } else {
         status = this->computeScalarField3D<ScalarFieldFromPoints::Gaussian>(
-          scalarArrayData,
+          scalarArrayData, ttkUtils::GetPointer<int>(maxIdArray),
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
           ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
@@ -151,14 +157,14 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
     case 1: {
       if(dim2D) {
         status = this->computeScalarField2D<ScalarFieldFromPoints::Linear>(
-          scalarArrayData,
+          scalarArrayData, ttkUtils::GetPointer<int>(maxIdArray),
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
           ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
           this->Resolution, nPoints, nPixels);
       } else {
         status = this->computeScalarField3D<ScalarFieldFromPoints::Linear>(
-          scalarArrayData,
+          scalarArrayData, ttkUtils::GetPointer<int>(maxIdArray),
           ttkUtils::GetPointer<double>(input->GetPoints()->GetData()),
           ttkUtils::GetPointer<double>(pwArray),
           ttkUtils::GetPointer<double>(pcArray), this->ImageBounds, spacing,
@@ -171,6 +177,8 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
   // On error cancel filter execution
   if(status == 0)
     return 0;
+
+  output->GetPointData()->AddArray(maxIdArray);
 
   return 1;
 }
