@@ -37,25 +37,25 @@ namespace ttk {
                       const DT1 *indexIdMapAlg1,
                       const DT1 *indexIdMapGT0,
                       const DT1 *indexIdMapGT1,
-                      const int dims[2]) {
+                      const long long int dims[2]) {
 
       std::map<int, std::vector<int>> rowFillAlg;
       std::map<int, std::vector<int>> columnFillAlg;
       std::map<int, std::vector<int>> rowFillGT;
       std::map<int, std::vector<int>> columnFillGT;
 
-      for(int r = 0; r < dims[1]; r++) {
+      for(long long int r = 0; r < dims[1]; r++) {
         rowFillAlg[indexIdMapAlg1[r]] = std::vector<int>(0);
         rowFillGT[indexIdMapGT1[r]] = std::vector<int>(0);
       }
-      for(int c = 0; c < dims[0]; c++) {
+      for(long long int c = 0; c < dims[0]; c++) {
         columnFillAlg[indexIdMapAlg0[c]] = std::vector<int>(0);
         columnFillGT[indexIdMapGT0[c]] = std::vector<int>(0);
       }
 
       //
-      for(int r = 0; r < dims[1]; r++) {
-        for(int c = 0; c < dims[0]; c++) {
+      for(long long int r = 0; r < dims[1]; r++) {
+        for(long long int c = 0; c < dims[0]; c++) {
 
           int valAlg = algMatrix[r * dims[0] + c];
           int valGT = gtMatrix[r * dims[0] + c];
@@ -71,7 +71,7 @@ namespace ttk {
       }
 
       // Count and compare events in columns: deaths, continuations, splits
-      for(int c = 0; c < dims[0]; c++) {
+      for(long long int c = 0; c < dims[0]; c++) {
         int nOnesAlg = columnFillAlg[indexIdMapAlg0[c]].size();
         int nOnesGT = columnFillGT[indexIdMapGT0[c]].size();
 
@@ -116,7 +116,7 @@ namespace ttk {
 
       // In rows we can check for births and merges
       // {alg, gt, correct}
-      for(int r = 0; r < dims[1]; r++) {
+      for(long long int r = 0; r < dims[1]; r++) {
         int nOnesAlg = rowFillAlg[indexIdMapAlg1[r]].size();
         int nOnesGT = rowFillGT[indexIdMapGT1[r]].size();
 
@@ -155,25 +155,6 @@ namespace ttk {
             ++curEvents.merges[2];
         }
       }
-
-      this->printMsg("-----------------EVENTS-----------------");
-      std::string cs = "Continuations: ";
-      std::string bs = "Births: ";
-      std::string ds = "Deaths: ";
-      std::string ss = "Splits: ";
-      std::string ms = "Merges: ";
-      for(int i = 0; i < 3; i++) {
-        cs += std::to_string(curEvents.continuations[i]) + " ";
-        bs += std::to_string(curEvents.births[i]) + " ";
-        ds += std::to_string(curEvents.deaths[i]) + " ";
-        ss += std::to_string(curEvents.splits[i]) + " ";
-        ms += std::to_string(curEvents.merges[i]) + " ";
-      }
-      this->printMsg(cs);
-      this->printMsg(bs);
-      this->printMsg(ds);
-      this->printMsg(ss);
-      this->printMsg(ms);
 
       return 1;
     }
