@@ -75,10 +75,11 @@
 
       <!-- OUTPUT PARAMETER WIDGETS -->
 
-      <OutputPort index="0" id="port0" name="Matrix" />
+      <OutputPort index="0" id="port0" name="UmbrellaMatrix" />
       <OutputPort index="1" id="port1" name="Points" />
       <OutputPort index="2" id="port2" name="Clusters" />
       <OutputPort index="3" id="port3" name="ThresholdedClusters" />
+      <OutputPort index="4" id="port4" name="ThresholdedMatrix" />
 
       <IntVectorProperty name="Kernel" command="SetKernel" number_of_elements="1" default_values="0">
         <EnumerationDomain name="enum">

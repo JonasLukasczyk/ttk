@@ -1,19 +1,9 @@
-/// TODO 1: Provide your information
-///
 /// \ingroup base
 /// \class ttk::UmbrellaClustering
-/// \author Your Name Here <Your Email Address Here>
+/// \author Emma Nilsson <emma.nilsson@liu.se>
 /// \date The Date Here.
 ///
-/// This module defines the %UmbrellaClustering class that computes for
-/// each vertex of a triangulation the average scalar value of itself and its
-/// direct neighbors.
-///
 /// \b Related \b publication: \n
-/// 'UmbrellaClustering'
-/// Jonas Lukasczyk and Julien Tierny.
-/// TTK Publications.
-/// 2020.
 ///
 
 #pragma once
@@ -36,14 +26,6 @@ namespace ttk {
       this->setDebugMsgPrefix("UmbrellaClustering");
     };
     ~UmbrellaClustering(){};
-
-    struct Umbrella {
-      std::vector<int> ids;
-
-      Umbrella() {
-        ids = std::vector<int>(0);
-      }
-    };
 
     template <typename DT>
     int computeUmbrellas(std::map<int, std::vector<int>> &pointUmbrellas,
@@ -146,26 +128,26 @@ namespace ttk {
 
     template <typename DT>
     int computeThresholdedUmbrellas(
-      std::map<int, std::vector<int>> &clustersThreshUmbrellas,
+      std::map<int, std::vector<int>> &pointThreshUmbrellas,
       const DT *coords,
       const DT *pws,
       const DT *pcs,
       const DT threshVal,
-      const int nClusters) const {
+      const int nPoints) const {
 
       ttk::Timer timer;
 
-      // const std::string msg = "Computing Thresholded Umbrella Clusters";
-      // this->printMsg(
-      //   msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
+      const std::string msg = "Computing Thresholded Umbrellas";
+      this->printMsg(
+        msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
       // umbrella indices list
-      std::vector<int> inThreshUmbrella(nClusters);
-      for(int i = 0; i < nClusters; i++) {
+      std::vector<int> inThreshUmbrella(nPoints);
+      for(int i = 0; i < nPoints; i++) {
         int maxUmbrellaIndex = -1;
         DT maxUmbrellaVal = 0.0;
 
-        for(int j = 0; j < nClusters; j++) {
+        for(int j = 0; j < nPoints; j++) {
           const int i3 = i * 3;
           const int j3 = j * 3;
 
@@ -198,11 +180,7 @@ namespace ttk {
 
           // Evaluate js value at intersection between i and j
           const DT umbrellaVal = pws[j] * std::exp(-0.5 * (sqT) / pcs[j]);
-          // this->printMsg("t: " + std::to_string(t));
-          // this->printMsg("Dist: " + std::to_string(sqT));
-          // this->printMsg("between: " + std::to_string(i) + " " +
-          // std::to_string(j)); this->printMsg("Val: " +
-          // std::to_string(umbrellaVal));
+
           if(umbrellaVal >= threshVal) {
             if(pws[j] > maxUmbrellaVal) {
               maxUmbrellaVal = pws[j];
@@ -215,18 +193,18 @@ namespace ttk {
       }
 
       // initialize umbrellas with point representatives
-      for(int i = 0; i < nClusters; i++) {
+      for(int i = 0; i < nPoints; i++) {
         if(inThreshUmbrella[i] == i) {
-          clustersThreshUmbrellas[i] = std::vector<int>(0);
-          clustersThreshUmbrellas[i].push_back(i);
+          pointThreshUmbrellas[i] = std::vector<int>(0);
+          pointThreshUmbrellas[i].push_back(i);
         } else if(inThreshUmbrella[i] == -1) {
-          clustersThreshUmbrellas[i] = std::vector<int>(0);
-          clustersThreshUmbrellas[i].push_back(-1);
+          pointThreshUmbrellas[i] = std::vector<int>(0);
+          pointThreshUmbrellas[i].push_back(-1);
         }
       }
 
       // loop through all points
-      for(int i = 0; i < nClusters; i++) {
+      for(int i = 0; i < nPoints; i++) {
         // if a point is not within its own umbrella
         if(inThreshUmbrella[i] != i && inThreshUmbrella[i] != -1) {
           int j = i;
@@ -236,11 +214,11 @@ namespace ttk {
             j = inThreshUmbrella[j];
           }
 
-          clustersThreshUmbrellas[j].push_back(i);
+          pointThreshUmbrellas[j].push_back(i);
         }
       }
 
-      // this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
+      this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
 
       return 1;
     }
@@ -292,30 +270,38 @@ namespace ttk {
       std::map<int, std::vector<int>> &tumbrellas1,
       const DT *ids0,
       const DT *ids1,
-      const int ntClusters0,
-      const int ntClusters1) const {
+      const int ntUmbrellas0,
+      const int ntUmbrellas1) const {
 
       ttk::Timer timer;
 
       const std::string msg = "Computing Umbrella Matrix ("
-                              + std::to_string(ntClusters0) + "x"
-                              + std::to_string(ntClusters1) + ")";
+                              + std::to_string(ntUmbrellas0) + "x"
+                              + std::to_string(ntUmbrellas1) + ")";
       this->printMsg(
         msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
       int i = 0;
       for(const auto &tu0 : tumbrellas0) {
+        if(tu0.second[0] == -1) {
+          continue;
+        }
         int j = 0;
+
         for(const auto &tu1 : tumbrellas1) {
+          if(tu1.second[0] == -1)
+            continue;
           int exist = 0;
-          for(long unsigned int c0 = 0; c0 < tu0.second.size(); c0++) {
-            for(long unsigned int c1 = 0; c1 < tu1.second.size(); c1++) {
-              if(ids0[tu0.second[c0]] == ids1[tu1.second[c1]]) {
+
+          for(long unsigned int p0 = 0; p0 < tu0.second.size(); p0++) {
+            for(long unsigned int p1 = 0; p1 < tu1.second.size(); p1++) {
+              if((ids0[tu0.second[p0]] == ids1[tu1.second[p1]])) {
                 exist = 1;
               }
             }
           }
-          tUmbrellaMatrix[j * ntClusters0 + i] = exist;
+
+          tUmbrellaMatrix[j * ntUmbrellas0 + i] = exist;
           ++j;
         }
         ++i;
