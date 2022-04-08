@@ -21,13 +21,19 @@ class TTKUMBRELLACLUSTERING_EXPORT ttkUmbrellaClustering
 
 private:
   int Kernel{0};
+  double ScalarThreshold{0.0};
 
   // For clustering points into umbrellas
   std::vector<std::map<int, std::vector<int>>> umbrellasPerTimestep;
+  std::vector<std::map<int, std::vector<int>>> threshUmbrellasPerTimestep;
 
 public:
   vtkSetMacro(Kernel, int);
   vtkGetMacro(Kernel, int);
+
+  vtkSetMacro(ScalarThreshold, double);
+  vtkGetMacro(ScalarThreshold, double);
+
   static ttkUmbrellaClustering *New();
   vtkTypeMacro(ttkUmbrellaClustering, ttkSimilarityAlgorithm);
 
@@ -41,11 +47,19 @@ protected:
                               vtkDataObject *inputDataObjects0,
                               vtkDataObject *inputDataObjects1) override;
 
+  int ComputeThresholdedClustering(vtkImageData *similarityMatrix,
+                                   vtkDataObject *inputDataObjects0,
+                                   vtkDataObject *inputDataObjects1);
+
   int AddUmbrellaIds(vtkDataObject *inputDataObjects, const size_t t);
 
   int FormatClusters(vtkDataObject *inputDataObjects,
                      vtkPolyData *outputPoints,
                      const size_t t);
+
+  int FormatThresholdedClusters(vtkDataObject *inputDataObjects,
+                                vtkPolyData *outputPoints,
+                                const size_t t);
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,

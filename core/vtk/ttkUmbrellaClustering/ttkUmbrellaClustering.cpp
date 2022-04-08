@@ -9,9 +9,13 @@
 #include <vtkPointSet.h>
 #include <vtkPolyData.h>
 
+#include <vtkCellData.h>
+#include <vtkIdList.h>
 #include <vtkIntArray.h>
 #include <vtkPointData.h>
 #include <vtkStringArray.h>
+#include <vtkThreshold.h>
+#include <vtkUnstructuredGrid.h>
 
 #include <ttkMacros.h>
 #include <ttkUtils.h>
@@ -20,7 +24,7 @@ vtkStandardNewMacro(ttkUmbrellaClustering);
 
 ttkUmbrellaClustering::ttkUmbrellaClustering() {
   this->SetNumberOfInputPorts(1);
-  this->SetNumberOfOutputPorts(3);
+  this->SetNumberOfOutputPorts(4);
 }
 
 ttkUmbrellaClustering::~ttkUmbrellaClustering() {
@@ -28,7 +32,7 @@ ttkUmbrellaClustering::~ttkUmbrellaClustering() {
 
 int ttkUmbrellaClustering::FillOutputPortInformation(int port,
                                                      vtkInformation *info) {
-  if(port == 0 || port == 1 || port == 2) {
+  if(port == 0 || port == 1 || port == 2 || port == 3) {
     info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkMultiBlockDataSet");
     return 1;
   }
@@ -170,6 +174,125 @@ int ttkUmbrellaClustering::ComputeSimilarityMatrix(
   return 1;
 }
 
+int ttkUmbrellaClustering::ComputeThresholdedClustering(
+  vtkImageData *similarityMatrix,
+  vtkDataObject *inputDataObjects0,
+  vtkDataObject *inputDataObjects1) {
+
+  // unpack input
+  auto c0 = vtkPolyData::SafeDownCast(inputDataObjects0);
+  auto c1 = vtkPolyData::SafeDownCast(inputDataObjects1);
+  if(!c0 || !c1)
+    return !this->printErr("Input data objects need to be vtkPloyData.");
+
+  auto threshold0 = vtkSmartPointer<vtkThreshold>::New();
+  threshold0->SetInputDataObject(c0);
+  threshold0->SetInputArrayToProcess(0, 0, 0, 0, "PointWeight");
+  threshold0->SetUpperThreshold(this->ScalarThreshold);
+  threshold0->SetThresholdFunction(
+    vtkThreshold::ThresholdType::THRESHOLD_UPPER);
+  threshold0->Update();
+  auto c0thresh = c0;
+  auto c0pdata = c0thresh->GetPointData();
+  const int nClusters0 = c0thresh->GetNumberOfPoints();
+
+  auto threshold1 = vtkSmartPointer<vtkThreshold>::New();
+  threshold1->SetInputDataObject(c1);
+  threshold1->SetThresholdFunction(vtkThreshold::THRESHOLD_UPPER);
+  threshold1->SetUpperThreshold(this->ScalarThreshold);
+  threshold1->SetInputArrayToProcess(0, 0, 0, 0, "PointWeight");
+  threshold1->Update();
+  auto c1thresh = c1;
+  auto c1pdata = c1thresh->GetPointData();
+  const int nClusters1 = c1thresh->GetNumberOfPoints();
+
+  // Get ids
+  auto ids0 = c0pdata->GetArray("PointId");
+  auto ids1 = c1pdata->GetArray("PointId");
+  if(!ids0 || !ids1)
+    return !this->printErr("Cluster data is missing array containing ids.");
+
+  // Get the point weights
+  auto pws0 = c0pdata->GetArray("PointWeight");
+  auto pws1 = c1pdata->GetArray("PointWeight");
+  if(!pws0 || !pws1)
+    return !this->printErr(
+      "Cluster data is missing array containing point weights.");
+
+  // Get point constants
+  auto pcs0 = c0pdata->GetArray("PointConstant");
+  auto pcs1 = c1pdata->GetArray("PointConstant");
+  if(!pcs0 || !pcs1)
+    return !this->printErr(
+      "Cluster data is missing array containing point constants.");
+
+  // Get point coords
+  auto coords0 = c0thresh->GetPoints()->GetData();
+  auto coords1 = c1thresh->GetPoints()->GetData();
+
+  // Check if both data objects feature ids should be calculated
+  if(threshUmbrellasPerTimestep.size() == 0) {
+    std::map<int, std::vector<int>> tumb0;
+    std::map<int, std::vector<int>> tumb1;
+
+    int status = 0;
+
+    ttkTypeMacroR(
+      coords0->GetDataType(), (status = this->computeThresholdedUmbrellas<T0>(
+                                 tumb0, ttkUtils::GetPointer<const T0>(coords0),
+                                 ttkUtils::GetPointer<const T0>(pws0),
+                                 ttkUtils::GetPointer<const T0>(pcs0),
+                                 this->ScalarThreshold, nClusters0)));
+    if(!status)
+      return 0;
+
+    ttkTypeMacroR(
+      coords1->GetDataType(), (status = this->computeThresholdedUmbrellas<T0>(
+                                 tumb1, ttkUtils::GetPointer<const T0>(coords1),
+                                 ttkUtils::GetPointer<const T0>(pws1),
+                                 ttkUtils::GetPointer<const T0>(pcs1),
+                                 this->ScalarThreshold, nClusters1)));
+    if(!status)
+      return 0;
+
+    threshUmbrellasPerTimestep.push_back(tumb0);
+    threshUmbrellasPerTimestep.push_back(tumb1);
+  } else {
+    std::map<int, std::vector<int>> tumb1;
+
+    int status = 0;
+
+    ttkTypeMacroR(
+      coords1->GetDataType(), (status = this->computeThresholdedUmbrellas<T0>(
+                                 tumb1, ttkUtils::GetPointer<const T0>(coords1),
+                                 ttkUtils::GetPointer<const T0>(pws1),
+                                 ttkUtils::GetPointer<const T0>(pcs1),
+                                 this->ScalarThreshold, nClusters1)));
+    if(!status)
+      return 0;
+
+    threshUmbrellasPerTimestep.push_back(tumb1);
+  }
+
+  auto &tumb0
+    = threshUmbrellasPerTimestep[threshUmbrellasPerTimestep.size() - 2];
+  auto &tumb1
+    = threshUmbrellasPerTimestep[threshUmbrellasPerTimestep.size() - 1];
+
+  this->printMsg("T=" + std::to_string(threshUmbrellasPerTimestep.size() - 1));
+  for(const auto &kv : tumb1) {
+    std::string s = std::to_string(kv.first) + ":"
+                    + std::to_string(ids1->GetTuple1(kv.first))
+                    + " has values ";
+    for(const auto &lv : kv.second) {
+      s += std::to_string(lv) + ":" + std::to_string(ids1->GetTuple1(lv)) + " ";
+    }
+    this->printMsg(s);
+  }
+
+  return 1;
+}
+
 int ttkUmbrellaClustering::AddUmbrellaIds(vtkDataObject *inputDataObjects,
                                           const size_t t) {
   // unpack input
@@ -195,11 +318,28 @@ int ttkUmbrellaClustering::AddUmbrellaIds(vtkDataObject *inputDataObjects,
   umbrellaIds->SetNumberOfComponents(1);
   umbrellaIds->SetNumberOfTuples(nPoints);
 
+  // Add thresholded umbrella ids to point output
+  auto tumbrellaIds = vtkSmartPointer<vtkIntArray>::New();
+  tumbrellaIds->SetName("ThreshUmbrellaId");
+  tumbrellaIds->SetNumberOfComponents(1);
+  tumbrellaIds->SetNumberOfTuples(nPoints);
+
   for(const auto &u : umbrellasPerTimestep[t]) {
     for(long unsigned int j = 0; j < u.second.size(); j++) {
       umbrellaIds->SetTuple1(u.second[j], ids->GetTuple1(u.first));
     }
   }
+
+  for(const auto &u : threshUmbrellasPerTimestep[t]) {
+    for(long unsigned int j = 0; j < u.second.size(); j++) {
+      if(u.second[j] == -1)
+        tumbrellaIds->SetTuple1(u.first, -1);
+      else
+        tumbrellaIds->SetTuple1(u.second[j], ids->GetTuple1(u.first));
+    }
+  }
+
+  p0->GetPointData()->AddArray(tumbrellaIds);
   p0->GetPointData()->AddArray(umbrellaIds);
 
   return 1;
@@ -214,6 +354,7 @@ int ttkUmbrellaClustering::FormatClusters(vtkDataObject *inputDataObjects,
     return !this->printErr("No points");
 
   auto inPD = inPointSet->GetPointData();
+  auto inCD = inPointSet->GetCellData();
 
   int nPoints = inPointSet->GetNumberOfPoints();
   // Do nothing if there are no points
@@ -228,27 +369,75 @@ int ttkUmbrellaClustering::FormatClusters(vtkDataObject *inputDataObjects,
   // Create new points and allocate point data
   auto newPoints = vtkSmartPointer<vtkPoints>::New();
   auto outPD = outputPoints->GetPointData();
+  auto outCD = outputPoints->GetCellData();
   outPD->CopyAllocate(inPD);
+  outCD->CopyAllocate(inCD);
+  outputPoints->Allocate(inPointSet->GetNumberOfCells());
   newPoints->SetDataType(inPointSet->GetPoints()->GetDataType());
 
-  // Create array for umbrella ids
-  auto umbrellaIds = vtkSmartPointer<vtkIntArray>::New();
-  umbrellaIds->SetName("UmbrellaId");
-  umbrellaIds->SetNumberOfComponents(1);
-  umbrellaIds->SetNumberOfTuples(umbrellasPerTimestep[t].size());
-
   double pPos[3];
+  auto vertId = vtkSmartPointer<vtkIdList>::New();
   for(const auto &u : umbrellasPerTimestep[t]) {
     inPointSet->GetPoint(u.first, pPos);
     int p = newPoints->InsertNextPoint(pPos);
+    vertId->InsertId(0, p);
+    int c = outputPoints->InsertNextCell(VTK_VERTEX, vertId);
     outPD->CopyData(inPD, u.first, p);
-    umbrellaIds->SetTuple1(p, ids->GetTuple1(u.first));
+    outCD->CopyData(inCD, u.first, c);
   }
 
   outputPoints->SetPoints(newPoints);
-  outPD->AddArray(umbrellaIds);
   outputPoints->Squeeze();
   outputPoints->GetFieldData()->DeepCopy(inPointSet->GetFieldData());
+
+  return 1;
+}
+
+int ttkUmbrellaClustering::FormatThresholdedClusters(
+  vtkDataObject *inputDataObjects, vtkPolyData *outputPoints, const size_t t) {
+  // unpack input
+  auto inPoints = vtkPolyData::SafeDownCast(inputDataObjects);
+  if(!inPoints)
+    return !this->printErr("No points");
+
+  auto inPD = inPoints->GetPointData();
+  auto inCD = inPoints->GetCellData();
+
+  int nClusters = inPoints->GetNumberOfPoints();
+  // Do nothing if there are no points
+  if(nClusters == 0)
+    return 1;
+
+  // Get ids
+  auto ids = inPD->GetArray("PointId");
+  if(!ids)
+    return !this->printErr("Input data is missing array containing ids.");
+
+  // Create new points and allocate point data
+  auto newPoints = vtkSmartPointer<vtkPoints>::New();
+  auto outPD = outputPoints->GetPointData();
+  auto outCD = outputPoints->GetCellData();
+  outPD->CopyAllocate(inPD);
+  outCD->CopyAllocate(inCD);
+  outputPoints->Allocate(inPoints->GetNumberOfCells());
+  newPoints->SetDataType(inPoints->GetPoints()->GetDataType());
+
+  double pPos[3];
+  auto vertId = vtkSmartPointer<vtkIdList>::New();
+  for(const auto &u : threshUmbrellasPerTimestep[t]) {
+    if(u.second[0] != -1) {
+      inPoints->GetPoint(u.first, pPos);
+      int p = newPoints->InsertNextPoint(pPos);
+      vertId->InsertId(0, p);
+      int c = outputPoints->InsertNextCell(VTK_VERTEX, vertId);
+      outPD->CopyData(inPD, u.first, p);
+      outCD->CopyData(inCD, u.first, c);
+    }
+  }
+
+  outputPoints->SetPoints(newPoints);
+  outputPoints->Squeeze();
+  outputPoints->GetFieldData()->DeepCopy(inPoints->GetFieldData());
 
   return 1;
 }
@@ -259,40 +448,54 @@ int ttkUmbrellaClustering::RequestData(vtkInformation *request,
 
   // Clear previous data
   umbrellasPerTimestep.clear();
+  threshUmbrellasPerTimestep.clear();
 
   // Calculate matrices
   this->ttkSimilarityAlgorithm::RequestData(request, inputVector, outputVector);
 
   // Copy input and add umbrella ids to all blocks
   ttk::Timer timer;
-  const std::string msg = "Add Umbrella Ids to Points";
-  this->printMsg(msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
   auto input = vtkMultiBlockDataSet::GetData(inputVector[0]);
 
   auto pointsOut = vtkMultiBlockDataSet::GetData(outputVector, 1);
   pointsOut->DeepCopy(input);
 
+  // Testing
+  for(size_t t = 1; t < input->GetNumberOfBlocks(); t++) {
+    auto similarityMatrix = vtkSmartPointer<vtkImageData>::New();
+    ComputeThresholdedClustering(
+      similarityMatrix, pointsOut->GetBlock(t - 1), pointsOut->GetBlock(t));
+  }
+
+  const std::string msg = "Add Umbrella Ids to Points";
+  this->printMsg(msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
   for(size_t t = 0; t < pointsOut->GetNumberOfBlocks(); t++) {
     if(!AddUmbrellaIds(pointsOut->GetBlock(t), t))
       return 0;
   }
-
   this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
 
   const std::string msg2 = "Create Cluster Output";
   this->printMsg(
     msg2, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
-
   // Create and format all clusters via function
   auto clustersOut = vtkMultiBlockDataSet::GetData(outputVector, 2);
-  for(size_t t = 0; t < input->GetNumberOfBlocks(); t++) {
+  for(size_t t = 0; t < pointsOut->GetNumberOfBlocks(); t++) {
     auto polyData = vtkSmartPointer<vtkPolyData>::New();
-    if(!FormatClusters(input->GetBlock(t), polyData, t))
+    if(!FormatClusters(pointsOut->GetBlock(t), polyData, t))
       return 0;
     clustersOut->SetBlock(t, polyData);
   }
-
   this->printMsg(msg2, 1, timer.getElapsedTime(), this->threadNumber_);
+
+  // Create and format all thresholded clusters via function
+  auto threshClustersOut = vtkMultiBlockDataSet::GetData(outputVector, 3);
+  for(size_t t = 0; t < input->GetNumberOfBlocks(); t++) {
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    if(!FormatThresholdedClusters(pointsOut->GetBlock(t), polyData, t))
+      return 0;
+    threshClustersOut->SetBlock(t, polyData);
+  }
 
   return 1;
 }
