@@ -1,13 +1,8 @@
-/// TODO 1: Provide your information
-///
 /// \ingroup base
 /// \class ttk::PointAdvection
-/// \author Your Name Here <Your Email Address Here>
-/// \date The Date Here.
+/// \author Emma Nilsson <emma.nilsson@liu.se>
+/// \date 2022-01-24.
 ///
-/// This module defines the %PointAdvection class that computes for each vertex
-/// of a triangulation the average scalar value of itself and its direct
-/// neighbors.
 ///
 /// \b Related \b publication: \n
 /// '???'
@@ -42,8 +37,8 @@ namespace ttk {
       double y{0.0};
       double z{0.0};
       double v[3]{0.0, 0.0, 0.0};
-      double weight{0.0};
-      double constant{0.0};
+      double amplitude{0.0};
+      double variance{0.0};
       double rate{0.0};
       bool outsideDomain{false};
 
@@ -67,8 +62,8 @@ namespace ttk {
         v[0] = p.v[0];
         v[1] = p.v[1];
         v[2] = p.v[2];
-        weight = p.weight;
-        constant = p.constant;
+        amplitude = p.amplitude;
+        variance = p.variance;
         rate = p.rate;
         outsideDomain = p.outsideDomain;
       }
@@ -84,8 +79,8 @@ namespace ttk {
         v[0] = p.v[0];
         v[1] = p.v[1];
         v[2] = p.v[2];
-        weight = p.weight;
-        constant = p.constant;
+        amplitude = p.amplitude;
+        variance = p.variance;
         rate = p.rate;
         outsideDomain = p.outsideDomain;
         return *this;
@@ -97,8 +92,8 @@ namespace ttk {
         p.timestep = timestep;
         p.birth = birth;
         p.death = death;
-        p.weight = weight;
-        p.constant = constant;
+        p.amplitude = amplitude;
+        p.variance = variance;
         p.rate = rate;
         p.outsideDomain = outsideDomain;
         p.x = x + a.x;
@@ -114,8 +109,8 @@ namespace ttk {
         p.timestep = timestep;
         p.birth = birth;
         p.death = death;
-        p.weight = weight;
-        p.constant = constant;
+        p.amplitude = amplitude;
+        p.variance = variance;
         p.rate = rate;
         p.outsideDomain = outsideDomain;
         p.x = k * x;

@@ -47,8 +47,8 @@ private:
   // Point parameters
   int NumberOfPoints{1};
   int RandomSeed{0};
-  double PointWeight[2]{0.0, 1.0};
-  double PointConstant[2]{0.0, 1.0};
+  double Amplitude[2]{0.0, 1.0};
+  double Variance[2]{0.0, 1.0};
   int Lifetime[2]{0, 1};
   int RespawnTime[2]{0, 1};
 
@@ -67,11 +67,11 @@ public:
   vtkSetMacro(RandomSeed, int);
   vtkGetMacro(RandomSeed, int);
 
-  vtkSetVector2Macro(PointWeight, double);
-  vtkGetVector2Macro(PointWeight, double);
+  vtkSetVector2Macro(Amplitude, double);
+  vtkGetVector2Macro(Amplitude, double);
 
-  vtkSetVector2Macro(PointConstant, double);
-  vtkGetVector2Macro(PointConstant, double);
+  vtkSetVector2Macro(Variance, double);
+  vtkGetVector2Macro(Variance, double);
 
   vtkSetVector2Macro(Lifetime, int);
   vtkGetVector2Macro(Lifetime, int);

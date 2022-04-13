@@ -107,12 +107,12 @@ int ttkPointAdvection::formatOutput(vtkPolyData *pd,
   auto deathArrayData
     = static_cast<int *>(prepArray(deathArray, "Death", nPs, 1));
 
-  auto weightArray = vtkSmartPointer<vtkDoubleArray>::New();
-  auto weightArrayData
-    = static_cast<double *>(prepArray(weightArray, "PointWeight", nPs, 1));
-  auto constantArray = vtkSmartPointer<vtkDoubleArray>::New();
-  auto constantArrayData
-    = static_cast<double *>(prepArray(constantArray, "PointConstant", nPs, 1));
+  auto amplitudeArray = vtkSmartPointer<vtkDoubleArray>::New();
+  auto amplitudeArrayData
+    = static_cast<double *>(prepArray(amplitudeArray, "Amplitude", nPs, 1));
+  auto varianceArray = vtkSmartPointer<vtkDoubleArray>::New();
+  auto varianceArrayData
+    = static_cast<double *>(prepArray(varianceArray, "Variance", nPs, 1));
 
   // Create arrays for field data
   auto timeArray = vtkSmartPointer<vtkDoubleArray>::New();
@@ -129,7 +129,7 @@ int ttkPointAdvection::formatOutput(vtkPolyData *pd,
     double pos[3] = {p.x, p.y, p.z};
     dataPoints->SetPoint(idx, pos);
 
-    // Calculate the point weight in current timestep
+    // Calculate the point amplitude in current timestep
     double pw = 0.0;
     rampFunction(timestep - p.birth, p.death - p.birth, pw);
 
@@ -137,8 +137,8 @@ int ttkPointAdvection::formatOutput(vtkPolyData *pd,
     idArrayData[idx] = p.pointId;
     birthArrayData[idx] = p.birth;
     deathArrayData[idx] = p.death;
-    weightArrayData[idx] = pw * p.weight;
-    constantArrayData[idx] = p.constant;
+    amplitudeArrayData[idx] = pw * p.amplitude;
+    varianceArrayData[idx] = p.variance;
 
     // Set connectivity and offset array
     connectivityArrayData[idx] = idx;
@@ -159,8 +159,8 @@ int ttkPointAdvection::formatOutput(vtkPolyData *pd,
   pointData->AddArray(birthArray);
   pointData->AddArray(deathArray);
 
-  pointData->AddArray(weightArray);
-  pointData->AddArray(constantArray);
+  pointData->AddArray(amplitudeArray);
+  pointData->AddArray(varianceArray);
 
   pd->GetFieldData()->AddArray(timeArray);
 
@@ -191,10 +191,10 @@ int ttkPointAdvection::RequestData(vtkInformation *,
   std::uniform_real_distribution<> disRate(1, 1);
 
   // Attributes distributions
-  std::uniform_real_distribution<> disWeight(
-    this->PointWeight[0], this->PointWeight[1]);
-  std::uniform_real_distribution<> disConstant(
-    this->PointConstant[0], this->PointConstant[1]);
+  std::uniform_real_distribution<> disAmplitude(
+    this->Amplitude[0], this->Amplitude[1]);
+  std::uniform_real_distribution<> disVariance(
+    this->Variance[0], this->Variance[1]);
 
   /* Create initial points */
 
@@ -219,8 +219,8 @@ int ttkPointAdvection::RequestData(vtkInformation *,
     p.death = p.birth + disLifetime(randGen);
     p.rate = disRate(randGen);
 
-    p.weight = disWeight(randGen);
-    p.constant = disConstant(randGen);
+    p.amplitude = disAmplitude(randGen);
+    p.variance = disVariance(randGen);
   }
 
   // maximum point id
@@ -286,8 +286,8 @@ int ttkPointAdvection::RequestData(vtkInformation *,
         p.death = p.birth + disLifetime(randGen);
         p.rate = disRate(randGen);
 
-        p.weight = disWeight(randGen);
-        p.constant = disConstant(randGen);
+        p.amplitude = disAmplitude(randGen);
+        p.variance = disVariance(randGen);
 
         // check case re-spawn time is zero, so the point is immediately added
         if(p.birth == t) {
