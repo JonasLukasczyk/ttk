@@ -2,18 +2,18 @@
 <ServerManagerConfiguration>
     <ProxyGroup name="filters">
         <SourceProxy name="ttkEndFor" class="ttkEndFor" label="TTK EndFor">
-            <Documentation 
-            long_help="TTK EndFor" 
+            <Documentation
+            long_help="TTK EndFor"
             short_help="TTK EndFor">
                 This filter requests more data as long as the maximum number of elements is not reached. This filter works in conjunction with the ttkForEach filter.
 
                 Online examples:
-                
+
                 - https://topology-tool-kit.github.io/examples/cinemaIO/
 
             </Documentation>
 
-            <InputProperty name="Data" port_index="0" command="SetInputConnection">
+            <InputProperty name="Data" port_index="0" clean_command="RemoveAllInputs" command="AddInputConnection" multiple_input="1">
                 <ProxyGroupDomain name="groups">
                     <Group name="sources" />
                     <Group name="filters" />
@@ -27,6 +27,11 @@
                 </ProxyGroupDomain>
                 <Documentation>ttkForEachRow filter that initiates iterations.</Documentation>
             </InputProperty>
+
+            <IntVectorProperty name="Streaming" command="SetStreaming" number_of_elements="1" default_values="1">
+              <BooleanDomain name="bool" />
+              <Documentation>If enabled ttkEndFor will append the output of all iterations in a vtkMultiBlockDataSet. Otherwise the filter will only provide the data of the last iteration.</Documentation>
+            </IntVectorProperty>
 
             ${DEBUG_WIDGETS}
 

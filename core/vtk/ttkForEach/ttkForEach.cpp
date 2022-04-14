@@ -140,8 +140,8 @@ int ttkForEach::RequestData(vtkInformation *request,
 
   std::string modeStrings[6] = {"B", "R", "G", "V", "A", "BT"};
   this->printMsg("[" + modeStrings[static_cast<int>(mode)] + "] Iteration: ( "
-                   + std::to_string(this->IterationIdx) + " / "
-                   + std::to_string(this->IterationNumber - 1) + " ) ",
+                   + std::to_string(this->IterationIdx+1) + " / "
+                   + std::to_string(this->IterationNumber) + " ) ",
                  ttk::debug::Separator::SLASH);
 
   this->SetExpressionString(std::to_string(this->IterationIdx));
