@@ -13,12 +13,12 @@
         <Documentation>The seed for the random number generators.</Documentation>
       </IntVectorProperty>
 
-      <DoubleVectorProperty name="Weight" command="SetPointWeight" default_values="0 1" number_of_elements="2">
-        <Documentation>The weight range of a point. The range sets the interval for random value generation.</Documentation>
+      <DoubleVectorProperty name="Amplitude" command="SetAmplitude" default_values="0 1" number_of_elements="2">
+        <Documentation>The amplitude range of a point. The range sets the interval for random value generation.</Documentation>
       </DoubleVectorProperty>
 
-      <DoubleVectorProperty name="Constant" command="SetPointConstant" default_values="0 1" number_of_elements="2">
-        <Documentation>A point specific constant. The range sets the interval for random value generation.
+      <DoubleVectorProperty name="Variance" command="SetVariance" default_values="0 1" number_of_elements="2">
+        <Documentation>A point specific variance. The range sets the interval for random value generation.
         </Documentation>
       </DoubleVectorProperty>
 
@@ -35,8 +35,8 @@
       <PropertyGroup panel_widget="Line" label="Point Options">
         <Property name="#Points" />
         <Property name="Seed" />
-        <Property name="Weight" />
-        <Property name="Constant" />
+        <Property name="Amplitude" />
+        <Property name="Variance" />
         <Property name="Lifetime" />
         <Property name="RespawnTime" />
       </PropertyGroup>

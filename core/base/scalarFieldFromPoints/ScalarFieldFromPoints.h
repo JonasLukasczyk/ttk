@@ -25,12 +25,6 @@ namespace ttk {
     typedef double (*KERNEL)(const double &, const double &, const double &);
 
     static double
-      Linear(const double &u, const double &bandwidth, const double &weight) {
-      double su = std::sqrt(u) / bandwidth;
-      return su >= 1 ? 0 : weight * (1 - su);
-    };
-
-    static double
       Gaussian(const double &u, const double &bandwidth, const double &weight) {
       return weight * exp(-0.5 * (u / bandwidth));
     };
@@ -41,7 +35,8 @@ namespace ttk {
     ~ScalarFieldFromPoints(){};
 
     template <KERNEL k>
-    int computeScalarField2D(double *outputData,
+    int computeScalarField2D(double *maxValData,
+                             double *addValData,
                              int *maxIdData,
                              const double *pointCoordiantes,
                              const double *weights,
@@ -73,7 +68,8 @@ namespace ttk {
 
       // clear data and init locks
       for(int i = 0, j = nPixels; i < j; i++) {
-        outputData[i] = 0.0;
+        maxValData[i] = 0.0;
+        addValData[i] = 0.0;
         maxIdData[i] = -1;
         omp_init_lock(&(lock[i]));
       }
@@ -109,10 +105,14 @@ namespace ttk {
 
             int pixelIndex = y * width + x;
             omp_set_lock(&(lock[pixelIndex]));
-            if(ku > outputData[pixelIndex]) {
-              outputData[pixelIndex] = ku;
+            // Max mixture
+            if(ku > maxValData[pixelIndex]) {
+              maxValData[pixelIndex] = ku;
               maxIdData[pixelIndex] = i;
             }
+
+            // Additive mixture
+            addValData[pixelIndex] += ku;
             omp_unset_lock(&(lock[pixelIndex]));
           }
         }
@@ -132,7 +132,8 @@ namespace ttk {
     }
 
     template <KERNEL k>
-    int computeScalarField3D(double *outputData,
+    int computeScalarField3D(double *maxValData,
+                             double *addValData,
                              int *maxIdData,
                              const double *pointCoordiantes,
                              const double *weights,
@@ -168,7 +169,8 @@ namespace ttk {
 
       // clear data and init locks
       for(int i = 0, j = nPixels; i < j; i++) {
-        outputData[i] = 0.0;
+        maxValData[i] = 0.0;
+        addValData[i] = 0.0;
         maxIdData[i] = -1;
         omp_init_lock(&(lock[i]));
       }
@@ -212,10 +214,14 @@ namespace ttk {
 
               int pixelIndex = z * width * height + y * width + x;
               omp_set_lock(&(lock[pixelIndex]));
-              if(ku > outputData[pixelIndex]) {
-                outputData[pixelIndex] = ku;
+              // Max mixture
+              if(ku > maxValData[pixelIndex]) {
+                maxValData[pixelIndex] = ku;
                 maxIdData[pixelIndex] = i;
               }
+
+              // Additive mixture
+              addValData[pixelIndex] += ku;
               omp_unset_lock(&(lock[pixelIndex]));
             }
           }
