@@ -1,9 +1,0 @@
-NAME
-  ttkUmbrellaClustering
-SOURCES
-  ttkUmbrellaClustering.cpp
-HEADERS
-  ttkUmbrellaClustering.h
-DEPENDS
-  umbrellaClustering
-  ttkSimilarityAlgorithm
