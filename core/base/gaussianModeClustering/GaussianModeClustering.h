@@ -228,6 +228,79 @@ namespace ttk {
     }
 
     template <typename DT>
+    int computeUnimodality(std::map<int, std::vector<int>> &pointClusters,
+                           int &nClusters,
+                           const DT *coords,
+                           const DT *pws,
+                           const DT *pcs,
+                           const int nPoints) const {
+
+      ttk::Timer timer;
+
+      const std::string msg = "Computing Unimodality";
+      this->printMsg(
+        msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
+
+      // indices list
+      std::vector<int> inClusters(nPoints);
+      for(int i = 0; i < nPoints; i++) {
+        int maxClusterIndex = i;
+        DT maxClusterVal = pws[i];
+
+        for(int j = 0; j < nPoints; j++) {
+          const int i3 = i * 3;
+          const int j3 = j * 3;
+
+          const DT dx = coords[i3 + 0] - coords[j3 + 0];
+          const DT dy = coords[i3 + 1] - coords[j3 + 1];
+          const DT dz = coords[i3 + 2] - coords[j3 + 2];
+
+          // Check if points are close enough
+          if(std::abs(dx) < 3 * std::sqrt(pcs[j])
+             && std::abs(dy) < 3 * std::sqrt(pcs[j])
+             && std::abs(dz) < 3 * std::sqrt(pcs[j])) {
+
+            // points fulfill criteria and has the highest "mean" value
+            if(std::abs(pws[j] - pws[i])
+                 >= 2 * std::min(std::sqrt(pcs[i]), std::sqrt(pcs[j]))
+               && pws[j] > pws[i] && pws[j] > maxClusterVal) {
+              maxClusterIndex = j;
+            }
+          }
+        }
+        inClusters[i] = maxClusterIndex;
+      }
+
+      // initialize with point representatives
+      for(int i = 0; i < nPoints; i++) {
+        if(inClusters[i] == i) {
+          pointClusters[i] = std::vector<int>(0);
+          pointClusters[i].push_back(i);
+          nClusters++;
+        }
+      }
+
+      // loop through all points
+      for(int i = 0; i < nPoints; i++) {
+        // if a point is not within its own gaussian
+        if(inClusters[i] != i) {
+          int j = i;
+
+          // loop until you find the root representative
+          while(j != inClusters[j]) {
+            j = inClusters[j];
+          }
+
+          pointClusters[j].push_back(i);
+        }
+      }
+
+      this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
+
+      return 1;
+    }
+
+    template <typename DT>
     int computeMatrix(unsigned char *matrix,
                       std::map<int, std::vector<int>> &clusters0,
                       std::map<int, std::vector<int>> &clusters1,
@@ -261,55 +334,6 @@ namespace ttk {
             }
           }
           matrix[j * nClusters0 + i] = exist;
-          ++j;
-        }
-        ++i;
-      }
-
-      this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
-
-      return 1;
-    }
-
-    template <typename DT>
-    int computeThresholdedUmbrellaMatrix(
-      unsigned char *tUmbrellaMatrix,
-      std::map<int, std::vector<int>> &tumbrellas0,
-      std::map<int, std::vector<int>> &tumbrellas1,
-      const DT *ids0,
-      const DT *ids1,
-      const int ntUmbrellas0,
-      const int ntUmbrellas1) const {
-
-      ttk::Timer timer;
-
-      const std::string msg = "Computing Umbrella Matrix ("
-                              + std::to_string(ntUmbrellas0) + "x"
-                              + std::to_string(ntUmbrellas1) + ")";
-      this->printMsg(
-        msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
-
-      int i = 0;
-      for(const auto &tu0 : tumbrellas0) {
-        if(tu0.second[0] == -1) {
-          continue;
-        }
-        int j = 0;
-
-        for(const auto &tu1 : tumbrellas1) {
-          if(tu1.second[0] == -1)
-            continue;
-          int exist = 0;
-
-          for(long unsigned int p0 = 0; p0 < tu0.second.size(); p0++) {
-            for(long unsigned int p1 = 0; p1 < tu1.second.size(); p1++) {
-              if((ids0[tu0.second[p0]] == ids1[tu1.second[p1]])) {
-                exist = 1;
-              }
-            }
-          }
-
-          tUmbrellaMatrix[j * ntUmbrellas0 + i] = exist;
           ++j;
         }
         ++i;

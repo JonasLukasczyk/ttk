@@ -130,6 +130,28 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
 
         break;
       }
+      case 2: {
+        ttkTypeMacroR(
+          coords0->GetDataType(),
+          (status = this->computeUnimodality<T0>(
+             clusters0, nClusters0, ttkUtils::GetPointer<const T0>(coords0),
+             ttkUtils::GetPointer<const T0>(amps0),
+             ttkUtils::GetPointer<const T0>(vars0), nPoints0)));
+        if(!status)
+          return 0;
+
+        ttkTypeMacroR(
+          coords1->GetDataType(),
+          (status = this->computeUnimodality<T0>(
+             clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
+             ttkUtils::GetPointer<const T0>(amps1),
+             ttkUtils::GetPointer<const T0>(vars1), nPoints1)));
+
+        if(!status)
+          return 0;
+
+        break;
+      }
 
       default:
         break;
@@ -169,6 +191,19 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
 
         break;
       }
+      case 2: {
+        ttkTypeMacroR(
+          coords1->GetDataType(),
+          (status = this->computeUnimodality<T0>(
+             clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
+             ttkUtils::GetPointer<const T0>(amps1),
+             ttkUtils::GetPointer<const T0>(vars1), nPoints1)));
+
+        if(!status)
+          return 0;
+
+        break;
+      }
 
       default:
         break;
@@ -185,6 +220,17 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
   similarityMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
   auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("ClusterCorrespondence");
+
+  std::string s = "Clusters for T="
+                  + std::to_string(clustersPerTimestep.size() - 2) + ": \n";
+  for(auto &clu : clusters0) {
+    s += std::to_string(clu.first) + ": ";
+    for(long unsigned int j = 0; j < clu.second.size(); j++) {
+      s += std::to_string(clu.second[j]) + " ";
+    }
+    s += "\n";
+  }
+  this->printMsg(s);
 
   // compute matrix
   int status = 0;
