@@ -262,7 +262,6 @@ int ttkSimilarityByJacobiSet::ComputeSimilarityMatrix(
 
     auto connectedComponents = vtkSmartPointer<ttkConnectedComponents>::New();
     connectedComponents->SetInputConnection(0, cleanPolyData->GetOutputPort(0));
-    connectedComponents->SetUseSeedIdAsComponentId(false);
     connectedComponents->Update();
     this->printMsg(
       msg, 0.9, t.getElapsedTime(), 1, ttk::debug::LineMode::REPLACE);
