@@ -1,5 +1,5 @@
 /// \ingroup base
-/// \class ttk::UmbrellaClustering
+/// \class ttk::GaussianModeClustering
 /// \author Emma Nilsson <emma.nilsson@liu.se>
 /// \date The Date Here.
 ///
@@ -19,16 +19,17 @@
 
 namespace ttk {
 
-  class UmbrellaClustering : virtual public Debug {
+  class GaussianModeClustering : virtual public Debug {
 
   public:
-    UmbrellaClustering() {
-      this->setDebugMsgPrefix("UmbrellaClustering");
+    GaussianModeClustering() {
+      this->setDebugMsgPrefix("GaussianModeClustering");
     };
-    ~UmbrellaClustering(){};
+    ~GaussianModeClustering(){};
 
     template <typename DT>
     int computeUmbrellas(std::map<int, std::vector<int>> &pointUmbrellas,
+                         int &nUmbrellas,
                          const DT *coords,
                          const DT *pws,
                          const DT *pcs,
@@ -71,6 +72,7 @@ namespace ttk {
         if(inUmbrella[i] == i) {
           pointUmbrellas[i] = std::vector<int>(0);
           pointUmbrellas[i].push_back(i);
+          nUmbrellas++;
         }
       }
 
@@ -129,6 +131,7 @@ namespace ttk {
     template <typename DT>
     int computeThresholdedUmbrellas(
       std::map<int, std::vector<int>> &pointThreshUmbrellas,
+      int &nUmbrellas,
       const DT *coords,
       const DT *pws,
       const DT *pcs,
@@ -197,6 +200,7 @@ namespace ttk {
         if(inThreshUmbrella[i] == i) {
           pointThreshUmbrellas[i] = std::vector<int>(0);
           pointThreshUmbrellas[i].push_back(i);
+          nUmbrellas++;
         } else if(inThreshUmbrella[i] == -1) {
           pointThreshUmbrellas[i] = std::vector<int>(0);
           pointThreshUmbrellas[i].push_back(-1);
@@ -224,35 +228,39 @@ namespace ttk {
     }
 
     template <typename DT>
-    int computeUmbrellaMatrix(unsigned char *umbrellaMatrix,
-                              std::map<int, std::vector<int>> &umbrellas0,
-                              std::map<int, std::vector<int>> &umbrellas1,
-                              const DT *ids0,
-                              const DT *ids1,
-                              const int nUmbrellas0,
-                              const int nUmbrellas1) const {
+    int computeMatrix(unsigned char *matrix,
+                      std::map<int, std::vector<int>> &clusters0,
+                      std::map<int, std::vector<int>> &clusters1,
+                      const DT *ids0,
+                      const DT *ids1,
+                      const int nClusters0,
+                      const int nClusters1) const {
 
       ttk::Timer timer;
 
-      const std::string msg = "Computing Umbrella Matrix ("
-                              + std::to_string(nUmbrellas0) + "x"
-                              + std::to_string(nUmbrellas1) + ")";
+      const std::string msg = "Computing Matrix (" + std::to_string(nClusters0)
+                              + "x" + std::to_string(nClusters1) + ")";
       this->printMsg(
         msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
       int i = 0;
-      for(const auto &u0 : umbrellas0) {
+      for(const auto &c0 : clusters0) {
+        if(c0.second[0] == -1) {
+          continue;
+        }
         int j = 0;
-        for(const auto &u1 : umbrellas1) {
+        for(const auto &c1 : clusters1) {
+          if(c1.second[0] == -1)
+            continue;
           int exist = 0;
-          for(long unsigned int p0 = 0; p0 < u0.second.size(); p0++) {
-            for(long unsigned int p1 = 0; p1 < u1.second.size(); p1++) {
-              if(ids0[u0.second[p0]] == ids1[u1.second[p1]]) {
+          for(long unsigned int p0 = 0; p0 < c0.second.size(); p0++) {
+            for(long unsigned int p1 = 0; p1 < c1.second.size(); p1++) {
+              if(ids0[c0.second[p0]] == ids1[c1.second[p1]]) {
                 exist = 1;
               }
             }
           }
-          umbrellaMatrix[j * nUmbrellas0 + i] = exist;
+          matrix[j * nClusters0 + i] = exist;
           ++j;
         }
         ++i;

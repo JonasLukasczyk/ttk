@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
-    <SourceProxy name="ttkUmbrellaClustering" class="ttkUmbrellaClustering" label="TTK UmbrellaClustering">
-      <Documentation long_help="UmbrellaClustering" short_help="UmbrellaClustering">
+    <SourceProxy name="ttkGaussianModeClustering" class="ttkGaussianModeClustering" label="TTK GaussianModeClustering">
+      <Documentation long_help="GaussianModeClustering" short_help="GaussianModeClustering">
         TODO
       </Documentation>
 
@@ -31,60 +31,59 @@
       </StringVectorProperty>
 
       <StringVectorProperty
-        name="PwArray"
-        label="Point Weight"
+        name="AmpArray"
+        label="Amplitude"
         command="SetInputArrayToProcess"
         element_types="0 0 0 0 2"
         number_of_elements="5"
-        default_values="2 0 0 0 Pws">
+        default_values="2 0 0 0 Amps">
         <ArrayListDomain
-          name="pws"
+          name="amps"
           input_domain_name="input_arrays"
           >
           <RequiredProperties>
             <Property function="Input" name="Points" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>The array that contains the point weights.</Documentation>
+        <Documentation>The array that contains the point amplitudes.</Documentation>
       </StringVectorProperty>
 
       <StringVectorProperty
-        name="PcArray"
-        label="Point Constant"
+        name="VarArray"
+        label="Variance"
         command="SetInputArrayToProcess"
         element_types="0 0 0 0 2"
         number_of_elements="5"
-        default_values="3 0 0 0 Pcs">
+        default_values="3 0 0 0 Varis">
         <ArrayListDomain
-          name="pcs"
+          name="varis"
           input_domain_name="input_arrays"
           >
           <RequiredProperties>
             <Property function="Input" name="Points" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>The array that contains the point constant.</Documentation>
+        <Documentation>The array that contains the point variances.</Documentation>
       </StringVectorProperty>
 
       <!-- Create a UI group that contains all input parameter widgets-->
       <PropertyGroup panel_widget="Line" label="Input Options">
         <Property name="PointIds" />
-        <Property name="PwArray" />
-        <Property name="PcArray" />
+        <Property name="AmpArray" />
+        <Property name="VarArray" />
       </PropertyGroup>
 
       <!-- OUTPUT PARAMETER WIDGETS -->
 
-      <OutputPort index="0" id="port0" name="UmbrellaMatrix" />
+      <OutputPort index="0" id="port0" name="Matrix" />
       <OutputPort index="1" id="port1" name="Points" />
       <OutputPort index="2" id="port2" name="Clusters" />
-      <OutputPort index="3" id="port3" name="ThresholdedClusters" />
-      <OutputPort index="4" id="port4" name="ThresholdedMatrix" />
 
-      <IntVectorProperty name="Kernel" command="SetKernel" number_of_elements="1" default_values="0">
+
+      <IntVectorProperty name="ClusteringType" command="SetClusteringType" number_of_elements="1" default_values="0">
         <EnumerationDomain name="enum">
-          <Entry value="0" text="Gaussian" />
-          <Entry value="1" text="Linear" />
+          <Entry value="0" text="Umbrella" />
+          <Entry value="1" text="Thresholded Umbrella"/>
         </EnumerationDomain>
         <Documentation>Kernel.</Documentation>
       </IntVectorProperty>
@@ -95,8 +94,8 @@
 
       <!-- Create a UI group that contains all output parameter widgets-->
       <PropertyGroup panel_widget="Line" label="Output Options">
-        <Property name="Kernel" />
-        <Property name="Kernel" />
+        <Property name="ClusteringType" />
+        <Property name="ScalarThreshold" />
       </PropertyGroup>
 
       ${DEBUG_WIDGETS}
