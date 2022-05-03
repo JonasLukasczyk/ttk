@@ -25,8 +25,7 @@ ttkScalarFieldCriticalPoints::ttkScalarFieldCriticalPoints() {
   this->SetNumberOfOutputPorts(1);
 }
 
-ttkScalarFieldCriticalPoints::~ttkScalarFieldCriticalPoints() {
-}
+ttkScalarFieldCriticalPoints::~ttkScalarFieldCriticalPoints() = default;
 
 int ttkScalarFieldCriticalPoints::FillInputPortInformation(
   int port, vtkInformation *info) {
@@ -101,11 +100,6 @@ int ttkScalarFieldCriticalPoints::RequestData(
 
   vtkNew<vtkPoints> pointSet{};
   pointSet->SetNumberOfPoints(criticalPoints_.size());
-  vtkNew<vtkIdTypeArray> offsets{}, connectivity{};
-  offsets->SetNumberOfComponents(1);
-  offsets->SetNumberOfTuples(criticalPoints_.size() + 1);
-  connectivity->SetNumberOfComponents(1);
-  connectivity->SetNumberOfTuples(criticalPoints_.size());
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
@@ -115,15 +109,9 @@ int ttkScalarFieldCriticalPoints::RequestData(
     input->GetPoint(criticalPoints_[i].first, p.data());
     pointSet->SetPoint(i, p.data());
     vertexTypes->SetTuple1(i, (float)criticalPoints_[i].second);
-    offsets->SetTuple1(i, i);
-    connectivity->SetTuple1(i, i);
   }
-  offsets->SetTuple1(criticalPoints_.size(), criticalPoints_.size());
 
-  vtkNew<vtkCellArray> cells{};
-  cells->SetData(offsets, connectivity);
-  output->SetVerts(cells);
-  output->SetPoints(pointSet);
+  ttkUtils::CellVertexFromPoints(output, pointSet);
   output->GetPointData()->AddArray(vertexTypes);
 
   if(VertexBoundary) {

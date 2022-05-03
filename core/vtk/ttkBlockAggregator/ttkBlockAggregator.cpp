@@ -14,13 +14,13 @@ ttkBlockAggregator::ttkBlockAggregator() {
   this->setDebugMsgPrefix("BlockAggregator");
 
   this->Reset();
+  this->SetInputArrayToProcess(0, 0, 0, 2, "_ttk_IterationInfo");
 
   this->SetNumberOfInputPorts(1);
   this->SetNumberOfOutputPorts(1);
 }
 
-ttkBlockAggregator::~ttkBlockAggregator() {
-}
+ttkBlockAggregator::~ttkBlockAggregator() = default;
 
 int ttkBlockAggregator::FillInputPortInformation(int port,
                                                  vtkInformation *info) {
@@ -80,19 +80,18 @@ int copyObjects(vtkDataObject *source, vtkDataObject *copy) {
   return 1;
 }
 
-int ttkBlockAggregator::AggregateBlock(vtkDataObject *dataObject) {
-  ttk::Timer t;
-  size_t nBlocks = this->AggregatedMultiBlockDataSet->GetNumberOfBlocks();
-  this->printMsg("Adding object add index " + std::to_string(nBlocks), 0,
-                 ttk::debug::LineMode::REPLACE);
-
-  auto copy = vtkSmartPointer<vtkDataObject>::Take(dataObject->NewInstance());
-  copyObjects(dataObject, copy);
-
-  this->AggregatedMultiBlockDataSet->SetBlock(nBlocks, copy);
-
-  this->printMsg("Adding object at block index " + std::to_string(nBlocks), 1,
-                 t.getElapsedTime());
+int ttkBlockAggregator::AggregateBlock(vtkMultiBlockDataSet* collection, vtkDataObject *item){
+  auto itemAsMB = vtkMultiBlockDataSet::SafeDownCast(item);
+  if(itemAsMB){
+    for(size_t b=0,n=itemAsMB->GetNumberOfBlocks(); b<n; b++)
+      this->AggregateBlock(collection, itemAsMB->GetBlock(b));
+  } else {
+    auto copy = vtkSmartPointer<vtkDataObject>::Take(item->NewInstance());
+    copy->ShallowCopy(item);
+    const auto nBlocks = collection->GetNumberOfBlocks();
+    collection->SetBlock(nBlocks, copy);
+    this->printMsg("Adding object at block index " + std::to_string(nBlocks), 1);
+  }
 
   return 1;
 }
@@ -101,8 +100,7 @@ int ttkBlockAggregator::RequestData(vtkInformation *ttkNotUsed(request),
                                     vtkInformationVector **inputVector,
                                     vtkInformationVector *outputVector) {
   // Get iteration information
-  double iterationIndex = 0;
-  this->SetInputArrayToProcess(0, 0, 0, 2, "_ttk_IterationInfo");
+  double iterationIndex = -1;
   auto iterationInformation = vtkDoubleArray::SafeDownCast(
     this->GetInputArrayToProcess(0, inputVector));
   if(iterationInformation) {
@@ -112,21 +110,30 @@ int ttkBlockAggregator::RequestData(vtkInformation *ttkNotUsed(request),
   }
 
   // Check if AggregatedMultiBlockDataSet needs to be reset
-  if(!iterationInformation || this->GetForceReset() || iterationIndex == 0)
+  if(!this->GetStreaming() || iterationIndex < 1)
     this->Reset();
 
-  // Add all inputs
   size_t nInputs = inputVector[0]->GetNumberOfInformationObjects();
-  for(size_t i = 0; i < nInputs; i++) {
-    auto input = vtkDataObject::GetData(inputVector[0], i);
+  if(nInputs==1){
+    // if there is only one input connection aggregate input directly into MBA
+    this->AggregateBlock(
+      this->AggregatedMultiBlockDataSet,
+      vtkDataObject::GetData(inputVector[0], 0)
+    );
+  } else if(nInputs>1) {
+    // if there is more than one input connection aggregate each connection in an own MB
+    if(iterationIndex<1){
+      // in the first iteration initialize the list of each input connection
+      for(size_t i = 0; i < nInputs; i++)
+        this->AggregatedMultiBlockDataSet->SetBlock(i, vtkSmartPointer<vtkMultiBlockDataSet>::New());
+    }
 
-    if(this->GetFlattenInput() && input->IsA("vtkMultiBlockDataSet")) {
-      auto inputAsMB = (vtkMultiBlockDataSet *)input;
-      auto nBlocks = inputAsMB->GetNumberOfBlocks();
-      for(size_t j = 0; j < nBlocks; j++)
-        this->AggregateBlock(inputAsMB->GetBlock(j));
-    } else
-      this->AggregateBlock(input);
+    // add each object to the list of the corresponding connection
+    for(size_t i = 0; i < nInputs; i++)
+      this->AggregateBlock(
+        static_cast<vtkMultiBlockDataSet*>(this->AggregatedMultiBlockDataSet->GetBlock(i)),
+        vtkDataObject::GetData(inputVector[0], i)
+      );
   }
 
   // Prepare output

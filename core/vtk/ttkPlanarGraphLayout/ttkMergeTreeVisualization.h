@@ -86,8 +86,10 @@ private:
   double prevXMax = 0;
 
 public:
-  ttkMergeTreeVisualization(){};
-  ~ttkMergeTreeVisualization(){};
+  ttkMergeTreeVisualization() = default;
+  ;
+  ~ttkMergeTreeVisualization() override = default;
+  ;
 
   // ==========================================================================
   // Getter / Setter
@@ -918,7 +920,7 @@ public:
 
             // Add VertexId
             int nodeVertexId = -1;
-            if(i < int(treesNodes.size())) {
+            if(i < int(treesNodes.size()) and treesNodes[i]) {
               auto vertexIdArray
                 = treesNodes[i]->GetPointData()->GetArray("VertexId");
               if(vertexIdArray and nodeMesh != -1)

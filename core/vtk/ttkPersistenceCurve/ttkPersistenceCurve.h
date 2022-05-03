@@ -43,8 +43,6 @@
 ///   Interaction sites</a> \n
 ///
 
-#ifndef _TTK_PERSISTENCECURVE_H
-#define _TTK_PERSISTENCECURVE_H
 #pragma once
 
 // VTK includes
@@ -114,8 +112,7 @@ private:
                vtkTable *outputSTPersistenceCurve,
                vtkTable *outputCTPersistenceCurve,
                const VTK_TT *inputScalars,
+               const size_t scalarsMTime,
                const void *inputOffsets,
                const TTK_TT *triangulation);
 };
-
-#endif // _TTK_PERSISTENCECURVE_H

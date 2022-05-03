@@ -21,23 +21,22 @@
 #include <ttkEndForModule.h>
 
 // TTK includes
-#include <ttkAlgorithm.h>
+#include <ttkBlockAggregator.h>
 
-class TTKENDFOR_EXPORT ttkEndFor : public ttkAlgorithm {
+class TTKENDFOR_EXPORT ttkEndFor : public ttkBlockAggregator {
 
 private:
   int LastIterationIdx{-1};
 
 public:
   static ttkEndFor *New();
-  vtkTypeMacro(ttkEndFor, ttkAlgorithm);
+  vtkTypeMacro(ttkEndFor, ttkBlockAggregator);
 
 protected:
   ttkEndFor();
-  ~ttkEndFor();
+  ~ttkEndFor() override;
 
   int FillInputPortInformation(int port, vtkInformation *info) override;
-  int FillOutputPortInformation(int port, vtkInformation *info) override;
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,

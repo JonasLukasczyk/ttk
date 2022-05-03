@@ -15,7 +15,6 @@
 #include <vtkDataArray.h>
 #include <vtkDataSet.h>
 #include <vtkFloatArray.h>
-#include <vtkGeometryFilter.h>
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 #include <vtkMultiBlockDataSet.h>
@@ -50,8 +49,7 @@ ttkMergeTreeClustering::ttkMergeTreeClustering() {
   this->SetNumberOfOutputPorts(3);
 }
 
-ttkMergeTreeClustering::~ttkMergeTreeClustering() {
-}
+ttkMergeTreeClustering::~ttkMergeTreeClustering() = default;
 
 /**
  * Specify the required input data type of each input port

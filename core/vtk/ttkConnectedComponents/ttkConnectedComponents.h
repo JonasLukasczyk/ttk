@@ -42,18 +42,21 @@ class TTKCONNECTEDCOMPONENTS_EXPORT ttkConnectedComponents
     protected ttk::ConnectedComponents {
 
 private:
-  bool UseSeedIdAsComponentId{true};
+  double BackgroundThreshold{0.0};
+  bool AugmentSegmentationWithComponentSize{false};
 
 public:
-  vtkSetMacro(UseSeedIdAsComponentId, bool);
-  vtkGetMacro(UseSeedIdAsComponentId, bool);
+  vtkSetMacro(BackgroundThreshold, double);
+  vtkGetMacro(BackgroundThreshold, double);
+  vtkSetMacro(AugmentSegmentationWithComponentSize, bool);
+  vtkGetMacro(AugmentSegmentationWithComponentSize, bool);
 
   static ttkConnectedComponents *New();
   vtkTypeMacro(ttkConnectedComponents, ttkAlgorithm);
 
 protected:
   ttkConnectedComponents();
-  virtual ~ttkConnectedComponents() override = default;
+  ~ttkConnectedComponents() override = default;
 
   int FillInputPortInformation(int port, vtkInformation *info) override;
   int FillOutputPortInformation(int port, vtkInformation *info) override;

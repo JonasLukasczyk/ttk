@@ -72,9 +72,13 @@ int ttkSimilarityByDistance::ComputeSimilarityMatrix(
       return 0;
   }
 
+  auto indexIdMap0 = this->GetInputArrayToProcess(0, p0);
+  auto indexIdMap1 = this->GetInputArrayToProcess(0, p1);
+  if(!indexIdMap0 || !indexIdMap1)
+    return !this->printErr("Unable to retrieve feature IDs.");
+
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-    similarityMatrix, this->GetInputArrayToProcess(0, p0),
-    this->GetInputArrayToProcess(0, p1));
+    similarityMatrix, indexIdMap0, indexIdMap1);
   if(!status)
     return 0;
 
