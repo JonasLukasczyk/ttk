@@ -52,21 +52,23 @@
             </DoubleVectorProperty>
 
             <IntVectorProperty name="TimeSeries" command="SetTimeSeries" default_values="2" number_of_elements="1">
-            <Hints>
-                <PropertyWidgetDecorator type="GenericDecorator"
-                mode="visibility"
-                property="TimeProp"
-                value="2" />
-            </Hints>
+            <Documentation>How many time steps the timer series contains.</Documentation>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility"
+                    property="TimeProp"
+                    value="2" />
+                </Hints>
             </IntVectorProperty>
 
             <DoubleVectorProperty name="Interval" command="SetInterval" number_of_elements="1" default_values="1.0">
-            <Hints>
-                <PropertyWidgetDecorator type="GenericDecorator"
-                mode="visibility"
-                property="TimeProp"
-                value="2" />
-            </Hints>
+                <Documentation> The time interval between time steps.</Documentation>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator"
+                    mode="visibility"
+                    property="TimeProp"
+                    value="2" />
+                </Hints>
             </DoubleVectorProperty>
 
              <!-- Create a UI group that contains all output parameter widgets -->

@@ -2,7 +2,9 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
     <SourceProxy name="ttkComparingSimilarityMatrices" class="ttkComparingSimilarityMatrices" label="TTK ComparingSimilarityMatrices">
-      <Documentation long_help="ComparingSimilarityMatrices Long" short_help="ComparingSimilarityMatrices Short">TODO.</Documentation>
+      <Documentation long_help="ComparingSimilarityMatrices Long" short_help="ComparingSimilarityMatrices Short">
+        This filter compares two sequences of similarity matrices. First, the number of continuations, splits, merges, births and deaths are counted for each matrix, then the matrices are compared based on correctness using the IndexIdMaps provided by the similarity matrices. Note that the features need to have the same ids for both ground truth and algorithm to compare correctness of the tracking.
+      .</Documentation>
 
       <!-- INPUT DATA OBJECTS -->
       <InputProperty name="AlgorithmMatrices" port_index="0" command="SetInputConnection">
@@ -13,7 +15,7 @@
         <DataTypeDomain name="input_type">
           <DataType value="vtkMultiBlockDataSet" />
         </DataTypeDomain>
-        <Documentation>TODO</Documentation>
+        <Documentation>The similarity matrices of the algorithm being tested.</Documentation>
       </InputProperty>
 
       <InputProperty name="GroundTruth" port_index="1" command="SetInputConnection">
@@ -24,7 +26,7 @@
         <DataTypeDomain name="input_type">
           <DataType value="vtkMultiBlockDataSet" />
         </DataTypeDomain>
-        <Documentation>TODO</Documentation>
+        <Documentation>The ground truth similarity matrices</Documentation>
       </InputProperty>
 
       <StringVectorProperty name="MatrixAlgorithm" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">

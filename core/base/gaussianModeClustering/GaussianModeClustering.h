@@ -31,8 +31,8 @@ namespace ttk {
     int computeUmbrellas(std::map<int, std::vector<int>> &pointUmbrellas,
                          int &nUmbrellas,
                          const DT *coords,
-                         const DT *pws,
-                         const DT *pcs,
+                         const double *pws,
+                         const double *pcs,
                          const int nPoints) const {
 
       ttk::Timer timer;
@@ -45,7 +45,7 @@ namespace ttk {
       std::vector<int> inUmbrella(nPoints);
       for(int i = 0; i < nPoints; i++) {
         int maxUmbrellaIndex = -1;
-        DT maxUmbrellaVal = 0.0;
+        double maxUmbrellaVal = 0.0;
 
         for(int j = 0; j < nPoints; j++) {
           const int i3 = i * 3;
@@ -56,7 +56,7 @@ namespace ttk {
           const DT dz = coords[i3 + 2] - coords[j3 + 2];
 
           // Evaluate js value at i
-          const DT umbrellaVal
+          const double umbrellaVal
             = pws[j] * std::exp(-0.5 * (dx * dx + dy * dy + dz * dz) / pcs[j]);
 
           if(umbrellaVal > maxUmbrellaVal) {
@@ -133,9 +133,9 @@ namespace ttk {
       std::map<int, std::vector<int>> &pointThreshUmbrellas,
       int &nUmbrellas,
       const DT *coords,
-      const DT *pws,
-      const DT *pcs,
-      const DT threshVal,
+      const double *pws,
+      const double *pcs,
+      const double threshVal,
       const int nPoints) const {
 
       ttk::Timer timer;
@@ -158,31 +158,31 @@ namespace ttk {
           const DT dy = coords[i3 + 1] - coords[j3 + 1];
           const DT dz = coords[i3 + 2] - coords[j3 + 2];
 
-          const DT sq = dx * dx + dy * dy + dz * dz;
+          const double sq = dx * dx + dy * dy + dz * dz;
 
-          DT a = ((-0.5 / pcs[i]) - (-0.5 / pcs[j])) * sq;
-          DT b = 2 * (-0.5 / pcs[j]) * sq;
-          DT c
+          double a = ((-0.5 / pcs[i]) - (-0.5 / pcs[j])) * sq;
+          double b = 2 * (-0.5 / pcs[j]) * sq;
+          double c
             = (-1 * (-0.5 / pcs[j]) * sq) + std::log(pws[i]) - std::log(pws[j]);
-          DT t;
+          double t;
           int status = 0;
-          status = this->rootsQuadratic<DT>(a, b, c, t);
+          status = this->rootsQuadratic<double>(a, b, c, t);
           t = 1 - t; // we have looked at i - j, but we want to do the gaussian
                      // function for j so we have to switch around.
 
           if(!status)
             break;
 
-          const DT pT[3]
+          const double pT[3]
             = {coords[i3 + 0] - (t * dx), coords[i3 + 1] - (t * dy),
                coords[i3 + 2] - (t * dz)};
-          const DT dxT = coords[i3 + 0] - pT[0];
-          const DT dyT = coords[i3 + 1] - pT[1];
-          const DT dzT = coords[i3 + 2] - pT[2];
-          const DT sqT = dxT * dxT + dyT * dyT + dzT * dzT;
+          const double dxT = coords[i3 + 0] - pT[0];
+          const double dyT = coords[i3 + 1] - pT[1];
+          const double dzT = coords[i3 + 2] - pT[2];
+          const double sqT = dxT * dxT + dyT * dyT + dzT * dzT;
 
           // Evaluate js value at intersection between i and j
-          const DT umbrellaVal = pws[j] * std::exp(-0.5 * (sqT) / pcs[j]);
+          const double umbrellaVal = pws[j] * std::exp(-0.5 * (sqT) / pcs[j]);
 
           if(umbrellaVal >= threshVal) {
             if(pws[j] > maxUmbrellaVal) {
@@ -231,8 +231,8 @@ namespace ttk {
     int computeUnimodality(std::map<int, std::vector<int>> &pointClusters,
                            int &nClusters,
                            const DT *coords,
-                           const DT *pws,
-                           const DT *pcs,
+                           const double *pws,
+                           const double *pcs,
                            const int nPoints) const {
 
       ttk::Timer timer;

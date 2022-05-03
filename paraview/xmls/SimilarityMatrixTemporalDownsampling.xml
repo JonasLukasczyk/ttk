@@ -2,7 +2,9 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
     <SourceProxy name="ttkSimilarityMatrixTemporalDownsampling" class="ttkSimilarityMatrixTemporalDownsampling" label="TTK SimilarityMatrixTemporalDownsampling">
-      <Documentation long_help="SimilarityMatrixTemporalDownsampling Long" short_help="SimilarityMatrixTemporalDownsampling Short"></Documentation>
+      <Documentation long_help="SimilarityMatrixTemporalDownsampling Long" short_help="SimilarityMatrixTemporalDownsampling Short">
+      Downsamples a sequence of similarity matrices based on a chosen time interval.
+      </Documentation>
 
       <!-- INPUT DATA OBJECTS -->
       <InputProperty name="Input" command="SetInputConnection">

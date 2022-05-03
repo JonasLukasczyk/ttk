@@ -3,7 +3,7 @@
   <ProxyGroup name="filters">
     <SourceProxy name="ttkGaussianModeClustering" class="ttkGaussianModeClustering" label="TTK GaussianModeClustering">
       <Documentation long_help="GaussianModeClustering" short_help="GaussianModeClustering">
-        TODO
+        This filters clusters a set of points based on Gaussian functions, where each point should have amplitude and variance values. The points can be clusteres based on the maximum of the Gaussian functions or the sum of Gaussian functions. We also generate feature similarities between time steps for the points, and output the corresponding cluster representatives (The point with the highest amplitude).
       </Documentation>
 
       <InputProperty name="Points" port_index="0" command="SetInputConnection">
@@ -27,7 +27,7 @@
             <Property function="Input" name="Points" />
           </RequiredProperties>
         </ArrayListDomain>
-        <Documentation>Feature Ids.</Documentation>
+        <Documentation>The array that contains the ids of points.</Documentation>
       </StringVectorProperty>
 
       <StringVectorProperty
@@ -86,11 +86,17 @@
           <Entry value="1" text="Thresholded Umbrella"/>
           <Entry value="2" text="Unimodality"/>
         </EnumerationDomain>
-        <Documentation>Kernel.</Documentation>
+        <Documentation>There are three possible ways to cluster gaussians: 1. Umbrella (Max Field), where we check if the maximum of one Gaussian is within the umbrella of the other, 2. Thresholded Umbrella (Max Field), we apply a minimum threshold value that the intersections have to be over, 3. Unimodality (Sum Field), we check whether two adjacent Gaussians when added together are unimodal or bimodal.</Documentation>
       </IntVectorProperty>
 
       <DoubleVectorProperty name="ScalarThreshold" command="SetScalarThreshold" number_of_elements="1" default_values="0.5">
         <Documentation>Threshold used to create an optional umbrella clustering where only points with values above the threshold are considered.</Documentation>
+        <Hints>
+            <PropertyWidgetDecorator type="GenericDecorator"
+            mode="visibility"
+            property="ClusteringType"
+            value="1" />
+        </Hints>
       </DoubleVectorProperty>
 
       <!-- Create a UI group that contains all output parameter widgets-->
