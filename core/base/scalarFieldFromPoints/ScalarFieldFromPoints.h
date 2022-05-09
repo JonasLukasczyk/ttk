@@ -34,108 +34,11 @@ namespace ttk {
     };
     ~ScalarFieldFromPoints(){};
 
-    template <KERNEL k>
-    int computeScalarField2D(double *maxValData,
-                             double *addValData,
-                             int *maxIdData,
-                             const double *pointCoordiantes,
-                             const double *weights,
-                             const double *constants,
-                             const double *bounds,
-                             const double *spacing,
-                             const int *dims,
-                             const size_t &nPoints,
-                             const size_t &nPixels) const {
-      ttk::Timer timer;
-
-      this->printMsg("Computing Scalar Field 2D",
-                     0, // progress form 0-1
-                     0, // elapsed time so far
-                     this->threadNumber_, ttk::debug::LineMode::REPLACE);
-
-      const double dx = spacing[0];
-      const double dy = spacing[1];
-      const double dx2 = dx / 2.0;
-      const double dy2 = dy / 2.0;
-      const int width = dims[0];
-      const int height = dims[1];
-
-      const double xBound = bounds[0] - dx2;
-      const double yBound = bounds[2] - dy2;
-
-      // create locks
-      omp_lock_t lock[nPixels];
-
-      // clear data and init locks
-      for(int i = 0, j = nPixels; i < j; i++) {
-        maxValData[i] = 0.0;
-        addValData[i] = 0.0;
-        maxIdData[i] = -1;
-        omp_init_lock(&(lock[i]));
-      }
-
-// compute scalar field
-#ifdef TTK_ENABLE_OPENMP
-#pragma omp parallel for num_threads(this->threadNumber_)
-#endif
-      for(size_t i = 0; i < nPoints; i++) {
-        const double &xP = pointCoordiantes[i * 3 + 0];
-        const double &yP = pointCoordiantes[i * 3 + 1];
-
-        const int xi
-          = std::min(width, std::max(0, (int)floor((xP - xBound) / dx)));
-        const int yi
-          = std::min(height, std::max(0, (int)floor((yP - yBound) / dy)));
-
-        const int kdx = floor(3 * sqrt(constants[i]) / dx + 0.5);
-        const int kdy = floor(3 * sqrt(constants[i]) / dy + 0.5);
-
-        const int x0 = std::max(0, std::min(width - 1, xi - kdx));
-        const int x1 = std::max(0, std::min(width - 1, xi + kdx));
-        const int y0 = std::max(0, std::min(height - 1, yi - kdy));
-        const int y1 = std::max(0, std::min(height - 1, yi + kdy));
-
-        // for all points in the bandwidth interval, calculate scalar value
-        for(int x = x0; x <= x1; x++) {
-          for(int y = y0; y <= y1; y++) {
-            double xxx = (x - xi) * dx;
-            double yyy = (y - yi) * dy;
-            const double u = (xxx * xxx + yyy * yyy);
-            const double ku = k(u, constants[i], weights[i]);
-
-            int pixelIndex = y * width + x;
-            omp_set_lock(&(lock[pixelIndex]));
-            // Max mixture
-            if(ku > maxValData[pixelIndex]) {
-              maxValData[pixelIndex] = ku;
-              maxIdData[pixelIndex] = i;
-            }
-
-            // Additive mixture
-            addValData[pixelIndex] += ku;
-            omp_unset_lock(&(lock[pixelIndex]));
-          }
-        }
-      }
-
-      // destroy all locks
-      for(int i = 0, j = nPixels; i < j; i++) {
-        omp_destroy_lock(&(lock[i]));
-      }
-
-      // print the progspacings of the current subprocedure with elapsed time
-      this->printMsg("Computing Scalar Field 2D",
-                     1, // progress
-                     timer.getElapsedTime(), this->threadNumber_);
-
-      return 1; // return success
-    }
-
-    template <KERNEL k>
+    template <KERNEL k, typename DT>
     int computeScalarField3D(double *maxValData,
                              double *addValData,
                              int *maxIdData,
-                             const double *pointCoordiantes,
+                             const DT *pointCoordiantes,
                              const double *weights,
                              const double *constants,
                              const double *bounds,
@@ -180,9 +83,9 @@ namespace ttk {
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif
       for(size_t i = 0; i < nPoints; i++) {
-        const double &xP = pointCoordiantes[i * 3 + 0];
-        const double &yP = pointCoordiantes[i * 3 + 1];
-        const double &zP = pointCoordiantes[i * 3 + 2];
+        const double xP = pointCoordiantes[i * 3 + 0];
+        const double yP = pointCoordiantes[i * 3 + 1];
+        const double zP = pointCoordiantes[i * 3 + 2];
 
         const int xi
           = std::min(width, std::max(0, (int)floor((xP - xBound) / dx)));

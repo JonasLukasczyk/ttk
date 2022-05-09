@@ -4,7 +4,7 @@
   <ProxyGroup name="filters">
     <SourceProxy name="ScalarFieldFromPoints" class="ttkScalarFieldFromPoints" label="TTK ScalarFieldFromPoints">
       <Documentation long_help="ScalarFieldFromPoints Long" short_help="ScalarFieldFromPoints Short">
-        The filter takes as input points and generates a scalar field.
+        The filter takes as input points and generates scalar fields based on Gaussian functions applied on the points, where the functions takes as input two scalar values that represents amplitude and variance. Two field types are generated: one where the maximum of the Gaussians and that point is yields the field value, and one where the sum of all Gaussians at that point yields the field value.
       </Documentation>
 
       <!-- INPUT -->
@@ -83,7 +83,7 @@
         <EnumerationDomain name="enum">
           <Entry value="0" text="Gaussian" />
         </EnumerationDomain>
-        <Documentation>Kernel.</Documentation>
+        <Documentation>The possible kernels used to generate features. Currently only Gaussians.</Documentation>
       </IntVectorProperty>
 
       <!-- Create a UI group that contains all output parameter widgets-->

@@ -90,8 +90,8 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
           coords0->GetDataType(),
           (status = this->computeUmbrellas<T0>(
              clusters0, nClusters0, ttkUtils::GetPointer<const T0>(coords0),
-             ttkUtils::GetPointer<const T0>(amps0),
-             ttkUtils::GetPointer<const T0>(vars0), nPoints0)));
+             ttkUtils::GetPointer<const double>(amps0),
+             ttkUtils::GetPointer<const double>(vars0), nPoints0)));
         if(!status)
           return 0;
 
@@ -99,8 +99,8 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
           coords1->GetDataType(),
           (status = this->computeUmbrellas<T0>(
              clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
-             ttkUtils::GetPointer<const T0>(amps1),
-             ttkUtils::GetPointer<const T0>(vars1), nPoints1)));
+             ttkUtils::GetPointer<const double>(amps1),
+             ttkUtils::GetPointer<const double>(vars1), nPoints1)));
 
         if(!status)
           return 0;
@@ -112,8 +112,8 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
           coords0->GetDataType(),
           (status = this->computeThresholdedUmbrellas<T0>(
              clusters0, nClusters0, ttkUtils::GetPointer<const T0>(coords0),
-             ttkUtils::GetPointer<const T0>(amps0),
-             ttkUtils::GetPointer<const T0>(vars0), this->ScalarThreshold,
+             ttkUtils::GetPointer<const double>(amps0),
+             ttkUtils::GetPointer<const double>(vars0), this->ScalarThreshold,
              nPoints0)));
         if(!status)
           return 0;
@@ -122,9 +122,31 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
           coords1->GetDataType(),
           (status = this->computeThresholdedUmbrellas<T0>(
              clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
-             ttkUtils::GetPointer<const T0>(amps1),
-             ttkUtils::GetPointer<const T0>(vars1), this->ScalarThreshold,
+             ttkUtils::GetPointer<const double>(amps1),
+             ttkUtils::GetPointer<const double>(vars1), this->ScalarThreshold,
              nPoints1)));
+        if(!status)
+          return 0;
+
+        break;
+      }
+      case 2: {
+        ttkTypeMacroR(
+          coords0->GetDataType(),
+          (status = this->computeUnimodality<T0>(
+             clusters0, nClusters0, ttkUtils::GetPointer<const T0>(coords0),
+             ttkUtils::GetPointer<const double>(amps0),
+             ttkUtils::GetPointer<const double>(vars0), nPoints0)));
+        if(!status)
+          return 0;
+
+        ttkTypeMacroR(
+          coords1->GetDataType(),
+          (status = this->computeUnimodality<T0>(
+             clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
+             ttkUtils::GetPointer<const double>(amps1),
+             ttkUtils::GetPointer<const double>(vars1), nPoints1)));
+
         if(!status)
           return 0;
 
@@ -148,8 +170,8 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
           coords1->GetDataType(),
           (status = this->computeUmbrellas<T0>(
              clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
-             ttkUtils::GetPointer<const T0>(amps1),
-             ttkUtils::GetPointer<const T0>(vars1), nPoints1)));
+             ttkUtils::GetPointer<const double>(amps1),
+             ttkUtils::GetPointer<const double>(vars1), nPoints1)));
 
         if(!status)
           return 0;
@@ -161,9 +183,22 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
           coords1->GetDataType(),
           (status = this->computeThresholdedUmbrellas<T0>(
              clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
-             ttkUtils::GetPointer<const T0>(amps1),
-             ttkUtils::GetPointer<const T0>(vars1), this->ScalarThreshold,
+             ttkUtils::GetPointer<const double>(amps1),
+             ttkUtils::GetPointer<const double>(vars1), this->ScalarThreshold,
              nPoints1)));
+        if(!status)
+          return 0;
+
+        break;
+      }
+      case 2: {
+        ttkTypeMacroR(
+          coords1->GetDataType(),
+          (status = this->computeUnimodality<T0>(
+             clusters1, nClusters1, ttkUtils::GetPointer<const T0>(coords1),
+             ttkUtils::GetPointer<const double>(amps1),
+             ttkUtils::GetPointer<const double>(vars1), nPoints1)));
+
         if(!status)
           return 0;
 
@@ -185,6 +220,17 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
   similarityMatrix->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
   auto matrixData = similarityMatrix->GetPointData()->GetArray(0);
   matrixData->SetName("ClusterCorrespondence");
+
+  std::string s = "Clusters for T="
+                  + std::to_string(clustersPerTimestep.size() - 2) + ": \n";
+  for(auto &clu : clusters0) {
+    s += std::to_string(clu.first) + ": ";
+    for(long unsigned int j = 0; j < clu.second.size(); j++) {
+      s += std::to_string(clu.second[j]) + " ";
+    }
+    s += "\n";
+  }
+  this->printMsg(s);
 
   // compute matrix
   int status = 0;
@@ -304,16 +350,26 @@ int ttkGaussianModeClustering::FormatClusters(vtkDataObject *inputDataObjects,
   newPoints->SetDataType(inPointSet->GetPoints()->GetDataType());
 
   // Copy all data from points to the new clusters
-  double pPos[3];
+  int nNewPoints = 0;
+  for(const auto &cluster : clustersPerTimestep[t]) {
+    if(cluster.second[0] != -1) {
+      nNewPoints++;
+    }
+  }
+
+  newPoints->SetNumberOfPoints(nNewPoints);
+  auto newPointsData = newPoints->GetData();
+  auto inPointsData = inPointSet->GetPoints()->GetData();
+  int p = 0;
   auto vertId = vtkSmartPointer<vtkIdList>::New();
   for(const auto &cluster : clustersPerTimestep[t]) {
     if(cluster.second[0] != -1) {
-      inPointSet->GetPoint(cluster.first, pPos);
-      int p = newPoints->InsertNextPoint(pPos);
+      newPointsData->SetTuple(p, cluster.first, inPointsData);
       vertId->InsertId(0, p);
       int c = outputPoints->InsertNextCell(VTK_VERTEX, vertId);
       outPD->CopyData(inPD, cluster.first, p);
       outCD->CopyData(inCD, cluster.first, c);
+      p++;
     }
   }
 
