@@ -238,6 +238,9 @@ int ttkTrackingGraph::CountNodesAndEdges(int &nNodes,
 
       nodeIdxOffsets[t] = dim[0] + nodeIdxOffsets[t - 1];
 
+      if(dim[0]==0 || dim[1]==0)
+        continue;
+
       // edges
       auto matrix = this->GetInputArrayToProcess(0, c);
       switch(matrix->GetDataType()) {
@@ -281,11 +284,12 @@ int ttkTrackingGraph::Validate(vtkMultiBlockDataSet *similarities,
 
   const int nSteps = similarities->GetNumberOfBlocks();
   for(int t = 0; t < nSteps; t++) {
-    auto c = similarities->GetBlock(t);
-    if(!c || !c->IsA("vtkImageData"))
+    auto block = vtkImageData::SafeDownCast(similarities->GetBlock(t));
+    if(!block)
       return !this->printErr(errmsg0);
-    auto matrix = this->GetInputArrayToProcess(0, c);
-    if(!matrix)
+
+    auto matrix = this->GetInputArrayToProcess(0, block);
+    if(!matrix && block->GetNumberOfPoints()>0)
       return !this->printErr("Unable to retrieve similarity matrix.");
   }
 

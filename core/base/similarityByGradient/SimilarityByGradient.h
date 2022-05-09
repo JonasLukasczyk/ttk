@@ -101,17 +101,13 @@ namespace ttk {
         this->computeGradientPath<IT, TT, CF>(
           matchIdx, seedIdx, order, triangulation, comperatorFunction);
 
-        bool found = false;
+        // add matches to matix. Note: it is possible that a matched extrema is not in the feature list (i.e., not tracked)
         for(IT j = 0; j < nFeatures1; j++) {
           if(criticalPointVertexIds1[j] == matchIdx) {
             matrix[indexFunction(i, j, nFeatures0, nFeatures1)] = 1;
-            found = true;
             break;
           }
         }
-        if(!found)
-          this->printErr(
-            "Unable to find matched vertex in given list of extrema.");
       }
 
       this->printMsg("Computing Similarity Matrix", 1, timer.getElapsedTime(),
