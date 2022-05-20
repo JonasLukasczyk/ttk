@@ -24,9 +24,9 @@ private:
   double ScalarThreshold{0.0};
 
   // For clustering points
-  std::vector<std::map<int, std::vector<int>>> clustersPerTimestep;
-  int nClusters0;
-  int nClusters1;
+  std::vector<std::map<int, std::vector<int>>> clustersPerTimestep_;
+  int nClusters0_;
+  int nClusters1_;
 
 public:
   vtkSetMacro(ClusteringType, int);
@@ -48,19 +48,11 @@ protected:
                               vtkDataObject *inputDataObjects0,
                               vtkDataObject *inputDataObjects1) override;
 
-  // int ComputeThresholdedClustering(vtkImageData *similarityMatrix,
-  //                                  vtkDataObject *inputDataObjects0,
-  //                                  vtkDataObject *inputDataObjects1);
-
   int AddClusterIds(vtkDataObject *inputDataObjects, const size_t t);
 
   int FormatClusters(vtkDataObject *inputDataObjects,
                      vtkPolyData *outputPoints,
                      const size_t t);
-
-  // int FormatThresholdedClusters(vtkDataObject *inputDataObjects,
-  //                               vtkPolyData *outputPoints,
-  //                               const size_t t);
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,

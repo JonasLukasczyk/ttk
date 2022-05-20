@@ -27,73 +27,32 @@ namespace ttk {
     };
     ~GaussianModeClustering(){};
 
-    template <typename DT>
-    int computeUmbrellas(std::map<int, std::vector<int>> &pointUmbrellas,
-                         int &nUmbrellas,
-                         const DT *coords,
-                         const double *pws,
-                         const double *pcs,
-                         const int nPoints) const {
+    // Class used to determine which vector fields exist and can be used
+    enum class ClusteringType {
+      UmbrellaClustering,
+      ThresholdedUmbrellaClustering,
+      Unimodality
+    };
 
-      ttk::Timer timer;
-
-      const std::string msg = "Computing Point Umbrellas";
-      this->printMsg(
-        msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
-
-      // umbrella indices list
-      std::vector<int> inUmbrella(nPoints);
-      for(int i = 0; i < nPoints; i++) {
-        int maxUmbrellaIndex = -1;
-        double maxUmbrellaVal = 0.0;
-
-        for(int j = 0; j < nPoints; j++) {
-          const int i3 = i * 3;
-          const int j3 = j * 3;
-
-          const DT dx = coords[i3 + 0] - coords[j3 + 0];
-          const DT dy = coords[i3 + 1] - coords[j3 + 1];
-          const DT dz = coords[i3 + 2] - coords[j3 + 2];
-
-          // Evaluate js value at i
-          const double umbrellaVal
-            = pws[j] * std::exp(-0.5 * (dx * dx + dy * dy + dz * dz) / pcs[j]);
-
-          if(umbrellaVal > maxUmbrellaVal) {
-            maxUmbrellaVal = umbrellaVal;
-            maxUmbrellaIndex = j;
-          }
+    void setClusteringType(const int ct) {
+      switch(ct) {
+        case 0: {
+          clusteringType_ = ClusteringType::UmbrellaClustering;
+          break;
         }
-        inUmbrella[i] = maxUmbrellaIndex;
-      }
-
-      // initialize umbrellas with point representatives
-      for(int i = 0; i < nPoints; i++) {
-        if(inUmbrella[i] == i) {
-          pointUmbrellas[i] = std::vector<int>(0);
-          pointUmbrellas[i].push_back(i);
-          nUmbrellas++;
+        case 1: {
+          clusteringType_ = ClusteringType::ThresholdedUmbrellaClustering;
+          break;
+        }
+        case 2: {
+          clusteringType_ = ClusteringType::Unimodality;
+          break;
         }
       }
+    }
 
-      // loop through all points
-      for(int i = 0; i < nPoints; i++) {
-        // if a point is not within its own umbrella
-        if(inUmbrella[i] != i) {
-          int j = i;
-
-          // loop until you find the root representative
-          while(j != inUmbrella[j]) {
-            j = inUmbrella[j];
-          }
-
-          pointUmbrellas[j].push_back(i);
-        }
-      }
-
-      this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
-
-      return 1;
+    void setThreshold(const double t) {
+      threshold_ = t;
     }
 
     // ax^2 + bx + c = 0
@@ -129,166 +88,187 @@ namespace ttk {
     }
 
     template <typename DT>
-    int computeThresholdedUmbrellas(
-      std::map<int, std::vector<int>> &pointThreshUmbrellas,
-      int &nUmbrellas,
-      const DT *coords,
-      const double *pws,
-      const double *pcs,
-      const double threshVal,
-      const int nPoints) const {
+    bool umbrellaCondition(const DT iCoords[3],
+                           const DT jCoords[3],
+                           const double pws[2],
+                           const double pcs[2],
+                           double &maxVal) const {
+
+      const DT dx = iCoords[0] - jCoords[0];
+      const DT dy = iCoords[1] - jCoords[1];
+      const DT dz = iCoords[2] - jCoords[2];
+
+      const double sq = dx * dx + dy * dy + dz * dz;
+
+      // Evaluate js value at i
+      const double umbrellaVal = pws[1] * std::exp(-0.5 * (sq) / pcs[1]);
+
+      if(umbrellaVal > maxVal) {
+        maxVal = umbrellaVal;
+        return true;
+      } else
+        return false;
+    }
+
+    template <typename DT>
+    bool thresholdedUmbrellaCondition(const DT iCoords[3],
+                                      const DT jCoords[3],
+                                      const double pws[2],
+                                      const double pcs[2],
+                                      double &maxVal) const {
+
+      const DT dx = iCoords[0] - jCoords[0];
+      const DT dy = iCoords[1] - jCoords[1];
+      const DT dz = iCoords[2] - jCoords[2];
+
+      const double sq = dx * dx + dy * dy + dz * dz;
+
+      double a = ((-0.5 / pcs[0]) - (-0.5 / pcs[1])) * sq;
+      double b = 2 * (-0.5 / pcs[1]) * sq;
+      double c
+        = (-1 * (-0.5 / pcs[1]) * sq) + std::log(pws[0]) - std::log(pws[1]);
+      double t;
+      int status = 0;
+      status = this->rootsQuadratic<double>(a, b, c, t);
+      t = 1 - t; // we have looked at i - j, but we want to do the gaussian
+                 // function for j so we have to switch around.
+
+      if(!status)
+        return false;
+
+      const double pT[3]
+        = {iCoords[0] - (t * dx), iCoords[1] - (t * dy), iCoords[2] - (t * dz)};
+      const double dxT = iCoords[0] - pT[0];
+      const double dyT = iCoords[1] - pT[1];
+      const double dzT = iCoords[2] - pT[2];
+      const double sqT = dxT * dxT + dyT * dyT + dzT * dzT;
+
+      // Evaluate js value at intersection between i and j
+      const double umbrellaVal = pws[1] * std::exp(-0.5 * (sqT) / pcs[1]);
+
+      if(umbrellaVal >= threshold_) {
+        if(pws[1] > maxVal) {
+          maxVal = pws[1];
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    template <typename DT>
+    bool unimodalityCondition(const DT iCoords[3],
+                              const DT jCoords[3],
+                              const double pws[2],
+                              const double pcs[2],
+                              double &maxVal) const {
+
+      const DT dx = iCoords[0] - jCoords[0];
+      const DT dy = iCoords[1] - jCoords[1];
+      const DT dz = iCoords[2] - jCoords[2];
+
+      const double distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+
+      // if i == j
+      if(distance == 0 && pws[0] > maxVal)
+        return true;
+
+      // Check if points are close enough
+      if(std::abs(dx) < 3 * std::sqrt(pcs[1])
+         && std::abs(dy) < 3 * std::sqrt(pcs[1])
+         && std::abs(dz) < 3 * std::sqrt(pcs[1])) {
+
+        if(distance <= 2 * std::min(std::sqrt(pcs[0]), std::sqrt(pcs[1]))
+           && pws[1] > pws[0]) {
+          maxVal = pws[1];
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    template <typename DT>
+    int computeClusters(std::map<int, std::vector<int>> &pointClusters,
+                        int &nClusters,
+                        const DT *coords,
+                        const double *pws,
+                        const double *pcs,
+                        const int nPoints) const {
 
       ttk::Timer timer;
 
-      const std::string msg = "Computing Thresholded Umbrellas";
+      const std::string msg = "Computing Clusters";
       this->printMsg(
         msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
 
       // umbrella indices list
-      std::vector<int> inThreshUmbrella(nPoints);
+      std::vector<int> inCluster(nPoints);
       for(int i = 0; i < nPoints; i++) {
-        int maxUmbrellaIndex = -1;
-        DT maxUmbrellaVal = 0.0;
+        int maxClusterIdx = -1;
+        double maxClusterVal = 0.0;
 
         for(int j = 0; j < nPoints; j++) {
           const int i3 = i * 3;
           const int j3 = j * 3;
 
-          const DT dx = coords[i3 + 0] - coords[j3 + 0];
-          const DT dy = coords[i3 + 1] - coords[j3 + 1];
-          const DT dz = coords[i3 + 2] - coords[j3 + 2];
+          const DT iCoords[3]
+            = {coords[i3 + 0], coords[i3 + 1], coords[i3 + 2]};
+          const DT jCoords[3]
+            = {coords[j3 + 0], coords[j3 + 1], coords[j3 + 2]};
 
-          const double sq = dx * dx + dy * dy + dz * dz;
+          const double pw[2] = {pws[i], pws[j]};
+          const double pc[2] = {pcs[i], pcs[j]};
 
-          double a = ((-0.5 / pcs[i]) - (-0.5 / pcs[j])) * sq;
-          double b = 2 * (-0.5 / pcs[j]) * sq;
-          double c
-            = (-1 * (-0.5 / pcs[j]) * sq) + std::log(pws[i]) - std::log(pws[j]);
-          double t;
-          int status = 0;
-          status = this->rootsQuadratic<double>(a, b, c, t);
-          t = 1 - t; // we have looked at i - j, but we want to do the gaussian
-                     // function for j so we have to switch around.
+          // Evaluate condition to see if i belongs to cluster of j
+          switch(clusteringType_) {
+            case ClusteringType::UmbrellaClustering: {
+              if(umbrellaCondition<DT>(iCoords, jCoords, pw, pc, maxClusterVal))
+                maxClusterIdx = j;
 
-          if(!status)
-            break;
+              break;
+            }
+            case ClusteringType::ThresholdedUmbrellaClustering: {
+              if(thresholdedUmbrellaCondition<DT>(
+                   iCoords, jCoords, pw, pc, maxClusterVal))
+                maxClusterIdx = j;
 
-          const double pT[3]
-            = {coords[i3 + 0] - (t * dx), coords[i3 + 1] - (t * dy),
-               coords[i3 + 2] - (t * dz)};
-          const double dxT = coords[i3 + 0] - pT[0];
-          const double dyT = coords[i3 + 1] - pT[1];
-          const double dzT = coords[i3 + 2] - pT[2];
-          const double sqT = dxT * dxT + dyT * dyT + dzT * dzT;
+              break;
+            }
+            case ClusteringType::Unimodality: {
+              if(unimodalityCondition<DT>(
+                   iCoords, jCoords, pw, pc, maxClusterVal))
+                maxClusterIdx = j;
 
-          // Evaluate js value at intersection between i and j
-          const double umbrellaVal = pws[j] * std::exp(-0.5 * (sqT) / pcs[j]);
-
-          if(umbrellaVal >= threshVal) {
-            if(pws[j] > maxUmbrellaVal) {
-              maxUmbrellaVal = pws[j];
-              maxUmbrellaIndex = j;
+              break;
             }
           }
         }
 
-        inThreshUmbrella[i] = maxUmbrellaIndex;
+        inCluster[i] = maxClusterIdx;
       }
 
       // initialize umbrellas with point representatives
       for(int i = 0; i < nPoints; i++) {
-        if(inThreshUmbrella[i] == i) {
-          pointThreshUmbrellas[i] = std::vector<int>(0);
-          pointThreshUmbrellas[i].push_back(i);
-          nUmbrellas++;
-        } else if(inThreshUmbrella[i] == -1) {
-          pointThreshUmbrellas[i] = std::vector<int>(0);
-          pointThreshUmbrellas[i].push_back(-1);
+        if(inCluster[i] == i) {
+          pointClusters[i] = std::vector<int>(0);
+          pointClusters[i].push_back(i);
+          nClusters++;
+        } else if(inCluster[i] == -1) {
+          pointClusters[i] = std::vector<int>(0);
+          pointClusters[i].push_back(-1);
         }
       }
 
       // loop through all points
       for(int i = 0; i < nPoints; i++) {
         // if a point is not within its own umbrella
-        if(inThreshUmbrella[i] != i && inThreshUmbrella[i] != -1) {
+        if(inCluster[i] != i && inCluster[i] != -1) {
           int j = i;
 
           // loop until you find the root representative
-          while(j != inThreshUmbrella[j]) {
-            j = inThreshUmbrella[j];
-          }
-
-          pointThreshUmbrellas[j].push_back(i);
-        }
-      }
-
-      this->printMsg(msg, 1, timer.getElapsedTime(), this->threadNumber_);
-
-      return 1;
-    }
-
-    template <typename DT>
-    int computeUnimodality(std::map<int, std::vector<int>> &pointClusters,
-                           int &nClusters,
-                           const DT *coords,
-                           const double *pws,
-                           const double *pcs,
-                           const int nPoints) const {
-
-      ttk::Timer timer;
-
-      const std::string msg = "Computing Unimodality";
-      this->printMsg(
-        msg, 0, 0, this->threadNumber_, ttk::debug::LineMode::REPLACE);
-
-      // indices list
-      std::vector<int> inClusters(nPoints);
-      for(int i = 0; i < nPoints; i++) {
-        int maxClusterIndex = i;
-        DT maxClusterVal = pws[i];
-
-        for(int j = 0; j < nPoints; j++) {
-          const int i3 = i * 3;
-          const int j3 = j * 3;
-
-          const DT dx = coords[i3 + 0] - coords[j3 + 0];
-          const DT dy = coords[i3 + 1] - coords[j3 + 1];
-          const DT dz = coords[i3 + 2] - coords[j3 + 2];
-
-          // Check if points are close enough
-          if(std::abs(dx) < 3 * std::sqrt(pcs[j])
-             && std::abs(dy) < 3 * std::sqrt(pcs[j])
-             && std::abs(dz) < 3 * std::sqrt(pcs[j])) {
-
-            // points fulfill criteria and has the highest "mean" value
-            if(std::abs(pws[j] - pws[i])
-                 >= 2 * std::min(std::sqrt(pcs[i]), std::sqrt(pcs[j]))
-               && pws[j] > pws[i] && pws[j] > maxClusterVal) {
-              maxClusterIndex = j;
-            }
-          }
-        }
-        inClusters[i] = maxClusterIndex;
-      }
-
-      // initialize with point representatives
-      for(int i = 0; i < nPoints; i++) {
-        if(inClusters[i] == i) {
-          pointClusters[i] = std::vector<int>(0);
-          pointClusters[i].push_back(i);
-          nClusters++;
-        }
-      }
-
-      // loop through all points
-      for(int i = 0; i < nPoints; i++) {
-        // if a point is not within its own gaussian
-        if(inClusters[i] != i) {
-          int j = i;
-
-          // loop until you find the root representative
-          while(j != inClusters[j]) {
-            j = inClusters[j];
+          while(j != inCluster[j]) {
+            j = inCluster[j];
           }
 
           pointClusters[j].push_back(i);
@@ -343,5 +323,9 @@ namespace ttk {
 
       return 1;
     }
+
+  protected:
+    ClusteringType clusteringType_{};
+    double threshold_{};
   };
 } // namespace ttk
