@@ -160,6 +160,15 @@ int ttkGaussianModeClustering::ComputeSimilarityMatrix(
     }
   }
 
+  // Create arrays for time data
+  auto timeArray = vtkSmartPointer<vtkIntArray>::New();
+  timeArray->SetName("Timesteps");
+  timeArray->SetNumberOfComponents(1);
+  timeArray->SetNumberOfTuples(2);
+  timeArray->SetTuple1(0, clustersPerTimestep_.size() - 2);
+  timeArray->SetTuple1(1, clustersPerTimestep_.size() - 1);
+  similarityMatrix->GetFieldData()->AddArray(timeArray);
+
   status = ttkSimilarityAlgorithm::AddIndexIdMaps(
     similarityMatrix, clusterIds0, clusterIds1);
   if(!status)

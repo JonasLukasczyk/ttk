@@ -5,6 +5,7 @@
 #include <vtkDataArray.h>
 #include <vtkDataSet.h>
 #include <vtkImageData.h>
+#include <vtkIntArray.h>
 #include <vtkMultiBlockDataSet.h>
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
@@ -54,9 +55,13 @@ int ttkSimilarityMatrixTemporalDownsampling::RequestData(
 
   auto outputMB = vtkMultiBlockDataSet::GetData(outputVector);
 
-  if(this->SamplingInterval < 2) {
-    return !this->printErr("Sampling interval must be at least 2");
+  if(this->SamplingInterval < 1) {
+    return !this->printErr("Sampling interval must be at least 1");
+  } else if(this->SamplingInterval == 1) {
+    outputMB->ShallowCopy(inputMB);
+    return 1;
   }
+
   int interval = this->SamplingInterval;
 
   for(int i = 1; i < nTimesteps; i += interval) {
@@ -118,6 +123,14 @@ int ttkSimilarityMatrixTemporalDownsampling::RequestData(
 
       prevMatrix->DeepCopy(outMatrix);
     }
+
+    auto timeArray = vtkSmartPointer<vtkIntArray>::New();
+    timeArray->SetName("Timesteps");
+    timeArray->SetNumberOfComponents(1);
+    timeArray->SetNumberOfTuples(2);
+    timeArray->SetTuple1(0, i - 1);
+    timeArray->SetTuple1(1, i + (interval - 2));
+    outMatrix->GetFieldData()->AddArray(timeArray);
 
     outputMB->SetBlock(outputMB->GetNumberOfBlocks(), outMatrix);
 

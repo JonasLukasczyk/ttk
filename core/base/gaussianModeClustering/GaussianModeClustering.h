@@ -117,43 +117,29 @@ namespace ttk {
                                       const double pcs[2],
                                       double &maxVal) const {
 
-      const DT dx = iCoords[0] - jCoords[0];
-      const DT dy = iCoords[1] - jCoords[1];
-      const DT dz = iCoords[2] - jCoords[2];
+      const DT dx = jCoords[0] - iCoords[0];
+      const DT dy = jCoords[1] - iCoords[1];
+      const DT dz = jCoords[2] - iCoords[2];
 
-      const double sq = dx * dx + dy * dy + dz * dz;
+      const double distance = dx * dx + dy * dy + dz * dz;
 
-      double a = ((-0.5 / pcs[0]) - (-0.5 / pcs[1])) * sq;
-      double b = 2 * (-0.5 / pcs[1]) * sq;
-      double c
-        = (-1 * (-0.5 / pcs[1]) * sq) + std::log(pws[0]) - std::log(pws[1]);
-      double t;
-      int status = 0;
-      status = this->rootsQuadratic<double>(a, b, c, t);
-      t = 1 - t; // we have looked at i - j, but we want to do the gaussian
-                 // function for j so we have to switch around.
-
-      if(!status)
+      // Thresholded gaussians with same variance in all dimensions end up as
+      // circles/spheres
+      const double ri = std::log(threshold_ / pws[0]) * (-2.0 * pcs[0]);
+      const double rj = std::log(threshold_ / pws[1]) * (-2.0 * pcs[1]);
+      if(ri < 0 || rj < 0)
         return false;
 
-      const double pT[3]
-        = {iCoords[0] - (t * dx), iCoords[1] - (t * dy), iCoords[2] - (t * dz)};
-      const double dxT = iCoords[0] - pT[0];
-      const double dyT = iCoords[1] - pT[1];
-      const double dzT = iCoords[2] - pT[2];
-      const double sqT = dxT * dxT + dyT * dyT + dzT * dzT;
+      // no overlap
+      if(std::sqrt(ri) + std::sqrt(rj) < std::sqrt(distance))
+        return false;
 
-      // Evaluate js value at intersection between i and j
-      const double umbrellaVal = pws[1] * std::exp(-0.5 * (sqT) / pcs[1]);
-
-      if(umbrellaVal >= threshold_) {
-        if(pws[1] > maxVal) {
-          maxVal = pws[1];
-          return true;
-        }
-      }
-
-      return false;
+      // they are connected
+      if(pws[1] > maxVal) {
+        maxVal = pws[1];
+        return true;
+      } else
+        return false;
     }
 
     template <typename DT>
@@ -189,6 +175,47 @@ namespace ttk {
     }
 
     template <typename DT>
+    bool intersectionCondition(const DT iCoords[3],
+                               const DT jCoords[3],
+                               const double pws[2],
+                               const double pcs[2],
+                               double &maxVal) const {
+
+      const DT dx = iCoords[0] - jCoords[0];
+      const DT dy = iCoords[1] - jCoords[1];
+      const DT dz = iCoords[2] - jCoords[2];
+
+      const double sq = dx * dx + dy * dy + dz * dz;
+
+      double a = ((-0.5 / pcs[0]) - (-0.5 / pcs[1])) * sq;
+      double b = 2 * (-0.5 / pcs[1]) * sq;
+      double c
+        = (-1 * (-0.5 / pcs[1]) * sq) + std::log(pws[0]) - std::log(pws[1]);
+      double t;
+      int status = 0;
+      status = this->rootsQuadratic<double>(a, b, c, t);
+      double ti = 1 - t; // for i
+      double tj = t; // for j
+
+      const double sqTi
+        = (ti * dx) * (ti * dx) + (ti * dy) * (ti * dy) + (ti * dz) * (ti * dz);
+      const double sqTj
+        = (tj * dx) * (tj * dx) + (tj * dy) * (tj * dy) + (tj * dz) * (tj * dz);
+
+      // Evaluate the summed value at intersection between i and j
+      const double intersectionVal
+        = pws[0] * std::exp(-0.5 * (sqTj) / pcs[0])
+          + pws[1] * std::exp(-0.5 * (sqTi) / pcs[1]);
+
+      if(intersectionVal > pws[1] && pws[1] > maxVal) {
+        maxVal = pws[1];
+        return true;
+      }
+
+      return false;
+    }
+
+    template <typename DT>
     int computeClusters(std::map<int, std::vector<int>> &pointClusters,
                         int &nClusters,
                         const DT *coords,
@@ -204,9 +231,13 @@ namespace ttk {
 
       // umbrella indices list
       std::vector<int> inCluster(nPoints);
+      std::vector<double> clusterMaxVals(nPoints);
       for(int i = 0; i < nPoints; i++) {
-        int maxClusterIdx = -1;
-        double maxClusterVal = 0.0;
+        inCluster[i] = -1;
+        clusterMaxVals[i] = 0.0;
+      }
+
+      for(int i = 0; i < nPoints; i++) {
 
         for(int j = 0; j < nPoints; j++) {
           const int i3 = i * 3;
@@ -223,29 +254,34 @@ namespace ttk {
           // Evaluate condition to see if i belongs to cluster of j
           switch(clusteringType_) {
             case ClusteringType::UmbrellaClustering: {
-              if(umbrellaCondition<DT>(iCoords, jCoords, pw, pc, maxClusterVal))
-                maxClusterIdx = j;
+              if(umbrellaCondition<DT>(
+                   iCoords, jCoords, pw, pc, clusterMaxVals[i]))
+                inCluster[i] = j;
 
               break;
             }
             case ClusteringType::ThresholdedUmbrellaClustering: {
               if(thresholdedUmbrellaCondition<DT>(
-                   iCoords, jCoords, pw, pc, maxClusterVal))
-                maxClusterIdx = j;
+                   iCoords, jCoords, pw, pc, clusterMaxVals[i])) {
+                if(inCluster[i] > -1 && inCluster[i] != i && i != j) {
+
+                  inCluster[inCluster[i]] = j;
+                  clusterMaxVals[inCluster[i]] = clusterMaxVals[i];
+                }
+                inCluster[i] = j;
+              }
 
               break;
             }
             case ClusteringType::Unimodality: {
               if(unimodalityCondition<DT>(
-                   iCoords, jCoords, pw, pc, maxClusterVal))
-                maxClusterIdx = j;
+                   iCoords, jCoords, pw, pc, clusterMaxVals[i]))
+                inCluster[i] = j;
 
               break;
             }
           }
         }
-
-        inCluster[i] = maxClusterIdx;
       }
 
       // initialize umbrellas with point representatives
