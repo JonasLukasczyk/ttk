@@ -27,8 +27,8 @@
 
       <Hints>
         <ShowInMenu category="TTK - Misc" />
-        <LiveSource interval="500" />
-        <Visibility replace_input="0" />
+        <!--<LiveSource interval="500" />-->
+        <!--<Visibility replace_input="0" />-->
       </Hints>
     </SourceProxy>
   </ProxyGroup>
