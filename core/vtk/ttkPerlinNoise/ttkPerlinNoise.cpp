@@ -114,9 +114,9 @@ int ttkPerlinNoise::RequestData(vtkInformation *,
   int dimZ = 0;
   int nTuples = 0;
 
-  if(this->Resolution[2] == 0) {
+  if(this->Resolution[2] == 1) {
     nTuples = this->Resolution[0] * this->Resolution[1];
-  } else if(this->Resolution[2] > 0) {
+  } else if(this->Resolution[2] > 1) {
     dimZ = this->Resolution[2] - 1;
     nTuples = this->Resolution[0] * this->Resolution[1] * this->Resolution[2];
   } else {
@@ -146,7 +146,7 @@ int ttkPerlinNoise::RequestData(vtkInformation *,
 
       initializeOutput(output, extent, nTuples, -1);
 
-      if(this->Resolution[2] == 0) {
+      if(this->Resolution[2] == 1) {
         // Calculate 2D noise for image
         int dims[2] = {this->Resolution[0], this->Resolution[1]};
         switch(VTK_DOUBLE) {
@@ -193,7 +193,7 @@ int ttkPerlinNoise::RequestData(vtkInformation *,
       initializeOutput(output, extent, nTuples, this->TimeStep);
 
       // Check perlin dimension
-      if(this->Resolution[2] == 0) {
+      if(this->Resolution[2] == 1) {
         // Get 2D+T noise for chosen time-step
         int dims[2] = {this->Resolution[0], this->Resolution[1]};
         switch(VTK_DOUBLE) {
@@ -250,7 +250,7 @@ int ttkPerlinNoise::RequestData(vtkInformation *,
         initializeOutput(image, extent, nTuples, time);
 
         // Check perlin dimension
-        if(this->Resolution[2] == 0) {
+        if(this->Resolution[2] == 1) {
           int dims[2] = {this->Resolution[0], this->Resolution[1]};
           // Execute perlin for time-step
           switch(VTK_DOUBLE) {

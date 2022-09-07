@@ -25,7 +25,7 @@ class TTKPERLINNOISE_EXPORT ttkPerlinNoise : public ttkAlgorithm,
                                              protected ttk::PerlinNoise {
 private:
   int Resolution[3]{0, 0, 0};
-  int Scale{0};
+  double Scale{0};
   int Frequency{0};
   int nOctaves{0};
   double Persistence{0.0};
@@ -39,8 +39,8 @@ public:
   vtkSetVector3Macro(Resolution, int);
   vtkGetVector3Macro(Resolution, int);
 
-  vtkSetMacro(Scale, int);
-  vtkGetMacro(Scale, int);
+  vtkSetMacro(Scale, double);
+  vtkGetMacro(Scale, double);
 
   vtkSetMacro(Frequency, int);
   vtkGetMacro(Frequency, int);

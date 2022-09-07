@@ -58,8 +58,27 @@
         <Documentation>The array that contains the point variance.</Documentation>
       </StringVectorProperty>
 
+      <StringVectorProperty
+        name="IdArray"
+        label="Point Id"
+        command="SetInputArrayToProcess"
+        element_types="0 0 0 0 2"
+        number_of_elements="5"
+        default_values="4 0 0 0 PointId">
+        <ArrayListDomain
+          name="ids"
+          input_domain_name="point_array"
+          >
+          <RequiredProperties>
+            <Property function="Input" name="Input" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>The array that contains the point ids.</Documentation>
+      </StringVectorProperty>
+
       <!-- Create a UI group that contains all input parameter widgets-->
       <PropertyGroup panel_widget="Line" label="Input Options">
+        <Property name="IdArray" />
         <Property name="AmpArray" />
         <Property name="VarArray" />
       </PropertyGroup>

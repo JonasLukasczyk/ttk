@@ -11,9 +11,9 @@
                 <Documentation>The Resolution dimensions of the generated noise data.</Documentation>
             </IntVectorProperty>
 
-            <IntVectorProperty name="Scale" label="Scale" command="SetScale" number_of_elements="1" default_values="10">
+            <DoubleVectorProperty name="Scale" label="Scale" command="SetScale" number_of_elements="1" default_values="10">
                 <Documentation>The scale of the noise.</Documentation>
-            </IntVectorProperty>
+            </DoubleVectorProperty>
             <IntVectorProperty name="Frequency" label="Frequency" command="SetFrequency" number_of_elements="1" default_values="1">
                 <Documentation>The frequency of the noise.</Documentation>
             </IntVectorProperty>
