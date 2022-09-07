@@ -92,12 +92,18 @@ namespace ttk {
       bottleneckDistance_.setPVAlgorithm(pvAlgorithm);
       bottleneckDistance_.setWasserstein(wasserstein);
 
-      bottleneckDistance_.setCTDiagram1(&CTDiagram0);
-      bottleneckDistance_.setCTDiagram2(&CTDiagram1);
-      bottleneckDistance_.setOutputMatchings(&matchings);
-      int status = bottleneckDistance_.execute<double>(false);
-      if(status < 0)
-        return -1;
+      // int status = bottleneckDistance_.computeBottleneck(
+      //   CTDiagram0,
+      //   CTDiagram1,
+      //   matchings
+      // );
+
+      // bottleneckDistance_.setCTDiagram1(&CTDiagram0);
+      // bottleneckDistance_.setCTDiagram2(&CTDiagram1);
+      // bottleneckDistance_.setOutputMatchings(&matchings);
+      // int status = bottleneckDistance_.execute<double>(false);
+      // if(status < 0)
+      //   return -1;
 
       return 1;
     }

@@ -12,6 +12,17 @@
 /// \param Input vtkDataObject that will be added as a block.
 /// \param Output vtkMultiBlockDataSet containing all added blocks.
 /// \sa ttkAlgorithm
+////
+/// \b Online \b examples: \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/contourTreeAlignment/">Contour
+///   Tree Alignment example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/mergeTreeClustering/">Merge
+///   Tree Clustering example</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/nestedTrackingFromOverlap/">Nested
+///   Tracking from Overlap example</a> \n
 
 #pragma once
 
@@ -47,5 +58,6 @@ protected:
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,
                   vtkInformationVector *outputVector) override;
+
   int AggregateBlock(vtkMultiBlockDataSet* collection, vtkDataObject *item);
 };

@@ -251,8 +251,8 @@ int ttkSimilarityByPersistencePairs::getDiagram(
 
     if(pairIdentifier != -1 && pairIdentifier < pairingsSize)
       diagram.at(pairIdentifier)
-        = std::make_tuple(vertexId1, (BNodeType)nodeType1, vertexId2,
-                          (BNodeType)nodeType2, (dataType)persistence, pairType,
+        = std::make_tuple(vertexId1, (ttk::CriticalType)nodeType1, vertexId2,
+                          (ttk::CriticalType)nodeType2, (dataType)persistence, pairType,
                           value1, x1, y1, z1 + s, value2, x2, y2, z2 + s);
 
     if(pairIdentifier >= pairingsSize) {
@@ -273,10 +273,10 @@ int ttkSimilarityByPersistencePairs::getDiagram(
     this->printWrn(msg.str());
   }
 
-  sort(diagram.begin(), diagram.end(),
-       [](const diagramTuple &a, const diagramTuple &b) -> bool {
-         return std::get<6>(a) < std::get<6>(b);
-       });
+  // sort(diagram.begin(), diagram.end(),
+  //     [](const diagramTuple &a, const diagramTuple &b) -> bool {
+  //       return std::get<6>(a) < std::get<6>(b);
+  //     });
 
   return 1;
 }

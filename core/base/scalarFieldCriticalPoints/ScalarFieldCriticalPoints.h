@@ -24,6 +24,19 @@
 /// IEEE Transactions on Visualization and Computer Graphics, 2021
 ///
 /// \sa ttkScalarFieldCriticalPoints.cpp %for a usage example.
+///
+/// \b Online \b examples: \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/BuiltInExample1/">
+///   BuiltInExample1</a> \n
+///   - <a href="https://topology-tool-kit.github.io/examples/dragon/">Dragon
+///   example</a>
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/interactionSites/">
+///   Interaction sites</a> \n
+///   - <a
+///   href="https://topology-tool-kit.github.io/examples/uncertainStartingVortex/">
+///   Uncertain Starting Vortex example</a> \n
 
 #pragma once
 
@@ -138,7 +151,6 @@ namespace ttk {
     const std::vector<std::vector<std::pair<SimplexId, SimplexId>>>
       *vertexLinkEdgeLists_{};
     std::vector<std::pair<SimplexId, char>> *criticalPoints_{};
-    int *rankArray_{nullptr};
 
     bool forceNonManifoldCheck{false};
 
@@ -215,9 +227,6 @@ int ttk::ScalarFieldCriticalPoints::executeLegacy(
   if(triangulation) {
     vertexNumber_ = triangulation->getNumberOfVertices();
     dimension_ = triangulation->getCellVertexNumber(0) - 1;
-#if TTK_ENABLE_MPI
-    rankArray_ = triangulation->getRankArray();
-#endif
   }
 
   printMsg("Extracting critical points...");
@@ -231,13 +240,22 @@ int ttk::ScalarFieldCriticalPoints::executeLegacy(
 #endif
 
   if(triangulation) {
+
+#if TTK_ENABLE_MPI
+    const auto rankArray{triangulation->getVertRankArray()};
+    if(ttk::isRunningWithMPI() && rankArray == nullptr) {
+      this->printErr("Missing vertex rank array");
+      return -6;
+    }
+#endif // TTK_ENABLE_MPI
+
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for schedule(dynamic, chunkSize) num_threads(threadNumber_)
 #endif
     for(SimplexId i = 0; i < (SimplexId)vertexNumber_; i++) {
 #if TTK_ENABLE_MPI
       if(!isRunningWithMPI()
-         || (isRunningWithMPI() && (this->rankArray_[i] == ttk::MPIrank_))) {
+         || (isRunningWithMPI() && (rankArray[i] == ttk::MPIrank_))) {
 #endif
         vertexTypes[i] = getCriticalType(i, offsets, triangulation);
 #if TTK_ENABLE_MPI
@@ -250,15 +268,8 @@ int ttk::ScalarFieldCriticalPoints::executeLegacy(
 #pragma omp parallel for schedule(dynamic, chunkSize) num_threads(threadNumber_)
 #endif
     for(SimplexId i = 0; i < (SimplexId)vertexNumber_; i++) {
-#if TTK_ENABLE_MPI
-      if(!isRunningWithMPI()
-         || (isRunningWithMPI() && (this->rankArray_[i] == ttk::MPIrank_))) {
-#endif
-        vertexTypes[i]
-          = getCriticalType(i, offsets, (*vertexLinkEdgeLists_)[i]);
-#if TTK_ENABLE_MPI
-      }
-#endif
+      // can't use MPI there since triangulation (~> rankArray) is nullptr
+      vertexTypes[i] = getCriticalType(i, offsets, (*vertexLinkEdgeLists_)[i]);
     }
   }
 
