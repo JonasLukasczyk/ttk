@@ -89,6 +89,12 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
     return 0;
   }
 
+  auto idArray = GetInputArrayToProcess(4, input);
+  if(!idArray) {
+    this->printErr("No point id array was provided.");
+    // return 0;
+  }
+
   auto output = vtkImageData::GetData(outputVector);
   output->SetDimensions(
     this->Resolution[0], this->Resolution[1], this->Resolution[2]);
@@ -145,6 +151,7 @@ int ttkScalarFieldFromPoints::RequestData(vtkInformation *,
            ttkUtils::GetPointer<double>(addScalarArray),
            ttkUtils::GetPointer<int>(maxIdArray),
            ttkUtils::GetPointer<T0>(input->GetPoints()->GetData()),
+           ttkUtils::GetPointer<int>(idArray),
            ttkUtils::GetPointer<double>(ampArray),
            ttkUtils::GetPointer<double>(varArray), this->ImageBounds, spacing,
            this->Resolution, nPoints, nPixels)));

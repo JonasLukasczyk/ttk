@@ -39,6 +39,7 @@ namespace ttk {
                              double *addValData,
                              int *maxIdData,
                              const DT *pointCoordiantes,
+                             const int *pointIds,
                              const double *weights,
                              const double *constants,
                              const double *bounds,
@@ -71,7 +72,7 @@ namespace ttk {
       omp_lock_t lock[nPixels];
 
       // clear data and init locks
-      for(int i = 0, j = nPixels; i < j; i++) {
+      for(size_t i = 0; i < nPixels; i++) {
         maxValData[i] = 0.0;
         addValData[i] = 0.0;
         maxIdData[i] = -1;
@@ -120,7 +121,7 @@ namespace ttk {
               // Max mixture
               if(ku > maxValData[pixelIndex]) {
                 maxValData[pixelIndex] = ku;
-                maxIdData[pixelIndex] = i;
+                maxIdData[pixelIndex] = pointIds[i];
               }
 
               // Additive mixture

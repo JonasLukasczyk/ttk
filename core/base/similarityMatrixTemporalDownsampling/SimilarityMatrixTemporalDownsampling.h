@@ -42,9 +42,9 @@ namespace ttk {
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp parallel for num_threads(this->threadNumber_)
 #endif
-      for(int i = 0; i < curDims[1]; i++) {
-        for(int j = 0; j < prevDims[0]; j++) {
-          for(int k = 0; k < curDims[0]; k++) {
+      for(int i = 0; i < curDims[1]; i++) { // row
+        for(int j = 0; j < prevDims[0]; j++) { // column
+          for(int k = 0; k < curDims[0]; k++) { // column
 
 #ifdef TTK_ENABLE_OPENMP
 #pragma omp atomic update
