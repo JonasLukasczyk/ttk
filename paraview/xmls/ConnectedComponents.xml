@@ -21,7 +21,7 @@
       <OutputPort index="0" id="port0" name="Segmentation" />
       <OutputPort index="1" id="port1" name="Components" />
 
-      <StringVectorProperty name="FeatureMask" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="None">
+      <StringVectorProperty name="FeatureMask" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0 0 0 0 None" default_values_delimiter=' '>
         <ArrayListDomain name="array_list" input_domain_name="segmantation_point_arrays" none_string="None">
           <RequiredProperties>
             <Property function="Input" name="Segmentation" />

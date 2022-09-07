@@ -2,6 +2,7 @@
 
 #include <Triangulation.h>
 #include <ttkUtils.h>
+#include <vtkCellData.h>
 #include <vtkCellTypes.h>
 #include <vtkImageData.h>
 #include <vtkPointData.h>

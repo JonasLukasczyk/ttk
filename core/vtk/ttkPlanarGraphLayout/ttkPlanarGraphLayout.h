@@ -56,13 +56,6 @@ class TTKPLANARGRAPHLAYOUT_EXPORT ttkPlanarGraphLayout
     protected ttk::PlanarGraphLayout {
 
 private:
-  // --- Graph Planar Layout
-  // optional field data
-  bool UseSequences{false};
-  bool UseSizes{false};
-  bool UseBranches{false};
-  bool UseLevels{false};
-
   // output field name
   std::string OutputArrayName{"Layout"};
 
@@ -76,22 +69,10 @@ private:
   double ImportantPairsSpacing = 1.;
   double NonImportantPairsSpacing = 0.1;
   double NonImportantPairsProximity = 0.05;
+  std::string ExcludeImportantPairsLower = "";
+  std::string ExcludeImportantPairsHigher = "";
 
 public:
-  // --- Graph Planar Layout
-  // getters and setters for optional arrays
-  vtkSetMacro(UseSequences, bool);
-  vtkGetMacro(UseSequences, bool);
-
-  vtkSetMacro(UseSizes, bool);
-  vtkGetMacro(UseSizes, bool);
-
-  vtkSetMacro(UseBranches, bool);
-  vtkGetMacro(UseBranches, bool);
-
-  vtkSetMacro(UseLevels, bool);
-  vtkGetMacro(UseLevels, bool);
-
   // getters and setters for output array name
   vtkSetMacro(OutputArrayName, const std::string &);
   vtkGetMacro(OutputArrayName, std::string);
@@ -123,6 +104,12 @@ public:
 
   vtkSetMacro(NonImportantPairsProximity, double);
   vtkGetMacro(NonImportantPairsProximity, double);
+
+  vtkSetMacro(ExcludeImportantPairsLower, const std::string &);
+  vtkGetMacro(ExcludeImportantPairsLower, std::string);
+
+  vtkSetMacro(ExcludeImportantPairsHigher, const std::string &);
+  vtkGetMacro(ExcludeImportantPairsHigher, std::string);
 
   // ---
   static ttkPlanarGraphLayout *New();

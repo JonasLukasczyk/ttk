@@ -220,6 +220,11 @@ int ttk::WebSocketIO::sendNextQueuedMessage() {
 }
 
 int ttk::WebSocketIO::processMessageQueue() {
+  if(this->connections.size() < 1) {
+    this->messageQueue.clear();
+    return 1;
+  }
+
   this->nMessages = this->messageQueue.size() + 2;
   msgTimer.reStart();
   this->printMsg(

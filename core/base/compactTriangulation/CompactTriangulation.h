@@ -1084,6 +1084,9 @@ namespace ttk {
       SimplexId nid = vertexIndices_[vertexId];
       SimplexId localVertexId = vertexId - vertexIntervals_[nid - 1] - 1;
       ImplicitCluster *exnode = searchCache(nid);
+      if(exnode == nullptr) {
+        return -1;
+      }
       if(exnode->vertexNeighbors_.empty()) {
         getClusterVertexNeighbors(exnode);
       }
@@ -1323,6 +1326,33 @@ namespace ttk {
       getBoundaryCells(exnode, 0);
       return (exnode->boundaryVertices_)[localVertexId];
     }
+
+#ifdef TTK_ENABLE_MPI
+    int preconditionDistributedVertices() override;
+    inline SimplexId TTK_TRIANGULATION_INTERNAL(getVertexGlobalId)(
+      const SimplexId &ltid) const override {
+#ifndef TTK_ENABLE_KAMIKAZE
+      if(ltid < 0 || ltid >= this->getNumberOfVerticesInternal()) {
+        return -1;
+      }
+#endif // TTK_ENABLE_KAMIKAZE
+      return this->vertexLidToGid_[ltid];
+    }
+    inline int TTK_TRIANGULATION_INTERNAL(getVertexGlobalIdMap)(
+      std::unordered_map<SimplexId, SimplexId> &map) const override {
+      map = this->vertexGidToLid_;
+      return 1;
+    }
+    inline SimplexId TTK_TRIANGULATION_INTERNAL(getVertexLocalId)(
+      const SimplexId &gtid) const override {
+#ifndef TTK_ENABLE_KAMIKAZE
+      if(this->vertexGidToLid_.find(gtid) == this->vertexGidToLid_.end()) {
+        return -1;
+      }
+#endif // TTK_ENABLE_KAMIKAZE
+      return this->vertexGidToLid_.at(gtid);
+    }
+#endif // TTK_ENABLE_MPI
 
     inline int preconditionBoundaryEdgesInternal() override {
       return 0;

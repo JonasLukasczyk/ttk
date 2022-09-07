@@ -496,7 +496,8 @@ int ttkExtract::ExtractGeometry(vtkDataObject *output,
     threshold->SetInputDataObject(maskOutput);
     threshold->SetInputArrayToProcess(
       0, 0, 0, isPointDataArray ? 0 : 1, "Mask");
-    threshold->ThresholdByUpper(0.5);
+    threshold->SetThresholdFunction(vtkThreshold::THRESHOLD_UPPER);
+    threshold->SetUpperThreshold(0.5);
     threshold->SetAllScalars(this->CellMode == CELL_MODE::ALL);
     threshold->Update();
 
