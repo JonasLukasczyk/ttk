@@ -122,7 +122,7 @@ int ttk::ttkCinemaImagingNative::RenderVTKObject(
     if(!status)
       return 0;
 
-    ttkCinemaImaging::AddAllFieldDataArrays(inputGrid, outputImage, i);
+    ttkCinemaImaging::AddAllFieldDataArrays(inputGrid, inputObject, outputImage, i);
 
     outputImages->SetBlock(i, outputImage);
   }

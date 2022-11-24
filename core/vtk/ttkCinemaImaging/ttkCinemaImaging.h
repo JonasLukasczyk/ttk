@@ -105,6 +105,7 @@ public:
                                const std::string &name = "");
 
   static int AddAllFieldDataArrays(vtkPointSet *inputGrid,
+                                   vtkDataObject *inputObject,
                                    vtkImageData *image,
                                    int tupelIdx);
 

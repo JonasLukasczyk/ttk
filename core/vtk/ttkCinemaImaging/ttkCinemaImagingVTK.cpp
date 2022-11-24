@@ -250,7 +250,7 @@ int ttk::ttkCinemaImagingVTK::RenderVTKObject(
     outputImage->DeepCopy(windowDepthToImageFilter->GetOutput());
     outputImagePD->GetAbstractArray(0)->SetName("Depth");
 
-    ttkCinemaImaging::AddAllFieldDataArrays(inputGrid, outputImage, i);
+    ttkCinemaImaging::AddAllFieldDataArrays(inputGrid, inputObject, outputImage, i);
 
     // Render Scalar Images
     if(nValuePasses > firstValuePassIndex) {

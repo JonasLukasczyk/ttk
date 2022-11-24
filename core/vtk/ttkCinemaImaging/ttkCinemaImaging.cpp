@@ -294,6 +294,7 @@ int ttkCinemaImaging::AddFieldDataArray(vtkFieldData *fd,
 };
 
 int ttkCinemaImaging::AddAllFieldDataArrays(vtkPointSet *inputGrid,
+                                            vtkDataObject *inputObject,
                                             vtkImageData *image,
                                             int tupelIdx) {
   auto imageFD = image->GetFieldData();
@@ -302,6 +303,10 @@ int ttkCinemaImaging::AddAllFieldDataArrays(vtkPointSet *inputGrid,
   for(int i = 0; i < inputGridPD->GetNumberOfArrays(); i++) {
     ttkCinemaImaging::AddFieldDataArray(
       imageFD, inputGridPD->GetArray(i), tupelIdx);
+  }
+  auto inputObjectFD = inputObject->GetFieldData();
+  for(int i = 0; i < inputObjectFD->GetNumberOfArrays(); i++) {
+    imageFD->AddArray(inputObjectFD->GetArray(i));
   }
 
   ttkCinemaImaging::AddFieldDataArray(
