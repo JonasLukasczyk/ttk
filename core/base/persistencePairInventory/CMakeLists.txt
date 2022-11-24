@@ -1,6 +1,4 @@
-ttk_add_base_library(persistencePairInventory
-  SOURCES
-    PersistencePairInventory.cpp
+ttk_add_base_template_library(persistencePairInventory
   HEADERS
     PersistencePairInventory.h
   DEPENDS

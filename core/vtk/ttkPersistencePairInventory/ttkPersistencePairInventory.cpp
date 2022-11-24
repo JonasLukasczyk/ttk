@@ -45,7 +45,7 @@ int ttkPersistencePairInventory::FillOutputPortInformation(int port, vtkInformat
 }
 
 int ttkPersistencePairInventory::RequestData(
-    vtkInformation* request,
+    vtkInformation*,
     vtkInformationVector** inputVector,
     vtkInformationVector* outputVector
 ){
@@ -64,7 +64,7 @@ int ttkPersistencePairInventory::RequestData(
 
     size_t nRows = this->UseBinning ? this->NumberOfScalarValues-1 : this->NumberOfScalarValues;
     size_t nCols = inputAsMB->GetNumberOfBlocks();
-    if(nCols<0){
+    if(nCols<1){
         this->printErr("Input 'vtkMultiBlockDataSet' object has no blocks.");
         return 0;
     }
@@ -122,7 +122,7 @@ int ttkPersistencePairInventory::RequestData(
             return 0;
         }
         auto firstBlockAsUG_FieldData = firstBlockAsUG->GetFieldData();
-        for(size_t i=0; i<firstBlockAsUG_FieldData->GetNumberOfArrays(); i++){
+        for(int i=0; i<firstBlockAsUG_FieldData->GetNumberOfArrays(); i++){
             auto arrayTemplate = firstBlockAsUG_FieldData->GetAbstractArray(i);
             auto arrayCopy = vtkSmartPointer<vtkAbstractArray>::Take(arrayTemplate->NewInstance());
             arrayCopy->SetName(arrayTemplate->GetName());
@@ -164,13 +164,13 @@ int ttkPersistencePairInventory::RequestData(
                         return 0;
                     }
 
-                    auto scalarArray = this->GetInputArrayToProcess(0, blockAsUG);
-                    if(!scalarArray){
+                    auto blockScalarArray = this->GetInputArrayToProcess(0, blockAsUG);
+                    if(!blockScalarArray){
                         this->printErr("Unable to retrieve input array.");
                         return 0;
                     }
 
-                    scalarsPerElement[i] = (VTK_TT*) scalarArray->GetVoidPointer(0);
+                    scalarsPerElement[i] = ttkUtils::GetPointer<VTK_TT>(blockScalarArray);
                     //connectivityListPerElement[i] = blockAsUG->GetCells()->GetPointer();
                     connectivityListPerElement[i] = ttkUtils::GetPointer<long long>(blockAsUG->GetCells()->GetConnectivityArray());
                     nEdgesPerElement[i] = blockAsUG->GetNumberOfCells();
@@ -195,12 +195,12 @@ int ttkPersistencePairInventory::RequestData(
                 scalarBoundsArray->SetValue(0, scalarBounds[0]);
                 scalarBoundsArray->SetValue(1, scalarBounds[1]);
 
-                auto persistenceThresholdArrayData = (VTK_TT*) persistenceThresholdArray->GetVoidPointer(0);
-                for(size_t i=0; i<this->NumberOfPersistenceThresholds; i++)
+                auto persistenceThresholdArrayData = ttkUtils::GetPointer<VTK_TT>(persistenceThresholdArray);
+                for(int i=0; i<this->NumberOfPersistenceThresholds; i++)
                     persistenceThresholdArrayData[i] = i*this->PersistenceDelta;
 
                 status = this->ComputePersistenceCurves(
-                    (int*) pcArray->GetVoidPointer(0),
+                    ttkUtils::GetPointer<int>(pcArray),
 
                     persistenceThresholdArrayData,
                     this->NumberOfPersistenceThresholds,
@@ -211,7 +211,7 @@ int ttkPersistencePairInventory::RequestData(
                 if(!status) return 0;
 
                 status = this->ComputePPI(
-                    (int*) ppiArray->GetVoidPointer(0),
+                    ttkUtils::GetPointer<int>(ppiArray),
 
                     nRows,
                     scalarBounds,

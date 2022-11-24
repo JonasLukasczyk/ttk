@@ -180,6 +180,11 @@ int DiagramToVTU(vtkUnstructuredGrid *vtu,
   vertsId->SetNumberOfTuples(2 * diagram.size());
   pd->AddArray(vertsId);
 
+  auto vertsScalars = vtkSmartPointer<vtkDataArray>::Take(inputScalars->NewInstance());
+  vertsScalars->SetName(inputScalars->GetName());
+  vertsScalars->SetNumberOfTuples(2 * diagram.size());
+  pd->AddArray(vertsScalars);
+
   vtkNew<vtkIntArray> critType{};
   critType->SetName(ttk::PersistenceCriticalTypeName);
   critType->SetNumberOfTuples(2 * diagram.size());
@@ -252,6 +257,8 @@ int DiagramToVTU(vtkUnstructuredGrid *vtu,
     offsets->SetTuple1(i, 2 * i);
 
     // point data
+    vertsScalars->SetTuple1(i0, pair.birth.sfValue);
+    vertsScalars->SetTuple1(i1, pair.death.sfValue);
     vertsId->SetTuple1(i0, pair.birth.id);
     vertsId->SetTuple1(i1, pair.death.id);
     critType->SetTuple1(i0, static_cast<ttk::SimplexId>(pair.birth.type));

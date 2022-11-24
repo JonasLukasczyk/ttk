@@ -1,88 +1,88 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ServerManagerConfiguration>
-    <ProxyGroup name="filters">
-        <SourceProxy name="PersistencePairInventory" class="ttkPersistencePairInventory" label="TTK PersistencePairInventory">
-           <Documentation long_help="TODO" short_help="TODO">
-               TODO
-           </Documentation>
+  <ProxyGroup name="filters">
+    <SourceProxy name="PersistencePairInventory" class="ttkPersistencePairInventory" label="TTK PersistencePairInventory">
+      <Documentation long_help="TODO" short_help="TODO">
+        TODO
+      </Documentation>
 
-           <InputProperty name="Input" command="SetInputConnection">
-                <ProxyGroupDomain name="groups">
-                    <Group name="sources" />
-                    <Group name="filters" />
-                </ProxyGroupDomain>
-                <DataTypeDomain name="input_type">
-                    <DataType value="vtkMultiBlockDataSet" />
-                </DataTypeDomain>
-                <InputArrayDomain name="input_array" attribute_type="point" number_of_components="1" />
-                <Documentation>TODO.</Documentation>
-            </InputProperty>
+      <InputProperty name="Input" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkMultiBlockDataSet" />
+        </DataTypeDomain>
+        <InputArrayDomain name="input_array" attribute_type="point" number_of_components="1" />
+        <Documentation>TODO.</Documentation>
+      </InputProperty>
 
-            <StringVectorProperty label="Scalars" name="ScalarArray" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
-                <ArrayListDomain attribute_type="Scalars" name="array_list">
-                    <RequiredProperties>
-                        <Property function="Input" name="Input" />
-                    </RequiredProperties>
-                </ArrayListDomain>
-                <Documentation>TODO</Documentation>
-            </StringVectorProperty>
-            <!--<StringVectorProperty name="PersistenceArrayName" command="SetPersistenceArrayName" number_of_elements="1" animateable="0" label="Persistence">-->
-            <!--    <ArrayListDomain name="array_list" default_values="Persistence" input_domain_name="input_array">-->
-            <!--        <RequiredProperties>-->
-            <!--            <Property name="Input" function="Input" />-->
-            <!--        </RequiredProperties>-->
-            <!--    </ArrayListDomain>-->
-            <!--    <Documentation>TODO.</Documentation>-->
-            <!--</StringVectorProperty>-->
+      <StringVectorProperty label="Scalars" name="ScalarArray" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5">
+        <ArrayListDomain attribute_type="Scalars" name="array_list">
+          <RequiredProperties>
+            <Property function="Input" name="Input" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>TODO</Documentation>
+      </StringVectorProperty>
+      <!--<StringVectorProperty name="PersistenceArrayName" command="SetPersistenceArrayName" number_of_elements="1" animateable="0" label="Persistence">-->
+      <!--    <ArrayListDomain name="array_list" default_values="Persistence" input_domain_name="input_array">-->
+      <!--        <RequiredProperties>-->
+      <!--            <Property name="Input" function="Input" />-->
+      <!--        </RequiredProperties>-->
+      <!--    </ArrayListDomain>-->
+      <!--    <Documentation>TODO.</Documentation>-->
+      <!--</StringVectorProperty>-->
 
-            <IntVectorProperty name="UseEntireScalarRange" label="Entire Scalar Range" command="SetUseEntireScalarRange" number_of_elements="1" default_values="1">
-                <BooleanDomain name="bool"/>
-                <Documentation>TODO</Documentation>
-            </IntVectorProperty>
-            <DoubleVectorProperty name="ScalarRange" label="Scalar Range" command="SetScalarRange" number_of_elements="2" default_values="0 0" panel_widget="double_range">
-                <ArrayRangeDomain name="range">
-                    <RequiredProperties>
-                        <Property function="Input" name="Input" />
-                        <Property function="ArraySelection" name="ScalarArray" />
-                    </RequiredProperties>
-                </ArrayRangeDomain>
-                <Hints>
-                    <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="UseEntireScalarRange" value="0" />
-                </Hints>
-                <Documentation>TODO</Documentation>
-            </DoubleVectorProperty>
-            <IntVectorProperty name="NumberOfScalarValues" label="# Scalar Values" command="SetNumberOfScalarValues" number_of_elements="1" default_values="2">
-                <Documentation>TODO</Documentation>
-            </IntVectorProperty>
-            <IntVectorProperty name="NumberOfPersistenceThresholds" label="# Persistence Thresholds" command="SetNumberOfPersistenceThresholds" number_of_elements="1" default_values="1">
-                <Documentation>TODO</Documentation>
-            </IntVectorProperty>
-            <DoubleVectorProperty name="PersistenceDelta" label="Persistence Delta" command="SetPersistenceDelta" number_of_elements="1" default_values="1">
-                <Documentation>TODO</Documentation>
-            </DoubleVectorProperty>
-            <IntVectorProperty name="UseBinning" label="Use Scalar Bins" command="SetUseBinning" number_of_elements="1" default_values="0">
-                <BooleanDomain name="bool"/>
-                <Documentation>TODO</Documentation>
-            </IntVectorProperty>
+      <IntVectorProperty name="UseEntireScalarRange" label="Entire Scalar Range" command="SetUseEntireScalarRange" number_of_elements="1" default_values="1">
+        <BooleanDomain name="bool" />
+        <Documentation>TODO</Documentation>
+      </IntVectorProperty>
+      <DoubleVectorProperty name="ScalarRange" label="Scalar Range" command="SetScalarRange" number_of_elements="2" default_values="0 0" panel_widget="double_range">
+        <ArrayRangeDomain name="range">
+          <RequiredProperties>
+            <Property function="Input" name="Input" />
+            <Property function="ArraySelection" name="ScalarArray" />
+          </RequiredProperties>
+        </ArrayRangeDomain>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator" mode="visibility" property="UseEntireScalarRange" value="0" />
+        </Hints>
+        <Documentation>TODO</Documentation>
+      </DoubleVectorProperty>
+      <IntVectorProperty name="NumberOfScalarValues" label="# Scalar Values" command="SetNumberOfScalarValues" number_of_elements="1" default_values="2">
+        <Documentation>TODO</Documentation>
+      </IntVectorProperty>
+      <IntVectorProperty name="NumberOfPersistenceThresholds" label="# Persistence Thresholds" command="SetNumberOfPersistenceThresholds" number_of_elements="1" default_values="1">
+        <Documentation>TODO</Documentation>
+      </IntVectorProperty>
+      <DoubleVectorProperty name="PersistenceDelta" label="Persistence Delta" command="SetPersistenceDelta" number_of_elements="1" default_values="1">
+        <Documentation>TODO</Documentation>
+      </DoubleVectorProperty>
+      <IntVectorProperty name="UseBinning" label="Use Scalar Bins" command="SetUseBinning" number_of_elements="1" default_values="0">
+        <BooleanDomain name="bool" />
+        <Documentation>TODO</Documentation>
+      </IntVectorProperty>
 
-            <PropertyGroup panel_widget="Line" label="Input Options">
-                <Property name="ScalarArray" />
-                <!--<Property name="PersistenceArrayName" />-->
-            </PropertyGroup>
-            <PropertyGroup panel_widget="Line" label="Output Options">
-                <Property name="UseEntireScalarRange" />
-                <Property name="ScalarRange" />
-                <Property name="NumberOfScalarValues" />
-                <Property name="NumberOfPersistenceThresholds" />
-                <Property name="PersistenceDelta" />
-                <Property name="UseBinning" />
-            </PropertyGroup>
+      <PropertyGroup panel_widget="Line" label="Input Options">
+        <Property name="ScalarArray" />
+        <!--<Property name="PersistenceArrayName" />-->
+      </PropertyGroup>
+      <PropertyGroup panel_widget="Line" label="Output Options">
+        <Property name="UseEntireScalarRange" />
+        <Property name="ScalarRange" />
+        <Property name="NumberOfScalarValues" />
+        <Property name="NumberOfPersistenceThresholds" />
+        <Property name="PersistenceDelta" />
+        <Property name="UseBinning" />
+      </PropertyGroup>
 
-            ${DEBUG_WIDGETS}
+      ${DEBUG_WIDGETS}
 
-            <Hints>
-                <ShowInMenu category="TTK - Scalar Data" />
-            </Hints>
-        </SourceProxy>
-    </ProxyGroup>
+      <Hints>
+        <ShowInMenu category="TTK - Scalar Data" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
 </ServerManagerConfiguration>

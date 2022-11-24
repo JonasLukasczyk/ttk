@@ -20,68 +20,68 @@ namespace ttk {
             };
             ~PersistencePairInventory(){};
 
-            template <class dataType> int ComputeScalarBounds(
-                dataType scalarBounds[2],
+            template <class DT> int ComputeScalarBounds(
+                DT scalarBounds[2],
 
-                const std::vector<dataType*>& scalarsPerElement,
+                const std::vector<DT*>& scalarsPerElement,
                 const std::vector<size_t>& nEdgesPerElement
             ) const;
 
 
-            template <class countType, class dataType, class idType> int ComputePersistenceCurves(
+            template <class countType, class DT, class IT> int ComputePersistenceCurves(
                 countType* persistenceCurve,
 
-                const dataType* persistenceThresholds,
+                const DT* persistenceThresholds,
                 const size_t& nPersistenceThresholds,
-                const std::vector<dataType*>& scalarsPerElement,
-                const std::vector<idType*>& connectivityListPerElement,
+                const std::vector<DT*>& scalarsPerElement,
+                const std::vector<IT*>& connectivityListPerElement,
                 const std::vector<size_t>& nEdgesPerElement
             ) const;
 
-            template <class binType, class dataType, class idType> int ComputePPI(
-                binType* ppi,
+            template <class BT, class DT, class IT> int ComputePPI(
+                BT* ppi,
 
                 const size_t& nRows,
-                const dataType scalarBounds[2],
+                const DT scalarBounds[2],
                 const bool& useBinning,
-                const std::vector<dataType*>& scalars,
-                const dataType* persistenceThresholds,
+                const std::vector<DT*>& scalars,
+                const DT* persistenceThresholds,
                 const size_t& nPersistenceThresholds,
-                const std::vector<idType*>& connectivityLists,
+                const std::vector<IT*>& connectivityLists,
                 const std::vector<size_t>& nEdges
             ) const;
 
-            template <class binType, class dataType, class idType> int ComputePPIColumn(
-                binType* ppi,
+            template <class BT, class DT, class IT> int ComputePPIColumn(
+                BT* ppi,
 
                 const size_t& nRows,
                 const size_t& nCols,
                 const size_t columnIndex,
-                const dataType scalarBounds[2],
+                const DT scalarBounds[2],
                 const bool& useBinning,
-                const dataType* scalars,
-                const dataType* persistenceThresholds,
+                const DT* scalars,
+                const DT* persistenceThresholds,
                 const size_t& nPersistenceThresholds,
-                const idType* connectivityLists,
+                const IT* connectivityLists,
                 const size_t& nEdges
             ) const;
 
-            template <class binType> int ComputeAPPI(
-                binType* appi,
+            template <class BT> int ComputeAPPI(
+                BT* appi,
 
                 const size_t& nRows,
                 const size_t& nCols,
                 const size_t& nPersistenceThresholds,
-                const binType* ppi
+                const BT* ppi
             ) const;
     };
 }
 
-template <class dataType>
+template <class DT>
 int ttk::PersistencePairInventory::ComputeScalarBounds(
-    dataType scalarBounds[2],
+    DT scalarBounds[2],
 
-    const std::vector<dataType*>& scalarsPerElement,
+    const std::vector<DT*>& scalarsPerElement,
     const std::vector<size_t>& nEdgesPerElement
 ) const {
     ttk::Timer t;
@@ -89,15 +89,15 @@ int ttk::PersistencePairInventory::ComputeScalarBounds(
 
     size_t nElements = scalarsPerElement.size();
 
-    scalarBounds[0] = std::numeric_limits<dataType>::max();
-    scalarBounds[1] = std::numeric_limits<dataType>::min();
+    scalarBounds[0] = std::numeric_limits<DT>::max();
+    scalarBounds[1] = std::numeric_limits<DT>::min();
 
     for(size_t e=0; e<nElements; e++){
-        dataType* scalars = scalarsPerElement[e];
+        DT* scalars = scalarsPerElement[e];
         size_t nVertices = nEdgesPerElement[e]*2;
 
         for(size_t v=0; v<nVertices; v++){
-            const dataType& scalar = scalars[v];
+            const DT& scalar = scalars[v];
             if(scalarBounds[0]>scalar)
                 scalarBounds[0]=scalar;
             if(scalarBounds[1]<scalar)
@@ -113,14 +113,14 @@ int ttk::PersistencePairInventory::ComputeScalarBounds(
     return 1;
 }
 
-template <class countType, class dataType, class idType>
+template <class countType, class DT, class IT>
 int ttk::PersistencePairInventory::ComputePersistenceCurves(
     countType* persistenceCurve,
 
-    const dataType* persistenceThresholds,
+    const DT* persistenceThresholds,
     const size_t& nPersistenceThresholds,
-    const std::vector<dataType*>& scalarsPerElement,
-    const std::vector<idType*>& connectivityListPerElement,
+    const std::vector<DT*>& scalarsPerElement,
+    const std::vector<IT*>& connectivityListPerElement,
     const std::vector<size_t>& nEdgesPerElement
 ) const {
 
@@ -144,24 +144,24 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
     #pragma omp parallel for num_threads(threadNumber_)
     #endif
     for(size_t e=0; e<nElements; e++){
-        dataType* scalars = scalarsPerElement[e];
-        idType* connectivityList = connectivityListPerElement[e];
+        DT* scalars = scalarsPerElement[e];
+        IT* connectivityList = connectivityListPerElement[e];
         size_t nEdges = nEdgesPerElement[e];
 
         size_t offset = e*nPersistenceThresholds;
         for(size_t p=0; p<nPersistenceThresholds; p++){
             size_t nPairsAboveThreshold = 0;
 
-            const dataType& persistenceThreshold = persistenceThresholds[p];
+            const DT& persistenceThreshold = persistenceThresholds[p];
 
-            for(size_t i=0,j=1; i<nEdges; i++,j+=3){
-                const idType& v0 = connectivityList[j];
-                const idType& v1 = connectivityList[j+1];
+            for(size_t i=0,j=0; i<nEdges; i++){
+                const IT& v0 = connectivityList[j++];
+                const IT& v1 = connectivityList[j++];
 
-                const dataType s0 = scalars[v0];
-                const dataType s1 = scalars[v1];
+                const DT s0 = scalars[v0];
+                const DT s1 = scalars[v1];
 
-                dataType persistence = s1>s0 ? s1-s0 : s0-s1;
+                DT persistence = s1>s0 ? s1-s0 : s0-s1;
                 if(persistence>persistenceThreshold)
                     nPairsAboveThreshold++;
             }
@@ -180,17 +180,17 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
     return 1;
 }
 
-template <class binType, class dataType, class idType>
+template <class BT, class DT, class IT>
 int ttk::PersistencePairInventory::ComputePPI(
-    binType* ppi,
+    BT* ppi,
 
     const size_t& nRows,
-    const dataType scalarBounds[2],
+    const DT scalarBounds[2],
     const bool& useBinning,
-    const std::vector<dataType*>& scalars,
-    const dataType* persistenceThresholds,
+    const std::vector<DT*>& scalars,
+    const DT* persistenceThresholds,
     const size_t& nPersistenceThresholds,
-    const std::vector<idType*>& connectivityLists,
+    const std::vector<IT*>& connectivityLists,
     const std::vector<size_t>& nEdges
 ) const {
     // -------------------------------------------------------------------------
@@ -260,19 +260,19 @@ int ttk::PersistencePairInventory::ComputePPI(
     return 1;
 }
 
-template <class binType, class dataType, class idType>
+template <class BT, class DT, class IT>
 int ttk::PersistencePairInventory::ComputePPIColumn(
-    binType* ppi,
+    BT* ppi,
 
     const size_t& nRows,
     const size_t& nCols,
     const size_t columnIndex,
-    const dataType scalarBounds[2],
+    const DT scalarBounds[2],
     const bool& useBinning,
-    const dataType* scalars,
-    const dataType* persistenceThresholds,
+    const DT* scalars,
+    const DT* persistenceThresholds,
     const size_t& nPersistenceThresholds,
-    const idType* connectivityLists,
+    const IT* connectivityLists,
     const size_t& nEdges
 ) const {
     // clear ppi column
@@ -288,26 +288,26 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
 
     // process pairs
     {
-        dataType range = scalarBounds[1]-scalarBounds[0];
+        DT range = scalarBounds[1]-scalarBounds[0];
 
         size_t rowOffset = nPersistenceThresholds*nCols;
 
         if(useBinning){
             // for(size_t i=0,j=1; i<nEdges; i++,j+=3){
-            //     const idType& v0 = connectivityLists[j];
-            //     const idType& v1 = connectivityLists[j+1];
+            //     const IT& v0 = connectivityLists[j];
+            //     const IT& v1 = connectivityLists[j+1];
 
-            //     const dataType& s0_ = scalars[v0];
-            //     const dataType& s1_ = scalars[v1];
+            //     const DT& s0_ = scalars[v0];
+            //     const DT& s1_ = scalars[v1];
 
             //     // enforce order
-            //     dataType s0 = s0_<s1_ ? s0_ : s1_;
-            //     dataType s1 = s0_<s1_ ? s1_ : s0_;
+            //     DT s0 = s0_<s1_ ? s0_ : s1_;
+            //     DT s1 = s0_<s1_ ? s1_ : s0_;
 
             //     // skip if edge does not intersect bounds
             //     if(s1<scalarBounds[0] || s0>scalarBounds[1]) continue;
 
-            //     const dataType persistence = s1-s0;
+            //     const DT persistence = s1-s0;
 
             //     // force bounds for bin index computation
             //     s0 = s0<scalarBounds[0] ? scalarBounds[0] : s0;
@@ -333,23 +333,23 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
             return 0;
         } else {
 
-            dataType delta = range/((dataType)(nRows-1));
+            DT delta = range/((DT)(nRows-1));
 
-            for(size_t i=0,j=1; i<nEdges; i++,j+=3){
-                const idType& v0 = connectivityLists[j];
-                const idType& v1 = connectivityLists[j+1];
+            for(size_t i=0,j=0; i<nEdges; i++,j+=2){
+                const IT& v0 = connectivityLists[j];
+                const IT& v1 = connectivityLists[j+1];
 
-                const dataType& s0_ = scalars[v0];
-                const dataType& s1_ = scalars[v1];
+                const DT& s0_ = scalars[v0];
+                const DT& s1_ = scalars[v1];
 
                 // enforce order
-                dataType s0 = s0_<s1_ ? s0_ : s1_;
-                dataType s1 = s0_<s1_ ? s1_ : s0_;
+                DT s0 = s0_<s1_ ? s0_ : s1_;
+                DT s1 = s0_<s1_ ? s1_ : s0_;
 
                 // skip if edge does not intersect bounds
                 if(s1<scalarBounds[0] || s0>scalarBounds[1]) continue;
 
-                const dataType persistence = s1-s0;
+                const DT persistence = s1-s0;
 
                 // force bounds for bin index computation
                 s0 = s0<scalarBounds[0] ? scalarBounds[0] : s0;
@@ -377,14 +377,14 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
     return 1;
 }
 
-template <class binType>
+template <class BT>
 int ttk::PersistencePairInventory::ComputeAPPI(
-    binType* appi,
+    BT* appi,
 
     const size_t& nRows,
     const size_t& nCols,
     const size_t& nPersistenceThresholds,
-    const binType* ppi
+    const BT* ppi
 ) const {
 
     size_t rowOffset = nPersistenceThresholds*nCols;
