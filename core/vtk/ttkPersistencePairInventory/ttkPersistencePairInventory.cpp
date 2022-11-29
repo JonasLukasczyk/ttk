@@ -106,8 +106,6 @@ int ttkPersistencePairInventory::RequestData(
         0, nRows-1,
         0, 0
     );
-    imageObject->SetSpacing(1,1,0);
-    imageObject->SetOrigin(0,0,0);
     imageObject->GetPointData()->AddArray( ppiArray );
     auto imageObject_FieldData = imageObject->GetFieldData();
     imageObject_FieldData->AddArray( pcArray );
@@ -191,6 +189,13 @@ int ttkPersistencePairInventory::RequestData(
                     scalarBounds[0] = this->ScalarRange[0];
                     scalarBounds[1] = this->ScalarRange[1];
                 }
+
+                imageObject->SetSpacing(
+                  1,
+                  (scalarBounds[1]-scalarBounds[0])/((VTK_TT)nRows-1),
+                  0
+                );
+                imageObject->SetOrigin(0,scalarBounds[0],0);
 
                 scalarBoundsArray->SetValue(0, scalarBounds[0]);
                 scalarBoundsArray->SetValue(1, scalarBounds[1]);
