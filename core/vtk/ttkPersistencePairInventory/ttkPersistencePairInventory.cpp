@@ -192,7 +192,7 @@ int ttkPersistencePairInventory::RequestData(
 
                 imageObject->SetSpacing(
                   1,
-                  (scalarBounds[1]-scalarBounds[0])/((VTK_TT)nRows-1),
+                  (static_cast<double>(scalarBounds[1])-static_cast<double>(scalarBounds[0]))/(static_cast<double>(nRows)-1.0),
                   0
                 );
                 imageObject->SetOrigin(0,scalarBounds[0],0);

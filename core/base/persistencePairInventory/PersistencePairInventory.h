@@ -20,7 +20,7 @@ namespace ttk {
             };
             ~PersistencePairInventory(){};
 
-            template <class DT> int ComputeScalarBounds(
+            template <typename DT> int ComputeScalarBounds(
                 DT scalarBounds[2],
 
                 const std::vector<DT*>& scalarsPerElement,
@@ -28,7 +28,7 @@ namespace ttk {
             ) const;
 
 
-            template <class countType, class DT, class IT> int ComputePersistenceCurves(
+            template <typename countType, typename DT, typename IT> int ComputePersistenceCurves(
                 countType* persistenceCurve,
 
                 const DT* persistenceThresholds,
@@ -38,7 +38,7 @@ namespace ttk {
                 const std::vector<size_t>& nEdgesPerElement
             ) const;
 
-            template <class BT, class DT, class IT> int ComputePPI(
+            template <typename BT, typename DT, typename IT> int ComputePPI(
                 BT* ppi,
 
                 const size_t& nRows,
@@ -51,7 +51,7 @@ namespace ttk {
                 const std::vector<size_t>& nEdges
             ) const;
 
-            template <class BT, class DT, class IT> int ComputePPIColumn(
+            template <typename BT, typename DT, typename IT> int ComputePPIColumn(
                 BT* ppi,
 
                 const size_t& nRows,
@@ -66,7 +66,7 @@ namespace ttk {
                 const size_t& nEdges
             ) const;
 
-            template <class BT> int ComputeAPPI(
+            template <typename BT> int ComputeAPPI(
                 BT* appi,
 
                 const size_t& nRows,
@@ -77,7 +77,7 @@ namespace ttk {
     };
 }
 
-template <class DT>
+template <typename DT>
 int ttk::PersistencePairInventory::ComputeScalarBounds(
     DT scalarBounds[2],
 
@@ -113,7 +113,7 @@ int ttk::PersistencePairInventory::ComputeScalarBounds(
     return 1;
 }
 
-template <class countType, class DT, class IT>
+template <typename countType, class DT, class IT>
 int ttk::PersistencePairInventory::ComputePersistenceCurves(
     countType* persistenceCurve,
 
@@ -180,7 +180,7 @@ int ttk::PersistencePairInventory::ComputePersistenceCurves(
     return 1;
 }
 
-template <class BT, class DT, class IT>
+template <typename BT, class DT, class IT>
 int ttk::PersistencePairInventory::ComputePPI(
     BT* ppi,
 
@@ -260,7 +260,7 @@ int ttk::PersistencePairInventory::ComputePPI(
     return 1;
 }
 
-template <class BT, class DT, class IT>
+template <typename BT, class DT, class IT>
 int ttk::PersistencePairInventory::ComputePPIColumn(
     BT* ppi,
 
@@ -377,7 +377,7 @@ int ttk::PersistencePairInventory::ComputePPIColumn(
     return 1;
 }
 
-template <class BT>
+template <typename BT>
 int ttk::PersistencePairInventory::ComputeAPPI(
     BT* appi,
 
