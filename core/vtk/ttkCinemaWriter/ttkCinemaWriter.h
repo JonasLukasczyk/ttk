@@ -28,7 +28,7 @@
 
 class TTKCINEMAWRITER_EXPORT ttkCinemaWriter : public ttkAlgorithm {
 public:
-  enum class FORMAT { VTK = 0, PNG = 1, TTK = 2 };
+  enum class FORMAT { VTK = 0, PNG = 1, TTK = 2, PYCINEMA = 3 };
 
 private:
   std::string DatabasePath{""};

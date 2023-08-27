@@ -24,6 +24,7 @@
 #include <vtkPNGWriter.h>
 #include <vtkXMLDataObjectWriter.h>
 #include <vtkXMLMultiBlockDataWriter.h>
+#include <PyCinemaWriter.h>
 
 // file lock
 #include <boost/interprocess/sync/file_lock.hpp>
@@ -114,6 +115,31 @@ int ttkCinemaWriter::InitializeLockFile() {
   return 1;
 }
 
+// void AddH5DataSet(H5::H5Location& location, const std::string& name, const hsize_t dim[3], const float* data){
+//   hsize_t cdim[3]{
+//     32<dim[0] ? 32 : dim[0],
+//     32<dim[1] ? 32 : dim[1],
+//     dim[2]
+//   };
+//   hsize_t DIM = dim[1]==1 && dim[2]==1
+//     ? 1
+//     : dim[2]==1
+//       ? 2
+//       : 3;
+
+//   H5::DSetCreatPropList ds_creatplist;  // create dataset creation prop list
+//   ds_creatplist.setChunk( DIM, cdim );  // then modify it for compression
+//   ds_creatplist.setDeflate( 9 );
+
+//   H5::DataSet dataset = location.createDataSet(
+//     name,
+//     H5::FloatType(H5::PredType::NATIVE_FLOAT),
+//     H5::DataSpace(DIM,dim),
+//     ds_creatplist
+//   );
+//   dataset.write( data, H5::PredType::NATIVE_FLOAT );
+// }
+
 // =============================================================================
 // Process Request
 // =============================================================================
@@ -142,6 +168,7 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
   std::string productExtension = this->Format == FORMAT::VTK
                                    ? xmlWriter->GetDefaultFileExtension()
                                  : this->Format == FORMAT::PNG ? "png"
+                                 : this->Format == FORMAT::PYCINEMA ? "h5"
                                                                : "ttk";
 
   // -------------------------------------------------------------------------
@@ -231,7 +258,7 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
   // Update database
   // ===========================================================================
   {
-    // Initilize file lock for remaining operations
+    // Initialize file lock for remaining operations
     std::string lockFilePath;
     if(!this->GetLockFilePath(lockFilePath))
       return 0;
@@ -247,7 +274,7 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
     struct stat info;
 
     // -------------------------------------------------------------------------
-    // If data.csv file does not exsist create it
+    // If data.csv file does not exist create it
     // -------------------------------------------------------------------------
     if(stat(csvPath.data(), &info) != 0) {
       ttk::Timer t;
@@ -328,12 +355,12 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
         if(columnName.compare("FILE") == 0)
           continue;
 
-        bool exsist = false;
+        bool exist = false;
         for(size_t j = 0; j < nFields; j++) {
           if(fields[j].compare(columnName) == 0)
-            exsist = true;
+            exist = true;
         }
-        if(!exsist) {
+        if(!exist) {
           this->printErr("'data.csv' file contains column '" + columnName
                          + "' not present in field data.");
           this->printErr("Unable to insert data product into cinema database.");
@@ -478,6 +505,98 @@ int ttkCinemaWriter::ProcessDataProduct(vtkDataObject *input) {
         imageWriter->Write();
         break;
       }
+      case FORMAT::PYCINEMA: {
+        auto inputAsID = vtkImageData::SafeDownCast(input);
+        if(!inputAsID) {
+          this->printErr("PyCinema format requires input of type 'vtkImageData'.");
+          return 0;
+        }
+
+        ttk::PyCinemaWriter writer( this->DatabasePath + "/" + rDataProductPath );
+
+        // get resolution
+        int dims[3];
+        inputAsID->GetDimensions(dims);
+
+        // write resolution
+        {
+          hsize_t s[3]{2,1,1};
+          float data[2]{(float)dims[0],(float)dims[1]};
+          writer.addH5DataSet(writer.root,"resolution",s,data,0);
+        }
+
+        // write offset (here always defaults to 0,0)
+        {
+          hsize_t s[3]{2,1,1};
+          float data[2]{0,0};
+          writer.addH5DataSet(writer.root,"offset",s,data,0);
+        }
+
+        // write meta
+        {
+          // field data
+          auto arrays = inputAsID->GetFieldData();
+          for(int i=0; i<arrays->GetNumberOfArrays(); i++){
+            auto array = arrays->GetArray(i);
+            if(!array)
+              continue;
+            int nTuples = array->GetNumberOfTuples();
+            int nComponents = array->GetNumberOfComponents();
+            if(nTuples<1 || (nTuples>1 && nComponents>1))
+              continue;
+            std::vector<float> data(nTuples*nComponents);
+            std::vector<double> rawData(nComponents);
+
+            for(int tIdx=0; tIdx<nTuples; tIdx++){
+              array->GetTuple(tIdx,rawData.data());
+              for(int cIdx=0; cIdx<nComponents; cIdx++){
+                data[tIdx*nComponents+cIdx] = static_cast<float>(rawData[cIdx]);
+              }
+            }
+            hsize_t s[3]{(hsize_t)data.size(),1,1};
+            writer.addH5DataSet(writer.meta,array->GetName(),s,data.data(),this->CompressionLevel);
+          }
+        }
+
+        // write channels
+        {
+          // point data
+          auto arrays = inputAsID->GetPointData();
+          for(int i=0; i<arrays->GetNumberOfArrays(); i++){
+            auto array = arrays->GetArray(i);
+            if(!array)
+              continue;
+            int nTuples = array->GetNumberOfTuples();
+            int nComponents = array->GetNumberOfComponents();
+            if(nTuples<1 || nComponents>1)
+              continue;
+            std::vector<float> data(nTuples*nComponents);
+            std::vector<double> rawData(nComponents);
+
+            for(int y=0; y<dims[1]; y++){
+              for(int x=0; x<dims[0]; x++){
+                // int tIdx = 256*dims[0] + x;
+                // int tIdx = y*dims[0] + x;
+                int tIdx = y*dims[0] + x;
+                int tIdxR = (dims[1]-1-y)*dims[0] + x;
+                array->GetTuple(tIdx,rawData.data());
+                for(int cIdx=0; cIdx<nComponents; cIdx++){
+                  data[tIdxR*nComponents+cIdx] = static_cast<float>(rawData[cIdx]);
+                }
+              }
+            }
+            // for(int tIdx=0; tIdx<nTuples; tIdx++){
+            //   array->GetTuple(tIdx,rawData.data());
+            //   for(int cIdx=0; cIdx<nComponents; cIdx++){
+            //     data[tIdx*nComponents+cIdx] = static_cast<float>(rawData[cIdx]);
+            //   }
+            // }
+            hsize_t s[3]{(hsize_t)dims[1],(hsize_t)dims[0],1};
+            writer.addH5DataSet(writer.channels,array->GetName(),s,data.data(),this->CompressionLevel);
+          }
+        }
+        break;
+      }
       case FORMAT::TTK: {
         // Topological Compression
         if(!input->IsA("vtkImageData")) {
@@ -557,7 +676,7 @@ int ttkCinemaWriter::RequestData(vtkInformation *ttkNotUsed(request),
   // Prepare Database
   // -------------------------------------------------------------------------
   {
-    // Initilize file lock for remaining operations
+    // Initialize file lock for remaining operations
     std::string lockFilePath;
     if(!this->GetLockFilePath(lockFilePath))
       return 0;

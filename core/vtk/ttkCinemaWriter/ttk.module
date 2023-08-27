@@ -5,6 +5,7 @@ SOURCES
 HEADERS
   ttkCinemaWriter.h
 DEPENDS
+  cinemaWriter
   ttkAlgorithm
   ttkTopologicalCompressionWriter
   Boost::boost

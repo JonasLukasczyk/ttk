@@ -6,6 +6,7 @@
 #include <vtkAbstractArray.h>
 #include <vtkDataArray.h>
 #include <vtkDataSet.h>
+#include <vtkPointSet.h>
 #include <vtkFieldData.h>
 #include <vtkSmartPointer.h>
 #include <vtkStringArray.h>
@@ -184,8 +185,22 @@ int ttkArrayEditor::RequestData(vtkInformation *ttkNotUsed(request),
           auto array = sourceFD->GetAbstractArray(i);
 
           if(isAddMode) {
-            if(selection->ArrayIsEnabled(array->GetName()))
-              outputAtt->AddArray(array);
+            if(selection->ArrayIsEnabled(array->GetName())){
+              if(targetAssociation == vtkDataObject::FIELD_ASSOCIATION_POINTS && array->GetNumberOfTuples()==1){
+                auto outputAsPS = static_cast<vtkPointSet*>(output);
+                const int nPoints = outputAsPS->GetNumberOfPoints();
+                auto filledArray = vtkSmartPointer<vtkAbstractArray>::Take( array->NewInstance() );
+                filledArray->SetName(array->GetName());
+                filledArray->SetNumberOfComponents(array->GetNumberOfComponents());
+                filledArray->SetNumberOfTuples(nPoints);
+                for(int j=0; j<nPoints; j++)
+                  filledArray->SetTuple(j,0,array);
+
+                outputAtt->AddArray(filledArray);
+              } else {
+                outputAtt->AddArray(array);
+              }
+            }
           } else {
             if(!selection->ArrayIsEnabled(array->GetName()))
               outputAtt->RemoveArray(array->GetName());
