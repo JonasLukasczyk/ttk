@@ -82,7 +82,17 @@ int ttkTopologicalSimplificationByPersistence::RequestData(
     return 0;
   this->preconditionTriangulation(triangulation);
 
-  double persistenceThreshold = this->PersistenceThreshold;
+  double persistenceThreshold = 0;
+
+  {
+      std::string finalExpressionString;
+      std::string errorMsg;
+      if( !ttkUtils::replaceVariables( this->PersistenceThreshold, inputDataSet->GetFieldData(), finalExpressionString, errorMsg ) )
+          return !this->printErr(errorMsg);
+
+      persistenceThreshold = std::stod(finalExpressionString);
+  }
+
   if(!this->ThresholdIsAbsolute) {
     double range[2];
     outputScalars->GetRange(range);

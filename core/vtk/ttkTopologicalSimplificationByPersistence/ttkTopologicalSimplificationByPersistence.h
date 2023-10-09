@@ -67,14 +67,14 @@ class TTKTOPOLOGICALSIMPLIFICATIONBYPERSISTENCE_EXPORT
   : public ttkAlgorithm,
     protected ttk::lts::LocalizedTopologicalSimplification {
 private:
-  double PersistenceThreshold{0.0};
+  std::string PersistenceThreshold{"0"};
   bool ThresholdIsAbsolute{false};
   bool ComputePerturbation{false};
   PAIR_TYPE PairType{PAIR_TYPE::EXTREMUM_SADDLE};
 
 public:
-  vtkSetMacro(PersistenceThreshold, double);
-  vtkGetMacro(PersistenceThreshold, double);
+  vtkSetMacro(PersistenceThreshold, std::string);
+  vtkGetMacro(PersistenceThreshold, std::string);
   vtkSetMacro(ThresholdIsAbsolute, bool);
   vtkGetMacro(ThresholdIsAbsolute, bool);
   vtkSetMacro(ComputePerturbation, bool);

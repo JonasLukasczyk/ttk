@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="UTF-8">
+      <title>ttkWebSocketIO library examples</title>
+      <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.js"></script>
+      <script type="text/javascript" src="./OrbitControls.js"></script>
+      <script type="text/javascript" src="../../WebSocketIO/ttkWebSocketIO.js"></script>
+      <script type="text/javascript" src="./vtkRenderer.js"></script>
+      <style>
+        #RendererContainer {
+            position: relative;
+        }
+        .dg.main {
+            position: absolute;
+            top:0;
+            right:0;
+        }
+
+      </style>
+   </head>
+   <body>
+      <div >
+         <table>
+            <tr>
+                <td>WebSocket Host</td>
+                <td><input id="msg-h" type="text" value="127.0.0.1"></td>
+            </tr>
+            <tr>
+                <td>Port</td>
+                <td><input id="msg-u" type="text" value="9285"></td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="connect-u" onclick="Connect();" title='Requests to build a connection' class="btn btn-primary btn-sm">Connect</button>
+                </td>
+                <td>
+                    <button id="request-u" onclick="Request();" title='Requests the latest input from the connected ParaView WebSocketIO filter.' class="btn btn-primary btn-sm">Request Data</button>
+                </td>
+            </tr>
+         </table>
+
+         <div id='RendererContainer'></div>
+      </div>
+
+      <script>
+         let ttk;
+
+         RENDERER = new vtkRenderer('RendererContainer',512,512);
+
+         function Connect() {
+            if ( ttk && ttk.getSocketObject().readyState !== 3) {
+                alert("please try it again after closing current connection") ;
+                return ;
+            }
+
+            const IP = document.getElementById("msg-h").value ;
+            const PORT = parseInt(document.getElementById("msg-u").value) ;
+
+            ttk = new ttkWebSocketIO(PORT, ()=>{}, ()=>{}, ()=>{}, ()=>{}, obj=>RENDERER.setScene(obj), IP, true) ;
+         }
+
+         function Request() {
+            if (ttk)
+               ttk.send("requestData") ;
+         }
+
+         function Close() {
+            if (ttk)
+               ttk.close() ;
+         }
+      </script>
+   </body>
+</html>

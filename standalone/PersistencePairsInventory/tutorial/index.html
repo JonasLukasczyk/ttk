@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>APPI</title>
+
+   <script type="text/javascript" src="./js/jquery.min.js"></script>
+   <script type="text/javascript" src="./js/bootstrap.min.js"></script>
+   <script src="./js/jquery.loading.min.js"></script>
+   <script type="text/javascript" src="./js/testdataset.js"></script>
+   <script src="./js/d3.v4.js"></script>
+   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+   <link rel="stylesheet" href="./css/bootstrap.min.css">
+   <link rel="stylesheet" href="./css/index.css">
+   <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+   <style>
+      table, td, th {
+        border: 1px solid #ddd;
+        text-align: left;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 4px;
+      }
+
+      th, td {
+        padding-left: 4px;
+      }
+      </style>
+</head>
+
+<body>
+<div class="modal fade" id="boxplotRange" data-source="x" tabindex="-1" role="dialog" aria-labelledby="boxplotRangeLabel" aria-hidden="true">
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="boxplotRangeLabel">change the range </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <!-- <input type="input" placeholder="1-60, 1-100" id="x-y-range-change" value=""> -->
+            <input type="input" placeholder="1" id="x-y-range-left" value="">
+            <input type="input" placeholder="100" id="x-y-range-right" value="">
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="boxplotRangeLabel-close">Close</button>
+            <button type="button" class="btn btn-primary" id="save-xy-axis">Save changes</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+<div class="modal fade" id="histRescaleCustomModel" tabindex="-1" role="dialog" aria-labelledby="histRescaleCustomLabel" aria-hidden="true">
+   <div class="modal-dialog" role="document">
+      <div class="modal-content">
+         <div class="modal-header">
+            <h5 class="modal-title" id="histRescaleCustomLabel">reScale to the custom range</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+            </button>
+         </div>
+         <div class="modal-body">
+            <input type="input" placeholder="lower" id="histRescaleCustomLower" value="">
+            <input type="input" placeholder="upper" id="histRescaleCustomUpper" value="">
+         </div>
+         <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="histRescaleCustom-close">Close</button>
+            <button type="button" class="btn btn-primary" id="histRescaleCustom">Save changes</button>
+         </div>
+      </div>
+   </div>
+</div>
+
+<div>
+   <div id="container-fluid-div" class="container-fluid" style="margin-top:10px;">
+      <div class="row" style="border-bottom: 0.1em solid #ddd;">
+         <div class="col-4">
+            <div class="text-justify p-2" style="display: flex;align-items: center;">
+               <span style="padding-right:4px;">Host:</span>
+               <!-- <input id="msg-host" type="text" style="width: 96px;font-size: 14px;" value="10.218.107.40"> <code>|</code> -->
+               <input id="msg-host" type="text" style="width: 96px;font-size: 14px;" value="localhost"> <code>|</code>
+               <span style="padding-right:4px;">Data Port: </span>
+               <input id="msg" type="text" value="9286" style="width: 38px;font-size: 14px;"><code>|</code>
+               <span style="padding-right:4px;">Render Port:</span>
+               <input id="msg-render" type="text" value="9289" style="width: 38px;font-size: 14px;"> <code>|</code>
+               <button id="connect" onclick="Connect();" style="font-size: 12px;" class="btn btn-primary btn-sm">Connect</button>
+               &nbsp; -<code> OR </code>- &nbsp;
+               <button id="load_test" onclick="LoadTest();" style="font-size: 12px;" class="btn btn-secondary btn-sm">Test dataset</button>
+               <br>
+            </div>
+         </div>
+
+         <div class="col-8" style="padding-left: 50px;font-size: 12px;color: gray;">
+            <table>
+               <tr>
+                 <td colspan="3"><kbd>ctrl v</kbd> Toggle between the APPI and PPI mode</td>
+                 <td colspan="3" title="in the APPI or PPI view"><kbd>ctrl ← or → or ↑ or ↓</kbd> Move the selected bin to ← or → or ↑ or ↓</td>
+                 <td colspan="3" title="in FBPC view"><kbd>ctrl b</kbd> Toggle between the view and brush mode</td>
+               </tr>
+               <tr>
+                  <td colspan="3" title="in the PPI view"><kbd>Shirt ctrl ← or →</kbd> shrink or expand the threshold window</td>
+                  <td colspan="3"  title="in the PPI view"><kbd>Shirt ← or →</kbd> Move the threshold window to the left or right</td>
+                  <td colspan="3"  title="in the APPI view"><kbd>ctrl x</kbd> Show or hide the tooltip</td>
+               </tr>
+             </table>
+         </div>
+      </div>
+
+   </div>
+   <div class="container-fluid">
+      <div class="row">
+         <div class="col-4" style="padding-right:0px;">
+            <div class="text-justify p-2" style="height: 100%;">
+               <h4>Functional Boxplot of Persistence Curves</h4>
+
+               <ul class="ul-menu" style="border-bottom: 0 solid #ddd;">
+                  <li>
+                     <div class="custom-control custom-switch inline">
+                        <input type="checkbox" class="custom-control-input" title="apply logarithmic" id="customSwitches--y">
+                        <label class="custom-control-label" title="logarithmic or not" for="customSwitches--y"></label>
+                     </div> <code>|</code>
+
+                     <div style="display:none;" debug-mode='1'>
+                        <span id="notification_xxyy"  class="p-1 bg-success text-white" title="x-y domain"
+                                 style="font-size:12px;cursor:pointer;"
+                                 data-toggle="modal"
+                                 data-target="#boxplotRange">0-0, 0-0</span> <code>|</code>
+                        <span id="brush_mode" class="p-1 bg-success text-white" mode="view" style="font-size:12px;cursor:pointer;">view mode</span>
+                     </div>
+
+                     <div debug-mode='1' style="display:none;">
+                     <input type="checkbox" id="boxplot-checkbox-lines">
+                     <select id="boxplot-select-lines" >
+                        <option value="all">all</option>
+                     </select><code>|</code></div>
+
+                     <!-- not required functionality -->
+                     <div style="display:none;" debug-mode='1'><input type="checkbox" checked="checked" id="boxplot-checkbox-polygon">polygon layer<code>|</code>
+                     <a id="download_raw_data" href="javascript:void(0);" download="raw_data.csv">raw.csv</a> <code>|</code> </div>
+
+                     <img id="box_zoom_back" style="width:20px;cursor: pointer;" src="./images/zoom_back.png">
+                  </li>
+               </ul>
+
+               <div id="box_dataviz" style="width: 100%;padding-bottom: 5px;">
+                  <h3>- </h3>
+               </div>
+               <div id="left-continer-middle">
+               <br>
+               <h4>Render View</h4></div>
+               <div id='RendererContainer' style="border: 0.1em solid #ddd;padding:0;"></div>
+
+            </div>
+         </div>
+         <div class="col-8">
+            <div class="text-justify p-2" style="height: 100%;" id="histogram-view-container">
+               <div id="APPI-header-container" style="padding-left: 30px;">
+                <h4 element-show="mdm">Aggregated Persistence Pair Inventory (APPI)</h4>
+                <h4 element-show="sdm" style="display:none;">Persistence Pair Inventory (PPI)</h4>
+
+                <div class="container-fluid" style="padding-right: 15px;padding-left: 15px;">
+                 <div class="row" id="container-row" style="border-bottom: 0 solid #ddd;">
+                     <div style="padding-left: 0;">
+                        <ul class="ul-menu">
+                           <!-- display none -->
+                           <li>
+                              <div style="display:none;">
+                                  Min Threshold:&nbsp;
+                                  <select id="hist-threshold" data-value='0' title="*">
+                                     <option> - </option>
+                                  </select> <code>|</code>
+                                  Max Threshold: <select id="threshold-window" data-value='1' title="*">
+                                     <option> - </option>
+                                  </select>
+                              </div>
+
+                              <img id="hist-rescale" style="width:16px;cursor: pointer;" title="Rescale to Data Range" src="./images/resize_3.png">
+                              <img id="hist-rescale-custom" style="width:16px;cursor: pointer;" title="Rescale to Custom Data Range" src="./images/resize_5.png" data-toggle="modal" data-target="#histRescaleCustomModel">
+                              <div style="display:none">
+                                 <input element-show="mdm" type="range" id="range_input" value="1" min="1" max="10" step="0.09">
+                                 &nbsp;&nbsp;|&nbsp;&nbsp;
+                              </div>
+                              <div style="display:none">
+                                 <input element-show="sdm" style="display:none;" type="range" id="sdm-range_input" value="1" min="1" max="10" step="0.09">
+                                 &nbsp;&nbsp;|&nbsp;&nbsp;
+                              </div>
+                              <img element-show="mdm" id="histogram_zoom_back" style="width:16px;cursor: pointer;" src="./images/zoom_back.png">
+                              <img element-show="sdm" id="sdm-histogram_zoom_back" style="width:16px;cursor: pointer; display:none;" src="./images/zoom_back.png">&nbsp;&nbsp;|&nbsp;&nbsp;
+
+                              Threshold:
+                              <label id="threshold-picker_left" style="border:0; color:#f6931f; font-weight:bold;width:24px;">0</label>
+                              <span id="histogram-threshold-picker-default">
+                                 <div class="ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content default-slider-range">
+                                    <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                    <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                    <div class="ui-slider-range ui-corner-all ui-widget-header" style="left: 0%; width: 0%;"></div>
+                                 </div>
+                              </span>
+                              <div id="threshold-slider-range" style="display:none;">
+                                <div id="threshold-custom-handle0" class="ui-slider-handle"></div>
+                                <div id="threshold-custom-handle1" class="ui-slider-handle"></div>
+                              </div>
+                              <label id="threshold-picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 8px;">0</label>
+                              &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+
+                              <span element-show="mdm" >
+                                 Time:  <label id="picker_left" style="border:0; color:#f6931f; font-weight:bold;width:24px;">0</label>
+                                 <span id="histogram-time-picker-default">
+                                    <div class="ui-slider ui-corner-all ui-slider-horizontal ui-widget ui-widget-content default-slider-range">
+                                       <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                       <div class="ui-slider-handle ui-corner-all ui-state-default" tabindex="0" style="left: 0%;"></div>
+                                       <div class="ui-slider-range ui-corner-all ui-widget-header" style="left: 0%; width: 0%;"></div>
+                                    </div>
+                                 </span>
+
+                                 <div id="slider-range" style="display: none;">
+                                   <div id="custom-handle0" class="ui-slider-handle"></div>
+                                   <div id="custom-handle1" class="ui-slider-handle"></div>
+                                 </div>
+
+                                 <div id="slider-range-single" style="display: none;">
+                                   <div id="custom-handle0-single" class="ui-slider-handle"></div>
+                                 </div>
+
+                                 <label id="picker_right" style="border:0; color:#f6931f; font-weight:bold;width:14px;margin-left: 8px;">0</label>
+                              </span>
+                              <span element-show="sdm" style="display:none;">Time:&nbsp;
+                                 <select id="hist-time">
+                                    <option> - </option>
+                                 </select>
+                              </span>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+                              <div id="histogram-notification"
+                                    data-pattern-0="Scalar: <code>{Scalar}</code>&nbsp;&nbsp;|&nbsp;&nbsp;Time: <code>{Time}</code>&nbsp;&nbsp;|&nbsp;&nbsp;Threshold: <code>{Threshold}</code>"
+                                    data-pattern-1="Left similarity: <code>{Left}</code>, Right similarity: <code>{Right}</code></span>">
+                              <span id="histogram-notification-placeholder-default"> - </span> <span id="histogram-notification-placeholder-0"></span> <span id="histogram-notification-placeholder-1"></span>
+                              </div>
+                           </li>
+                        </ul>
+                     </div>
+                  </div> <!-- row -->
+               </div> <!-- container-fluid -->
+            </div> <!--APPI-header-container -->
+
+               <div style="position: relative;">
+                  <div element-show="mdm" id="histogram_viz" class="histogram_viz_boundary">
+                     <h3 style="padding-bottom: 10px;padding-left: 30px;">-</h3>
+                  </div>
+                  <div id="histogram_viz_legend" class="histogram_legend_boundary" data-x_0="0.2" data-x_1="0.8"></div>
+
+                  <div id="legend-slider-top"><div id="legend-custom-handle-top" class="ui-slider-handle"></div></div>
+                  <div id="legend-slider-right"><div id="legend-custom-handle-right" class="ui-slider-handle"></div></div>
+
+               </div>
+
+
+               <div element-show="sdm" style="display:none;" id="sdm-histogram_viz" class="histogram_viz_boundary"></div>
+
+            </div> <!-- histogram-view-container -->
+         </div> <!-- col-8 -->
+      </div>
+   </div>
+</div>
+<script type="text/javascript" src="./js/utils.js"></script>
+<script type="text/javascript" src="./lib/ttkWebSocketIO.js"></script>
+<script type="text/javascript" src="./js/legend.js"></script>
+<script type="text/javascript" src="./js/boxplot.js"></script>
+<script type="text/javascript" src="./js/histogram.js"></script>
+<script type="text/javascript" src="./js/histogram.sdm.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/110/three.min.js"></script>
+
+<script type="text/javascript" src="./js/OrbitControls.js"></script>
+<script type="text/javascript" src="./js/vtkRenderer.js"></script>
+<script src="./js/index.js"></script>
+
+<!-- for purpose -->
+<img id="hidden-zoom-back" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-brush-mode" class="nospace" src="./images/zoom_back.png">
+
+<!-- automatically fill-in the xxyy input value -->
+<img id="hidden-notification_xxyy" class="nospace" src="./images/zoom_back.png">
+<!-- implement clicking event -->
+<img id="hidden-notification_xxyy-zoom" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-next" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-optimal-threshold" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-prev" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-right-next" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-move-right-prev" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-mdm-add-window" class="nospace" src="./images/zoom_back.png">
+<img id="hidden-sdm-add-window" class="nospace" src="./images/zoom_back.png">
+<!-- re-draw the vertical column lonely -->
+<img id="hidden-sdm-draw-vertical-column-lonely" class="nospace" src="./images/zoom_back.png">
+<!-- re-draw the legend in the sdm lonely -->
+<img id="hidden-sdm-draw-legend-lonely" class="nospace" src="./images/zoom_back.png">
+<!-- reset domain of top in the legend -->
+<img id="hidden-legend-redraw-top" class="nospace" src="./images/zoom_back.png">
+<!-- reset domain of right in the legend -->
+<img id="hidden-legend-redraw-right" class="nospace" src="./images/zoom_back.png">
+<!-- click event in APPI -->
+<img id="hidden-click-event-APPI" class="nospace" src="./images/zoom_back.png">
+</body>
+</html>

@@ -1,0 +1,7 @@
+NAME
+  ttkLevelSets
+DEPENDS
+  ttkAlgorithm
+  VTK::FiltersCore
+  VTK::FiltersGeneral
+  VTK::FiltersGeometry
