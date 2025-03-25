@@ -29,8 +29,6 @@
         <Documentation>TODO</Documentation>
       </InputProperty>
 
-      <OutputPort index="0" id="port0" name="Matrix" />
-
       <StringVectorProperty name="FeatureIds" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="ttkVertexScalarField">
         <ArrayListDomain name="array_list" input_domain_name="input_arrays">
           <RequiredProperties>
@@ -39,6 +37,50 @@
         </ArrayListDomain>
         <Documentation>Feature Ids.</Documentation>
       </StringVectorProperty>
+
+
+      <IntVectorProperty name="Backend" command="SetBackend" label="Backend"
+          number_of_elements="1" default_values="0"
+          panel_visibility="advanced">
+          <EnumerationDomain name="enum">
+            <Entry value="0" text="Wasserstein Distance (IEEE TVCG 2021)"/>
+            <Entry value="1" text="Edit Distance (IEEE TVCG 2019)"/>
+            <Entry value="3" text="Branch Mapping Distance (EuroVis 2022)"/>
+            <Entry value="4" text="Path Mapping Distance (TopoInVis 2022)"/>
+          </EnumerationDomain>
+          <Documentation>
+
+          </Documentation>
+      </IntVectorProperty>
+
+      <IntVectorProperty
+        name="BranchMetric"
+        label="Branch Metric"
+        command="SetBranchMetric"
+        number_of_elements="1"
+        default_values="0">
+        <EnumerationDomain name="enum">
+            <Entry value="0" text="Wasserstein first degree"/>
+            <Entry value="1" text="Wasserstein second degree"/>
+            <Entry value="2" text="Persistence"/>
+            <Entry value="3" text="Shifting"/>
+        </EnumerationDomain>
+        <Hints>
+          <PropertyWidgetDecorator type="GenericDecorator"
+                                  mode="visibility"
+                                  property="Backend"
+                                  value="3" />
+          </Hints>
+          <Documentation>
+            The metric used to compare branches in the algorithm.
+          </Documentation>
+        </IntVectorProperty>
+
+      <!-- <OutputPort index="0" id="port0" name="Matrix" /> -->
+      <OutputPort name="Correspondences" index="0" id="port0" />
+      <OutputPort name="Input Trees" index="1" id="port1" />
+      <!-- <OutputPort name="Input Nodes" index="1" id="port1" /> -->
+      <!-- <OutputPort name="Input Arcs" index="2" id="port2" /> -->
 
       ${DEBUG_WIDGETS}
 

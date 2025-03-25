@@ -82,8 +82,6 @@ private:
    */
   std::string OutputArrayName{"AveragedScalarField"};
   double scaling = 2.0;
-  int backend = 0;
-  int branchMetric = 0;
   void dfs_linearization(
       ttk::SimplexId curr_node,
       std::vector<double> &lin,
@@ -106,18 +104,6 @@ public:
    */
   vtkSetMacro(OutputArrayName, const std::string &);
   vtkGetMacro(OutputArrayName, std::string);
-
-  void SetBackend(int b) {
-    backend = b;
-    Modified();
-  }
-  vtkGetMacro(backend, int);
-
-  void SetBranchMetric(int b) {
-    branchMetric = b;
-    Modified();
-  }
-  vtkGetMacro(branchMetric, int);
 
   void SetScaling(double s) {
     scaling = s;
