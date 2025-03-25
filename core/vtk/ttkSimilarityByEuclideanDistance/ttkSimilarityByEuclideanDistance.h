@@ -1,31 +1,31 @@
 #pragma once
 
 // VTK Module
-#include <ttkSimilarityByDistanceModule.h>
+#include <ttkSimilarityByEuclideanDistanceModule.h>
 
 // VTK Includes
 #include <ttkSimilarityAlgorithm.h>
 
 // TTK Base Includes
-#include <SimilarityByDistance.h>
+#include <SimilarityByEuclideanDistance.h>
 
-class TTKSIMILARITYBYDISTANCE_EXPORT ttkSimilarityByDistance
+class TTKSIMILARITYBYEUCLIDEANDISTANCE_EXPORT ttkSimilarityByEuclideanDistance
   : public ttkSimilarityAlgorithm,
-    protected ttk::SimilarityByDistance {
+    protected ttk::SimilarityByEuclideanDistance {
 
 private:
   bool NormalizeMatrix{true};
 
 public:
-  static ttkSimilarityByDistance *New();
-  vtkTypeMacro(ttkSimilarityByDistance, ttkSimilarityAlgorithm);
+  static ttkSimilarityByEuclideanDistance *New();
+  vtkTypeMacro(ttkSimilarityByEuclideanDistance, ttkSimilarityAlgorithm);
 
   vtkSetMacro(NormalizeMatrix, bool);
   vtkGetMacro(NormalizeMatrix, bool);
 
 protected:
-  ttkSimilarityByDistance();
-  ~ttkSimilarityByDistance();
+  ttkSimilarityByEuclideanDistance();
+  ~ttkSimilarityByEuclideanDistance();
 
   int RequestData(vtkInformation *request,
                   vtkInformationVector **inputVector,

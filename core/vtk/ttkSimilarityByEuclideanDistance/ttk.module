@@ -1,0 +1,9 @@
+NAME
+  ttkSimilarityByEuclideanDistance
+SOURCES
+  ttkSimilarityByEuclideanDistance.cpp
+HEADERS
+  ttkSimilarityByEuclideanDistance.h
+DEPENDS
+  similarityByEuclideanDistance
+  ttkSimilarityAlgorithm

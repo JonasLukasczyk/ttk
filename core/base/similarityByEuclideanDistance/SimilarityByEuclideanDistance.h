@@ -1,16 +1,16 @@
 /// TODO 1: Provide your information
 ///
 /// \ingroup base
-/// \class ttk::SimilarityByDistance
+/// \class ttk::SimilarityByEuclideanDistance
 /// \author Your Name Here <Your Email Address Here>
 /// \date The Date Here.
 ///
-/// This module defines the %SimilarityByDistance class that computes for
+/// This module defines the %SimilarityByEuclideanDistance class that computes for
 /// each vertex of a triangulation the average scalar value of itself and its
 /// direct neighbors.
 ///
 /// \b Related \b publication: \n
-/// 'SimilarityByDistance'
+/// 'SimilarityByEuclideanDistance'
 /// Jonas Lukasczyk and Julien Tierny.
 /// TTK Publications.
 /// 2020.
@@ -22,13 +22,13 @@
 
 namespace ttk {
 
-  class SimilarityByDistance : virtual public Debug {
+  class SimilarityByEuclideanDistance : virtual public Debug {
 
   public:
-    SimilarityByDistance() {
-      this->setDebugMsgPrefix("SimilarityByDistance");
+    SimilarityByEuclideanDistance() {
+      this->setDebugMsgPrefix("SimilarityByEuclideanDistance");
     };
-    ~SimilarityByDistance(){};
+    ~SimilarityByEuclideanDistance(){};
 
     template <typename DT>
     int computeDistanceMatrix(DT *distanceMatrix,

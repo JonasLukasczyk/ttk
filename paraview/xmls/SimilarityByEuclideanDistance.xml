@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ServerManagerConfiguration>
   <ProxyGroup name="filters">
-    <SourceProxy name="ttkSimilarityByDistance" class="ttkSimilarityByDistance" label="TTK SimilarityByDistance">
-      <Documentation long_help="SimilarityByDistance" short_help="SimilarityByDistance">
+    <SourceProxy name="ttkSimilarityByEuclideanDistance" class="ttkSimilarityByEuclideanDistance" label="TTK SimilarityByEuclideanDistance">
+      <Documentation long_help="SimilarityByEuclideanDistance" short_help="SimilarityByEuclideanDistance">
         TODO
       </Documentation>
 

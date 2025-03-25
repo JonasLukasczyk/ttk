@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+    <SourceProxy name="ttkSimilarityByMorseSmaleSegmentation" class="ttkSimilarityByMorseSmaleSegmentation" label="TTK SimilarityByMorseSmaleSegmentation">
+      <Documentation long_help="SimilarityByMorseSmaleSegmentation" short_help="SimilarityByMorseSmaleSegmentation">
+        TODO
+      </Documentation>
+
+      <InputProperty name="Segmentation" port_index="0" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkMultiBlockDataSet" />
+        </DataTypeDomain>
+        <Documentation>TODO</Documentation>
+      </InputProperty>
+
+      <InputProperty name="Points" port_index="1" command="SetInputConnection">
+        <ProxyGroupDomain name="groups">
+          <Group name="sources" />
+          <Group name="filters" />
+        </ProxyGroupDomain>
+        <DataTypeDomain name="input_type">
+          <DataType value="vtkMultiBlockDataSet" />
+        </DataTypeDomain>
+        <Documentation>TODO</Documentation>
+      </InputProperty>
+
+      <OutputPort index="0" id="port0" name="Matrix" />
+
+      <StringVectorProperty name="AscendingManifold" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="0">
+        <ArrayListDomain name="array_list" input_domain_name="input_arrays">
+          <RequiredProperties>
+            <Property function="Input" name="Segmentation" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>TODO</Documentation>
+      </StringVectorProperty>
+
+      <StringVectorProperty name="DescendingManifold" command="SetInputArrayToProcess" element_types="0 0 0 0 2" number_of_elements="5" default_values="1">
+        <ArrayListDomain name="array_list" input_domain_name="input_arrays">
+          <RequiredProperties>
+            <Property function="Input" name="Segmentation" />
+          </RequiredProperties>
+        </ArrayListDomain>
+        <Documentation>TODO</Documentation>
+      </StringVectorProperty>
+
+      ${DEBUG_WIDGETS}
+
+      <Hints>
+        <ShowInMenu category="TTK - Time-Varying Scalar Data" />
+      </Hints>
+    </SourceProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>

@@ -60,6 +60,7 @@ int countEdges(int &nEdges,
                const vtkDataArray *indexIdMap1 = nullptr) {
 
   if(nIds0 > 0 && nIds1 > 0) {
+
     std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap0;
     std::unordered_map<ttk::SimplexId, ttk::SimplexId> idIndexMap1;
     ttkSimilarityAlgorithm::BuildIdIndexMap(idIndexMap0, indexIdMap0);
@@ -408,14 +409,13 @@ int ttkTrackingGraph::GenerateTrackingGraphFromFeatures(
       auto fFD = f->GetFieldData();
       for(int a = 0; a < trackingGraphPD->GetNumberOfArrays(); a++) {
         auto oArray = trackingGraphPD->GetAbstractArray(a);
-        const int nComponents = oArray->GetNumberOfComponents();
         auto iArray = fPD->GetAbstractArray(oArray->GetName());
         if(iArray) {
           oArray->InsertTuples(q, n, 0, iArray);
         } else {
           iArray = fFD->GetAbstractArray(oArray->GetName());
           for(int i = 0; i < n; i++)
-            oArray->InsertTuples(q + i, nComponents, 0, iArray);
+            oArray->InsertTuples(q + i, 1, 0, iArray);
         }
       }
 

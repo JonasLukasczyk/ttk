@@ -1,4 +1,4 @@
-#include <ttkSimilarityByDistance.h>
+#include <ttkSimilarityByEuclideanDistance.h>
 
 #include <vtkInformation.h>
 #include <vtkObjectFactory.h>
@@ -14,13 +14,13 @@
 #include <ttkMacros.h>
 #include <ttkUtils.h>
 
-vtkStandardNewMacro(ttkSimilarityByDistance);
+vtkStandardNewMacro(ttkSimilarityByEuclideanDistance);
 
-ttkSimilarityByDistance::ttkSimilarityByDistance() {}
-ttkSimilarityByDistance::~ttkSimilarityByDistance() {}
+ttkSimilarityByEuclideanDistance::ttkSimilarityByEuclideanDistance() {}
+ttkSimilarityByEuclideanDistance::~ttkSimilarityByEuclideanDistance() {}
 
 
-int ttkSimilarityByDistance::RequestData(vtkInformation *,
+int ttkSimilarityByEuclideanDistance::RequestData(vtkInformation *,
                                         vtkInformationVector **inputVector,
                                         vtkInformationVector *outputVector) {
 

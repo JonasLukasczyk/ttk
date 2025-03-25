@@ -1,0 +1,9 @@
+NAME
+  ttkSimilarityByMorseSmaleSegmentation
+SOURCES
+  ttkSimilarityByMorseSmaleSegmentation.cpp
+HEADERS
+  ttkSimilarityByMorseSmaleSegmentation.h
+DEPENDS
+  similarityByMorseSmaleSegmentation
+  ttkSimilarityAlgorithm
