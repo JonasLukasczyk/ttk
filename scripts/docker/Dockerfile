@@ -11,7 +11,7 @@ ENV CMAKE_BUILD_TYPE=MinSizeRel \
     CMAKE_GENERATOR=Ninja
 
 # bring in additional apt sources
-RUN apt-get update \ 
+RUN apt-get update \
  && apt-get install --no-install-recommends -yqq ca-certificates \
  && echo "deb [trusted=yes] https://apt.kitware.com/ubuntu/ focal main" > /etc/apt/sources.list.d/kitware.list \
  && apt-get update
@@ -65,6 +65,14 @@ RUN  install-helper /tmp/zfp.sh
 COPY pkg/spectra.sh /tmp
 RUN  install-helper /tmp/spectra.sh
 
+#install MPICH
+COPY pkg/mpich.sh /tmp
+RUN  install-helper /tmp/mpich.sh
+
+#install OpenMPI
+#COPY pkg/ompi.sh /tmp
+#RUN  install-helper /tmp/ompi.sh
+
 # install ParaView
 ARG paraview=5.13.0
 ENV PARAVIEW_VERSION=${paraview}
@@ -81,7 +89,7 @@ ARG ttk=dev
 ENV TTK_VERSION=${ttk}
 
 ENV DEV=""
-
+ADD https://api.github.com/repos/m-s-will/ttk/git/refs/heads/mpi_container version.json
 COPY pkg/ttk.sh /tmp
 RUN  install-helper /tmp/ttk.sh
 
@@ -101,7 +109,7 @@ ENV DEV="True"
 
 COPY pkg/ttk.sh /tmp
 RUN  install-helper /tmp/ttk.sh
-  
+
 # --------------------------------------------------------------------------
 
 FROM base as ttk
@@ -112,7 +120,7 @@ RUN apt-get update \
  && apt-get -yqq --no-install-recommends install $(cat /usr/local/.pkgs) \
  && apt-get clean \
  && rm -rf /var/cache/apt/lists
-
+RUN /sbin/ldconfig
 # run pvserver by default
 CMD /usr/local/bin/pvserver
 EXPOSE 11111

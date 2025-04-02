@@ -43,7 +43,7 @@ After building the image with `docker build -t <image-name> --build-arg paraview
 ```
 docker run -it --rm -p 11111:11111 -v "$HOME:/home/`whoami`/" --user $UID <image-name>
 ```
-or use the GitHub image with 
+or use the GitHub image with
 ```
 docker run -it --rm -p 11111:11111 -v "$(pwd)/data:/home/paraview/data" --user $UID ghcr.io/scivislab/ttk:latest
 ```

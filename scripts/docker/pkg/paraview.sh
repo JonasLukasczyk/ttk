@@ -38,9 +38,11 @@ conf_args \
     -DPARAVIEW_INSTALL_DEVELOPMENT_FILES=ON     \
     -DPARAVIEW_ENABLE_RAYTRACING=${enable_rt}   \
     -DPARAVIEW_USE_VTKM=ON					    \
+    -DPARAVIEW_USE_MPI=ON					    \
     -DPARAVIEW_USE_PYTHON=ON                    \
     -DPARAVIEW_USE_QT=OFF 				        \
     -DVTK_USE_X:BOOL=OFF 					    \
+    -DVTK_USE_64BIT_IDS=ON					    \
     -DVTK_OPENGL_HAS_OSMESA:BOOL=ON 		    \
     -DVTK_SMP_IMPLEMENTATION_TYPE=OpenMP        \
     -DVTKOSPRAY_ENABLE_DENOISER=${enable_dn}
@@ -48,6 +50,6 @@ conf_args \
 cmake-default
 
 # download and install materials
-mkdir -p /usr/share/materials 
+mkdir -p /usr/share/materials
 curl -kL https://gitlab.kitware.com/paraview/materials/-/archive/master/materials-master.tar.bz2 | \
     tar jxv --strip-components 1 -C /usr/share/materials

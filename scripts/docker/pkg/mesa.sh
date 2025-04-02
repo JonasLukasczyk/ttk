@@ -17,7 +17,7 @@ require-pkgs \
 fetch-src https://codeload.github.com/mesa3d/mesa/tar.gz/refs/tags/mesa-${MESA_VERSION}
 
 # determine build type from CMake default
-case ${CMAKE_BUILD_TYPE,,} in 
+case ${CMAKE_BUILD_TYPE,,} in
     relwithdebinfo)
         buildtype='debugoptimized'
         ;;
@@ -29,7 +29,7 @@ case ${CMAKE_BUILD_TYPE,,} in
         ;;
 esac
 
-# configure 
+# configure
 meson build \
     -Dbuildtype=${buildtype}        \
     -Dosmesa=gallium			    \
@@ -45,8 +45,7 @@ meson build \
     -Dshared-glapi=true
 
 # build
-ninja -C build 
+ninja -C build
 
 # install
 ninja -C build install
-

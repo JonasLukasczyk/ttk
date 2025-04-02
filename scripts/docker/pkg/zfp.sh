@@ -11,4 +11,3 @@ require-pkgs \
 fetch-src https://codeload.github.com/LLNL/zfp/tar.gz/0.5.5
 
 cmake-default -DBUILD_EXAMPLES=OFF
-

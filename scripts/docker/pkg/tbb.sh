@@ -5,4 +5,3 @@ fetch-src https://github.com/oneapi-src/oneTBB/archive/refs/tags/v${TBB_VERSION}
 
 cmake-default \
     -DTBB_TEST=OFF
-

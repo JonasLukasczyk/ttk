@@ -15,7 +15,7 @@ then
     PV_VERSION_OUTPUT = $(paraview --version)
     PARAVIEW_VERSION = "${PV_VERSION_OUTPUT:17}"
     echo "$PARAVIEW_VERSION"
-    
+
 else
     PV_VERSION_OUTPUT=$($PARAVIEW_PATH --version)
     PARAVIEW_VERSION="${PV_VERSION_OUTPUT:17}"
