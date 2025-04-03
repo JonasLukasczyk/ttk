@@ -17,7 +17,7 @@ RUN apt-get update \
  && apt-get update
 
 # install base development env
-RUN apt-get install --no-install-recommends -yqq \
+RUN apt-get update && apt-get install --no-install-recommends -yqq \
     build-essential \
     ninja-build \
     cmake \
@@ -74,7 +74,7 @@ RUN  install-helper /tmp/mpich.sh
 #RUN  install-helper /tmp/ompi.sh
 
 # install ParaView
-ARG paraview=5.13.0
+ARG paraview=5.13.1
 ENV PARAVIEW_VERSION=${paraview}
 
 COPY pkg/paraview.sh /tmp
@@ -89,7 +89,7 @@ ARG ttk=dev
 ENV TTK_VERSION=${ttk}
 
 ENV DEV=""
-ADD https://api.github.com/repos/m-s-will/ttk/git/refs/heads/mpi_container version.json
+ADD https://api.github.com/repos/JonasLukasczyk/ttk/git/refs/heads/tracking version.json
 COPY pkg/ttk.sh /tmp
 RUN  install-helper /tmp/ttk.sh
 
@@ -118,6 +118,7 @@ COPY --from=builder-ttk /usr/local /usr/local
 
 RUN apt-get update \
  && apt-get -yqq --no-install-recommends install $(cat /usr/local/.pkgs) \
+ && apt-get -yqq install gdb \
  && apt-get clean \
  && rm -rf /var/cache/apt/lists
 RUN /sbin/ldconfig

@@ -44,9 +44,9 @@ if [ -n "${DEV}" ]; then
 fi
 
 # get source code
-git clone https://github.com/m-s-will/ttk.git
+git clone https://github.com/JonasLukasczyk/ttk.git
 cd ttk
-git checkout mpi_container
+git checkout tracking
 
 # actually compile
 cmake-default \
@@ -57,13 +57,9 @@ cmake-default \
     -DTTK_BUILD_VTK_PYTHON_MODULE=ON \
     -DTTK_ENABLE_DOUBLE_TEMPLATING=OFF \
     -DTTK_ENABLE_CPU_OPTIMIZATION=ON \
-    -DTTK_ENABLE_64BIT_IDS=ON \
+    -DTTK_ENABLE_64BIT_IDS=OFF \
     -DTTK_ENABLE_OPENMP=ON \
     -DTTK_ENABLE_KAMIKAZE=ON \
-    -DTTK_ENABLE_MPI=ON \
-    -DVTK_MODULE_ENABLE_ttkExTreeM=NO \
-    -DVTK_MODULE_ENABLE_ttkPairExtrema=NO \
-    -DVTK_MODULE_ENABLE_ttkGradientGraph=NO \
     ..
 
 # call Ninja manually to ignore duplicate targets

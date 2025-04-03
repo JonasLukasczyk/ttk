@@ -7,5 +7,7 @@ require-pkgs \
 fetch-src https://github.com/embree/embree/archive/v${EMBREE_VERSION}.tar.gz
 
 cmake-default \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+    -DCMAKE_BUILD_TYPE=Release \
     -DEMBREE_TASKING_SYSTEM=TBB \
     -DEMBREE_TUTORIALS=OFF

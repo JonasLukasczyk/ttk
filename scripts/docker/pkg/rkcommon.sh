@@ -6,5 +6,6 @@ require-pkgs \
 fetch-src https://github.com/ospray/rkcommon/archive/v${RKCOMMON_VERSION}.tar.gz
 
 cmake-default \
+    -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
     -DBUILD_TESTING=OFF                 \
     -DRKCOMMON_TASKING_SYSTEM=TBB
