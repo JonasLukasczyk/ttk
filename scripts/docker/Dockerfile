@@ -85,30 +85,26 @@ RUN  install-helper /tmp/paraview.sh
 FROM builder as builder-ttk
 
 # install TTK
-ARG ttk=dev
-ENV TTK_VERSION=${ttk}
-
-ENV DEV=""
-ADD https://api.github.com/repos/JonasLukasczyk/ttk/git/refs/heads/tracking version.json
+COPY ../../ /tmp/ttk
 COPY pkg/ttk.sh /tmp
 RUN  install-helper /tmp/ttk.sh
 
 # --------------------------------------------------------------------------
 
 #FROM builder-ttk as ttk-dev
-FROM builder as ttk-dev
+#FROM builder as ttk-dev
 
 #COPY --from=builder-ttk /usr/local /usr/local
 
-RUN apt-get update \
- && apt-get -yqq --no-install-recommends install $(cat /usr/local/.pkgs) gdb \
- && apt-get clean \
- && rm -rf /var/cache/apt/lists
+#RUN apt-get update \
+# && apt-get -yqq --no-install-recommends install $(cat /usr/local/.pkgs) gdb \
+# && apt-get clean \
+# && rm -rf /var/cache/apt/lists
 
-ENV DEV="True"
+#ENV DEV="True"
 
-COPY pkg/ttk.sh /tmp
-RUN  install-helper /tmp/ttk.sh
+#COPY pkg/ttk.sh /tmp
+#RUN  install-helper /tmp/ttk.sh
 
 # --------------------------------------------------------------------------
 

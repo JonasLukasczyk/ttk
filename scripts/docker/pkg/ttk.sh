@@ -44,9 +44,7 @@ if [ -n "${DEV}" ]; then
 fi
 
 # get source code
-git clone https://github.com/JonasLukasczyk/ttk.git
-cd ttk
-git checkout tracking
+cd /tmp/ttk
 
 # actually compile
 cmake-default \
