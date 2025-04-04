@@ -87,6 +87,7 @@ private:
   double NonImportantPairsProximity = 0.05;
   std::string ExcludeImportantPairsLower = "";
   std::string ExcludeImportantPairsHigher = "";
+  double ConflictTolerance = 1e-6;
 
   //
   vtkAbstractArray *oldScalars = 0;
@@ -314,6 +315,9 @@ public:
 
   vtkSetMacro(ExcludeImportantPairsHigher, const std::string &);
   vtkGetMacro(ExcludeImportantPairsHigher, std::string);
+
+  vtkSetMacro(ConflictTolerance, double);
+  vtkGetMacro(ConflictTolerance, double);
 
   /**
    * This static method and the macro below are VTK conventions on how to

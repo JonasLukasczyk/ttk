@@ -95,6 +95,13 @@ int ttkPlanarGraphLayout::planarGraphLayoutCall(
   if(!cells)
     return !this->printErr("Unable to retrieve connectivity array.");
 
+  auto parentIds = vtkSmartPointer<vtkIntArray>::New();
+  if(input->GetPointData()->HasArray("ParentId"))
+    parentIds->ShallowCopy(input->GetPointData()->GetArray("ParentId"));
+  auto nodeIds = vtkSmartPointer<vtkIntArray>::New();
+  if(input->GetPointData()->HasArray("NodeId"))
+    nodeIds->ShallowCopy(input->GetPointData()->GetArray("NodeId"));
+
   int status = 1;
   ttkTypeMacroAII(
     this->GetUseSequences() ? sequenceArray->GetDataType() : VTK_INT,
@@ -109,7 +116,12 @@ int ttkPlanarGraphLayout::planarGraphLayoutCall(
                                : nullptr,
        this->GetUseSizes() ? ttkUtils::GetPointer<float>(sizeArray) : nullptr,
        this->GetUseBranches() ? ttkUtils::GetPointer<T1>(branchArray) : nullptr,
-       this->GetUseLevels() ? ttkUtils::GetPointer<T1>(levelArray) : nullptr)));
+       this->GetUseLevels() ? ttkUtils::GetPointer<T1>(levelArray) : nullptr,
+       ttkUtils::GetPointer<int>(nodeIds),
+       ttkUtils::GetPointer<int>(parentIds)
+     )
+     )
+     );
 
   if(status != 1)
     return 0;

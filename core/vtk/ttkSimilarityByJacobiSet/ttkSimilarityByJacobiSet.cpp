@@ -184,6 +184,7 @@ int ttkSimilarityByJacobiSet::RequestData(vtkInformation *,
     // auto copy = vtkSmartPointer<vtkUnstructuredGrid>::New();
     // copy->ShallowCopy(jacobiSet);
     // output->SetBlock(t-1, copy);
+    // continue;
 
     // deriving connected components of temporal edges
     auto components = vtkSmartPointer<vtkPolyData>::New();
@@ -256,6 +257,9 @@ int ttkSimilarityByJacobiSet::RequestData(vtkInformation *,
         msg + " (#" + std::to_string(components->GetNumberOfCells()) + ")", 1,
         timer.getElapsedTime(), 1);
     }
+
+    output->SetBlock(t-1, components);
+    continue;
 
     // auto copy = vtkSmartPointer<vtkUnstructuredGrid>::New();
     // copy->ShallowCopy(jacobiSet);

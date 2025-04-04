@@ -1,0 +1,9 @@
+NAME
+  ttkMergeTreeFeatures
+SOURCES
+  ttkMergeTreeFeatures.cpp
+HEADERS
+  ttkMergeTreeFeatures.h
+DEPENDS
+  mergeTreeFeatures
+  ttkAlgorithm

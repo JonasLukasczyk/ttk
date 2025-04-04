@@ -23,6 +23,8 @@
 #include <vtkPointData.h>
 #include <vtkPoints.h>
 #include <vtkStringArray.h>
+#include <vtkTransform.h>
+#include <vtkTransformFilter.h>
 #include <vtkUnstructuredGrid.h>
 
 class ttkMergeTreeVisualization : public ttk::MergeTreeVisualization {
@@ -1289,7 +1291,8 @@ public:
 
         // Get dimension shift
         printMsg("// Get dimension shift", ttk::debug::Priority::VERBOSE);
-        double diff_z = PlanarLayout ? 0 : -std::get<4>(allBounds[i]);
+        double diff_z
+          = PlanarLayout or ShiftMode == -1 ? 0 : -std::get<4>(allBounds[i]);
         if(DimensionToShift != 0) { // is not X
           float minX = 0;
           if(PlanarLayout) {
@@ -1305,7 +1308,7 @@ public:
                or (trees.size() == 2 and barycenters.size() == 1));
           if(DimensionToShift == 2) {
             // is Z
-            diff_z = -diff_x;
+            diff_z = diff_x;
             diff_x = new_diff_x;
           } else if(diffYAllowed and DimensionToShift == 1) {
             // is Y
@@ -1425,7 +1428,8 @@ public:
           }
 
           // Get x Max and y Min for next iteration if needed (double line mode)
-          prevXMax = std::max(prevXMax, point[0]);
+          // prevXMax = std::max(prevXMax, point[0]);
+          prevXMax = std::max(prevXMax, point[DimensionToShift]);
           if(ShiftMode == 3) { // Double line
             if(i < numInputs / 2)
               prevYMax = std::max(prevYMax, point[1]);
@@ -1944,7 +1948,11 @@ public:
         // solved.
         printMsg("// Shift segmentation", ttk::debug::Priority::VERBOSE);
         if(OutputSegmentation and not PlanarLayout and treesSegmentation[i]) {
-          vtkNew<vtkUnstructuredGrid> iTreesSegmentationCopy{};
+          prevXMax = treesSegmentation[i]->GetBounds()[2 * DimensionToShift + 1]
+                     + (DimensionToShift == 0
+                          ? diff_x
+                          : (DimensionToShift == 1 ? diff_y : diff_z));
+          /*vtkNew<vtkUnstructuredGrid> iTreesSegmentationCopy{};
           if(ShiftMode != -1)
             iTreesSegmentationCopy->DeepCopy(treesSegmentation[i]);
           else
@@ -1957,11 +1965,13 @@ public:
             vtkNew<vtkAppendFilter> appendFilter2{};
             appendFilter2->AddInputData(treesSegmentation[i]);
             appendFilter2->Update();
-            iVkOutputSegmentationTemp->ShallowCopy(appendFilter2->GetOutput());
+            iVkOutputSegmentationTemp->ShallowCopy(
+              appendFilter2->GetOutput());
           }
           if(ShiftMode != -1) {
             for(int p = 0;
-                p < iVkOutputSegmentationTemp->GetPoints()->GetNumberOfPoints();
+                p
+                < iVkOutputSegmentationTemp->GetPoints()->GetNumberOfPoints();
                 ++p) {
               double *point
                 = iVkOutputSegmentationTemp->GetPoints()->GetPoint(p);
@@ -1971,7 +1981,49 @@ public:
               iVkOutputSegmentationTemp->GetPoints()->SetPoint(p, point);
             }
           }
-          appendFilter->AddInputData(iVkOutputSegmentationTemp);
+          appendFilter->AddInputData(iVkOutputSegmentationTemp);*/
+
+          if(!vtkOutputSegmentation)
+            vtkOutputSegmentation = treesSegmentation[i]->NewInstance();
+          vtkDataSet *vtkOutputSegmentationTemp = vtkOutputSegmentation;
+          if(not(numInputs > 1 and printTreeId < 0)) {
+            if(ShiftMode != -1)
+              vtkOutputSegmentationTemp->DeepCopy(treesSegmentation[i]);
+            else
+              vtkOutputSegmentationTemp->ShallowCopy(treesSegmentation[i]);
+          } else
+            vtkOutputSegmentationTemp = treesSegmentation[i];
+          if((numInputs > 1 and printTreeId < 0)
+             or treesSegmentation[i]->IsA("vtkUnstructuredGrid")) {
+            if(numInputs > 1 and printTreeId < 0
+               and treesSegmentation[i]->IsA("vtkImageData")) {
+              printWrn("Convert segmentation to vtkUnstructuredGrid.");
+              vtkNew<vtkAppendFilter> appendFilter2{};
+              appendFilter2->AddInputData(vtkOutputSegmentationTemp);
+              appendFilter2->Update();
+              vtkOutputSegmentationTemp->ShallowCopy(
+                appendFilter2->GetOutput());
+            }
+            vtkNew<vtkTransform> transform{};
+            transform->Translate(diff_x, diff_y, diff_z);
+            vtkNew<vtkTransformFilter> transformFilter{};
+            transformFilter->SetTransform(transform);
+            transformFilter->SetInputData(vtkOutputSegmentationTemp);
+            transformFilter->Update();
+            if(numInputs > 1 and printTreeId < 0)
+              appendFilter->AddInputData(
+                transformFilter->GetOutputDataObject(0));
+            else
+              vtkOutputSegmentation->ShallowCopy(
+                transformFilter->GetOutputDataObject(0));
+          } else if(treesSegmentation[i]->IsA("vtkImageData")) {
+            double orig[3];
+            vtkImageData::SafeDownCast(treesSegmentation[i])->GetOrigin(orig);
+            double newOrigin[3]
+              = {orig[0] + diff_x, orig[1] + diff_y, orig[2] + diff_z};
+            vtkImageData::SafeDownCast(vtkOutputSegmentation)
+              ->SetOrigin(newOrigin);
+          }
         }
         printMsg("// Shift segmentation DONE", ttk::debug::Priority::VERBOSE);
       }

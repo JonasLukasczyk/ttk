@@ -6,6 +6,8 @@
 #include <vtkPointData.h>
 #include <vtkPointSet.h>
 
+#include <vtkPolyData.h>
+
 #include <ttkUtils.h>
 
 vtkStandardNewMacro(ttkIcospheresFromPoints);
@@ -57,6 +59,34 @@ int ttkIcospheresFromPoints::RequestData(vtkInformation *request,
   size_t const nPoints = input->GetNumberOfPoints();
   if(nPoints < 1)
     return 1;
+
+  if(this->GetNumberOfSubdivisions()<0){
+    auto output = vtkPolyData::GetData(outputVector);
+    auto copy = vtkSmartPointer<vtkPoints>::New();
+    copy->ShallowCopy(input->GetPoints());
+    output->SetPoints(copy);
+
+    auto offsets = vtkSmartPointer<vtkIdTypeArray>::New();
+    offsets->SetNumberOfTuples(nPoints + 1);
+    auto offsetsData = ttkUtils::GetPointer<vtkIdType>(offsets);
+    for(size_t i = 0; i <= nPoints; i++)
+      offsetsData[i] = i;
+
+    auto connectivity = vtkSmartPointer<vtkIdTypeArray>::New();
+    connectivity->SetNumberOfTuples(nPoints);
+    auto connectivityData = ttkUtils::GetPointer<vtkIdType>(connectivity);
+    for(size_t i = 0; i < nPoints; i++)
+      connectivityData[i] = i;
+
+    auto cells = vtkSmartPointer<vtkCellArray>::New();
+    cells->SetData(offsets, connectivity);
+    output->SetVerts(cells);
+
+    output->GetPointData()->ShallowCopy(input->GetPointData());
+    output->GetFieldData()->ShallowCopy(input->GetFieldData());
+
+    return 1;
+  }
 
   this->SetCenters(input->GetPoints()->GetData());
 

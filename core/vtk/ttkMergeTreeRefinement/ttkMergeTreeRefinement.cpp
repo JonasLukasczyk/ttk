@@ -3,7 +3,7 @@
 #include <vtkDataSet.h>
 #include <vtkInformation.h>
 #include <vtkMultiBlockDataSet.h>
-#include <vtkUnstructuredGrid.h>
+#include <vtkPolyData.h>
 
 #include <vtkCellData.h>
 #include <vtkPointData.h>
@@ -36,7 +36,7 @@ int ttkMergeTreeRefinement::FillInputPortInformation(int port,
       info->Append(
         vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkMultiBlockDataSet");
       info->Append(
-        vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkUnstructuredGrid");
+        vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkPolyData");
       return 1;
     case 1:
       info->Remove(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE());
@@ -120,13 +120,13 @@ int ttkMergeTreeRefinement::RequestData(vtkInformation *,
 
   for(int b = 0; b < nBlocks; b++) {
     auto i_mergeTree
-      = vtkUnstructuredGrid::SafeDownCast(i_mergeTrees->GetBlock(b));
+      = vtkPolyData::SafeDownCast(i_mergeTrees->GetBlock(b));
     auto i_domain = vtkDataSet::SafeDownCast(i_domains->GetBlock(b));
-    if(!i_mergeTree->IsA("vtkUnstructuredGrid") || !i_domain->IsA("vtkDataSet"))
-      return !this->printErr("Merge trees must be vtkUnstructuredGrids and "
+    if(!i_mergeTree->IsA("vtkPolyData") || !i_domain->IsA("vtkDataSet"))
+      return !this->printErr("Merge trees must be vtkPolyData and "
                              "domains must be vtkDataSets.");
 
-    auto o_mergeTree = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    auto o_mergeTree = vtkSmartPointer<vtkPolyData>::New();
     auto o_domain = vtkSmartPointer<vtkDataSet>::Take(i_domain->NewInstance());
 
     int status = this->RefineMergeTreeAndSegmentation(
@@ -151,9 +151,9 @@ int ttkMergeTreeRefinement::RequestData(vtkInformation *,
   return 1;
 }
 int ttkMergeTreeRefinement::RefineMergeTreeAndSegmentation(
-  vtkUnstructuredGrid *o_mergeTree,
+  vtkPolyData *o_mergeTree,
   vtkDataSet *o_domain,
-  vtkUnstructuredGrid *i_mergeTree,
+  vtkPolyData *i_mergeTree,
   vtkDataSet *i_domain,
   const double interval) {
   ttk::Timer timer;
@@ -175,7 +175,7 @@ int ttkMergeTreeRefinement::RefineMergeTreeAndSegmentation(
   auto i_mtCellData = i_mergeTree->GetCellData();
 
   auto i_mtPointCoords = i_mergeTree->GetPoints()->GetData();
-  auto i_mtConnectivity = i_mergeTree->GetCells()->GetConnectivityArray();
+  auto i_mtConnectivity = i_mergeTree->GetLines()->GetConnectivityArray();
 
   auto i_mtScalars = this->GetInputArrayToProcess(0, i_mergeTree);
   auto i_dScalars = this->GetInputArrayToProcess(0, i_domain);
@@ -436,7 +436,7 @@ int ttkMergeTreeRefinement::RefineMergeTreeAndSegmentation(
   {
     auto cells = vtkSmartPointer<vtkCellArray>::New();
     cells->SetData(o_mtOffsets, o_mtConnectivity);
-    o_mergeTree->SetCells(VTK_LINE, cells);
+    o_mergeTree->SetLines(cells);
 
     auto points = vtkSmartPointer<vtkPoints>::New();
     points->SetData(outPointArrays[0]);

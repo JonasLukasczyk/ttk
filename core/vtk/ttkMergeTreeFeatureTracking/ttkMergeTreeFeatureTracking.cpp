@@ -254,6 +254,7 @@ int ttkMergeTreeFeatureTracking::runOutput(
     visuMaker.setNonImportantPairsProximity(NonImportantPairsProximity);
     visuMaker.setExcludeImportantPairsHigher(ExcludeImportantPairsHigher);
     visuMaker.setExcludeImportantPairsLower(ExcludeImportantPairsLower);
+    visuMaker.setConflictTolerance(ConflictTolerance);
     visuMaker.setIsPersistenceDiagram(isPersistenceDiagram_);
     visuMaker.setTreesNodes(treesNodes);
     visuMaker.copyPointData(treesNodes[i], treesNodeCorrMesh[i]);
@@ -271,8 +272,10 @@ int ttkMergeTreeFeatureTracking::runOutput(
     visuMaker.setPrintClusterId(0);
     visuMaker.setDebugLevel(this->debugLevel_);
     visuMaker.setIsPDSadMax(mixtureCoefficient_ == 0);
-
-    visuMaker.setShiftMode(2); // Line
+    if(DimensionSpacing != 0.0)
+      visuMaker.setShiftMode(2); // Line
+    else
+      visuMaker.setShiftMode(-1); // None
     visuMaker.setPrevXMaxOffset(prevXMax);
 
     visuMaker.makeTreesOutput<float>(trees);

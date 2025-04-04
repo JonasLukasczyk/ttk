@@ -58,7 +58,10 @@ namespace ttk {
       const ST *pointSequences,
       const float *sizes,
       const IT *branches,
-      const IT *levels) const;
+      const IT *levels,
+      const int* nodeIds,
+      const int* parentIds
+      ) const;
 
     template <typename IT, typename CT>
     int extractLevel(
@@ -87,13 +90,16 @@ namespace ttk {
       const std::vector<size_t> &edgeIndices,
       const std::map<ST, size_t> &sequenceValueToIndexMap) const;
 
-    template <typename IT, typename CT>
+    template <typename IT, typename ST, typename CT>
     int computeSlots(
       // Output
       float *layout,
 
       // Input
+      const ST *pointSequences,
       const CT *connectivityList,
+      const int* nodeIds,
+      const int* parentIds,
       const size_t &nPoints,
       const size_t &nEdges,
       const float *sizes,
@@ -275,13 +281,16 @@ int ttk::PlanarGraphLayout::computeDotString(
 // =============================================================================
 // Compute Slots
 // =============================================================================
-template <typename IT, typename CT>
+template <typename IT, typename ST, typename CT>
 int ttk::PlanarGraphLayout::computeSlots(
   // Output
   float *layout,
 
   // Input
+  const ST *pointSequences,
   const CT *connectivityList,
+  const int* nodeIds,
+  const int* parentIds,
   const size_t &nPoints,
   const size_t &nEdges,
   const float *sizes,
@@ -313,14 +322,24 @@ int ttk::PlanarGraphLayout::computeSlots(
   // Compute Children
   // ---------------------------------------------------------------------------
   std::vector<std::vector<size_t>> nodeIndexChildrenIndexMap(nPoints);
-
-  size_t const nEdges2 = nEdges * 2;
-  for(size_t i = 0; i < nEdges2; i += 2) {
-    auto n0 = connectivityList[i + 0];
-    auto n1 = connectivityList[i + 1];
-    if((levels[n0] + 1) == levels[n1])
-      nodeIndexChildrenIndexMap[n0].push_back(n1);
+  for(size_t i=0; i<nPoints; i++){
+    auto parent = nodeIds[i];
+    auto cLevel = levels[i]+1;
+    for(size_t j=0; j<nPoints; j++){
+      if(levels[j]==cLevel && parentIds[j]==parent && pointSequences[i]==pointSequences[j])
+        nodeIndexChildrenIndexMap[i].push_back(j);
+    }
   }
+
+
+
+  // size_t const nEdges2 = nEdges * 2;
+  // for(size_t i = 0; i < nEdges2; i += 2) {
+  //   auto n0 = connectivityList[i + 0];
+  //   auto n1 = connectivityList[i + 1];
+  //   if((levels[n0] + 1) == levels[n1])
+  //     nodeIndexChildrenIndexMap[n0].push_back(n1);
+  // }
 
   // ---------------------------------------------------------------------------
   // Adjust positions from bottom to top (skip last level)
@@ -388,7 +407,10 @@ int ttk::PlanarGraphLayout::computeLayout(
   const ST *pointSequences,
   const float *sizes,
   const IT *branches,
-  const IT *levels) const {
+  const IT *levels,
+  const int* nodeIds,
+  const int* parentIds
+) const {
 
   Timer t;
 
@@ -486,12 +508,12 @@ int ttk::PlanarGraphLayout::computeLayout(
   // If nLevels>1 then compute slots
   // ---------------------------------------------------------------------------
   if(nLevels > 1) {
-    this->computeSlots<IT, CT>(
+    this->computeSlots<IT,ST,CT>(
       // Output
       layout,
 
       // Input
-      connectivityList, nPoints, nEdges, sizes, levels, nLevels);
+      pointSequences, connectivityList, nodeIds, parentIds, nPoints, nEdges, sizes, levels, nLevels);
   }
 
   // ---------------------------------------------------------------------------

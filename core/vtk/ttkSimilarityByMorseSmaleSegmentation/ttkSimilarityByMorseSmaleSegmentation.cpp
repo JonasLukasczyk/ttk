@@ -111,6 +111,8 @@ int ttkSimilarityByMorseSmaleSegmentation::RequestData(vtkInformation *,
       if(!status)
         return 0;
     }
+
+    // backwards maps
     for (const auto& pair : {std::pair{0, a0}, std::pair{3, d0}}) {
       status = this->performLookup<int,indexFunc1>(
           ttkUtils::GetPointer<int>(matrixBData),

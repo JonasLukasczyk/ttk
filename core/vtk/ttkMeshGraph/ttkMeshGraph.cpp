@@ -1,3 +1,4 @@
+
 #include <ttkMeshGraph.h>
 
 #include <vtkAbstractArray.h>
@@ -158,7 +159,7 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
 
     for(int i = 0; i < iPointData->GetNumberOfArrays(); i++) {
       auto iArray = iPointData->GetArray(i);
-      if(iArray->GetNumberOfComponents() > 1)
+      if(!iArray || iArray->GetNumberOfComponents() > 1)
         continue;
 
       auto oArray = vtkSmartPointer<vtkDataArray>::Take(
@@ -171,12 +172,12 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
       ttkTypeMacroAI(
         iArray->GetDataType(), inputConnectivityArray->GetDataType(),
         (status = this->mapInputPointDataToOutputPointData<T0, T1>(
-           ttkUtils::GetPointer<T0>(oArray),
+          ttkUtils::GetPointer<T0>(oArray),
 
-           nInputPoints, nInputCells,
-           ttkUtils::GetPointer<T1>(inputConnectivityArray),
-           ttkUtils::GetPointer<T0>(iArray), this->GetUseQuadraticCells(),
-           this->GetSubdivisions())));
+          nInputPoints, nInputCells,
+          ttkUtils::GetPointer<T1>(inputConnectivityArray),
+          ttkUtils::GetPointer<T0>(iArray), this->GetUseQuadraticCells(),
+          this->GetSubdivisions())));
 
       if(!status)
         return 0;
@@ -203,8 +204,8 @@ int ttkMeshGraph::RequestData(vtkInformation *ttkNotUsed(request),
       ttkTypeMacroA(
         iArray->GetDataType(),
         (status = this->mapInputCellDataToOutputCellData<T0>(
-           ttkUtils::GetPointer<T0>(oArray), nInputCells,
-           ttkUtils::GetPointer<T0>(iArray), this->GetUseQuadraticCells())));
+          ttkUtils::GetPointer<T0>(oArray), nInputCells,
+          ttkUtils::GetPointer<T0>(iArray), this->GetUseQuadraticCells())));
       if(!status)
         return 0;
     }
