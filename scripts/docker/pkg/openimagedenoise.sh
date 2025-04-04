@@ -9,6 +9,7 @@ if [ $(arch) == "x86_64" ]; then
     fetch-src https://github.com/OpenImageDenoise/oidn/releases/download/v${OIDN_VERSION}/oidn-${OIDN_VERSION}.src.tar.gz
 
     cmake-default \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
         -DOIDN_APPS=OFF
 
 fi
