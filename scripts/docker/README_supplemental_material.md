@@ -8,7 +8,7 @@ This docker file can be used to build docker images containing installations of 
 
 The full docker image specifically contains:
 
-- ParaView server with offscreen rendering using either [OSMesa](http://www.mesa3d.org/osmesa.html) or [OSPRay](http://www.ospray.org).
+- ParaView server with offscreen rendering using [OSPRay](http://www.ospray.org).
 - TTK for ParaView plugins are installed.
 
 It is supposed to be used in conjunction with a local ParaView GUI.

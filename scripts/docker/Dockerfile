@@ -54,8 +54,8 @@ COPY pkg/ospray.sh /tmp
 RUN  install-helper /tmp/ospray.sh
 
 # install OSMesa
-COPY pkg/mesa.sh /tmp
-RUN  install-helper /tmp/mesa.sh
+#COPY pkg/mesa.sh /tmp
+#RUN  install-helper /tmp/mesa.sh
 
 # install ZFP
 COPY pkg/zfp.sh /tmp
