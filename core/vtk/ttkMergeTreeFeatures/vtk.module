@@ -1,0 +1,4 @@
+NAME
+  ttkMergeTreeFeatures
+DEPENDS
+  ttkAlgorithm
