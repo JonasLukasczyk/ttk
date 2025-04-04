@@ -12,7 +12,7 @@
                     <Group name="filters" />
                 </ProxyGroupDomain>
                 <DataTypeDomain name="input_type">
-                    <DataType value="vtkUnstructuredGrid" />
+                    <DataType value="vtkPolyData" />
                 </DataTypeDomain>
                 <Documentation>TODO.</Documentation>
             </InputProperty>

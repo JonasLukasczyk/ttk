@@ -2,7 +2,7 @@
 
 #include <vtkDataSet.h>
 #include <vtkInformation.h>
-#include <vtkUnstructuredGrid.h>
+#include <vtkPolyData.h>
 
 #include <vtkCellData.h>
 #include <vtkPointData.h>
@@ -38,7 +38,7 @@ int ttkMergeTreeRemake::FillInputPortInformation(int port, vtkInformation *info)
 int ttkMergeTreeRemake::FillOutputPortInformation(int port, vtkInformation *info) {
   switch(port) {
     case 0:
-      info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkUnstructuredGrid");
+      info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkPolyData");
       return 1;
     case 1:
       info->Set(ttkAlgorithm::SAME_DATA_TYPE_AS_INPUT_PORT(), 0);
@@ -131,7 +131,7 @@ int ttkMergeTreeRemake::RequestData(vtkInformation *,
 
     // Compute merge tree output
     {
-      auto mergeTreeRemake = vtkUnstructuredGrid::GetData(outputVector, 0);
+      auto mergeTree = vtkPolyData::GetData(outputVector, 0);
 
       const int nPropagations = propagations.size();
 
@@ -200,12 +200,12 @@ int ttkMergeTreeRemake::RequestData(vtkInformation *,
 
         auto points = vtkSmartPointer<vtkPoints>::New();
         points->SetData(pointCoords);
-        mergeTreeRemake->SetPoints(points);
+        mergeTree->SetPoints(points);
 
-        auto mergeTreeRemakePD = mergeTreeRemake->GetPointData();
-        mergeTreeRemakePD->AddArray(vertexId);
-        mergeTreeRemakePD->AddArray(branchId);
-        mergeTreeRemakePD->AddArray(outputScalars);
+        auto mergeTreePD = mergeTree->GetPointData();
+        mergeTreePD->AddArray(vertexId);
+        mergeTreePD->AddArray(branchId);
+        mergeTreePD->AddArray(outputScalars);
       }
 
       // edges
@@ -288,15 +288,15 @@ int ttkMergeTreeRemake::RequestData(vtkInformation *,
 
         auto cells = vtkSmartPointer<vtkCellArray>::New();
         cells->SetData(offsets, connectivity);
-        mergeTreeRemake->SetCells(VTK_LINE, cells);
-        auto mergeTreeRemakeCD = mergeTreeRemake->GetCellData();
-        mergeTreeRemakeCD->AddArray(edgebranchId);
-        mergeTreeRemakeCD->AddArray(edgePersistence);
+        mergeTree->SetLines(cells);
+        auto mergeTreeCD = mergeTree->GetCellData();
+        mergeTreeCD->AddArray(edgebranchId);
+        mergeTreeCD->AddArray(edgePersistence);
 
-        auto mergeTreeRemakePD = mergeTreeRemake->GetPointData();
-        mergeTreeRemakePD->AddArray(nextId);
-        mergeTreeRemakePD->AddArray(pairId);
-        mergeTreeRemakePD->AddArray(type);
+        auto mergeTreePD = mergeTree->GetPointData();
+        mergeTreePD->AddArray(nextId);
+        mergeTreePD->AddArray(pairId);
+        mergeTreePD->AddArray(type);
       }
     }
 

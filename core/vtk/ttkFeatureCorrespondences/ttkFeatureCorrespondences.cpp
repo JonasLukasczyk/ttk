@@ -3,6 +3,7 @@
 #include <vtkInformation.h>
 
 #include <vtkDataArray.h>
+#include <vtkFloatArray.h>
 #include <vtkImageData.h>
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
@@ -85,8 +86,11 @@ int ttkFeatureCorrespondences::RequestData(vtkInformation *ttkNotUsed(request),
     if(!iMatrix)
       return !this->printErr("Unable to retrieve input matrix.");
 
-    auto oMatrix = vtkSmartPointer<vtkDataArray>::Take(iMatrix->NewInstance());
-    oMatrix->DeepCopy(iMatrix);
+    // auto oMatrix = vtkSmartPointer<vtkDataArray>::Take(iMatrix->NewInstance());
+    // oMatrix->DeepCopy(iMatrix);
+    auto oMatrix = vtkSmartPointer<vtkFloatArray>::New();
+    oMatrix->SetName(iMatrix->GetName());
+    oMatrix->SetNumberOfTuples(iMatrix->GetNumberOfTuples());
 
     int status = 0;
 
@@ -134,7 +138,7 @@ int ttkFeatureCorrespondences::RequestData(vtkInformation *ttkNotUsed(request),
         ttkTypeMacroA(
           iMatrix->GetDataType(),
           (status = this->twoPassOptimization<T0>(
-            ttkUtils::GetPointer<T0>(oMatrix),
+            ttkUtils::GetPointer<float>(oMatrix),
             ttkUtils::GetPointer<T0>(iMatrix),
             ttkUtils::GetPointer<int>(iMatrix_->GetFieldData()->GetArray((idArrayName+"_t-1").data())),
             ttkUtils::GetPointer<int>(iMatrix_->GetFieldData()->GetArray((idArrayName+"_t").data())),

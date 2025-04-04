@@ -98,7 +98,7 @@ int ttkSimilarityByMergeTreeEditDistance::RequestData(vtkInformation *,
     auto nodes1 = vtkUnstructuredGrid::SafeDownCast(inputNodes->GetBlock(t));
     auto arcs1 = vtkUnstructuredGrid::SafeDownCast(inputArcs->GetBlock(t));
 
-    
+
     auto memberNodes0 = vtkUnstructuredGrid::SafeDownCast(memberNodes->GetBlock(t-1));
     auto memberArcs0 = vtkUnstructuredGrid::SafeDownCast(memberArcs->GetBlock(t-1));
     auto memberNodes1 = vtkUnstructuredGrid::SafeDownCast(memberNodes->GetBlock(t));
@@ -157,7 +157,7 @@ int ttkSimilarityByMergeTreeEditDistance::RequestData(vtkInformation *,
     }
 
     status = ttkSimilarityAlgorithm::AddIndexIdMaps(
-      matrix, indexIdMap0, indexIdMap1, "FeatureId");
+      matrix, indexIdMap0, indexIdMap1, fidArr0->GetName());
     if(!status)
       return 0;
 
