@@ -1,5 +1,5 @@
 MESA_VERSION=20.3.5
-
+MESA_MAJOR_VERSION=20
 # install packages required for build
 require-pkgs \
     pkg-config      \
@@ -11,10 +11,13 @@ require-pkgs \
 	libdrm-dev		\
 	gettext			\
 	bison			\
+    xz-utils		\
+    libarchive-tools \
 	flex
 
 # fetch and unpack source
-fetch-src https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-${MESA_VERSION}/mesa-mesa-${MESA_VERSION}.tar.gz
+#fetch-src https://gitlab.freedesktop.org/mesa/mesa/-/archive/mesa-${MESA_VERSION}/mesa-mesa-${MESA_VERSION}.tar.gz
+curl -qL "https://archive.mesa3d.org/older-versions/${MESA_MAJOR_VERSION}.x/mesa-${MESA_VERSION}.tar.xz" | bsdtar xzf - --strip-components 1
 
 # determine build type from CMake default
 case ${CMAKE_BUILD_TYPE,,} in

@@ -18,6 +18,7 @@ RUN apt-get update \
 
 # install base development env
 RUN apt-get update && apt-get install --no-install-recommends -yqq \
+    xz-utils \
     build-essential \
     ninja-build \
     cmake \
@@ -54,8 +55,8 @@ COPY pkg/ospray.sh /tmp
 RUN  install-helper /tmp/ospray.sh
 
 # install OSMesa
-#COPY pkg/mesa.sh /tmp
-#RUN  install-helper /tmp/mesa.sh
+COPY pkg/mesa.sh /tmp
+RUN  install-helper /tmp/mesa.sh
 
 # install ZFP
 COPY pkg/zfp.sh /tmp
