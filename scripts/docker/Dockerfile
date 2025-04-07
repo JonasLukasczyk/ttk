@@ -30,55 +30,55 @@ RUN apt-get update && apt-get install --no-install-recommends -yqq \
 
 FROM build-base as builder
 
-COPY install-helper /usr/bin
+COPY scripts/docker/install-helper /usr/bin
 
 # install OSPRay + dependencies
-COPY pkg/ispc.sh /tmp
+COPY scripts/docker/pkg/ispc.sh /tmp
 RUN  install-helper /tmp/ispc.sh
 
-COPY pkg/tbb.sh /tmp
+COPY scripts/docker/pkg/tbb.sh /tmp
 RUN  install-helper /tmp/tbb.sh
 
-COPY pkg/embree.sh /tmp
+COPY scripts/docker/pkg/embree.sh /tmp
 RUN  install-helper /tmp/embree.sh
 
-COPY pkg/rkcommon.sh /tmp
+COPY scripts/docker/pkg/rkcommon.sh /tmp
 RUN  install-helper /tmp/rkcommon.sh
 
-COPY pkg/openimagedenoise.sh /tmp
+COPY scripts/docker/pkg/openimagedenoise.sh /tmp
 RUN  install-helper /tmp/openimagedenoise.sh
 
-COPY pkg/openvkl.sh /tmp
+COPY scripts/docker/pkg/openvkl.sh /tmp
 RUN  install-helper /tmp/openvkl.sh
 
-COPY pkg/ospray.sh /tmp
+COPY scripts/docker/pkg/ospray.sh /tmp
 RUN  install-helper /tmp/ospray.sh
 
 # install OSMesa
-COPY pkg/mesa.sh /tmp
+COPY scripts/docker/pkg/mesa.sh /tmp
 RUN  install-helper /tmp/mesa.sh
 
 # install ZFP
-COPY pkg/zfp.sh /tmp
+COPY scripts/docker/pkg/zfp.sh /tmp
 RUN  install-helper /tmp/zfp.sh
 
 # install Spectra
-COPY pkg/spectra.sh /tmp
+COPY scripts/docker/pkg/spectra.sh /tmp
 RUN  install-helper /tmp/spectra.sh
 
 #install MPICH
-COPY pkg/mpich.sh /tmp
+COPY scripts/docker/pkg/mpich.sh /tmp
 RUN  install-helper /tmp/mpich.sh
 
 #install OpenMPI
-#COPY pkg/ompi.sh /tmp
+#COPY scripts/docker/pkg/ompi.sh /tmp
 #RUN  install-helper /tmp/ompi.sh
 
 # install ParaView
 ARG paraview=5.13.1
 ENV PARAVIEW_VERSION=${paraview}
 
-COPY pkg/paraview.sh /tmp
+COPY scripts/docker/pkg/paraview.sh /tmp
 RUN  install-helper /tmp/paraview.sh
 
 # --------------------------------------------------------------------------
@@ -86,8 +86,8 @@ RUN  install-helper /tmp/paraview.sh
 FROM builder as builder-ttk
 
 # install TTK
-COPY ../../ /tmp/ttk
-COPY pkg/ttk.sh /tmp
+COPY . /tmp/ttk
+COPY scripts/docker/pkg/ttk.sh /tmp
 RUN  install-helper /tmp/ttk.sh
 
 # --------------------------------------------------------------------------
@@ -104,7 +104,7 @@ RUN  install-helper /tmp/ttk.sh
 
 #ENV DEV="True"
 
-#COPY pkg/ttk.sh /tmp
+#COPY scripts/docker/pkg/ttk.sh /tmp
 #RUN  install-helper /tmp/ttk.sh
 
 # --------------------------------------------------------------------------

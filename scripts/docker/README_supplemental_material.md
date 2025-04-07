@@ -14,7 +14,7 @@ The full docker image specifically contains:
 It is supposed to be used in conjunction with a local ParaView GUI.
 
 ### Custom Images
-To re-build the image, simply clone this repository and run `docker build -t tracking .` (which will build a docker image with current versions of ParaView and TTK).
+To re-build the image, simply clone this repository and run `docker build -t tracking -f scripts/docker/Dockerfile .` from the root directory (which will build a docker image with current versions of ParaView and TTK).
 
 The Dockerfile will build the default target containing ParaView and TTK. When run, the image starts a ParaView server on port 11111.
 

@@ -1,6 +1,7 @@
 #! /bin/bash
 set -e
 
+
 require-pkgs \
     build-essential         \
     cmake                   \
@@ -38,10 +39,6 @@ require-pkgs \
 
 /sbin/ldconfig
 
-if [ -n "${DEV}" ]; then
-        #echo "DEVELOPER MODE"
-        exit
-fi
 
 # get source code
 cd /tmp/ttk
