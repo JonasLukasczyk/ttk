@@ -1,0 +1,45 @@
+name: Build Linux wheel
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - wheel-experiment
+
+jobs:
+  wheel:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build manylinux image
+        run: |
+          docker build \
+            -f packaging/Dockerfile.manylinux2014 \
+            -t ttk-manylinux2014:boost-1.86 \
+            .
+
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel
+
+      - name: Build wheel
+        run: |
+          python -m cibuildwheel \
+            --platform linux \
+            --output-dir wheelhouse
+
+      - name: Show wheels
+        run: ls -lh wheelhouse
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: ttk-linux-wheel
+          path: wheelhouse/*.whl

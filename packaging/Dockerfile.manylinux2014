@@ -1,0 +1,35 @@
+FROM quay.io/pypa/manylinux2014_x86_64
+
+ARG BOOST_VERSION=1.86.0
+ARG BOOST_VERSION_U=1_86_0
+
+ENV BOOST_ROOT=/opt/boost
+
+RUN yum install -y \
+      curl \
+      bzip2 \
+      xz \
+      tar \
+      make \
+      which \
+    && yum clean all
+
+RUN curl -fL \
+      "https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION_U}.tar.bz2" \
+      -o /tmp/boost.tar.bz2 \
+    && mkdir -p /tmp/boost-src "${BOOST_ROOT}" \
+    && tar -xjf /tmp/boost.tar.bz2 \
+         -C /tmp/boost-src \
+         --strip-components=1 \
+    && cd /tmp/boost-src \
+    && ./bootstrap.sh --prefix="${BOOST_ROOT}" \
+    && ./b2 \
+         -j"$(nproc)" \
+         variant=release \
+         link=shared \
+         threading=multi \
+         --without-python \
+         install \
+    && rm -rf /tmp/boost-src /tmp/boost.tar.bz2
+
+RUN find /opt/boost -name BoostConfig.cmake -print

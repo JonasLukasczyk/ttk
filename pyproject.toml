@@ -1,0 +1,202 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.11",
+    "vtk-sdk-python-wheel-helper>=1.0.5",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "ttk"
+version = "1.4.0.dev0"
+requires-python = ">=3.12,<3.13"
+
+dependencies = [
+    "vtk==9.6.2",
+]
+
+[tool.scikit-build]
+cmake.build-type = "Release"
+wheel.reproducible = true
+
+[tool.scikit-build.cmake.define]
+
+TTK_BUILD_VTK_WRAPPERS = true
+TTK_BUILD_PARAVIEW_PLUGINS = false
+TTK_BUILD_STANDALONE_APPS = false
+
+VTK_DIR = "/opt/vtk-sdk/vtk-9.6.2.data/headers/cmake"
+Boost_DIR = "/opt/boost/lib/cmake/Boost-1.86.0"
+
+CMAKE_CXX_FLAGS = "-D_GLIBCXX_USE_CXX11_ABI=0"
+
+CMAKE_INSTALL_RPATH = "$ORIGIN;$ORIGIN/../lib64;$ORIGIN/../vtkmodules"
+
+# ---------------------------------------------------------------------------
+# TTK VTK modules
+# ---------------------------------------------------------------------------
+
+VTK_MODULE_ENABLE_ttkAlgorithm = "WANT"
+VTK_MODULE_ENABLE_ttkArrayEditor = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkArrayPreconditioning = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkBarycentricSubdivision = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkBlockAggregator = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkBottleneckDistance = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkCinemaDarkroom = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkCinemaImaging = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkCinemaProductReader = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkCinemaQuery = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkCinemaReader = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkCinemaWriter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkClusteringMetrics = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkComponentSize = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkConnectedComponents = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkContinuousScatterPlot = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkContourAroundPoint = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkContourForests = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkContourTree = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkContourTreeAlignment = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDataSetInterpolator = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDataSetToTable = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDelaunayRipsPersistenceDiagram = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDelaunayRipsPersistenceGenerators = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDepthImageBasedGeometryApproximation = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDimensionReduction = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDimensionReductionMetrics = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDiscreteGradient = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDiscreteVectorField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDistanceField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkDistanceMatrixDistortion = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkEigenField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkEndFor = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkExtract = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkFiber = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkFiberSurface = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkFlattenMultiBlock = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkForEach = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkGaussianPointCloud = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkGeometrySmoother = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkGridLayout = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkHarmonicField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkHelloWorld = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkIcosphere = "WANT"
+VTK_MODULE_ENABLE_ttkIcosphereFromObject = "WANT"
+VTK_MODULE_ENABLE_ttkIcospheresFromPoints = "WANT"
+VTK_MODULE_ENABLE_ttkIdentifierRandomizer = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkIdentifiers = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkIdentifyByScalarField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkImportEmbeddingFromTable = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkIntegralLines = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkJacobiSet = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkLDistance = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkLDistanceMatrix = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMandatoryCriticalPoints = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkManifoldCheck = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMarchingTetrahedra = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMatrixToHeatMap = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeBlockTables = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTree = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreeAutoencoder = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreeAutoencoderDecoding = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreeClustering = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreeDistanceMatrix = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreePrincipalGeodesics = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreePrincipalGeodesicsDecoding = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreeTemporalReduction = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMergeTreeTemporalReductionDecoding = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMeshGraph = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMeshSubdivision = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMetricDistortion = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMorphologicalOperators = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMorseSmaleComplex = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkMorseSmaleQuadrangulation = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkOBJWriter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkOFFReader = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkOFFWriter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPathCompression = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPeriodicGhostsGeneration = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceCurve = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceDiagram = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceDiagramApproximation = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceDiagramClustering = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceDiagramDictionary = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceDiagramDictionaryDecoding = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistenceDiagramDistanceMatrix = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPersistentGenerators = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPlanarGraphLayout = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPointDataConverter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPointDataSelector = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPointMerger = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPointSetToCurve = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkPointSetToSurface = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkProgramBase = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkProjectionFromField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkProjectionFromTable = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkQuadrangulationSubdivision = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkRangePolygon = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkReebGraph = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkReebSpace = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkRipsComplex = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkRipsPersistenceDiagram = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkRipsPersistenceGenerators = "DONT_WANT"
+
+VTK_MODULE_ENABLE_ttkScalarFieldCriticalPoints = "WANT"
+
+VTK_MODULE_ENABLE_ttkScalarFieldNormalizer = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkScalarFieldSmoother = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkSeparatrixStability = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkSignedDistanceField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkSphereFromPoint = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkStableManifoldPersistence = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkStringArrayConverter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkSurfaceGeometrySmoother = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTableDataSelector = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTableDistanceMatrix = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTextureMapFromField = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTopologicalCompression = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTopologicalCompressionReader = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTopologicalCompressionWriter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTopologicalSimplification = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTopologicalSimplificationByPersistence = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTopologicalSkeleton = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTrackingFromFields = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTrackingFromOverlap = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTrackingFromPersistenceDiagrams = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTriangulationManager = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTriangulationReader = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTriangulationRequest = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkTriangulationWriter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkUncertainDataEstimator = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkUserInterfaceBase = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkVectorWeightCurve = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkWRLExporter = "DONT_WANT"
+VTK_MODULE_ENABLE_ttkWebSocketIO = "DONT_WANT"
+
+[tool.cibuildwheel]
+build = "cp312-manylinux_x86_64"
+manylinux-x86_64-image = "ttk-manylinux2014:boost-1.86"
+
+before-all = "bash /project/packaging/prepare-vtk-sdk.sh"
+repair-wheel-command = """
+VTK_EXCLUDES=$(
+  find /opt/vtk-sdk \
+    -type f \
+    -name 'libvtk*.so*' \
+    -printf '%f\n' \
+  | sort -u \
+  | sed 's/^/--exclude /' \
+  | tr '\\n' ' '
+)
+
+echo "VTK auditwheel excludes:"
+echo "$VTK_EXCLUDES"
+
+auditwheel repair \
+  $VTK_EXCLUDES \
+  -w {dest_dir} \
+  {wheel}
+"""
+
+# before-test = """
+# pip install "numpy<2.4"
+# """
+# test-command = "python {project}/tests/wheel_smoke_test.py"
