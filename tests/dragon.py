@@ -1,3 +1,11 @@
+# /// script
+# requires-python = ">=3.12,<3.13"
+# dependencies = [
+#   "vtk==9.6.2",
+#   "ttk @ https://github.com/JonasLukasczyk/ttk/releases/download/v0.9.8/ttk-1.4.0.dev0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+# ]
+# ///
+
 import tempfile
 from pathlib import Path
 from urllib.request import urlretrieve
