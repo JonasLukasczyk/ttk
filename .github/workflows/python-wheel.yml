@@ -1,0 +1,67 @@
+name: Python wheel (Linux x86_64)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - name: Check out TTK
+        uses: actions/checkout@v4
+
+      - name: Check packaging inputs
+        run: |
+          test -f packaging/ttk-disabled-modules.txt
+          test -f packaging/test_wheel.py
+          test -f packaging/Dockerfile.dev
+          test -f packaging/build-wheel.sh
+
+      - name: Show runner resources
+        run: |
+          nproc
+          free -h
+          df -h . /var/lib/docker
+
+      - name: Build wheel development image
+        run: docker build --file packaging/Dockerfile.dev --tag ttk-wheel-dev:ci .
+
+      - name: Build and repair wheel
+        run: |
+          mkdir -p "$RUNNER_TEMP/ttk-wheel-work"
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace/ttk:ro" \
+            --volume "$RUNNER_TEMP/ttk-wheel-work:/workspace/work" \
+            --workdir /workspace/ttk \
+            --env BUILD_ROOT=/workspace/work \
+            --env BUILD_JOBS="$(nproc)" \
+            ttk-wheel-dev:ci \
+            bash /workspace/ttk/packaging/build-wheel.sh all
+
+      - name: Test repaired wheel in clean manylinux container
+        run: |
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE:/workspace/ttk:ro" \
+            --volume "$RUNNER_TEMP/ttk-wheel-work:/workspace/work:ro" \
+            --workdir /tmp \
+            --entrypoint bash \
+            quay.io/pypa/manylinux_2_28_x86_64 \
+            -euo pipefail -c '
+              /opt/python/cp312-cp312/bin/python -m venv /tmp/ttk-test-venv
+              source /tmp/ttk-test-venv/bin/activate
+              python -m pip install --no-deps /workspace/work/repaired-dist/topology_toolkit-*.whl
+              unset PYTHONPATH LD_LIBRARY_PATH
+              python -X faulthandler /workspace/ttk/packaging/test_wheel.py
+            '
+
+      - name: Upload tested wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: topology-toolkit-cp312-manylinux-wheel
+          path: ${{ runner.temp }}/ttk-wheel-work/repaired-dist/*.whl
+          if-no-files-found: error
+          retention-days: 14

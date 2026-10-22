@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "topology_toolkit"
+version = "1.4.0"
+description = "Private VTK 9.7.1 and TTK 1.4.0 Python bindings"
+requires-python = ">=3.12,<3.13"
+dependencies = ["numpy"]
+
+[tool.setuptools]
+packages = ["topology_toolkit", "topology_toolkit._vtkmodules"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"topology_toolkit._vtkmodules" = ["*.so", "*.py", "*.pyi"]

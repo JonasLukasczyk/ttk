@@ -1,0 +1,48 @@
+FROM quay.io/pypa/manylinux_2_28_x86_64
+
+ARG OPENMPI_VERSION=5.0.11
+ARG MPI4PY_VERSION=4.1.2
+
+ENV PATH="/opt/python/cp312-cp312/bin:${PATH}" \
+    PYTHONUNBUFFERED=1
+
+# Match the system dependencies from the original Dockerfile.
+RUN dnf install -y \
+      git \
+      gcc \
+      gcc-c++ \
+      make \
+      pkgconf-pkg-config \
+      curl \
+      bzip2 \
+      xz \
+      tar \
+      which \
+    && dnf clean all
+
+# Build and packaging tools.
+RUN python -m pip install --no-cache-dir \
+      cmake \
+      ninja \
+      patchelf \
+      "setuptools>=75" \
+      wheel \
+      build \
+      auditwheel
+
+# Match the MPI versions from the original Dockerfile.
+RUN python -m pip install --no-cache-dir \
+      "openmpi==${OPENMPI_VERSION}" \
+      "mpi4py==${MPI4PY_VERSION}"
+
+# Validate MPI during image construction.
+RUN command -v mpicc \
+    && command -v mpicxx \
+    && mpicc --showme:compile \
+    && mpicxx --showme:link \
+    && python -c \
+       "from mpi4py import MPI; print(MPI.Get_library_version())"
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]
